@@ -6,6 +6,15 @@ export const money = (cents: number) =>
     cents / 100,
   );
 
+export function formatAmountInput(value: string): string {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+
+  const whole = (digits.slice(0, -2) || "0").replace(/^0+/, "") || "0";
+  const cents = digits.slice(-2).padStart(2, "0");
+  return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents}`;
+}
+
 export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
