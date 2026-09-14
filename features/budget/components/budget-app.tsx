@@ -23,6 +23,7 @@ import {
   monthLabel,
   shiftMonth,
   summarize,
+  planGoals,
 } from "../services/budget";
 import type { GoalId, Transaction, View } from "../types";
 import { GoalPercentagesDialog } from "./goal-percentages-dialog";
@@ -94,9 +95,14 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       (memberFilter === "all" || t.memberId === memberFilter),
   );
   const summary = summarize(monthly);
-  const sharedIncome = summarize(
-    budget.state.transactions.filter((t) => t.date.startsWith(month)),
-  ).income;
+  const members = budget.household?.members ?? [];
+  const ownMember = members.find((member) => member.id === budget.user?.id);
+  const plans = planGoals(
+    monthly,
+    members.filter(
+      (member) => memberFilter === "all" || member.id === memberFilter,
+    ),
+  );
   const allTags = [
     ...new Set(budget.state.transactions.flatMap((t) => t.tags)),
   ].sort((a, b) => a.localeCompare(b, "pt-BR"));
@@ -282,12 +288,11 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                 ))}
             </div>
           </div>
-          {memberFilter !== "all" && (
-            <p className="filter-explanation">
-              Mostrando quem recebeu ou pagou. Os valores planejados continuam
-              sendo os do casal.
-            </p>
-          )}
+          <p className="filter-explanation">
+            {memberFilter === "all"
+              ? "O planejado soma as metas individuais de cada pessoa."
+              : "Renda, gastos e metas da pessoa selecionada."}
+          </p>
           {budget.error && (
             <div role="alert" className="storage-error">
               {budget.error}
@@ -364,75 +369,79 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                     <div>
                       <h2 id="goals-title">Metas do orçamento</h2>
                     </div>
-                    <button
-                      className="text-button"
-                      disabled={budget.busy}
-                      onClick={() =>
-                        setEditingPercentages(
-                          budget.household?.percentagesRevision ?? 0,
-                        )
-                      }
-                    >
-                      Editar percentuais
-                    </button>
+                    {(memberFilter === "all" ||
+                      memberFilter === budget.user?.id) && (
+                      <button
+                        className="text-button"
+                        disabled={budget.busy}
+                        onClick={() =>
+                          setEditingPercentages(
+                            ownMember?.percentagesRevision ?? 0,
+                          )
+                        }
+                      >
+                        Editar meus percentuais
+                      </button>
+                    )}
                   </div>
                   <div
                     className={`goals-grid ${view === "goals" ? "expanded-goals" : ""}`}
                   >
-                    {summary.goals.map((goal) => (
-                      <button
-                        key={goal.id}
-                        className="goal-card"
-                        style={
-                          {
-                            "--goal-color": goal.color,
-                            "--goal-bg": goal.background,
-                          } as React.CSSProperties
-                        }
-                        onClick={() => filterGoal(goal.id)}
-                      >
-                        <div className="goal-card-top">
-                          <span className="goal-icon">
-                            <GoalIcon goal={goal.id} size={21} />
-                          </span>
-                          <span className="goal-number">
-                            {budget.state.percentages[goal.id]}%
-                          </span>
-                        </div>
-                        <h3>{goal.name}</h3>
-                        <strong>{displayMoney(goal.amount)}</strong>
-                        <p className="goal-budget">
-                          de{" "}
-                          {displayMoney(
-                            Math.round(
-                              (sharedIncome *
-                                budget.state.percentages[goal.id]) /
-                                100,
-                            ),
-                          )}{" "}
-                          planejados
-                        </p>
-                        <div className="goal-card-foot">
-                          <span>
-                            {goal.count}{" "}
-                            {goal.count === 1 ? "transação" : "transações"}
-                          </span>
-                          <ArrowUpRight size={16} />
-                        </div>
-                        <div className="goal-bar">
-                          <span
-                            style={{
-                              width: hidden
-                                ? "0%"
-                                : `${sharedIncome * budget.state.percentages[goal.id] > 0 ? Math.min(100, (goal.amount / ((sharedIncome * budget.state.percentages[goal.id]) / 100)) * 100) : goal.amount > 0 ? 100 : 0}%`,
-                            }}
-                          />
-                        </div>
-                        {view === "goals" && (
-                          <p className="goal-description">{goal.description}</p>
-                        )}
-                      </button>
-                    ))}
+                    {summary.goals.map((goal) => {
+                      const plan = plans.find(
+                        (item) => item.id === goal.id,
+                      ) ?? { planned: 0, percentage: null };
+                      return (
+                        <button
+                          key={goal.id}
+                          className="goal-card"
+                          style={
+                            {
+                              "--goal-color": goal.color,
+                              "--goal-bg": goal.background,
+                            } as React.CSSProperties
+                          }
+                          onClick={() => filterGoal(goal.id)}
+                        >
+                          <div className="goal-card-top">
+                            <span className="goal-icon">
+                              <GoalIcon goal={goal.id} size={21} />
+                            </span>
+                            <span className="goal-number">
+                              {plan.percentage === null
+                                ? "—"
+                                : `${plan.percentage.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}
+                            </span>
+                          </div>
+                          <h3>{goal.name}</h3>
+                          <strong>{displayMoney(goal.amount)}</strong>
+                          <p className="goal-budget">
+                            de {displayMoney(plan.planned)} planejados
+                          </p>
+                          <div className="goal-card-foot">
+                            <span>
+                              {goal.count}{" "}
+                              {goal.count === 1 ? "transação" : "transações"}
+                            </span>
+                            <ArrowUpRight size={16} />
+                          </div>
+                          <div className="goal-bar">
+                            <span
+                              style={{
+                                width: hidden
+                                  ? "0%"
+                                  : `${plan.planned > 0 ? Math.min(100, (goal.amount / plan.planned) * 100) : goal.amount > 0 ? 100 : 0}%`,
+                              }}
+                            />
+                          </div>
+                          {view === "goals" && (
+                            <p className="goal-description">
+                              {goal.description}
+                            </p>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
                   {view === "goals" && (
                     <div className="goal-explanation">

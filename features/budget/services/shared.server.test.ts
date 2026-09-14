@@ -1,3 +1,4 @@
+import { Database } from "bun:sqlite";
 import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -119,8 +120,7 @@ describe("shared budget", () => {
         ),
       ).rejects.toThrow("indisponível");
     } finally {
-      if (previousNodeEnvironment === undefined)
-        delete process.env.NODE_ENV;
+      if (previousNodeEnvironment === undefined) delete process.env.NODE_ENV;
       else process.env.NODE_ENV = previousNodeEnvironment;
     }
   });
@@ -350,14 +350,33 @@ describe("shared budget", () => {
       ),
     ).rejects.toThrow("sessão expirou");
   });
-  test("shared percentages validate totals and reject concurrent overwrite", async () => {
+  test("individual percentages validate totals and reject same-person concurrent overwrite", async () => {
     const { a, b } = await couple();
     const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
     await store.command(
       { action: "percentages", percentages, revision: 0 },
       a.session,
     );
-    expect(store.snapshot(b.session).budget.percentages).toEqual(percentages);
+    expect(store.snapshot(a.session).budget.percentages).toEqual(percentages);
+    expect(store.snapshot(b.session).budget.percentages).toEqual(
+      DEFAULT_PERCENTAGES,
+    );
+    await store.command(
+      {
+        action: "percentages",
+        percentages: DEFAULT_PERCENTAGES,
+        revision: 0,
+        memberId: a.snapshot.user!.id,
+      },
+      b.session,
+    );
+    expect(store.snapshot(a.session).budget.percentages).toEqual(percentages);
+    expect(
+      store
+        .snapshot(b.session)
+        .household?.members.find((member) => member.id === a.snapshot.user!.id)
+        ?.percentages,
+    ).toEqual(percentages);
     await expect(
       store.command(
         {
@@ -365,7 +384,7 @@ describe("shared budget", () => {
           percentages: DEFAULT_PERCENTAGES,
           revision: 0,
         },
-        b.session,
+        a.session,
       ),
     ).rejects.toThrow("mudou");
     await expect(
@@ -502,5 +521,66 @@ test("Resend transport sends HTML and text with the configured origin and never 
       if (value === undefined) delete process.env[name!];
       else process.env[name!] = value;
     }
+  }
+});
+
+test("legacy household percentages migrate to both people once without changing transactions", () => {
+  const dir = mkdtempSync(join(tmpdir(), "twogether-migration-"));
+  const file = join(dir, "test.sqlite");
+  const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
+  const legacy = new Database(file);
+  legacy.exec(`CREATE TABLE households (id TEXT PRIMARY KEY, percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0);
+    CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, household_id TEXT REFERENCES households(id));
+    CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id,id));`);
+  legacy
+    .query("INSERT INTO households VALUES ('home', ?, 4)")
+    .run(JSON.stringify(percentages));
+  legacy.exec(
+    "INSERT INTO users VALUES ('a','Ana','a@test.com','home'), ('b','Bia','b@test.com','home')",
+  );
+  const payload = JSON.stringify(transaction("a"));
+  legacy
+    .query("INSERT INTO transactions VALUES ('transaction-1','home',?,2,0)")
+    .run(payload);
+  legacy.close();
+  try {
+    const migrated = createBudgetStore(file);
+    migrated.close();
+    const inspect = new Database(file);
+    expect(
+      inspect
+        .query(
+          "SELECT percentages, revision FROM member_percentages ORDER BY user_id",
+        )
+        .all(),
+    ).toEqual([
+      { percentages: JSON.stringify(percentages), revision: 0 },
+      { percentages: JSON.stringify(percentages), revision: 0 },
+    ]);
+    expect(
+      inspect.query("SELECT payload, revision FROM transactions").get(),
+    ).toEqual({ payload, revision: 2 });
+    inspect
+      .query(
+        "UPDATE member_percentages SET percentages = ?, revision = 1 WHERE user_id = 'a'",
+      )
+      .run(JSON.stringify(DEFAULT_PERCENTAGES));
+    inspect.close();
+    const reopened = createBudgetStore(file);
+    reopened.close();
+    const verify = new Database(file);
+    expect(
+      verify
+        .query(
+          "SELECT percentages, revision FROM member_percentages WHERE user_id = 'a'",
+        )
+        .get(),
+    ).toEqual({
+      percentages: JSON.stringify(DEFAULT_PERCENTAGES),
+      revision: 1,
+    });
+    verify.close();
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
   }
 });

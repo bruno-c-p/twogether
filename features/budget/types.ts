@@ -37,12 +37,15 @@ export interface Member {
   id: string;
   name: string;
 }
+export interface MemberBudget extends Member {
+  percentages: GoalPercentages;
+  percentagesRevision: number;
+}
 export interface SharedSnapshot {
   user: (Member & { email: string }) | null;
   household: {
     id: string;
-    members: Member[];
-    percentagesRevision: number;
+    members: MemberBudget[];
   } | null;
   budget: BudgetState;
 }

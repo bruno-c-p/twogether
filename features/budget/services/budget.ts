@@ -1,5 +1,5 @@
 import { GOALS } from "../constants";
-import type { Transaction, GoalPercentages } from "../types";
+import type { Transaction, GoalPercentages, MemberBudget } from "../types";
 
 export const money = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -81,8 +81,9 @@ export function isTransaction(value: unknown): value is Transaction {
     t.amount <= 99999999999 &&
     (t.kind === "expense" || t.kind === "income") &&
     isDate(t.date) &&
-    (GOALS.some((g) => g.id === t.goal) ||
-      (t.kind === "income" && t.goal === null)) &&
+    (t.kind === "income"
+      ? t.goal === null
+      : GOALS.some((g) => g.id === t.goal)) &&
     Array.isArray(t.tags) &&
     t.tags.every((tag) => typeof tag === "string" && tag.length <= 24)
   );
@@ -106,4 +107,40 @@ export function isGoalPercentages(value: unknown): value is GoalPercentages {
       GOALS.reduce((sum, { id }) => sum + Number(values[id]) * 100, 0),
     ) === 10000
   );
+}
+
+export function planGoals(
+  transactions: Transaction[],
+  members: MemberBudget[],
+) {
+  const incomes = members.map((member) => ({
+    member,
+    income: transactions.reduce(
+      (sum, transaction) =>
+        sum +
+        (transaction.kind === "income" && transaction.memberId === member.id
+          ? transaction.amount
+          : 0),
+      0,
+    ),
+  }));
+  const income = incomes.reduce((sum, item) => sum + item.income, 0);
+  return GOALS.map((goal) => {
+    const planned = incomes.reduce(
+      (sum, item) =>
+        sum +
+        Math.round((item.income * item.member.percentages[goal.id]) / 100),
+      0,
+    );
+    return {
+      id: goal.id,
+      planned,
+      percentage:
+        members.length === 1
+          ? members[0].percentages[goal.id]
+          : income > 0
+            ? (planned / income) * 100
+            : null,
+    };
+  });
 }

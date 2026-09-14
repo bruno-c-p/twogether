@@ -100,7 +100,7 @@ export function TransactionDialog({
         description,
         date,
         kind,
-        goal,
+        goal: kind === "income" ? null : goal,
         tags: completeTags,
         memberId,
         revision: transaction?.revision,
@@ -146,7 +146,10 @@ export function TransactionDialog({
                 type="button"
                 className={kind === "income" ? "active income" : ""}
                 aria-pressed={kind === "income"}
-                onClick={() => setKind("income")}
+                onClick={() => {
+                  setKind("income");
+                  setGoal(null);
+                }}
               >
                 <ArrowDownLeft size={17} /> Receita
               </button>
@@ -211,39 +214,32 @@ export function TransactionDialog({
                 ))}
               </select>
             </label>
-            <fieldset className="goal-field">
-              <legend>
-                Para qual meta?{" "}
-                {kind === "income" && (
-                  <span className="optional">opcional</span>
-                )}
-              </legend>
-              <div className="goal-options">
-                {GOALS.map((item) => (
-                  <button
-                    key={item.id}
-                    type="button"
-                    className={`goal-option ${goal === item.id ? "selected" : ""}`}
-                    style={
-                      {
-                        "--goal-color": item.color,
-                        "--goal-bg": item.background,
-                      } as React.CSSProperties
-                    }
-                    aria-pressed={goal === item.id}
-                    onClick={() =>
-                      setGoal(
-                        goal === item.id && kind === "income" ? null : item.id,
-                      )
-                    }
-                  >
-                    <GoalIcon goal={item.id} size={19} />
-                    <span>{item.name}</span>
-                    {goal === item.id && <Check size={14} />}
-                  </button>
-                ))}
-              </div>
-            </fieldset>
+            {kind === "expense" && (
+              <fieldset className="goal-field">
+                <legend>Para qual meta?</legend>
+                <div className="goal-options">
+                  {GOALS.map((item) => (
+                    <button
+                      key={item.id}
+                      type="button"
+                      className={`goal-option ${goal === item.id ? "selected" : ""}`}
+                      style={
+                        {
+                          "--goal-color": item.color,
+                          "--goal-bg": item.background,
+                        } as React.CSSProperties
+                      }
+                      aria-pressed={goal === item.id}
+                      onClick={() => setGoal(item.id)}
+                    >
+                      <GoalIcon goal={item.id} size={19} />
+                      <span>{item.name}</span>
+                      {goal === item.id && <Check size={14} />}
+                    </button>
+                  ))}
+                </div>
+              </fieldset>
+            )}
             <label htmlFor="tag-input">
               Tags <span className="optional">opcional · até 8</span>
             </label>

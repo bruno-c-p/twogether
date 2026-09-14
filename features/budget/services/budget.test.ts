@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { normalizeTag, parseAmount, shiftMonth, summarize } from "./budget";
+import {
+  normalizeTag,
+  parseAmount,
+  shiftMonth,
+  summarize,
+  planGoals,
+  isTransaction,
+} from "./budget";
+import { DEFAULT_PERCENTAGES } from "../constants";
 import type { Transaction } from "../types";
 
 const transactions: Transaction[] = [
@@ -79,6 +87,14 @@ describe("resumo financeiro", () => {
   });
 });
 
+describe("tipo da transação", () => {
+  it("não associa uma receita a uma meta", () => {
+    expect(isTransaction(transactions[0])).toBe(true);
+    expect(isTransaction({ ...transactions[0], goal: "fixed" })).toBe(false);
+    expect(isTransaction({ ...transactions[1], goal: null })).toBe(false);
+  });
+});
+
 describe("mês e tags", () => {
   it("navega corretamente nas viradas de ano", () => {
     expect(shiftMonth("2026-12", 1)).toBe("2027-01");
@@ -87,5 +103,68 @@ describe("mês e tags", () => {
   it("normaliza tags para evitar duplicatas por espaços e letras maiúsculas", () => {
     expect(normalizeTag(" #Casa ")).toBe("casa");
     expect(normalizeTag("A   DOIS")).toBe("a dois");
+  });
+});
+
+describe("individual goal planning", () => {
+  const members = [
+    {
+      id: "a",
+      name: "Ana",
+      percentagesRevision: 0,
+      percentages: { ...DEFAULT_PERCENTAGES, fixed: 25, targets: 20 },
+    },
+    {
+      id: "b",
+      name: "Bia",
+      percentagesRevision: 0,
+      percentages: { ...DEFAULT_PERCENTAGES, fixed: 35, targets: 10 },
+    },
+  ];
+  const income = (memberId: string, amount: number): Transaction => ({
+    id: memberId,
+    memberId,
+    amount,
+    kind: "income",
+    description: "Salário",
+    date: "2026-09-14",
+    goal: null,
+    tags: [],
+  });
+  const monthly = [income("a", 500000), income("b", 300000)];
+  it("sums each person's plan and weights the combined percentage by income", () => {
+    expect(
+      planGoals(monthly, members).find((goal) => goal.id === "targets"),
+    ).toEqual({ id: "targets", planned: 130000, percentage: 16.25 });
+    expect(
+      planGoals(monthly, [members[0]]).find((goal) => goal.id === "targets"),
+    ).toEqual({ id: "targets", planned: 100000, percentage: 20 });
+    expect(
+      planGoals(monthly, [members[1]]).find((goal) => goal.id === "targets"),
+    ).toEqual({ id: "targets", planned: 30000, percentage: 10 });
+  });
+  it("keeps personal priorities without income and shows no combined percentage", () => {
+    expect(planGoals([], members)[0]).toEqual({
+      id: "fixed",
+      planned: 0,
+      percentage: null,
+    });
+    expect(planGoals([], [members[0]])[0]).toEqual({
+      id: "fixed",
+      planned: 0,
+      percentage: 25,
+    });
+  });
+  it("sums rounded individual cents and excludes expenses from planned income", () => {
+    const expense: Transaction = {
+      ...income("a", 10000),
+      kind: "expense",
+      goal: "targets",
+    };
+    expect(
+      planGoals([income("a", 3), income("b", 5), expense], members).find(
+        (goal) => goal.id === "targets",
+      )?.planned,
+    ).toBe(2);
   });
 });

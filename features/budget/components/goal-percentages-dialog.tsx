@@ -52,7 +52,7 @@ export function GoalPercentagesDialog({
         }}
       >
         <header className="dialog-header">
-          <h2 id="percentages-title">Divisão da renda</h2>
+          <h2 id="percentages-title">Divisão da minha renda</h2>
           <button
             type="button"
             className="icon-button"
@@ -63,8 +63,9 @@ export function GoalPercentagesDialog({
           </button>
         </header>
         <p className="percentage-intro">
-          Defina a porcentagem da renda destinada a cada meta. A soma deve ser
-          100% e vale para todos os meses.
+          Defina a porcentagem da sua renda destinada a cada meta. A soma deve
+          ser 100% e vale para todos os meses. Cada pessoa define seus próprios
+          percentuais.
         </p>
         <div className="percentage-fields">
           {GOALS.map((goal) => (

@@ -69,6 +69,17 @@ export function createBudgetStore(
       db.exec("ALTER TABLE users DROP COLUMN password");
       db.exec("DELETE FROM sessions");
     }).immediate();
+  db.exec(`CREATE TABLE IF NOT EXISTS member_percentages (
+    user_id TEXT PRIMARY KEY REFERENCES users(id),
+    percentages TEXT NOT NULL,
+    revision INTEGER NOT NULL DEFAULT 0
+  );`);
+  function initializePercentages() {
+    db.exec(`INSERT OR IGNORE INTO member_percentages(user_id, percentages)
+      SELECT users.id, households.percentages FROM users
+      JOIN households ON households.id = users.household_id`);
+  }
+  initializePercentages();
   const atomic = <T>(fn: () => T) => db.transaction(fn).immediate();
   function userFromSession(session: string | undefined): UserRow | null {
     if (!session || !/^[a-f0-9]{64}$/.test(session)) return null;
@@ -101,6 +112,7 @@ export function createBudgetStore(
       if (!user.household_id)
         return { user: identity, household: null, budget: emptyBudget() };
       const home = household(user);
+      initializePercentages();
       const rows = db
         .query<TransactionRow, [string]>(
           "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
@@ -111,15 +123,36 @@ export function createBudgetStore(
         household: {
           id: home.id,
           members: db
-            .query<{ id: string; name: string }, [string]>(
-              "SELECT id, name FROM users WHERE household_id = ? ORDER BY rowid",
+            .query<
+              {
+                id: string;
+                name: string;
+                percentages: string;
+                revision: number;
+              },
+              [string]
+            >(
+              `SELECT users.id, users.name, member_percentages.percentages, member_percentages.revision
+               FROM users JOIN member_percentages ON member_percentages.user_id = users.id
+               WHERE users.household_id = ? ORDER BY users.rowid`,
             )
-            .all(home.id),
-          percentagesRevision: home.revision,
+            .all(home.id)
+            .map((member) => ({
+              id: member.id,
+              name: member.name,
+              percentages: JSON.parse(member.percentages),
+              percentagesRevision: member.revision,
+            })),
         },
         budget: {
           ...emptyBudget(),
-          percentages: JSON.parse(home.percentages),
+          percentages: JSON.parse(
+            db
+              .query<{ percentages: string }, [string]>(
+                "SELECT percentages FROM member_percentages WHERE user_id = ?",
+              )
+              .get(user.id)!.percentages,
+          ),
           transactions: rows.map((row) => ({
             ...JSON.parse(row.payload),
             revision: row.revision,
@@ -441,11 +474,11 @@ export function createBudgetStore(
             throw new RequestError("Os percentuais devem somar 100%.");
           const result = db
             .query(
-              "UPDATE households SET percentages = ?, revision = revision + 1 WHERE id = ? AND revision = ?",
+              "UPDATE member_percentages SET percentages = ?, revision = revision + 1 WHERE user_id = ? AND revision = ?",
             )
             .run(
               JSON.stringify(data.percentages),
-              home.id,
+              user.id,
               revision(data.revision),
             );
           if (!result.changes) throw conflict();
