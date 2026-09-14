@@ -1015,58 +1015,6 @@ h1 {
   font-size: 13px;
   line-height: 1.8;
 }
-.tags-panel {
-  margin-top: 24px;
-}
-.tags-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 15px;
-}
-.tag-card {
-  text-align: left;
-  padding: 22px;
-  border: 1px solid var(--border);
-  background: white;
-  border-radius: 9px;
-}
-.tag-card:hover {
-  border-color: #8fa477;
-  transform: translateY(-2px);
-}
-.tag-card-heading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  color: #a0ac90;
-}
-.tag-card-symbol {
-  font-size: 23px;
-  color: #92a078;
-  background: #f3f5ec;
-  display: grid;
-  place-items: center;
-  width: 37px;
-  height: 37px;
-  border-radius: 10px;
-}
-.tag-card h3 {
-  font-size: 16px;
-  font-weight: 550;
-  margin: 20px 0 8px;
-}
-.tag-card strong {
-  font-family: "Manrope", sans-serif;
-  font-size: 23px;
-  display: block;
-  font-weight: 500;
-}
-.tag-card > span {
-  display: block;
-  font-size: 10px;
-  color: #95a184;
-  margin-top: 12px;
-}
 .transaction-dialog,
 .help-dialog {
   padding: 0;
@@ -1724,9 +1672,6 @@ h1 {
     padding-right: 7px;
     max-width: 135px;
   }
-  .tags-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
   .topbar-right {
     gap: 13px;
   }
@@ -2118,23 +2063,6 @@ h1 {
   }
   .goal-explanation p {
     font-size: 12px;
-  }
-  .tags-grid {
-    gap: 11px;
-  }
-  .tag-card {
-    padding: 17px 14px;
-  }
-  .tag-card h3 {
-    font-size: 14px;
-    overflow-wrap: anywhere;
-  }
-  .tag-card strong {
-    font-size: 20px;
-  }
-  .tag-card > span {
-    font-size: 10px;
-    line-height: 1.7;
   }
   .help-dialog {
     max-width: calc(100vw - 25px);

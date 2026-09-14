@@ -11,7 +11,6 @@ import {
   Leaf,
   Plus,
   ReceiptText,
-  Tag,
   Target,
   UsersRound,
   X,
@@ -38,7 +37,6 @@ const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },
   { id: "transactions", label: "Transações", icon: ReceiptText },
   { id: "goals", label: "Metas", icon: Target },
-  { id: "tags", label: "Tags", icon: Tag },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
 export function BudgetApp() {
@@ -150,10 +148,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     goals: {
       title: "Metas",
       subtitle: "Divida sua renda por meta e compare gasto e planejado.",
-    },
-    tags: {
-      title: "Tags",
-      subtitle: "Organize as transações por assunto.",
     },
   };
 
@@ -479,70 +473,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   compact={view === "overview"}
                   onViewAll={() => navigate("transactions")}
                 />
-              )}
-              {view === "tags" && (
-                <section className="tags-panel">
-                  <div className="section-heading">
-                    <div>
-                      <h2>
-                        Tags{" "}
-                        <span className="count-badge">{allTags.length}</span>
-                      </h2>
-                      <p>Organize e filtre as transações por assunto.</p>
-                    </div>
-                  </div>
-                  {allTags.length ? (
-                    <div className="tags-grid">
-                      {allTags.map((tag) => {
-                        const tagged = monthly.filter((t) =>
-                          t.tags.includes(tag),
-                        );
-                        const total = tagged
-                          .filter((t) => t.kind === "expense")
-                          .reduce((sum, t) => sum + t.amount, 0);
-                        return (
-                          <button
-                            className="tag-card"
-                            key={tag}
-                            onClick={() => {
-                              navigate("transactions");
-                              setTagFilter(tag);
-                            }}
-                          >
-                            <div className="tag-card-heading">
-                              <span className="tag-card-symbol">#</span>
-                              <ArrowUpRight size={18} />
-                            </div>
-                            <h3>{tag}</h3>
-                            <strong>{displayMoney(total)}</strong>
-                            <span>
-                              {tagged.length}{" "}
-                              {tagged.length === 1 ? "transação" : "transações"}{" "}
-                              · despesas no mês
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="empty-state">
-                      <div className="empty-icon">
-                        <Tag size={25} />
-                      </div>
-                      <h3>Nenhuma tag cadastrada</h3>
-                      <p>
-                        Adicione tags às transações para filtrar e organizar seu
-                        orçamento.
-                      </p>
-                      <button
-                        className="primary-button"
-                        onClick={() => setDialog({ transaction: null })}
-                      >
-                        <Plus size={16} /> Criar uma transação
-                      </button>
-                    </div>
-                  )}
-                </section>
               )}
             </>
           )}

@@ -1,7 +1,7 @@
 export type GoalId =
   "fixed" | "pleasure" | "comfort" | "targets" | "knowledge" | "freedom";
 export type TransactionKind = "expense" | "income";
-export type View = "overview" | "transactions" | "goals" | "tags";
+export type View = "overview" | "transactions" | "goals";
 
 export interface Transaction {
   id: string;
