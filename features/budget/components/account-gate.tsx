@@ -48,6 +48,24 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
       setCooldown(60);
     }
   }
+  if (!budget.ready) {
+    return (
+      <main className="account-page" aria-busy="true">
+        <a href="/" className="brand" aria-label="twogether — início">
+          twogether.
+        </a>
+        <section className="account-card account-loading-card">
+          <div className="account-symbol" aria-hidden="true">
+            <HeartHandshake size={30} strokeWidth={1.5} />
+          </div>
+          <p className="eyebrow">DUAS PESSOAS. UM ORÇAMENTO.</p>
+          <p className="account-loading-message" role="status">
+            Abrindo seu orçamento…
+          </p>
+        </section>
+      </main>
+    );
+  }
   return (
     <main className="account-page">
       <a href="/" className="brand">
@@ -84,9 +102,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                   ? "Modo desenvolvimento: informe um e-mail para entrar ou criar uma conta."
                   : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
         </p>
-        {!budget.ready ? (
-          <p role="status">Abrindo seu orçamento…</p>
-        ) : budget.accessToken ? (
+        {budget.accessToken ? (
           <div className="account-form">
             <button
               className="primary-button"

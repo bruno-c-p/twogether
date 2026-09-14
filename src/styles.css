@@ -2249,6 +2249,15 @@ h1 {
   background: #fff;
   box-shadow: 0 12px 60px #183f3510;
 }
+.account-loading-card {
+  min-height: 220px;
+}
+.account-loading-message {
+  color: #72816c;
+  line-height: 1.6;
+  font-size: 14px;
+  margin-top: 24px;
+}
 .account-symbol {
   width: 58px;
   height: 58px;
