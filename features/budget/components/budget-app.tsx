@@ -11,9 +11,9 @@ import {
   Leaf,
   Plus,
   ReceiptText,
-  ShieldCheck,
   Tag,
   Target,
+  UsersRound,
   X,
 } from "lucide-react";
 import { useBudget, type BudgetController } from "../hooks/use-budget";
@@ -57,6 +57,8 @@ export function BudgetApp() {
   );
 }
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+  const memberCount = budget.household?.members.length ?? 0;
+  const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const [memberFilter, setMemberFilter] = useState("all");
   const [coupleOpen, setCoupleOpen] = useState(false);
   const [month, setMonth] = useState("");
@@ -174,16 +176,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             </button>
           ))}
         </nav>
-        <div className="sidebar-bottom">
-          <div className="sidebar-user">
-            <div className="avatar">
-              {budget.user?.name.slice(0, 1).toUpperCase()}
-            </div>
-            <div>
-              <strong>{budget.user?.name}</strong>
-            </div>
-          </div>
-        </div>
       </aside>
       <div className="main-shell">
         <header className="topbar">
@@ -200,13 +192,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             twogether.
           </a>
           <div className="topbar-right">
-            <span
-              className="local-status"
-              aria-label="Orçamento compartilhado"
-              title="Orçamento compartilhado"
-            >
-              <ShieldCheck size={15} />
-            </span>
             <button
               className="icon-button visibility-button"
               onClick={() => setHidden(!hidden)}
@@ -216,12 +201,14 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
             </button>
             <button
-              className="avatar small account-button"
-              aria-label="Nosso espaço"
-              title="Nosso espaço"
+              className="space-button"
+              aria-label={`Abrir nosso espaço: ${memberLabel}`}
+              title={`Nosso espaço: ${memberLabel}`}
               onClick={() => setCoupleOpen(true)}
             >
-              {budget.user?.name.slice(0, 1).toUpperCase()}
+              <UsersRound size={17} strokeWidth={1.8} aria-hidden="true" />
+              <span className="space-button-label">Nosso espaço</span>
+              <span className="space-member-count">{memberLabel}</span>
             </button>
           </div>
         </header>
@@ -294,11 +281,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   </button>
                 ))}
             </div>
-            <button className="text-button" onClick={() => setCoupleOpen(true)}>
-              {budget.household?.members.length === 1
-                ? "Convidar meu par"
-                : "Nosso espaço"}
-            </button>
           </div>
           {memberFilter !== "all" && (
             <p className="filter-explanation">

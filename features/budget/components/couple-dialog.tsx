@@ -136,7 +136,7 @@ export function CoupleDialog({
         <footer className="dialog-footer">
           <span className="account-email">{budget.user?.email}</span>
           <button
-            className="text-button"
+            className="text-button logout-button"
             disabled={budget.busy}
             onClick={() => budget.command({ action: "logout" })}
           >

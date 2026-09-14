@@ -176,17 +176,6 @@ button svg {
   background: #6e885c;
   margin-left: auto;
 }
-.sidebar-bottom {
-  margin-top: auto;
-  padding-top: 0;
-}
-.sidebar-user {
-  padding: 20px 3px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
 .avatar {
   display: grid;
   place-items: center;
@@ -197,11 +186,6 @@ button svg {
   font-size: 12px;
   font-weight: 600;
   color: #777263;
-}
-.sidebar-user strong {
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
 }
 .main-shell {
   margin-left: 226px;
@@ -229,16 +213,6 @@ button svg {
   align-items: center;
   gap: 20px;
 }
-.local-status {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 11px;
-  color: #92998d;
-}
-.local-status svg {
-  color: #7b9371;
-}
 .icon-button {
   width: 32px;
   height: 32px;
@@ -256,11 +230,6 @@ button svg {
 }
 .visibility-button {
   color: #7e887e;
-}
-.small {
-  width: 31px;
-  height: 31px;
-  font-size: 11px;
 }
 .mobile-brand {
   display: none;
@@ -1609,8 +1578,7 @@ h1 {
   .sidebar .brand-period {
     display: none;
   }
-  .nav-item > span,
-  .sidebar-user {
+  .nav-item > span {
     display: none;
   }
   .desktop-navigation {
@@ -1622,11 +1590,6 @@ h1 {
     padding: 14px;
     justify-content: center;
     border-radius: 10px;
-  }
-  .sidebar-bottom {
-    padding: 0;
-    width: 100%;
-    margin-bottom: 25px;
   }
   .main-shell {
     margin-left: 76px;
@@ -1764,9 +1727,6 @@ h1 {
   .tags-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
-  .local-status {
-    font-size: 10px;
-  }
   .topbar-right {
     gap: 13px;
   }
@@ -1792,10 +1752,6 @@ h1 {
   .mobile-brand .brand-mark {
     scale: 0.8;
     width: 23px;
-  }
-  .local-status,
-  .topbar-right > .avatar {
-    display: none;
   }
   .visibility-button {
     width: 40px;
@@ -2462,13 +2418,39 @@ h1 {
   border-radius: 12px;
   margin-bottom: 20px;
 }
-.account-button {
-  border: none;
+.space-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: transparent;
+  color: #667862;
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
   cursor: pointer;
+}
+.space-button:hover {
+  background: #edf2e9;
+  color: #35513f;
+}
+.space-button > svg {
+  color: #7b9371;
   flex-shrink: 0;
 }
-.topbar-right .account-button {
-  display: grid;
+.space-member-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: #e9efdf;
+  color: #4e6746;
+  font-size: 11px;
+  font-weight: 600;
 }
 .couple-toolbar {
   display: flex;
@@ -2534,7 +2516,18 @@ h1 {
   flex-shrink: 0;
 }
 .couple-dialog .dialog-footer {
+  align-items: center;
+  justify-content: space-between;
   flex-wrap: wrap;
+}
+.couple-dialog .logout-button {
+  border-radius: 6px;
+  padding-inline: 10px;
+  color: #b45454;
+}
+.couple-dialog .logout-button:hover {
+  background: #fff0ef;
+  color: #963d3d;
 }
 .filter-explanation {
   color: #7b8772;
@@ -2574,5 +2567,15 @@ h1 {
   .person-filter button {
     padding: 9px 14px;
     max-width: 135px;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .space-button {
+    gap: 5px;
+    padding: 6px 4px;
+  }
+  .space-button-label {
+    display: none;
   }
 }
