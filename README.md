@@ -32,11 +32,11 @@ O link de acesso expira em 15 minutos, funciona uma vez e autentica somente quem
 
 ## Orçamento
 
-- Transações com descrição, valor, data, meta, tags e **quem recebeu/pagou**; por padrão, a pessoa atual.
+- Transações com descrição, valor, data, meta e tags; cada nova transação é associada automaticamente à pessoa logada e mantém essa atribuição quando editada.
 - Visão **Nós** e filtros individuais. O valor planejado de cada meta sempre usa a renda total do casal, mesmo com um filtro individual ativo.
 - Seis metas fixas com percentuais editáveis que somam 100%: custo fixo 30%, prazeres 10%, conforto 15%, metas 15%, liberdade financeira 25% e conhecimento 5%. A divisão vale para todos os meses.
 - Edição, exclusão e desfazer por transação, busca e filtros por meta, tipo e tag. Valores em centavos inteiros.
-- Autoria original e última pessoa que editou preservadas, independentemente de quem pagou.
+- Autoria original e última pessoa que editou preservadas.
 - Atualização automática a cada 5 segundos enquanto a página está visível e ao voltar à aba. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
 
 ## Persistência e publicação

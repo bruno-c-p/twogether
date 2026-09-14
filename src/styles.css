@@ -2284,8 +2284,7 @@ h1 {
   flex-direction: column;
   gap: 18px;
 }
-.account-form label,
-.member-select {
+.account-form label {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -2293,8 +2292,7 @@ h1 {
   font-weight: 600;
   color: #445443;
 }
-.account-form input,
-.member-select select {
+.account-form input {
   min-width: 0;
   width: 100%;
   padding: 13px 14px;
@@ -2468,9 +2466,6 @@ h1 {
   padding: 0;
   margin: 0;
   min-width: 0;
-}
-.member-select {
-  margin: 0 0 22px;
 }
 .transaction-person {
   color: #59764f;

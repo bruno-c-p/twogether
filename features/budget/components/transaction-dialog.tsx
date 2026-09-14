@@ -35,9 +35,7 @@ export function TransactionDialog({
   const [tags, setTags] = useState(transaction?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
   const [saving, setSaving] = useState(false);
-  const [memberId, setMemberId] = useState(
-    transaction?.memberId ?? currentUserId,
-  );
+  const memberId = transaction?.memberId ?? currentUserId;
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -199,21 +197,6 @@ export function TransactionDialog({
                 />
               </label>
             </div>
-            <label className="member-select">
-              {kind === "income" ? "Quem recebeu?" : "Quem pagou?"}
-              <select
-                value={memberId}
-                onChange={(event) => setMemberId(event.target.value)}
-                required
-              >
-                {members.map((member) => (
-                  <option key={member.id} value={member.id}>
-                    {member.name}
-                    {member.id === currentUserId ? " (você)" : ""}
-                  </option>
-                ))}
-              </select>
-            </label>
             {kind === "expense" && (
               <fieldset className="goal-field">
                 <legend>Para qual meta?</legend>

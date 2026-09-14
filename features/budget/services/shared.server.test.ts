@@ -243,7 +243,7 @@ describe("shared budget", () => {
       Date.now = now;
     }
   });
-  test("both members edit shared transactions; attribution and authorship are independent", async () => {
+  test("new transactions use the logged-in member and edits preserve attribution", async () => {
     const { a, b } = await couple();
     const t = transaction(b.snapshot.user!.id);
     await store.command(
@@ -254,13 +254,14 @@ describe("shared budget", () => {
       a.session,
     );
     const received = (await store.snapshot(b.session)).budget.transactions[0];
-    expect(received.memberId).toBe(b.snapshot.user!.id);
+    expect(received.memberId).toBe(a.snapshot.user!.id);
     expect(received.createdBy).toBe(a.snapshot.user!.id);
     await store.command(
       { action: "save", transaction: { ...received, amount: 15000 } },
       b.session,
     );
     const edited = (await store.snapshot(a.session)).budget.transactions[0];
+    expect(edited.memberId).toBe(a.snapshot.user!.id);
     expect(edited.amount).toBe(15000);
     expect(edited.updatedBy).toBe(b.snapshot.user!.id);
     expect(edited.createdBy).toBe(a.snapshot.user!.id);
@@ -329,23 +330,20 @@ describe("shared budget", () => {
       ),
     ).rejects.toThrow("mudou");
   });
-  test("couples are isolated and foreign member attribution is rejected", async () => {
+  test("couples are isolated and transaction attribution comes from the session", async () => {
     const { a } = await couple();
     const c = await signup("Cris");
     await store.command({ action: "create" }, c.session);
     await store.command(
-      { action: "save", transaction: transaction(a.snapshot.user!.id) },
+      { action: "save", transaction: transaction(c.snapshot.user!.id) },
       a.session,
     );
+    expect(
+      (await store.snapshot(a.session)).budget.transactions[0]?.memberId,
+    ).toBe(a.snapshot.user!.id);
     expect((await store.snapshot(c.session)).budget.transactions).toHaveLength(
       0,
     );
-    await expect(
-      store.command(
-        { action: "save", transaction: transaction(c.snapshot.user!.id) },
-        a.session,
-      ),
-    ).rejects.toThrow("deste casal");
     await expect(
       store.command(
         { action: "delete", id: "transaction-1", revision: 1 },

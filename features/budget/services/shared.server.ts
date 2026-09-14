@@ -297,12 +297,7 @@ export function createBudgetStore(
       throw new RequestError("Versão inválida. Atualize a página.");
     return Number(value);
   }
-  async function canonical(
-    value: unknown,
-    user: UserRow,
-    home: HouseholdRow,
-    database: DatabaseExecutor,
-  ): Promise<Transaction> {
+  function canonical(value: unknown, user: UserRow): Transaction {
     if (
       !isTransaction(value) ||
       value.id.length > 100 ||
@@ -312,15 +307,6 @@ export function createBudgetStore(
       value.date < "1900-01-01"
     )
       throw new RequestError("Confira os dados da transação.");
-    if (
-      typeof value.memberId !== "string" ||
-      !(await one(
-        database,
-        "SELECT 1 FROM users WHERE id = ? AND household_id = ?",
-        [value.memberId, home.id],
-      ))
-    )
-      throw new RequestError("Selecione uma pessoa deste casal.");
     return {
       id: value.id,
       description: value.description.trim(),
@@ -329,7 +315,6 @@ export function createBudgetStore(
       kind: value.kind,
       goal: value.goal,
       tags: [...new Set(value.tags)],
-      memberId: value.memberId,
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     };
@@ -573,7 +558,7 @@ export function createBudgetStore(
           );
         } else if (data.action === "save") {
           const rawTransaction = data.transaction;
-          const t = await canonical(rawTransaction, user, home, transaction);
+          const t = canonical(rawTransaction, user);
           const old = await one<TransactionRow>(
             transaction,
             "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
@@ -584,13 +569,20 @@ export function createBudgetStore(
             : undefined;
           if (old ? old.deleted || old.revision !== given : given !== undefined)
             throw conflict();
-          const createdBy = old
-            ? (JSON.parse(old.payload) as Transaction).createdBy
-            : user.id;
+          const previous = old
+            ? (JSON.parse(old.payload) as Transaction)
+            : undefined;
+          const createdBy = previous?.createdBy ?? user.id;
+          const memberId =
+            typeof previous?.memberId === "string"
+              ? previous.memberId
+              : typeof previous?.createdBy === "string"
+                ? previous.createdBy
+                : user.id;
           await execute(
             transaction,
             "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
-            [t.id, home.id, JSON.stringify({ ...t, createdBy })],
+            [t.id, home.id, JSON.stringify({ ...t, memberId, createdBy })],
           );
         } else if (data.action === "delete" || data.action === "undo-delete") {
           const undo = data.action === "undo-delete";
