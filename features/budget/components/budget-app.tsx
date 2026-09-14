@@ -26,6 +26,7 @@ import {
 } from "../services/budget";
 import type { GoalId, Transaction, View } from "../types";
 import { GoalPercentagesDialog } from "./goal-percentages-dialog";
+import { AppFooter } from "./app-footer";
 import { AccountGate } from "./account-gate";
 import { CoupleDialog } from "./couple-dialog";
 import { Distribution } from "./distribution";
@@ -437,17 +438,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                       );
                     })}
                   </div>
-                  {view === "goals" && (
-                    <div className="goal-explanation">
-                      <Leaf size={21} />
-                      <p>
-                        Os percentuais dividem a renda entre as seis metas e
-                        valem para todos os meses. Compare o gasto de cada meta
-                        com o valor planejado ou selecione uma para ver suas
-                        transações.
-                      </p>
-                    </div>
-                  )}
                 </section>
               )}
               {(view === "overview" || view === "transactions") && (
@@ -477,6 +467,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             </>
           )}
         </main>
+        <AppFooter />
       </div>
       <nav className="mobile-navigation" aria-label="Navegação mobile">
         {navigation.map((item) => (

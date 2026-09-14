@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "../hooks/use-budget";
+import { AppFooter } from "./app-footer";
 
 const isDevelopment = import.meta.env.DEV;
 
@@ -63,6 +64,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             Abrindo seu orçamento…
           </p>
         </section>
+        <AppFooter />
       </main>
     );
   }
@@ -316,6 +318,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             : "Sem senha. Um espaço exclusivo para vocês dois."}
         </p>
       </section>
+      <AppFooter />
     </main>
   );
 }

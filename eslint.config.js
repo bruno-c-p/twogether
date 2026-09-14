@@ -4,7 +4,15 @@ import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 
 export default tseslint.config(
-  { ignores: ["dist/**", ".tanstack/**", "src/routeTree.gen.ts"] },
+  {
+    ignores: [
+      "dist/**",
+      ".tanstack/**",
+      ".vercel/**",
+      ".output/**",
+      "src/routeTree.gen.ts",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

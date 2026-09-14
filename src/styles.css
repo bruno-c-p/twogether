@@ -190,6 +190,23 @@ button svg {
 .main-shell {
   margin-left: 226px;
 }
+.site-footer {
+  max-width: 1450px;
+  margin: 0 auto;
+  padding: 28px 43px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  color: #9aa393;
+  font-size: 11px;
+}
+.site-footer-brand {
+  color: #6f8163;
+  font-family: "Manrope", sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.35px;
+}
 .topbar {
   height: 78px;
   padding: 0 43px;
@@ -1000,21 +1017,6 @@ h1 {
   margin-top: 18px;
   line-height: 1.6;
 }
-.goal-explanation {
-  display: flex;
-  gap: 15px;
-  align-items: center;
-  padding: 23px;
-  background: #eff3e9;
-  border-radius: 9px;
-  margin-top: 20px;
-  color: #7b9067;
-  max-width: 700px;
-}
-.goal-explanation p {
-  font-size: 13px;
-  line-height: 1.8;
-}
 .transaction-dialog,
 .help-dialog {
   padding: 0;
@@ -1428,6 +1430,10 @@ h1 {
   .topbar {
     padding: 0 28px;
   }
+  .site-footer {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
   main {
     padding: 30px 28px 0;
   }
@@ -1562,6 +1568,10 @@ h1 {
   .topbar {
     padding: 0 22px;
   }
+  .site-footer {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
   .overview-grid {
     grid-template-columns: 1fr 1fr;
     gap: 12px;
@@ -1686,6 +1696,12 @@ h1 {
   .topbar {
     height: 67px;
     padding: 0 20px;
+  }
+  .main-shell > .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 24px 19px 94px;
+    gap: 6px;
   }
   .breadcrumb {
     display: none;
@@ -2057,13 +2073,6 @@ h1 {
   .goal-description {
     font-size: 11px;
   }
-  .goal-explanation {
-    padding: 16px;
-    align-items: flex-start;
-  }
-  .goal-explanation p {
-    font-size: 12px;
-  }
   .help-dialog {
     max-width: calc(100vw - 25px);
   }
@@ -2239,6 +2248,13 @@ h1 {
 }
 .account-page > .brand {
   margin-bottom: 36px;
+}
+.account-page > .site-footer {
+  width: 100%;
+  max-width: 470px;
+  margin-top: auto;
+  padding-left: 0;
+  padding-right: 0;
 }
 .account-card {
   width: 100%;
@@ -2487,6 +2503,10 @@ h1 {
   }
   .account-page > .brand {
     margin-bottom: 24px;
+  }
+  .account-page > .site-footer {
+    align-items: center;
+    padding: 24px 0;
   }
   .account-card {
     padding: 26px 22px;
