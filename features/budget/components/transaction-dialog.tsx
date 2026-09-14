@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowDownLeft, ArrowUpRight, Check, Plus, X } from "lucide-react";
 import { GOALS } from "../constants";
-import { localDate, normalizeTag, parseAmount } from "../services/budget";
+import {
+  formatAmountInput,
+  localDate,
+  normalizeTag,
+  parseAmount,
+} from "../services/budget";
 import type { Transaction, TransactionKind, Member } from "../types";
 import { GoalIcon } from "./goal-icon";
 
@@ -34,6 +39,9 @@ export function TransactionDialog({
   const [goal, setGoal] = useState(transaction?.goal ?? null);
   const [tags, setTags] = useState(transaction?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
+  const [amountValue, setAmountValue] = useState(
+    transaction ? formatAmountInput(String(transaction.amount)) : "",
+  );
   const [saving, setSaving] = useState(false);
   const memberId = transaction?.memberId ?? currentUserId;
   const [error, setError] = useState("");
@@ -50,6 +58,12 @@ export function TransactionDialog({
       if (previous instanceof HTMLElement) previous.focus();
     };
   }, []);
+
+  useEffect(() => {
+    const input = amountInput.current;
+    if (!input) return;
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, [amountValue]);
 
   function addTag(value: string) {
     const tag = normalizeTag(value);
@@ -162,14 +176,14 @@ export function TransactionDialog({
                 ref={amountInput}
                 name="amount"
                 autoFocus
-                inputMode="decimal"
+                type="text"
+                inputMode="numeric"
                 placeholder="0,00"
-                maxLength={18}
+                maxLength={14}
                 required
-                defaultValue={
-                  transaction
-                    ? (transaction.amount / 100).toFixed(2).replace(".", ",")
-                    : ""
+                value={amountValue}
+                onChange={(event) =>
+                  setAmountValue(formatAmountInput(event.currentTarget.value))
                 }
                 aria-describedby={error ? "form-error" : undefined}
               />

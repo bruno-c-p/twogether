@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   normalizeTag,
+  formatAmountInput,
   parseAmount,
   shiftMonth,
   summarize,
@@ -41,6 +42,16 @@ const transactions: Transaction[] = [
 ];
 
 describe("valores em reais", () => {
+  it("formata a digitação como moeda brasileira, começando pelos centavos", () => {
+    expect(formatAmountInput("1")).toBe("0,01");
+    expect(formatAmountInput("12")).toBe("0,12");
+    expect(formatAmountInput("123")).toBe("1,23");
+    expect(formatAmountInput("1234")).toBe("12,34");
+    expect(formatAmountInput("1234567")).toBe("12.345,67");
+    expect(formatAmountInput("R$ 1.234,56")).toBe("1.234,56");
+    expect(formatAmountInput("")).toBe("");
+  });
+
   it("converte centavos e separadores brasileiros sem arredondamento flutuante", () => {
     expect(parseAmount("1.234,56")).toBe(123456);
     expect(parseAmount("0,01")).toBe(1);
