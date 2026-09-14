@@ -1,0 +1,153 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import { DEFAULT_PERCENTAGES } from "../constants";
+import type {
+  Transaction,
+  GoalPercentages,
+  SharedSnapshot,
+  BudgetCommand,
+  CommandResult,
+} from "../types";
+
+const initial: SharedSnapshot = {
+  user: null,
+  household: null,
+  budget: {
+    transactions: [],
+    percentages: { ...DEFAULT_PERCENTAGES },
+  },
+};
+export function useBudget() {
+  const [accessToken, setAccessToken] = useState("");
+  const [snapshot, setSnapshot] = useState(initial);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState("");
+  const [syncError, setSyncError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
+  const generation = useRef(0);
+  const refresh = useCallback(async () => {
+    if (inFlight.current) return;
+    const current = ++generation.current;
+    try {
+      const response = await fetch("/api/budget", { cache: "no-store" });
+      if (!response.ok)
+        throw new Error("Não foi possível sincronizar. Tente novamente.");
+      const result: CommandResult = await response.json();
+      if (current !== generation.current) return;
+      setSnapshot(result.snapshot);
+      setSyncError("");
+    } catch (error) {
+      if (current === generation.current)
+        setSyncError(
+          error instanceof Error && !(error instanceof TypeError)
+            ? error.message
+            : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
+        );
+    } finally {
+      setReady(true);
+    }
+  }, []);
+  useEffect(() => {
+    const readAccessLink = () =>
+      setAccessToken(
+        new URLSearchParams(window.location.hash.slice(1)).get("access") ?? "",
+      );
+    readAccessLink();
+    window.addEventListener("hashchange", readAccessLink);
+    void refresh();
+    const synchronize = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+    const interval = window.setInterval(synchronize, 5000);
+    window.addEventListener("focus", synchronize);
+    window.addEventListener("online", synchronize);
+    document.addEventListener("visibilitychange", synchronize);
+    const invalidateRequests = () => {
+      generation.current++;
+    };
+    return () => {
+      invalidateRequests();
+      window.removeEventListener("hashchange", readAccessLink);
+      window.clearInterval(interval);
+      window.removeEventListener("focus", synchronize);
+      window.removeEventListener("online", synchronize);
+      document.removeEventListener("visibilitychange", synchronize);
+    };
+  }, [refresh]);
+
+  const command = useCallback(
+    async (data: BudgetCommand): Promise<CommandResult | null> => {
+      if (inFlight.current) return null;
+      inFlight.current = true;
+      generation.current++;
+      setBusy(true);
+      setError("");
+      try {
+        const response = await fetch("/api/budget", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          if (response.status === 401) setSnapshot(initial);
+          throw new Error(result.error || "Não foi possível salvar.");
+        }
+        const success: CommandResult = result;
+        setSnapshot(success.snapshot);
+        return success;
+      } catch (error) {
+        setError(
+          error instanceof Error && !(error instanceof TypeError)
+            ? error.message
+            : "Sem conexão. Confira o orçamento antes de tentar novamente.",
+        );
+        return null;
+      } finally {
+        inFlight.current = false;
+        setBusy(false);
+      }
+    },
+    [],
+  );
+
+  return {
+    accessToken,
+    finishAccess: () => {
+      setError("");
+      setAccessToken("");
+      const fragment = new URLSearchParams(window.location.hash.slice(1));
+      fragment.delete("access");
+      window.history.replaceState(
+        null,
+        "",
+        `${window.location.pathname}${fragment.size ? `#${fragment}` : ""}`,
+      );
+    },
+    state: snapshot.budget,
+    user: snapshot.user,
+    household: snapshot.household,
+    ready,
+    error: error || syncError,
+    busy,
+    refresh,
+    command,
+    saveTransaction: async (transaction: Transaction) =>
+      !!(await command({ action: "save", transaction })),
+    removeTransaction: async (transaction: Transaction) =>
+      !!(await command({
+        action: "delete",
+        id: transaction.id,
+        revision: transaction.revision ?? 0,
+      })),
+    restore: async (transaction: Transaction) =>
+      !!(await command({
+        action: "undo-delete",
+        id: transaction.id,
+        revision: (transaction.revision ?? 0) + 1,
+      })),
+    savePercentages: async (percentages: GoalPercentages, revision: number) =>
+      !!(await command({ action: "percentages", percentages, revision })),
+  };
+}
+export type BudgetController = ReturnType<typeof useBudget>;

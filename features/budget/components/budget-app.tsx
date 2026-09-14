@@ -1,0 +1,628 @@
+import { useEffect, useState } from "react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  EyeOff,
+  LayoutGrid,
+  Leaf,
+  Plus,
+  ReceiptText,
+  ShieldCheck,
+  Tag,
+  Target,
+  X,
+} from "lucide-react";
+import { useBudget, type BudgetController } from "../hooks/use-budget";
+import {
+  localDate,
+  money,
+  monthLabel,
+  shiftMonth,
+  summarize,
+} from "../services/budget";
+import type { GoalId, Transaction, View } from "../types";
+import { GoalPercentagesDialog } from "./goal-percentages-dialog";
+import { AccountGate } from "./account-gate";
+import { CoupleDialog } from "./couple-dialog";
+import { Distribution } from "./distribution";
+import { GoalIcon } from "./goal-icon";
+import { TransactionDialog } from "./transaction-dialog";
+import { TransactionList } from "./transaction-list";
+
+const navigation = [
+  { id: "overview", label: "Visão geral", icon: LayoutGrid },
+  { id: "transactions", label: "Transações", icon: ReceiptText },
+  { id: "goals", label: "Metas", icon: Target },
+  { id: "tags", label: "Tags", icon: Tag },
+] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
+
+export function BudgetApp() {
+  const budget = useBudget();
+  if (
+    !budget.ready ||
+    budget.accessToken ||
+    !budget.user?.name ||
+    !budget.household
+  )
+    return <AccountGate budget={budget} />;
+  return (
+    <BudgetWorkspace
+      key={`${budget.household.id}:${budget.user.id}`}
+      budget={budget}
+    />
+  );
+}
+function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+  const [memberFilter, setMemberFilter] = useState("all");
+  const [coupleOpen, setCoupleOpen] = useState(false);
+  const [month, setMonth] = useState("");
+  const [view, setView] = useState<View>("overview");
+  const [hidden, setHidden] = useState(false);
+  const [dialog, setDialog] = useState<{
+    transaction: Transaction | null;
+  } | null>(null);
+  const [query, setQuery] = useState("");
+  const [goalFilter, setGoalFilter] = useState<GoalId | "all">("all");
+  const [tagFilter, setTagFilter] = useState("");
+  const [kindFilter, setKindFilter] = useState("all");
+  const [notice, setNotice] = useState<{
+    message: string;
+    undo?: Transaction;
+  } | null>(null);
+  const [editingPercentages, setEditingPercentages] = useState<number | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setMonth(localDate().slice(0, 7));
+  }, []);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(() => setNotice(null), 8000);
+    return () => window.clearTimeout(timer);
+  }, [notice]);
+
+  const monthly = budget.state.transactions.filter(
+    (t) =>
+      t.date.startsWith(month) &&
+      (memberFilter === "all" || t.memberId === memberFilter),
+  );
+  const summary = summarize(monthly);
+  const sharedIncome = summarize(
+    budget.state.transactions.filter((t) => t.date.startsWith(month)),
+  ).income;
+  const allTags = [
+    ...new Set(budget.state.transactions.flatMap((t) => t.tags)),
+  ].sort((a, b) => a.localeCompare(b, "pt-BR"));
+  const displayMoney = (value: number) => (hidden ? "R$ ••••" : money(value));
+
+  function navigate(next: View) {
+    setView(next);
+    setQuery("");
+    setGoalFilter("all");
+    setTagFilter("");
+    setKindFilter("all");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function filterGoal(id: GoalId) {
+    navigate("transactions");
+    setGoalFilter(id);
+  }
+
+  async function save(transaction: Transaction) {
+    if (!(await budget.saveTransaction(transaction))) return false;
+    setMonth(transaction.date.slice(0, 7));
+    setNotice({
+      message: dialog?.transaction
+        ? "Transação atualizada."
+        : "Transação adicionada.",
+    });
+    return true;
+  }
+
+  async function remove(transaction: Transaction) {
+    if (await budget.removeTransaction(transaction))
+      setNotice({ message: "Transação excluída.", undo: transaction });
+  }
+
+  const titles = {
+    overview: {
+      title: "Visão geral",
+      subtitle: "Saldo, entradas, despesas e metas do mês.",
+    },
+    transactions: {
+      title: "Transações",
+      subtitle: "Registre e acompanhe as entradas e despesas do mês.",
+    },
+    goals: {
+      title: "Metas",
+      subtitle: "Divida sua renda por meta e compare gasto e planejado.",
+    },
+    tags: {
+      title: "Tags",
+      subtitle: "Organize as transações por assunto.",
+    },
+  };
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <a className="brand" href="/" aria-label="twogether — início">
+          <span className="brand-mark">
+            <span />
+            <span />
+          </span>
+          twogether<span className="brand-period">.</span>
+        </a>
+        <nav className="desktop-navigation" aria-label="Navegação principal">
+          {navigation.map((item) => (
+            <button
+              key={item.id}
+              className={view === item.id ? "nav-item active" : "nav-item"}
+              aria-label={item.label}
+              aria-current={view === item.id ? "page" : undefined}
+              onClick={() => navigate(item.id)}
+            >
+              <item.icon size={19} strokeWidth={1.7} />
+              <span>{item.label}</span>
+              {view === item.id && <span className="nav-active-dot" />}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="sidebar-user">
+            <div className="avatar">
+              {budget.user?.name.slice(0, 1).toUpperCase()}
+            </div>
+            <div>
+              <strong>{budget.user?.name}</strong>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div className="main-shell">
+        <header className="topbar">
+          <div className="breadcrumb">
+            <strong>
+              {navigation.find((item) => item.id === view)?.label}
+            </strong>
+          </div>
+          <a className="mobile-brand brand" href="/">
+            <span className="brand-mark">
+              <span />
+              <span />
+            </span>
+            twogether.
+          </a>
+          <div className="topbar-right">
+            <span
+              className="local-status"
+              aria-label="Orçamento compartilhado"
+              title="Orçamento compartilhado"
+            >
+              <ShieldCheck size={15} />
+            </span>
+            <button
+              className="icon-button visibility-button"
+              onClick={() => setHidden(!hidden)}
+              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+              title={hidden ? "Mostrar valores" : "Ocultar valores"}
+            >
+              {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
+            <button
+              className="avatar small account-button"
+              aria-label="Nosso espaço"
+              title="Nosso espaço"
+              onClick={() => setCoupleOpen(true)}
+            >
+              {budget.user?.name.slice(0, 1).toUpperCase()}
+            </button>
+          </div>
+        </header>
+        <main id="main-content">
+          <div className="page-heading">
+            <div>
+              <h1>{titles[view].title}</h1>
+              <p>{titles[view].subtitle}</p>
+            </div>
+            <button
+              className="primary-button add-transaction"
+              disabled={budget.busy}
+              onClick={() => setDialog({ transaction: null })}
+            >
+              <Plus size={19} /> Nova transação
+            </button>
+          </div>
+          <div className="month-row">
+            <div className="month-picker">
+              <button
+                className="icon-button"
+                aria-label="Mês anterior"
+                disabled={!month}
+                onClick={() => setMonth(shiftMonth(month, -1))}
+              >
+                <ChevronLeft size={17} />
+              </button>
+              <span>{month ? monthLabel(month) : "Carregando..."}</span>
+              <button
+                className="icon-button"
+                aria-label="Próximo mês"
+                disabled={!month}
+                onClick={() => setMonth(shiftMonth(month, 1))}
+              >
+                <ChevronRight size={17} />
+              </button>
+            </div>
+            {month && month !== localDate().slice(0, 7) && (
+              <button
+                className="today-button"
+                onClick={() => setMonth(localDate().slice(0, 7))}
+              >
+                Voltar para este mês
+              </button>
+            )}
+          </div>
+          <div className="couple-toolbar">
+            <div className="person-filter" aria-label="Filtrar por pessoa">
+              <button
+                aria-pressed={memberFilter === "all"}
+                className={memberFilter === "all" ? "active" : ""}
+                onClick={() => setMemberFilter("all")}
+              >
+                Nós
+              </button>
+              {[...(budget.household?.members ?? [])]
+                .sort(
+                  (a, b) =>
+                    Number(b.id === budget.user?.id) -
+                    Number(a.id === budget.user?.id),
+                )
+                .map((member) => (
+                  <button
+                    key={member.id}
+                    aria-pressed={memberFilter === member.id}
+                    className={memberFilter === member.id ? "active" : ""}
+                    onClick={() => setMemberFilter(member.id)}
+                  >
+                    {member.id === budget.user?.id ? "Eu" : member.name}
+                  </button>
+                ))}
+            </div>
+            <button className="text-button" onClick={() => setCoupleOpen(true)}>
+              {budget.household?.members.length === 1
+                ? "Convidar meu par"
+                : "Nosso espaço"}
+            </button>
+          </div>
+          {memberFilter !== "all" && (
+            <p className="filter-explanation">
+              Mostrando quem recebeu ou pagou. Os valores planejados continuam
+              sendo os do casal.
+            </p>
+          )}
+          {budget.error && (
+            <div role="alert" className="storage-error">
+              {budget.error}
+            </div>
+          )}
+          {!budget.ready ? (
+            <div className="loading-state" aria-live="polite">
+              Carregando orçamento…
+            </div>
+          ) : (
+            <>
+              {view === "overview" && (
+                <section className="overview-grid" aria-label="Resumo mensal">
+                  <div className="balance-card">
+                    <div className="balance-top">
+                      <span>
+                        {memberFilter === "all"
+                          ? "Nosso saldo do mês"
+                          : "Saldo desta pessoa"}
+                      </span>
+                      <span className="balance-symbol">
+                        <Leaf size={19} strokeWidth={1.4} />
+                      </span>
+                    </div>
+                    <div className="balance-amount">
+                      {displayMoney(summary.balance)}
+                    </div>
+                    <div className="balance-caption">
+                      <span className="balance-dot" />
+                      {summary.balance < 0
+                        ? "As despesas superam as entradas neste mês."
+                        : summary.income
+                          ? "Saldo = entradas - despesas."
+                          : "Nenhuma entrada registrada neste mês."}
+                    </div>
+                    <div className="balance-divider" />
+                    <div className="balance-bottom">
+                      <div>
+                        <span>
+                          <span className="money-icon">
+                            <ArrowDownLeft size={14} />
+                          </span>{" "}
+                          Entradas
+                        </span>
+                        <strong>{displayMoney(summary.income)}</strong>
+                      </div>
+                      <div>
+                        <span>
+                          <span className="money-icon">
+                            <ArrowUpRight size={14} />
+                          </span>{" "}
+                          Saídas
+                        </span>
+                        <strong>{displayMoney(summary.expenses)}</strong>
+                      </div>
+                      <div className="balance-decoration" aria-hidden="true">
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                        <i />
+                      </div>
+                    </div>
+                  </div>
+                  <Distribution transactions={monthly} hidden={hidden} />
+                </section>
+              )}
+              {(view === "overview" || view === "goals") && (
+                <section
+                  className="goals-section"
+                  aria-labelledby="goals-title"
+                >
+                  <div className="section-heading">
+                    <div>
+                      <h2 id="goals-title">Metas do orçamento</h2>
+                    </div>
+                    <button
+                      className="text-button"
+                      disabled={budget.busy}
+                      onClick={() =>
+                        setEditingPercentages(
+                          budget.household?.percentagesRevision ?? 0,
+                        )
+                      }
+                    >
+                      Editar percentuais
+                    </button>
+                  </div>
+                  <div
+                    className={`goals-grid ${view === "goals" ? "expanded-goals" : ""}`}
+                  >
+                    {summary.goals.map((goal) => (
+                      <button
+                        key={goal.id}
+                        className="goal-card"
+                        style={
+                          {
+                            "--goal-color": goal.color,
+                            "--goal-bg": goal.background,
+                          } as React.CSSProperties
+                        }
+                        onClick={() => filterGoal(goal.id)}
+                      >
+                        <div className="goal-card-top">
+                          <span className="goal-icon">
+                            <GoalIcon goal={goal.id} size={21} />
+                          </span>
+                          <span className="goal-number">
+                            {budget.state.percentages[goal.id]}%
+                          </span>
+                        </div>
+                        <h3>{goal.name}</h3>
+                        <strong>{displayMoney(goal.amount)}</strong>
+                        <p className="goal-budget">
+                          de{" "}
+                          {displayMoney(
+                            Math.round(
+                              (sharedIncome *
+                                budget.state.percentages[goal.id]) /
+                                100,
+                            ),
+                          )}{" "}
+                          planejados
+                        </p>
+                        <div className="goal-card-foot">
+                          <span>
+                            {goal.count}{" "}
+                            {goal.count === 1 ? "transação" : "transações"}
+                          </span>
+                          <ArrowUpRight size={16} />
+                        </div>
+                        <div className="goal-bar">
+                          <span
+                            style={{
+                              width: hidden
+                                ? "0%"
+                                : `${sharedIncome * budget.state.percentages[goal.id] > 0 ? Math.min(100, (goal.amount / ((sharedIncome * budget.state.percentages[goal.id]) / 100)) * 100) : goal.amount > 0 ? 100 : 0}%`,
+                            }}
+                          />
+                        </div>
+                        {view === "goals" && (
+                          <p className="goal-description">{goal.description}</p>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                  {view === "goals" && (
+                    <div className="goal-explanation">
+                      <Leaf size={21} />
+                      <p>
+                        Os percentuais dividem a renda entre as seis metas e
+                        valem para todos os meses. Compare o gasto de cada meta
+                        com o valor planejado ou selecione uma para ver suas
+                        transações.
+                      </p>
+                    </div>
+                  )}
+                </section>
+              )}
+              {(view === "overview" || view === "transactions") && (
+                <TransactionList
+                  transactions={monthly}
+                  members={budget.household?.members ?? []}
+                  busy={budget.busy}
+                  hidden={hidden}
+                  query={query}
+                  goalFilter={goalFilter}
+                  tagFilter={tagFilter}
+                  kindFilter={kindFilter}
+                  onQuery={setQuery}
+                  onGoal={setGoalFilter}
+                  onTag={(tag) => {
+                    setTagFilter(tag);
+                    setView("transactions");
+                  }}
+                  onKind={setKindFilter}
+                  onEdit={(transaction) => setDialog({ transaction })}
+                  onDelete={remove}
+                  onAdd={() => setDialog({ transaction: null })}
+                  compact={view === "overview"}
+                  onViewAll={() => navigate("transactions")}
+                />
+              )}
+              {view === "tags" && (
+                <section className="tags-panel">
+                  <div className="section-heading">
+                    <div>
+                      <h2>
+                        Tags{" "}
+                        <span className="count-badge">{allTags.length}</span>
+                      </h2>
+                      <p>Organize e filtre as transações por assunto.</p>
+                    </div>
+                  </div>
+                  {allTags.length ? (
+                    <div className="tags-grid">
+                      {allTags.map((tag) => {
+                        const tagged = monthly.filter((t) =>
+                          t.tags.includes(tag),
+                        );
+                        const total = tagged
+                          .filter((t) => t.kind === "expense")
+                          .reduce((sum, t) => sum + t.amount, 0);
+                        return (
+                          <button
+                            className="tag-card"
+                            key={tag}
+                            onClick={() => {
+                              navigate("transactions");
+                              setTagFilter(tag);
+                            }}
+                          >
+                            <div className="tag-card-heading">
+                              <span className="tag-card-symbol">#</span>
+                              <ArrowUpRight size={18} />
+                            </div>
+                            <h3>{tag}</h3>
+                            <strong>{displayMoney(total)}</strong>
+                            <span>
+                              {tagged.length}{" "}
+                              {tagged.length === 1 ? "transação" : "transações"}{" "}
+                              · despesas no mês
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <div className="empty-state">
+                      <div className="empty-icon">
+                        <Tag size={25} />
+                      </div>
+                      <h3>Nenhuma tag cadastrada</h3>
+                      <p>
+                        Adicione tags às transações para filtrar e organizar seu
+                        orçamento.
+                      </p>
+                      <button
+                        className="primary-button"
+                        onClick={() => setDialog({ transaction: null })}
+                      >
+                        <Plus size={16} /> Criar uma transação
+                      </button>
+                    </div>
+                  )}
+                </section>
+              )}
+            </>
+          )}
+        </main>
+      </div>
+      <nav className="mobile-navigation" aria-label="Navegação mobile">
+        {navigation.map((item) => (
+          <button
+            key={item.id}
+            className={view === item.id ? "active" : ""}
+            aria-current={view === item.id ? "page" : undefined}
+            onClick={() => navigate(item.id)}
+          >
+            <item.icon size={21} strokeWidth={1.7} />
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </nav>
+      {editingPercentages !== null && (
+        <GoalPercentagesDialog
+          percentages={budget.state.percentages}
+          onClose={() => setEditingPercentages(null)}
+          error={budget.error}
+          onSave={async (values) => {
+            if (!(await budget.savePercentages(values, editingPercentages)))
+              return false;
+            setNotice({ message: "Percentuais atualizados." });
+            return true;
+          }}
+        />
+      )}
+      {dialog && (
+        <TransactionDialog
+          transaction={dialog.transaction}
+          defaultDate={
+            month === localDate().slice(0, 7) ? localDate() : `${month}-01`
+          }
+          existingTags={allTags}
+          members={budget.household?.members ?? []}
+          currentUserId={budget.user?.id ?? ""}
+          serverError={budget.error}
+          onSave={save}
+          onClose={() => setDialog(null)}
+        />
+      )}
+      {notice && (
+        <div className="toast" role="status">
+          <Check size={18} />
+          <span>{notice.message}</span>
+          {notice.undo && (
+            <button
+              onClick={async () => {
+                if (notice.undo && (await budget.restore(notice.undo)))
+                  setNotice({ message: "Alteração desfeita." });
+              }}
+            >
+              Desfazer
+            </button>
+          )}
+          <button
+            className="toast-close"
+            aria-label="Fechar aviso"
+            onClick={() => setNotice(null)}
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+      {coupleOpen && (
+        <CoupleDialog budget={budget} onClose={() => setCoupleOpen(false)} />
+      )}
+    </div>
+  );
+}
