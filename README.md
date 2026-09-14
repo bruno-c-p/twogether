@@ -16,7 +16,8 @@ bun run dev
 - `RESEND_API_KEY`: chave do Resend, somente no servidor.
 - `RESEND_FROM`: remetente de um domínio verificado no Resend, como `Twogether <acesso@seu-dominio.com>`.
 - `APP_ORIGIN`: origem da aplicação, sem caminho. Local: `http://localhost:3000`. Para testar em outro dispositivo, use um endereço acessível a ambos e abra o app por esse mesmo endereço. Produção exige HTTPS.
-- `BUDGET_DATABASE_PATH`: caminho do banco, padrão `./data/twogether.sqlite`.
+- `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`: credenciais injetadas pela integração Turso do Vercel. Quando presentes, o servidor usa o banco compartilhado remoto.
+- `BUDGET_DATABASE_PATH`: fallback local quando Turso não está configurado, padrão `./data/twogether.sqlite`.
 
 Reinicie o servidor após alterar o ambiente. Em `bun run dev`, o acesso local usa o e-mail informado para encontrar ou criar a conta diretamente no SQLite e não envia mensagens pelo Resend; esse atalho só existe com `NODE_ENV=development`. Fora do desenvolvimento, sem a configuração do Resend, o aplicativo não envia links de acesso.
 
@@ -40,9 +41,9 @@ O link de acesso expira em 15 minutos, funciona uma vez e autentica somente quem
 
 ## Persistência e publicação
 
-SQLite no servidor (`data/`, ignorado pelo Git), com transações, sessões e tokens armazenados por hash. Cookies HttpOnly/SameSite e Secure sob HTTPS. API valida origem, dados, membros e versões no servidor; respostas não são cacheadas. Env e credenciais não integram o bundle cliente.
+Turso Cloud fornece o SQLite compartilhado de produção por HTTP; o cliente libSQL inicializa o schema e usa transações no servidor. Sem as variáveis Turso, o desenvolvimento local usa SQLite em `data/` (ignorado pelo Git). Sessões e tokens são armazenados por hash. Cookies HttpOnly/SameSite e Secure sob HTTPS. A API valida origem, dados, membros e versões no servidor; respostas não são cacheadas. Env e credenciais não integram o bundle cliente.
 
-Esta entrega roda localmente. Publicação requer servidor Bun com disco persistente, backups do SQLite e as variáveis de produção. Não use disco efêmero nem várias réplicas com bancos separados. O build gera cliente e servidor em `dist/`; o adaptador de hospedagem deve servir os assets e o handler TanStack com Bun. E-mails são transacionais; o app não dispara convites para terceiros automaticamente.
+Para configurar localmente após conectar o recurso no Vercel, rode `vercel env pull .env.local --yes`. A publicação usa Nitro para gerar o handler TanStack Start compatível com Vercel. E-mails são transacionais; o app não dispara convites para terceiros automaticamente.
 
 ## Verificação
 

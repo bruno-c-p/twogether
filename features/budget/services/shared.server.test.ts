@@ -36,7 +36,7 @@ const signup = async (name: string) => {
     undefined,
   );
   await store.command({ action: "profile", name }, result.session);
-  return { ...result, snapshot: store.snapshot(result.session) };
+  return { ...result, snapshot: await store.snapshot(result.session) };
 };
 async function couple() {
   const a = await signup("Ana");
@@ -88,8 +88,8 @@ describe("shared budget", () => {
     );
     expect(again.snapshot.user?.id).toBe(verified.snapshot.user?.id);
     await store.command({ action: "logout" }, again.session);
-    expect(store.snapshot(again.session).user).toBeNull();
-    expect(store.snapshot("forged").user).toBeNull();
+    expect((await store.snapshot(again.session)).user).toBeNull();
+    expect((await store.snapshot("forged")).user).toBeNull();
   });
   test("development login creates and reuses accounts without email", async () => {
     const previousNodeEnvironment = process.env.NODE_ENV;
@@ -198,7 +198,9 @@ describe("shared budget", () => {
       ),
     );
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect(store.snapshot(a.session).household?.members).toHaveLength(2);
+    expect((await store.snapshot(a.session)).household?.members).toHaveLength(
+      2,
+    );
     await expect(
       store.command({ action: "invite" }, a.session),
     ).rejects.toThrow("duas pessoas");
@@ -233,7 +235,7 @@ describe("shared budget", () => {
         store.command({ action: "join", token: invite.inviteToken }, b.session),
       ).rejects.toThrow("expirado");
       Date.now = () => time + 31 * 86400_000;
-      expect(store.snapshot(a.session).user).toBeNull();
+      expect((await store.snapshot(a.session)).user).toBeNull();
       await expect(
         store.command({ action: "invite" }, a.session),
       ).rejects.toThrow("sessão expirou");
@@ -251,14 +253,14 @@ describe("shared budget", () => {
       },
       a.session,
     );
-    const received = store.snapshot(b.session).budget.transactions[0];
+    const received = (await store.snapshot(b.session)).budget.transactions[0];
     expect(received.memberId).toBe(b.snapshot.user!.id);
     expect(received.createdBy).toBe(a.snapshot.user!.id);
     await store.command(
       { action: "save", transaction: { ...received, amount: 15000 } },
       b.session,
     );
-    const edited = store.snapshot(a.session).budget.transactions[0];
+    const edited = (await store.snapshot(a.session)).budget.transactions[0];
     expect(edited.amount).toBe(15000);
     expect(edited.updatedBy).toBe(b.snapshot.user!.id);
     expect(edited.createdBy).toBe(a.snapshot.user!.id);
@@ -269,7 +271,7 @@ describe("shared budget", () => {
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
-    const old = store.snapshot(a.session).budget.transactions[0];
+    const old = (await store.snapshot(a.session)).budget.transactions[0];
     await store.command(
       { action: "save", transaction: { ...old, amount: 20000 } },
       b.session,
@@ -287,10 +289,13 @@ describe("shared budget", () => {
       },
       b.session,
     );
-    expect(store.snapshot(a.session).budget.transactions).toHaveLength(2);
+    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+      2,
+    );
     expect(
-      store.snapshot(a.session).budget.transactions.find((t) => t.id === old.id)
-        ?.amount,
+      (await store.snapshot(a.session)).budget.transactions.find(
+        (t) => t.id === old.id,
+      )?.amount,
     ).toBe(20000);
   });
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
@@ -314,7 +319,9 @@ describe("shared budget", () => {
       { action: "undo-delete", id: "transaction-1", revision: 2 },
       a.session,
     );
-    expect(store.snapshot(b.session).budget.transactions).toHaveLength(2);
+    expect((await store.snapshot(b.session)).budget.transactions).toHaveLength(
+      2,
+    );
     await expect(
       store.command(
         { action: "undo-delete", id: "transaction-1", revision: 2 },
@@ -330,7 +337,9 @@ describe("shared budget", () => {
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
-    expect(store.snapshot(c.session).budget.transactions).toHaveLength(0);
+    expect((await store.snapshot(c.session)).budget.transactions).toHaveLength(
+      0,
+    );
     await expect(
       store.command(
         { action: "save", transaction: transaction(c.snapshot.user!.id) },
@@ -357,8 +366,10 @@ describe("shared budget", () => {
       { action: "percentages", percentages, revision: 0 },
       a.session,
     );
-    expect(store.snapshot(a.session).budget.percentages).toEqual(percentages);
-    expect(store.snapshot(b.session).budget.percentages).toEqual(
+    expect((await store.snapshot(a.session)).budget.percentages).toEqual(
+      percentages,
+    );
+    expect((await store.snapshot(b.session)).budget.percentages).toEqual(
       DEFAULT_PERCENTAGES,
     );
     await store.command(
@@ -370,12 +381,13 @@ describe("shared budget", () => {
       },
       b.session,
     );
-    expect(store.snapshot(a.session).budget.percentages).toEqual(percentages);
+    expect((await store.snapshot(a.session)).budget.percentages).toEqual(
+      percentages,
+    );
     expect(
-      store
-        .snapshot(b.session)
-        .household?.members.find((member) => member.id === a.snapshot.user!.id)
-        ?.percentages,
+      (await store.snapshot(b.session)).household?.members.find(
+        (member) => member.id === a.snapshot.user!.id,
+      )?.percentages,
     ).toEqual(percentages);
     await expect(
       store.command(
@@ -423,7 +435,9 @@ describe("shared budget", () => {
       );
       disk.close();
       disk = createBudgetStore(file);
-      expect(disk.snapshot(a.session).budget.transactions).toHaveLength(1);
+      expect((await disk.snapshot(a.session)).budget.transactions).toHaveLength(
+        1,
+      );
     } finally {
       disk.close();
       rmSync(dir, { recursive: true });
@@ -524,7 +538,7 @@ test("Resend transport sends HTML and text with the configured origin and never 
   }
 });
 
-test("legacy household percentages migrate to both people once without changing transactions", () => {
+test("legacy household percentages migrate to both people once without changing transactions", async () => {
   const dir = mkdtempSync(join(tmpdir(), "twogether-migration-"));
   const file = join(dir, "test.sqlite");
   const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
@@ -545,6 +559,7 @@ test("legacy household percentages migrate to both people once without changing 
   legacy.close();
   try {
     const migrated = createBudgetStore(file);
+    await migrated.snapshot(undefined);
     migrated.close();
     const inspect = new Database(file);
     expect(
@@ -567,6 +582,7 @@ test("legacy household percentages migrate to both people once without changing 
       .run(JSON.stringify(DEFAULT_PERCENTAGES));
     inspect.close();
     const reopened = createBudgetStore(file);
+    await reopened.snapshot(undefined);
     reopened.close();
     const verify = new Database(file);
     expect(

@@ -33,12 +33,15 @@ export async function handleBudgetRequest(
     const db =
       database ??
       (store ??= createBudgetStore(
-        process.env.BUDGET_DATABASE_PATH || resolve("data/twogether.sqlite"),
+        process.env.TURSO_DATABASE_URL ||
+          process.env.BUDGET_DATABASE_PATH ||
+          resolve("data/twogether.sqlite"),
       ));
     if (request.method === "GET")
-      return new Response(JSON.stringify({ snapshot: db.snapshot(session) }), {
-        headers,
-      });
+      return new Response(
+        JSON.stringify({ snapshot: await db.snapshot(session) }),
+        { headers },
+      );
     if (request.method !== "POST")
       throw new RequestError("Método inválido.", 405);
     const reader = request.body?.getReader();

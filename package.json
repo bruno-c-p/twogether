@@ -11,9 +11,11 @@
     "test": "vitest run && bun test features/budget/services/shared.server.test.ts"
   },
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "@tanstack/react-router": "latest",
     "@tanstack/react-start": "1.168.53",
     "lucide-react": "^0.577.0",
+    "nitro": "^3.0.260903-beta",
     "react": "^19.2.0",
     "react-dom": "^19.2.0"
   },
