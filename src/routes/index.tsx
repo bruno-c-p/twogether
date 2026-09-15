@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
+import { loadBudget } from "@/features/budget/actions/load-budget";
 import { RouteError } from "../route-error";
 
 function BudgetPending() {
@@ -11,9 +12,15 @@ function BudgetPending() {
 }
 
 export const Route = createFileRoute("/")({
-  component: BudgetApp,
+  component: BudgetRoute,
+  loader: () => loadBudget(),
   pendingComponent: BudgetPending,
   errorComponent: RouteError,
   pendingMs: 300,
   pendingMinMs: 500,
 });
+
+function BudgetRoute() {
+  const initialSnapshot = Route.useLoaderData();
+  return <BudgetApp initialSnapshot={initialSnapshot} />;
+}
