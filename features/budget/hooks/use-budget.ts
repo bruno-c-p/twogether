@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { DEFAULT_PERCENTAGES } from "../constants";
 import type {
   BankAccount,
@@ -10,7 +10,7 @@ import type {
   CommandResult,
 } from "../types";
 
-const initial: SharedSnapshot = {
+const emptySnapshot = (): SharedSnapshot => ({
   user: null,
   household: null,
   budget: {
@@ -18,13 +18,14 @@ const initial: SharedSnapshot = {
     accounts: [],
     percentages: { ...DEFAULT_PERCENTAGES },
   },
-};
-export function useBudget() {
+});
+
+export function useBudget(initialSnapshot: SharedSnapshot) {
+  const router = useRouter();
   const search = useSearch({ from: "/" });
   const navigate = useNavigate();
   const accessToken = search.access ?? "";
-  const [snapshot, setSnapshot] = useState(initial);
-  const [ready, setReady] = useState(false);
+  const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [error, setError] = useState("");
   const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,12 +49,9 @@ export function useBudget() {
             ? error.message
             : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
         );
-    } finally {
-      setReady(true);
     }
   }, []);
   useEffect(() => {
-    void refresh();
     const synchronize = () => {
       if (document.visibilityState === "visible") void refresh();
     };
@@ -88,11 +86,12 @@ export function useBudget() {
         });
         const result = await response.json();
         if (!response.ok) {
-          if (response.status === 401) setSnapshot(initial);
+          if (response.status === 401) setSnapshot(emptySnapshot());
           throw new Error(result.error || "Não foi possível salvar.");
         }
         const success: CommandResult = result;
         setSnapshot(success.snapshot);
+        void router.invalidate();
         return success;
       } catch (error) {
         setError(
@@ -106,7 +105,7 @@ export function useBudget() {
         setBusy(false);
       }
     },
-    [],
+    [router],
   );
 
   return {
@@ -122,7 +121,6 @@ export function useBudget() {
     state: snapshot.budget,
     user: snapshot.user,
     household: snapshot.household,
-    ready,
     error: error || syncError,
     busy,
     refresh,
