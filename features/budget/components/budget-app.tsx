@@ -30,6 +30,8 @@ import { GoalPercentagesDialog } from "./goal-percentages-dialog";
 import { AppFooter } from "./app-footer";
 import { AccountGate } from "./account-gate";
 import { CoupleDialog } from "./couple-dialog";
+import { FinancialHistory } from "./financial-history";
+import { ExpenseCharts } from "./expense-charts";
 import { Distribution } from "./distribution";
 import { GoalIcon } from "./goal-icon";
 import { TransactionDialog } from "./transaction-dialog";
@@ -387,6 +389,20 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   </div>
                   <Distribution transactions={monthly} hidden={hidden} />
                 </section>
+              )}
+              {view === "overview" && month && (
+                <ExpenseCharts
+                  transactions={monthly}
+                  month={month}
+                  hidden={hidden}
+                />
+              )}
+              {view === "overview" && month && (
+                <FinancialHistory
+                  transactions={budget.state.transactions.filter((t) => memberFilter === "all" || t.memberId === memberFilter)}
+                  month={month}
+                  hidden={hidden}
+                />
               )}
               {(view === "overview" || view === "goals") && (
                 <section
