@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowDownLeft, ArrowUpRight, Check, Plus, X } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  Check,
+  Plus,
+  Repeat2,
+  X,
+} from "lucide-react";
 import { GOALS } from "../constants";
 import {
   formatAmountInput,
@@ -217,36 +224,54 @@ export function TransactionDialog({
               </label>
             </div>
             {!transaction && (
-              <div className="goal-field">
-                <label>
+              <section
+                className={`recurrence-panel ${recurring ? "is-active" : ""}`}
+                aria-label="Recorrência"
+              >
+                <div className="recurrence-heading">
+                  <span className="recurrence-icon">
+                    <Repeat2 size={18} />
+                  </span>
+                  <div className="recurrence-copy">
+                    <label htmlFor="recurring">Repetir mensalmente</label>
+                    <p>Para contas e entradas que se repetem.</p>
+                  </div>
                   <input
+                    id="recurring"
+                    className="recurrence-switch"
                     type="checkbox"
+                    role="switch"
                     checked={recurring}
                     onChange={(event) => setRecurring(event.target.checked)}
                   />
-                  Repetir mensalmente
-                </label>
+                </div>
                 {recurring && (
-                  <label>
-                    Quantidade de meses (incluindo este)
-                    <input
-                      type="number"
-                      min={2}
-                      max={120}
-                      required
-                      value={occurrences}
-                      onChange={(event) =>
-                        setOccurrences(event.target.valueAsNumber)
-                      }
-                    />
-                    <span className="account-footnote">
-                      Cada ocorrência pode ser editada ou excluída
-                      individualmente. Em meses mais curtos, usamos o último dia
-                      do mês.
-                    </span>
-                  </label>
+                  <div className="recurrence-details">
+                    <div className="recurrence-count">
+                      <label htmlFor="occurrences">Por quantos meses?</label>
+                      <div className="recurrence-number">
+                        <input
+                          id="occurrences"
+                          type="number"
+                          min={2}
+                          max={120}
+                          required
+                          value={Number.isNaN(occurrences) ? "" : occurrences}
+                          onChange={(event) =>
+                            setOccurrences(event.target.valueAsNumber)
+                          }
+                          aria-describedby="recurrence-hint"
+                        />
+                        <span>meses</span>
+                      </div>
+                    </div>
+                    <p id="recurrence-hint">
+                      Inclui o mês da primeira transação. Em meses mais curtos,
+                      usamos o último dia.
+                    </p>
+                  </div>
                 )}
-              </div>
+              </section>
             )}
             {kind === "expense" && (
               <fieldset className="goal-field">
