@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "../hooks/use-budget";
 import { AppFooter } from "./app-footer";
@@ -70,6 +71,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   }
   return (
     <main className="account-page">
+      <ThemeToggle />
       <a href="/" className="brand">
         twogether.
       </a>

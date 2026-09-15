@@ -5,6 +5,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import stylesheet from "../styles.css?url";
+import { themeScript } from "@/features/theme";
 
 export const Route = createRootRoute({
   head: () => ({
@@ -34,8 +35,9 @@ export const Route = createRootRoute({
     ],
   }),
   component: () => (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
       </head>
       <body>

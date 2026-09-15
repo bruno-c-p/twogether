@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -193,6 +194,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             twogether.
           </a>
           <div className="topbar-right">
+            <ThemeToggle />
             <button
               className="icon-button visibility-button"
               onClick={() => setHidden(!hidden)}

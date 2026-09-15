@@ -33,7 +33,7 @@ export function Distribution({
               cy="80"
               r="63"
               fill="none"
-              stroke="#eff0e9"
+              stroke="var(--border)"
               strokeWidth="19"
             />
             {!hidden &&
