@@ -26,7 +26,7 @@ import {
   summarize,
   planGoals,
 } from "../services/budget";
-import type { BankAccount, GoalId, Transaction, View } from "../types";
+import type { BankAccount, GoalId, SharedSnapshot, Transaction, View } from "../types";
 import { GoalPercentagesDialog } from "./goal-percentages-dialog";
 import { AppFooter } from "./app-footer";
 import { AccountGate } from "./account-gate";
@@ -47,14 +47,13 @@ const navigation = [
   { id: "goals", label: "Metas", icon: Target },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
-export function BudgetApp() {
-  const budget = useBudget();
-  if (
-    !budget.ready ||
-    budget.accessToken ||
-    !budget.user?.name ||
-    !budget.household
-  )
+export function BudgetApp({
+  initialSnapshot,
+}: {
+  initialSnapshot: SharedSnapshot;
+}) {
+  const budget = useBudget(initialSnapshot);
+  if (budget.accessToken || !budget.user?.name || !budget.household)
     return <AccountGate budget={budget} />;
   return (
     <BudgetWorkspace
@@ -374,11 +373,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {budget.error}
             </div>
           )}
-          {!budget.ready ? (
-            <div className="loading-state" aria-live="polite">
-              Carregando orçamento…
-            </div>
-          ) : view === "accounts" ? (
+          {view === "accounts" ? (
             <AccountList
               accounts={budget.state.accounts}
               transactions={budget.state.transactions}
