@@ -1220,7 +1220,12 @@ h1 {
 }
 .account-item .row-actions {
   opacity: 1;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+.account-balance {
   margin-left: auto;
+  flex-shrink: 0;
 }
 .goal-field {
   padding: 0;

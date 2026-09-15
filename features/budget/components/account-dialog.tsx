@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
+import { formatAmountInput, parseBalance } from "../services/budget";
 import type { BankAccount } from "../types";
 
 interface Props {
@@ -16,8 +17,12 @@ export function AccountDialog({
   onClose,
 }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const amountInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [openingValue, setOpeningValue] = useState(
+    account ? formatAmountInput(String(account.openingBalance)) : "",
+  );
 
   useEffect(() => {
     const element = dialog.current;
@@ -31,14 +36,25 @@ export function AccountDialog({
     };
   }, []);
 
+  useEffect(() => {
+    const input = amountInput.current;
+    if (!input) return;
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, [openingValue]);
+
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
     const name = String(
       new FormData(event.currentTarget).get("name") ?? "",
     ).trim();
+    const openingBalance = parseBalance(openingValue);
     if (!name) {
       setError("Dê um nome para esta conta.");
+      return;
+    }
+    if (openingBalance === null) {
+      setError("Digite um saldo inicial válido, como 0,00 ou 1.250,00.");
       return;
     }
     setSaving(true);
@@ -47,6 +63,7 @@ export function AccountDialog({
       await onSave({
         id: account?.id ?? crypto.randomUUID(),
         name,
+        openingBalance,
         revision: account?.revision,
       })
     )
@@ -88,6 +105,31 @@ export function AccountDialog({
                 required
               />
             </label>
+            <label className="amount-label" htmlFor="opening-balance">
+              Saldo inicial
+            </label>
+            <div className="amount-input">
+              <span>R$</span>
+              <input
+                id="opening-balance"
+                ref={amountInput}
+                name="openingBalance"
+                type="text"
+                inputMode="numeric"
+                placeholder="0,00"
+                maxLength={14}
+                required
+                value={openingValue}
+                onChange={(event) =>
+                  setOpeningValue(formatAmountInput(event.currentTarget.value))
+                }
+                aria-describedby={error ? "form-error" : undefined}
+              />
+            </div>
+            <p className="account-footnote">
+              O saldo da conta soma este valor com as receitas e subtrai as
+              despesas.
+            </p>
             {error && (
               <p id="form-error" role="alert" className="form-error">
                 {error}

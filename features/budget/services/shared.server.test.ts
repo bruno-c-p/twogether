@@ -47,7 +47,7 @@ async function couple() {
   return { a, b };
 }
 function account(id = "account-1"): BankAccount {
-  return { id, name: "Nubank" };
+  return { id, name: "Nubank", openingBalance: 0 };
 }
 function transaction(memberId: string, accountId = "account-1"): Transaction {
   return {
@@ -752,7 +752,7 @@ describe("bank accounts", () => {
       a.session,
     );
     expect(created.snapshot.budget.accounts).toEqual([
-      { id: "account-1", name: "Nubank", revision: 1 },
+      { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
     ]);
     expect((await store.snapshot(b.session)).budget.accounts).toHaveLength(1);
     const current = created.snapshot.budget.accounts[0];
@@ -763,6 +763,26 @@ describe("bank accounts", () => {
     expect((await store.snapshot(a.session)).budget.accounts[0]?.name).toBe(
       "Itaú",
     );
+  });
+  test("stores an opening balance on the account", async () => {
+    const { a } = await couple();
+    const created = await store.command(
+      {
+        action: "save-account",
+        account: { ...account(), openingBalance: 250000 },
+      },
+      a.session,
+    );
+    expect(created.snapshot.budget.accounts[0]?.openingBalance).toBe(250000);
+    await expect(
+      store.command(
+        {
+          action: "save-account",
+          account: { ...account("bad"), openingBalance: -1 },
+        },
+        a.session,
+      ),
+    ).rejects.toThrow("conta");
   });
   test("requires an existing account on every transaction save", async () => {
     const { a } = await couple();

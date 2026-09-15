@@ -350,7 +350,11 @@ export function createBudgetStore(
       value.name.length > 50
     )
       throw new RequestError("Confira os dados da conta.");
-    return { id: value.id, name: value.name.trim() };
+    return {
+      id: value.id,
+      name: value.name.trim(),
+      openingBalance: value.openingBalance,
+    };
   }
   const conflict = () =>
     new RequestError(

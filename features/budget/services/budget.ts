@@ -36,15 +36,43 @@ export function monthLabel(month: string) {
     .replace(" de ", " ");
 }
 
-export function parseAmount(value: string): number | null {
+function parseCents(value: string, min: number): number | null {
   const normalized = value.trim().replace(/^R\$\s*/, "");
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(normalized))
     return null;
   const [whole, decimals = ""] = normalized.replaceAll(".", "").split(",");
   const cents = Number(whole) * 100 + Number(decimals.padEnd(2, "0"));
-  return Number.isSafeInteger(cents) && cents > 0 && cents <= 99999999999
+  return Number.isSafeInteger(cents) && cents >= min && cents <= 99999999999
     ? cents
     : null;
+}
+
+export function parseAmount(value: string): number | null {
+  return parseCents(value, 1);
+}
+
+export function parseBalance(value: string): number | null {
+  if (!value.trim()) return 0;
+  return parseCents(value, 0);
+}
+
+export function accountBalance(
+  account: BankAccount,
+  transactions: Transaction[],
+): number {
+  return transactions.reduce((balance, transaction) => {
+    if (transaction.accountId !== account.id) return balance;
+    switch (transaction.kind) {
+      case "income":
+        return balance + transaction.amount;
+      case "expense":
+        return balance - transaction.amount;
+      default: {
+        const _exhaustive: never = transaction.kind;
+        return _exhaustive;
+      }
+    }
+  }, account.openingBalance ?? 0);
 }
 
 export function normalizeTag(value: string) {
@@ -89,7 +117,11 @@ export function isBankAccount(value: unknown): value is BankAccount {
     typeof account.id === "string" &&
     account.id.length > 0 &&
     typeof account.name === "string" &&
-    account.name.trim().length > 0
+    account.name.trim().length > 0 &&
+    typeof account.openingBalance === "number" &&
+    Number.isSafeInteger(account.openingBalance) &&
+    account.openingBalance >= 0 &&
+    account.openingBalance <= 99999999999
   );
 }
 

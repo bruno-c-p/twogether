@@ -175,7 +175,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     },
     accounts: {
       title: "Contas",
-      subtitle: "Cadastre as contas usadas nas transações.",
+      subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
     },
     goals: {
       title: "Metas",
@@ -381,6 +381,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               accounts={budget.state.accounts}
               transactions={budget.state.transactions}
               busy={budget.busy}
+              hidden={hidden}
               onAdd={() => setAccountDialog({ account: null })}
               onEdit={(account) => setAccountDialog({ account })}
               onDelete={removeAccount}

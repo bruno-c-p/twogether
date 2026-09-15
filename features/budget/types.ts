@@ -6,6 +6,7 @@ export type View = "overview" | "transactions" | "goals" | "accounts";
 export interface BankAccount {
   id: string;
   name: string;
+  openingBalance: number;
   revision?: number;
 }
 

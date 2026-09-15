@@ -1,10 +1,12 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { accountBalance, money } from "../services/budget";
 import type { BankAccount, Transaction } from "../types";
 
 interface Props {
   accounts: BankAccount[];
   transactions: Transaction[];
   busy: boolean;
+  hidden: boolean;
   onAdd: () => void;
   onEdit: (account: BankAccount) => void;
   onDelete: (account: BankAccount) => void;
@@ -14,6 +16,7 @@ export function AccountList({
   accounts,
   transactions,
   busy,
+  hidden,
   onAdd,
   onEdit,
   onDelete,
@@ -29,7 +32,7 @@ export function AccountList({
             Contas cadastradas
             <span className="count-badge">{accounts.length}</span>
           </h2>
-          <p>Cada transação precisa de uma destas contas.</p>
+          <p>Saldo inicial mais receitas, menos despesas de cada conta.</p>
         </div>
       </div>
       {sorted.length ? (
@@ -38,6 +41,7 @@ export function AccountList({
             const used = transactions.some(
               (transaction) => transaction.accountId === account.id,
             );
+            const balance = accountBalance(account, transactions);
             return (
               <div className="account-item" key={account.id}>
                 <span className="transaction-icon income-icon">
@@ -57,6 +61,11 @@ export function AccountList({
                       : "Nenhuma transação nesta conta"}
                   </div>
                 </div>
+                <span
+                  className={`transaction-value account-balance${balance < 0 ? " negative" : " positive"}`}
+                >
+                  {hidden ? "R$ ••••" : money(balance)}
+                </span>
                 <div className="row-actions">
                   <button
                     className="icon-button"
