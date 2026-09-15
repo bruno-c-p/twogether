@@ -17,7 +17,7 @@ interface Props {
   members: Member[];
   currentUserId: string;
   serverError: string;
-  onSave: (transaction: Transaction) => Promise<boolean>;
+  onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -42,6 +42,8 @@ export function TransactionDialog({
   const [amountValue, setAmountValue] = useState(
     transaction ? formatAmountInput(String(transaction.amount)) : "",
   );
+  const [recurring, setRecurring] = useState(false);
+  const [occurrences, setOccurrences] = useState(12);
   const [saving, setSaving] = useState(false);
   const memberId = transaction?.memberId ?? currentUserId;
   const [error, setError] = useState("");
@@ -106,17 +108,20 @@ export function TransactionDialog({
     setSaving(true);
     setError("");
     if (
-      await onSave({
-        id: transaction?.id ?? crypto.randomUUID(),
-        amount,
-        description,
-        date,
-        kind,
-        goal: kind === "income" ? null : goal,
-        tags: completeTags,
-        memberId,
-        revision: transaction?.revision,
-      })
+      await onSave(
+        {
+          id: transaction?.id ?? crypto.randomUUID(),
+          amount,
+          description,
+          date,
+          kind,
+          goal: kind === "income" ? null : goal,
+          tags: completeTags,
+          memberId,
+          revision: transaction?.revision,
+        },
+        recurring && !transaction ? occurrences : 1,
+      )
     )
       onClose();
     setSaving(false);
@@ -211,6 +216,38 @@ export function TransactionDialog({
                 />
               </label>
             </div>
+            {!transaction && (
+              <div className="goal-field">
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={recurring}
+                    onChange={(event) => setRecurring(event.target.checked)}
+                  />
+                  Repetir mensalmente
+                </label>
+                {recurring && (
+                  <label>
+                    Quantidade de meses (incluindo este)
+                    <input
+                      type="number"
+                      min={2}
+                      max={120}
+                      required
+                      value={occurrences}
+                      onChange={(event) =>
+                        setOccurrences(event.target.valueAsNumber)
+                      }
+                    />
+                    <span className="account-footnote">
+                      Cada ocorrência pode ser editada ou excluída
+                      individualmente. Em meses mais curtos, usamos o último dia
+                      do mês.
+                    </span>
+                  </label>
+                )}
+              </div>
+            )}
             {kind === "expense" && (
               <fieldset className="goal-field">
                 <legend>Para qual meta?</legend>

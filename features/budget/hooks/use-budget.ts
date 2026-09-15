@@ -132,11 +132,18 @@ export function useBudget() {
     busy,
     refresh,
     command,
-    saveTransaction: async (transaction: Transaction) =>
-      !!(await command({ action: "save", transaction })),
-    removeTransaction: async (transaction: Transaction) =>
+    saveTransaction: async (transaction: Transaction, occurrences = 1) =>
+      !!(await command({ action: "save", transaction, occurrences })),
+    removeTransaction: async (
+      transaction: Transaction,
+      following?: Transaction[],
+    ) =>
       !!(await command({
         action: "delete",
+        following: following?.map((item) => ({
+          id: item.id,
+          revision: item.revision ?? 0,
+        })),
         id: transaction.id,
         revision: transaction.revision ?? 0,
       })),

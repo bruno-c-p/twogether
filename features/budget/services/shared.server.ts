@@ -557,6 +557,14 @@ export function createBudgetStore(
             [home.id],
           );
         } else if (data.action === "save") {
+          const occurrences = data.occurrences ?? 1;
+          if (
+            typeof occurrences !== "number" ||
+            !Number.isInteger(occurrences) ||
+            occurrences < 1 ||
+            occurrences > 120
+          )
+            throw new RequestError("Escolha entre 1 e 120 ocorrências.");
           const rawTransaction = data.transaction;
           const t = canonical(rawTransaction, user);
           const old = await one<TransactionRow>(
@@ -569,6 +577,8 @@ export function createBudgetStore(
             : undefined;
           if (old ? old.deleted || old.revision !== given : given !== undefined)
             throw conflict();
+          if (old && occurrences !== 1)
+            throw new RequestError("Edite cada ocorrência individualmente.");
           const previous = old
             ? (JSON.parse(old.payload) as Transaction)
             : undefined;
@@ -579,11 +589,41 @@ export function createBudgetStore(
               : typeof previous?.createdBy === "string"
                 ? previous.createdBy
                 : user.id;
+          t.recurrenceId =
+            previous?.recurrenceId ??
+            (occurrences > 1 ? randomUUID() : undefined);
+          t.recurrenceIndex =
+            previous?.recurrenceIndex ?? (occurrences > 1 ? 0 : undefined);
           await execute(
             transaction,
             "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
             [t.id, home.id, JSON.stringify({ ...t, memberId, createdBy })],
           );
+          const [year, month, day] = t.date.split("-").map(Number);
+          for (let index = 1; index < occurrences; index++) {
+            const target = new Date(Date.UTC(year, month - 1 + index, 1));
+            if (target.getUTCFullYear() > 9999)
+              throw new RequestError(
+                "A recorrência ultrapassa a data máxima permitida.",
+              );
+            const lastDay = new Date(
+              Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+            ).getUTCDate();
+            target.setUTCDate(Math.min(day, lastDay));
+            const occurrence = {
+              ...t,
+              id: randomUUID(),
+              recurrenceIndex: index,
+              date: target.toISOString().slice(0, 10),
+              memberId,
+              createdBy,
+            };
+            await execute(
+              transaction,
+              "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
+              [occurrence.id, home.id, JSON.stringify(occurrence)],
+            );
+          }
         } else if (data.action === "delete" || data.action === "undo-delete") {
           const undo = data.action === "undo-delete";
           const id = text(data.id, 100);
@@ -593,6 +633,60 @@ export function createBudgetStore(
             [home.id, id],
           );
           if (!previous) throw conflict();
+          if (!undo && data.following !== undefined) {
+            const source: Transaction = JSON.parse(previous.payload);
+            if (
+              !source.recurrenceId ||
+              source.recurrenceIndex === undefined ||
+              !Array.isArray(data.following)
+            )
+              throw new RequestError("Recorrência inválida.");
+            const candidates = await execute(
+              transaction,
+              "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
+              [home.id],
+            );
+            const following = candidates.rows.filter((row) => {
+              const item: Transaction = JSON.parse(String(row.payload));
+              return (
+                item.recurrenceId === source.recurrenceId &&
+                item.recurrenceIndex !== undefined &&
+                item.recurrenceIndex > source.recurrenceIndex!
+              );
+            });
+            const expected = data.following;
+            if (
+              expected.length !== following.length ||
+              following.some(
+                (row) =>
+                  !expected.some(
+                    (item) =>
+                      item &&
+                      typeof item === "object" &&
+                      "id" in item &&
+                      "revision" in item &&
+                      item.id === row.id &&
+                      item.revision === row.revision,
+                  ),
+              )
+            )
+              throw conflict();
+            for (const row of following) {
+              await execute(
+                transaction,
+                "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
+                [
+                  JSON.stringify({
+                    ...JSON.parse(String(row.payload)),
+                    updatedBy: user.id,
+                    updatedAt: new Date().toISOString(),
+                  }),
+                  home.id,
+                  row.id,
+                ],
+              );
+            }
+          }
           const payload = JSON.stringify({
             ...JSON.parse(previous.payload),
             updatedBy: user.id,
