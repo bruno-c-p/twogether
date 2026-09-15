@@ -10,10 +10,10 @@ import {
   Eye,
   EyeOff,
   LayoutGrid,
-  Leaf,
   Plus,
   ReceiptText,
   Target,
+  TriangleAlert,
   UsersRound,
   X,
 } from "lucide-react";
@@ -336,16 +336,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <>
               {view === "overview" && (
                 <section className="overview-grid" aria-label="Resumo mensal">
-                  <div className="balance-card">
+                  <div
+                    className={`balance-card${summary.balance < 0 ? " negative" : ""}`}
+                  >
                     <div className="balance-top">
-                      <span>
-                        {memberFilter === "all"
-                          ? "Nosso saldo do mês"
-                          : "Saldo desta pessoa"}
-                      </span>
-                      <span className="balance-symbol">
-                        <Leaf size={19} strokeWidth={1.4} />
-                      </span>
+                      {memberFilter === "all"
+                        ? "Nosso saldo do mês"
+                        : "Saldo desta pessoa"}
                     </div>
                     <div className="balance-amount">
                       {displayMoney(summary.balance)}
@@ -435,10 +432,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                       const plan = plans.find(
                         (item) => item.id === goal.id,
                       ) ?? { planned: 0, percentage: null };
+                      const overBudget = goal.amount > plan.planned;
+                      const overage = goal.amount - plan.planned;
                       return (
                         <button
                           key={goal.id}
-                          className="goal-card"
+                          className={`goal-card${overBudget ? " over-budget" : ""}`}
+                          aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
                           style={
                             {
                               "--goal-color": goal.color,
@@ -467,7 +467,25 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                               {goal.count}{" "}
                               {goal.count === 1 ? "transação" : "transações"}
                             </span>
-                            <ArrowUpRight size={16} />
+                            {overBudget ? (
+                              <span
+                                className="goal-status"
+                                title={
+                                  hidden
+                                    ? "Acima do planejado"
+                                    : `${displayMoney(overage)} acima do planejado`
+                                }
+                              >
+                                <TriangleAlert size={14} />
+                                <span>
+                                  {hidden
+                                    ? "Acima do planejado"
+                                    : `${displayMoney(overage)} acima`}
+                                </span>
+                              </span>
+                            ) : (
+                              <ArrowUpRight size={16} />
+                            )}
                           </div>
                           <div className="goal-bar">
                             <span

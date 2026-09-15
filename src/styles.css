@@ -11,6 +11,9 @@
   --border: #e8ebe4;
   --surface: #fff;
   --page: #f8f9f6;
+  --danger: #a4474e;
+  --danger-soft: #f8e9e8;
+  --danger-on-brand: #f3a3a6;
 }
 * {
   box-sizing: border-box;
@@ -361,21 +364,27 @@ h1 {
   overflow: hidden;
   min-height: 236px;
 }
+.balance-card.negative {
+  border: 1px solid var(--danger-on-brand);
+}
+.balance-card.negative .balance-amount {
+  color: var(--danger-on-brand);
+}
+.balance-card.negative .balance-caption {
+  color: var(--danger-on-brand);
+}
+.balance-card.negative .balance-dot {
+  background: var(--danger-on-brand);
+}
+.balance-card.negative .balance-bottom > div:nth-child(2) strong {
+  color: var(--danger-on-brand);
+}
 .balance-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
   color: #dce6da;
   font-size: 12px;
-}
-.balance-symbol {
-  border: 1px solid #ffffff25;
-  border-radius: 50%;
-  width: 31px;
-  height: 31px;
-  display: grid;
-  place-items: center;
-  color: #c8d8ae;
 }
 .balance-amount {
   font-family: "Manrope", sans-serif;
@@ -593,6 +602,11 @@ h1 {
   transform: translateY(-3px);
   box-shadow: 0 6px 15px #213d3110;
 }
+.goal-card.over-budget,
+.goal-card.over-budget:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger-soft);
+}
 .goal-card-top {
   display: flex;
   align-items: center;
@@ -639,11 +653,31 @@ h1 {
 .goal-card-foot svg {
   color: var(--text-muted, #929f85);
 }
+.goal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.goal-status span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .goal-bar {
   height: 3px;
   background: var(--goal-bg);
   border-radius: 3px;
   overflow: hidden;
+}
+.goal-card.over-budget .goal-bar {
+  background: var(--danger-soft);
+}
+.goal-card.over-budget .goal-bar > span {
+  background: var(--danger);
 }
 .goal-bar > span {
   height: 100%;
@@ -862,6 +896,9 @@ h1 {
 }
 .transaction-value.positive {
   color: var(--text, #568559);
+}
+.transaction-value.negative {
+  color: var(--danger);
 }
 .row-actions {
   display: flex;
@@ -2565,6 +2602,9 @@ h1 {
   background: #1e4438;
   border: 1px solid #3b6350;
 }
+:root[data-theme="dark"] .balance-card.negative {
+  border-color: var(--danger-on-brand);
+}
 :root[data-theme="dark"] .primary-button {
   color: #19271c;
 }
@@ -2743,7 +2783,7 @@ select {
   gap: 12px;
   background: color-mix(
     in srgb,
-    var(--category-fixed) var(--day-strength),
+    var(--danger) var(--day-strength),
     var(--page)
   );
   font-size: 11px;
@@ -2765,13 +2805,13 @@ select {
   width: 13px;
   height: 13px;
   border-radius: 3px;
-  background: color-mix(in srgb, var(--category-fixed) 20%, var(--page));
+  background: color-mix(in srgb, var(--danger) 20%, var(--page));
 }
 .expense-heat-legend i:nth-of-type(2) {
-  background: color-mix(in srgb, var(--category-fixed) 40%, var(--page));
+  background: color-mix(in srgb, var(--danger) 40%, var(--page));
 }
 .expense-heat-legend i:nth-of-type(3) {
-  background: color-mix(in srgb, var(--category-fixed) 70%, var(--page));
+  background: color-mix(in srgb, var(--danger) 70%, var(--page));
 }
 .expense-tag-donut {
   width: min(240px, 100%);
@@ -2864,8 +2904,11 @@ select {
   }
 }
 
+.expense-day[data-intense="true"] {
+  color: var(--surface);
+}
 :root[data-theme="dark"] .expense-day[data-intense="true"] {
-  color: #132019;
+  color: #2d1d20;
 }
 @media (max-width: 360px) {
   .balance-bottom strong {

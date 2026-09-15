@@ -220,7 +220,7 @@ export function TransactionList(props: Props) {
                     .replace(".", "")}
                 </time>
                 <span
-                  className={`transaction-value ${t.kind === "income" ? "positive" : ""}`}
+                  className={`transaction-value ${t.kind === "income" ? "positive" : "negative"}`}
                 >
                   {hidden
                     ? "R$ ••••"
