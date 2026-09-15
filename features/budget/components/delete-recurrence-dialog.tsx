@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Trash2, X } from "lucide-react";
 import type { Transaction } from "../types";
 
 interface Props {
@@ -19,19 +20,23 @@ export function DeleteRecurrenceDialog({
   onDelete,
 }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const [following, setFollowing] = useState(false);
   useEffect(() => {
     const element = dialog.current;
     const previous = document.activeElement;
     element?.showModal();
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
       element?.close();
+      document.body.style.overflow = overflow;
       if (previous instanceof HTMLElement) previous.focus();
     };
   }, []);
   return (
     <dialog
       ref={dialog}
-      className="transaction-dialog"
+      className="transaction-dialog delete-dialog"
       aria-labelledby="delete-title"
       onCancel={(event) => {
         event.preventDefault();
@@ -39,38 +44,79 @@ export function DeleteRecurrenceDialog({
       }}
     >
       <div className="dialog-content">
-        <h2 id="delete-title">Excluir transação recorrente</h2>
-        <p>{transaction.description}</p>
-        <p>
-          As ocorrências anteriores serão mantidas. A exclusão em conjunto não
-          pode ser desfeita.
-        </p>
-        {error && (
-          <p role="alert" className="form-error">
-            {error}
-          </p>
-        )}
+        <header className="dialog-header">
+          <h2 id="delete-title">Excluir transação</h2>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="Fechar"
+            disabled={busy}
+            onClick={onClose}
+          >
+            <X size={22} />
+          </button>
+        </header>
+        <p className="delete-description">{transaction.description}</p>
         <fieldset className="transaction-fields" disabled={busy}>
-          <footer className="dialog-footer" style={{ flexWrap: "wrap" }}>
+          <fieldset className="delete-options">
+            <legend>O que você deseja excluir?</legend>
+            <label
+              className={`delete-option ${!following ? "is-selected" : ""}`}
+            >
+              <input
+                type="radio"
+                name="delete-scope"
+                checked={!following}
+                onChange={() => setFollowing(false)}
+              />
+              <span>
+                <strong>Só esta transação</strong>
+                <small>As outras ocorrências serão mantidas.</small>
+              </span>
+            </label>
+            {count > 1 && (
+              <label
+                className={`delete-option ${following ? "is-selected" : ""}`}
+              >
+                <input
+                  type="radio"
+                  name="delete-scope"
+                  checked={following}
+                  onChange={() => setFollowing(true)}
+                />
+                <span>
+                  <strong>Esta e as seguintes</strong>
+                  <small>{count} transações desta recorrência.</small>
+                </span>
+              </label>
+            )}
+          </fieldset>
+          {following && (
+            <p className="delete-warning">
+              As anteriores serão mantidas. Esta exclusão não pode ser desfeita.
+            </p>
+          )}
+          {error && (
+            <p role="alert" className="form-error">
+              {error}
+            </p>
+          )}
+          <footer className="dialog-footer">
             <button type="button" className="text-button" onClick={onClose}>
               Cancelar
             </button>
             <button
               type="button"
-              className="text-button"
-              onClick={() => void onDelete(false)}
+              className="primary-button delete-confirm"
+              onClick={() => void onDelete(following)}
             >
-              Só esta
+              <Trash2 size={16} />
+              {busy
+                ? "Excluindo…"
+                : following
+                  ? `Excluir ${count} transações`
+                  : "Excluir transação"}
             </button>
-            {count > 1 && (
-              <button
-                type="button"
-                className="primary-button"
-                onClick={() => void onDelete(true)}
-              >
-                {busy ? "Excluindo…" : `Esta e as seguintes (${count})`}
-              </button>
-            )}
           </footer>
         </fieldset>
       </div>
