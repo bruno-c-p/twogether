@@ -99,7 +99,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
           {budget.accessToken
             ? "Confirme para abrir seu orçamento com segurança."
             : budget.user
-              ? "Tudo compartilhado: transações, tags e as seis metas de vocês."
+              ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
               : sentTo
                 ? `Enviamos seu link para ${sentTo}. Abra o e-mail para continuar.`
                 : isDevelopment

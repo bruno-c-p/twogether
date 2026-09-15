@@ -1,5 +1,10 @@
 import { GOALS } from "../constants";
-import type { Transaction, GoalPercentages, MemberBudget } from "../types";
+import type {
+  BankAccount,
+  Transaction,
+  GoalPercentages,
+  MemberBudget,
+} from "../types";
 
 export const money = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -77,6 +82,17 @@ function isDate(value: unknown): value is string {
   return !Number.isNaN(date.getTime()) && localDate(date) === value;
 }
 
+export function isBankAccount(value: unknown): value is BankAccount {
+  if (!value || typeof value !== "object") return false;
+  const account = value as Record<string, unknown>;
+  return (
+    typeof account.id === "string" &&
+    account.id.length > 0 &&
+    typeof account.name === "string" &&
+    account.name.trim().length > 0
+  );
+}
+
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== "object") return false;
   const t = value as Record<string, unknown>;
@@ -94,7 +110,9 @@ export function isTransaction(value: unknown): value is Transaction {
       ? t.goal === null
       : GOALS.some((g) => g.id === t.goal)) &&
     Array.isArray(t.tags) &&
-    t.tags.every((tag) => typeof tag === "string" && tag.length <= 24)
+    t.tags.every((tag) => typeof tag === "string" && tag.length <= 24) &&
+    typeof t.accountId === "string" &&
+    t.accountId.length > 0
   );
 }
 

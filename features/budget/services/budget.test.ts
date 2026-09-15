@@ -6,6 +6,7 @@ import {
   shiftMonth,
   summarize,
   planGoals,
+  isBankAccount,
   isTransaction,
 } from "./budget";
 import { DEFAULT_PERCENTAGES } from "../constants";
@@ -20,6 +21,7 @@ const transactions: Transaction[] = [
     date: "2026-09-01",
     goal: null,
     tags: [],
+    accountId: "account-1",
   },
   {
     id: "fixed",
@@ -29,6 +31,7 @@ const transactions: Transaction[] = [
     date: "2026-09-05",
     goal: "fixed",
     tags: ["casa"],
+    accountId: "account-1",
   },
   {
     id: "pleasure",
@@ -38,6 +41,7 @@ const transactions: Transaction[] = [
     date: "2026-09-11",
     goal: "pleasure",
     tags: ["a dois"],
+    accountId: "account-1",
   },
 ];
 
@@ -104,6 +108,20 @@ describe("tipo da transação", () => {
     expect(isTransaction({ ...transactions[0], goal: "fixed" })).toBe(false);
     expect(isTransaction({ ...transactions[1], goal: null })).toBe(false);
   });
+  it("exige uma conta bancária", () => {
+    expect(isTransaction({ ...transactions[0], accountId: "" })).toBe(false);
+    expect(
+      isTransaction({ ...transactions[0], accountId: undefined }),
+    ).toBe(false);
+  });
+});
+
+describe("conta bancária", () => {
+  it("exige identificador e nome", () => {
+    expect(isBankAccount({ id: "account-1", name: "Nubank" })).toBe(true);
+    expect(isBankAccount({ id: "", name: "Nubank" })).toBe(false);
+    expect(isBankAccount({ id: "account-1", name: "   " })).toBe(false);
+  });
 });
 
 describe("mês e tags", () => {
@@ -141,6 +159,7 @@ describe("individual goal planning", () => {
     date: "2026-09-14",
     goal: null,
     tags: [],
+    accountId: "account-1",
   });
   const monthly = [income("a", 500000), income("b", 300000)];
   it("sums each person's plan and weights the combined percentage by income", () => {

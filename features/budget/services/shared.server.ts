@@ -10,8 +10,13 @@ import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
 import { sendMagicLink, type MagicLinkSender } from "./email.server";
 import { DEFAULT_PERCENTAGES } from "../constants";
-import { isGoalPercentages, isTransaction } from "./budget";
-import type { BudgetState, SharedSnapshot, Transaction } from "../types";
+import { isBankAccount, isGoalPercentages, isTransaction } from "./budget";
+import type {
+  BankAccount,
+  BudgetState,
+  SharedSnapshot,
+  Transaction,
+} from "../types";
 
 export class RequestError extends Error {
   constructor(
@@ -26,6 +31,7 @@ const digest = (value: string) =>
 const token = () => randomBytes(32).toString("hex");
 const emptyBudget = (): BudgetState => ({
   transactions: [],
+  accounts: [],
   percentages: { ...DEFAULT_PERCENTAGES },
 });
 interface UserRow {
@@ -44,6 +50,12 @@ interface TransactionRow {
   revision: number;
   deleted: number;
 }
+interface AccountRow {
+  id: string;
+  payload: string;
+  revision: number;
+  deleted: number;
+}
 
 type DatabaseExecutor = Client | DatabaseTransaction;
 
@@ -56,6 +68,7 @@ const schema = [
   `CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS invites (hash TEXT PRIMARY KEY, household_id TEXT NOT NULL UNIQUE REFERENCES households(id), expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS transactions (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
+  `CREATE TABLE IF NOT EXISTS accounts (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
   `CREATE TABLE IF NOT EXISTS magic_links (hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS attempts (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS member_percentages (user_id TEXT PRIMARY KEY REFERENCES users(id), percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
@@ -216,6 +229,11 @@ export function createBudgetStore(
         "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
         [home.id],
       );
+      const accountRows = await all<AccountRow>(
+        transaction,
+        "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
+        [home.id],
+      );
       const members = await all<{
         id: string;
         name: string;
@@ -250,6 +268,10 @@ export function createBudgetStore(
             ? JSON.parse(ownPercentages.percentages)
             : { ...DEFAULT_PERCENTAGES },
           transactions: rows.map((row) => ({
+            ...JSON.parse(row.payload),
+            revision: row.revision,
+          })),
+          accounts: accountRows.map((row) => ({
             ...JSON.parse(row.payload),
             revision: row.revision,
           })),
@@ -304,7 +326,8 @@ export function createBudgetStore(
       !value.id ||
       value.description.length > 80 ||
       value.tags.length > 8 ||
-      value.date < "1900-01-01"
+      value.date < "1900-01-01" ||
+      value.accountId.length > 100
     )
       throw new RequestError("Confira os dados da transação.");
     return {
@@ -315,9 +338,19 @@ export function createBudgetStore(
       kind: value.kind,
       goal: value.goal,
       tags: [...new Set(value.tags)],
+      accountId: value.accountId,
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     };
+  }
+  function canonicalAccount(value: unknown): BankAccount {
+    if (
+      !isBankAccount(value) ||
+      value.id.length > 100 ||
+      value.name.length > 50
+    )
+      throw new RequestError("Confira os dados da conta.");
+    return { id: value.id, name: value.name.trim() };
   }
   const conflict = () =>
     new RequestError(
@@ -567,6 +600,12 @@ export function createBudgetStore(
             throw new RequestError("Escolha entre 1 e 120 ocorrências.");
           const rawTransaction = data.transaction;
           const t = canonical(rawTransaction, user);
+          const account = await one<AccountRow>(
+            transaction,
+            "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
+            [home.id, t.accountId],
+          );
+          if (!account) throw new RequestError("Escolha uma conta bancária.");
           const old = await one<TransactionRow>(
             transaction,
             "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
@@ -703,6 +742,46 @@ export function createBudgetStore(
               revision(data.revision),
               undo ? 1 : 0,
             ],
+          );
+          if (result.rowsAffected !== 1) throw conflict();
+        } else if (data.action === "save-account") {
+          const account = canonicalAccount(data.account);
+          const old = await one<AccountRow>(
+            transaction,
+            "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
+            [home.id, account.id],
+          );
+          const given = isBankAccount(data.account)
+            ? data.account.revision
+            : undefined;
+          if (old ? old.deleted || old.revision !== given : given !== undefined)
+            throw conflict();
+          await execute(
+            transaction,
+            "INSERT INTO accounts(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = accounts.revision + 1",
+            [account.id, home.id, JSON.stringify(account)],
+          );
+        } else if (data.action === "delete-account") {
+          const id = text(data.id, 100);
+          const previous = await one<AccountRow>(
+            transaction,
+            "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
+            [home.id, id],
+          );
+          if (!previous || previous.deleted) throw conflict();
+          const rows = await all<TransactionRow>(
+            transaction,
+            "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
+            [home.id],
+          );
+          if (rows.some((row) => JSON.parse(row.payload).accountId === id))
+            throw new RequestError(
+              "Exclua ou mova as transações desta conta antes de apagá-la.",
+            );
+          const result = await execute(
+            transaction,
+            "UPDATE accounts SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
+            [home.id, id, revision(data.revision)],
           );
           if (result.rowsAffected !== 1) throw conflict();
         } else if (data.action === "percentages") {

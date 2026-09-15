@@ -8,12 +8,13 @@ import {
 } from "lucide-react";
 import { GOALS } from "../constants";
 import { money } from "../services/budget";
-import type { GoalId, Transaction, Member } from "../types";
+import type { BankAccount, GoalId, Transaction, Member } from "../types";
 import { GoalIcon } from "./goal-icon";
 
 interface Props {
   transactions: Transaction[];
   members: Member[];
+  accounts: BankAccount[];
   busy: boolean;
   hidden: boolean;
   query: string;
@@ -180,6 +181,10 @@ export function TransactionList(props: Props) {
                     <div className="transaction-person">
                       {props.members.find((member) => member.id === t.memberId)
                         ?.name ?? "Pessoa do casal"}
+                      {" · "}
+                      {props.accounts.find(
+                        (account) => account.id === t.accountId,
+                      )?.name ?? "Sem conta"}
                     </div>
                     <div className="row-tags">
                       {t.tags.length ? (

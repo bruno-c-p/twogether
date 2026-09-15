@@ -9,6 +9,7 @@ import {
   ChevronRight,
   Eye,
   EyeOff,
+  Landmark,
   LayoutGrid,
   Plus,
   ReceiptText,
@@ -25,7 +26,7 @@ import {
   summarize,
   planGoals,
 } from "../services/budget";
-import type { GoalId, Transaction, View } from "../types";
+import type { BankAccount, GoalId, Transaction, View } from "../types";
 import { GoalPercentagesDialog } from "./goal-percentages-dialog";
 import { AppFooter } from "./app-footer";
 import { AccountGate } from "./account-gate";
@@ -36,10 +37,13 @@ import { Distribution } from "./distribution";
 import { GoalIcon } from "./goal-icon";
 import { TransactionDialog } from "./transaction-dialog";
 import { TransactionList } from "./transaction-list";
+import { AccountDialog } from "./account-dialog";
+import { AccountList } from "./account-list";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },
   { id: "transactions", label: "Transações", icon: ReceiptText },
+  { id: "accounts", label: "Contas", icon: Landmark },
   { id: "goals", label: "Metas", icon: Target },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
@@ -69,6 +73,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
+  } | null>(null);
+  const [accountDialog, setAccountDialog] = useState<{
+    account: BankAccount | null;
   } | null>(null);
   const [query, setQuery] = useState("");
   const [goalFilter, setGoalFilter] = useState<GoalId | "all">("all");
@@ -166,11 +173,39 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       title: "Transações",
       subtitle: "Registre e acompanhe as entradas e despesas do mês.",
     },
+    accounts: {
+      title: "Contas",
+      subtitle: "Cadastre as contas usadas nas transações.",
+    },
     goals: {
       title: "Metas",
       subtitle: "Divida sua renda por meta e compare gasto e planejado.",
     },
   };
+
+  function openTransaction(transaction: Transaction | null) {
+    if (!transaction && budget.state.accounts.length === 0) {
+      setNotice({
+        message: "Cadastre uma conta para lançar transações.",
+      });
+      navigate("accounts");
+      return;
+    }
+    setDialog({ transaction });
+  }
+
+  async function saveAccount(account: BankAccount) {
+    if (!(await budget.saveAccount(account))) return false;
+    setNotice({
+      message: accountDialog?.account ? "Conta atualizada." : "Conta adicionada.",
+    });
+    return true;
+  }
+
+  async function removeAccount(account: BankAccount) {
+    if (await budget.removeAccount(account))
+      setNotice({ message: "Conta excluída." });
+  }
 
   return (
     <div className="app-shell">
@@ -243,12 +278,19 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <button
               className="primary-button add-transaction"
               disabled={budget.busy}
-              onClick={() => setDialog({ transaction: null })}
+              onClick={() =>
+                view === "accounts"
+                  ? setAccountDialog({ account: null })
+                  : openTransaction(null)
+              }
             >
-              <Plus size={19} /> Nova transação
+              <Plus size={19} />{" "}
+              {view === "accounts" ? "Nova conta" : "Nova transação"}
             </button>
           </div>
-          <div className="month-row">
+          {view !== "accounts" && (
+            <>
+              <div className="month-row">
             <div className="month-picker">
               <button
                 className="icon-button"
@@ -323,6 +365,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               ? "O planejado soma as metas individuais de cada pessoa."
               : "Renda, gastos e metas da pessoa selecionada."}
           </p>
+            </>
+          )}
           {budget.error && (
             <div role="alert" className="storage-error">
               {budget.error}
@@ -332,6 +376,15 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <div className="loading-state" aria-live="polite">
               Carregando orçamento…
             </div>
+          ) : view === "accounts" ? (
+            <AccountList
+              accounts={budget.state.accounts}
+              transactions={budget.state.transactions}
+              busy={budget.busy}
+              onAdd={() => setAccountDialog({ account: null })}
+              onEdit={(account) => setAccountDialog({ account })}
+              onDelete={removeAccount}
+            />
           ) : (
             <>
               {view === "overview" && (
@@ -511,6 +564,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                 <TransactionList
                   transactions={monthly}
                   members={budget.household?.members ?? []}
+                  accounts={budget.state.accounts}
                   busy={budget.busy}
                   hidden={hidden}
                   query={query}
@@ -524,9 +578,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                     setView("transactions");
                   }}
                   onKind={setKindFilter}
-                  onEdit={(transaction) => setDialog({ transaction })}
+                  onEdit={(transaction) => openTransaction(transaction)}
                   onDelete={remove}
-                  onAdd={() => setDialog({ transaction: null })}
+                  onAdd={() => openTransaction(null)}
                   compact={view === "overview"}
                   onViewAll={() => navigate("transactions")}
                 />
@@ -570,10 +624,19 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           }
           existingTags={allTags}
           members={budget.household?.members ?? []}
+          accounts={budget.state.accounts}
           currentUserId={budget.user?.id ?? ""}
           serverError={budget.error}
           onSave={save}
           onClose={() => setDialog(null)}
+        />
+      )}
+      {accountDialog && (
+        <AccountDialog
+          account={accountDialog.account}
+          serverError={budget.error}
+          onSave={saveAccount}
+          onClose={() => setAccountDialog(null)}
         />
       )}
       {deleting && (
