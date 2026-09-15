@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { DEFAULT_PERCENTAGES } from "../constants";
 import type {
   BankAccount,
@@ -19,7 +20,9 @@ const initial: SharedSnapshot = {
   },
 };
 export function useBudget() {
-  const [accessToken, setAccessToken] = useState("");
+  const search = useSearch({ from: "/" });
+  const navigate = useNavigate();
+  const accessToken = search.access ?? "";
   const [snapshot, setSnapshot] = useState(initial);
   const [ready, setReady] = useState(false);
   const [error, setError] = useState("");
@@ -50,12 +53,6 @@ export function useBudget() {
     }
   }, []);
   useEffect(() => {
-    const readAccessLink = () =>
-      setAccessToken(
-        new URLSearchParams(window.location.hash.slice(1)).get("access") ?? "",
-      );
-    readAccessLink();
-    window.addEventListener("hashchange", readAccessLink);
     void refresh();
     const synchronize = () => {
       if (document.visibilityState === "visible") void refresh();
@@ -69,7 +66,6 @@ export function useBudget() {
     };
     return () => {
       invalidateRequests();
-      window.removeEventListener("hashchange", readAccessLink);
       window.clearInterval(interval);
       window.removeEventListener("focus", synchronize);
       window.removeEventListener("online", synchronize);
@@ -117,14 +113,11 @@ export function useBudget() {
     accessToken,
     finishAccess: () => {
       setError("");
-      setAccessToken("");
-      const fragment = new URLSearchParams(window.location.hash.slice(1));
-      fragment.delete("access");
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${fragment.size ? `#${fragment}` : ""}`,
-      );
+      void navigate({
+        to: "/",
+        search: (prev) => ({ ...prev, access: undefined }),
+        replace: true,
+      });
     },
     state: snapshot.budget,
     user: snapshot.user,

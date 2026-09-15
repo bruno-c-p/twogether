@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "../hooks/use-budget";
@@ -8,8 +9,10 @@ const isDevelopment = import.meta.env.DEV;
 
 export function inviteToken(value: string) {
   try {
+    const url = new URL(value);
     return (
-      new URLSearchParams(new URL(value).hash.slice(1)).get("convite") ??
+      url.searchParams.get("convite") ??
+      new URLSearchParams(url.hash.slice(1)).get("convite") ??
       value.trim()
     );
   } catch {
@@ -17,18 +20,17 @@ export function inviteToken(value: string) {
   }
 }
 export function AccountGate({ budget }: { budget: BudgetController }) {
-  const [invitation, setInvitation] = useState("");
+  const search = useSearch({ from: "/" });
+  const navigate = useNavigate();
+  const invitation = search.convite ?? "";
+  const clearInvitation = () =>
+    void navigate({
+      to: "/",
+      search: (prev) => ({ ...prev, convite: undefined }),
+      replace: true,
+    });
   const [sentTo, setSentTo] = useState("");
   const [cooldown, setCooldown] = useState(0);
-  useEffect(() => {
-    const readInvitation = () =>
-      setInvitation(
-        new URLSearchParams(window.location.hash.slice(1)).get("convite") ?? "",
-      );
-    readInvitation();
-    window.addEventListener("hashchange", readInvitation);
-    return () => window.removeEventListener("hashchange", readInvitation);
-  }, []);
   useEffect(() => {
     if (!cooldown) return;
     const timer = window.setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -237,11 +239,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                         token: inviteToken(invitation),
                       })
                     )
-                      window.history.replaceState(
-                        null,
-                        "",
-                        window.location.pathname,
-                      );
+                      clearInvitation();
                   }}
                 >
                   {budget.busy ? "Aguarde…" : "Aceitar convite"}
@@ -249,14 +247,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 </button>
                 <button
                   className="text-button"
-                  onClick={() => {
-                    setInvitation("");
-                    window.history.replaceState(
-                      null,
-                      "",
-                      window.location.pathname,
-                    );
-                  }}
+                  onClick={clearInvitation}
                 >
                   Usar outro convite ou começar do zero
                 </button>
