@@ -60,7 +60,6 @@ export function useBudget() {
     const synchronize = () => {
       if (document.visibilityState === "visible") void refresh();
     };
-    const interval = window.setInterval(synchronize, 5000);
     window.addEventListener("focus", synchronize);
     window.addEventListener("online", synchronize);
     document.addEventListener("visibilitychange", synchronize);
@@ -70,7 +69,6 @@ export function useBudget() {
     return () => {
       invalidateRequests();
       window.removeEventListener("hashchange", readAccessLink);
-      window.clearInterval(interval);
       window.removeEventListener("focus", synchronize);
       window.removeEventListener("online", synchronize);
       document.removeEventListener("visibilitychange", synchronize);

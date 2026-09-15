@@ -38,7 +38,7 @@ O link de acesso expira em 15 minutos, funciona uma vez e autentica somente quem
 - Seis metas fixas com percentuais editáveis que somam 100%: custo fixo 30%, prazeres 10%, conforto 15%, metas 15%, liberdade financeira 25% e conhecimento 5%. A divisão vale para todos os meses.
 - Edição, exclusão e desfazer por transação, busca e filtros por meta, tipo e tag. Valores em centavos inteiros.
 - Autoria original e última pessoa que editou preservadas.
-- Atualização automática a cada 5 segundos enquanto a página está visível e ao voltar à aba. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
+- Cada alteração salva já retorna o orçamento atualizado e é aplicada imediatamente; ao voltar à aba, focar a janela ou reconectar à internet, o orçamento é sincronizado com as alterações do seu par. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
 
 ## Persistência e publicação
 
