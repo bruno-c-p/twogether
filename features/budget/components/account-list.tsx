@@ -5,6 +5,7 @@ import type { BankAccount, Transaction } from "../types";
 interface Props {
   accounts: BankAccount[];
   transactions: Transaction[];
+  memberFilter: string;
   busy: boolean;
   hidden: boolean;
   onAdd: () => void;
@@ -15,12 +16,19 @@ interface Props {
 export function AccountList({
   accounts,
   transactions,
+  memberFilter,
   busy,
   hidden,
   onAdd,
   onEdit,
   onDelete,
 }: Props) {
+  const visibleTransactions =
+    memberFilter === "all"
+      ? transactions
+      : transactions.filter(
+          (transaction) => transaction.memberId === memberFilter,
+        );
   const sorted = [...accounts].sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR"),
   );
@@ -41,7 +49,7 @@ export function AccountList({
             const used = transactions.some(
               (transaction) => transaction.accountId === account.id,
             );
-            const balance = accountBalance(account, transactions);
+            const balance = accountBalance(account, visibleTransactions);
             return (
               <div className="account-item" key={account.id}>
                 <span className="transaction-icon income-icon">
