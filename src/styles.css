@@ -310,7 +310,15 @@ h1 {
   align-items: center;
   gap: 9px;
 }
-.month-picker > span {
+.month-picker .month-input {
+  width: 180px;
+  min-height: 32px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--surface, #fff);
+  color: var(--text);
+  font-family: inherit;
   text-transform: capitalize;
   font-size: 13px;
   font-weight: 550;
@@ -1787,7 +1795,7 @@ h1 {
   .month-picker {
     gap: 6px;
   }
-  .month-picker > span {
+  .month-picker .month-input {
     font-size: 12px;
     min-width: 100px;
   }

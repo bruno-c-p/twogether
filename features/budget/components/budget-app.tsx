@@ -20,7 +20,6 @@ import { useBudget, type BudgetController } from "../hooks/use-budget";
 import {
   localDate,
   money,
-  monthLabel,
   shiftMonth,
   summarize,
   planGoals,
@@ -239,7 +238,21 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               >
                 <ChevronLeft size={17} />
               </button>
-              <span>{month ? monthLabel(month) : "Carregando..."}</span>
+              <input
+                className="month-input"
+                type="month"
+                aria-label="Selecionar mês e ano"
+                value={month}
+                required
+                onChange={(event) => {
+                  if (
+                    event.currentTarget.validity.valid &&
+                    event.currentTarget.value
+                  ) {
+                    setMonth(event.currentTarget.value);
+                  }
+                }}
+              />
               <button
                 className="icon-button"
                 aria-label="Próximo mês"
