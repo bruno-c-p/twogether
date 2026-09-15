@@ -50,25 +50,6 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
       setCooldown(60);
     }
   }
-  if (!budget.ready) {
-    return (
-      <main className="account-page" aria-busy="true">
-        <a href="/" className="brand" aria-label="twogether — início">
-          twogether.
-        </a>
-        <section className="account-card account-loading-card">
-          <div className="account-symbol" aria-hidden="true">
-            <HeartHandshake size={30} strokeWidth={1.5} />
-          </div>
-          <p className="eyebrow">DUAS PESSOAS. UM ORÇAMENTO.</p>
-          <p className="account-loading-message" role="status">
-            Abrindo seu orçamento…
-          </p>
-        </section>
-        <AppFooter />
-      </main>
-    );
-  }
   return (
     <main className="account-page">
       <ThemeToggle />
