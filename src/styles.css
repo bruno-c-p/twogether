@@ -2562,7 +2562,7 @@ h1 {
   background: #16201cef;
 }
 :root[data-theme="dark"] .balance-card {
-  background: linear-gradient(125deg, #244c3e, #193c32);
+  background: #1e4438;
   border: 1px solid #3b6350;
 }
 :root[data-theme="dark"] .primary-button {
@@ -2572,8 +2572,7 @@ h1 {
   background: #c8ddae;
 }
 :root[data-theme="dark"] .account-page {
-  background:
-    radial-gradient(ellipse at top left, #293c2d, transparent 65%), var(--page);
+  background: var(--page);
 }
 :root[data-theme="dark"] .transaction-dialog::backdrop,
 :root[data-theme="dark"] .help-dialog::backdrop {
