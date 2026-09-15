@@ -1,3 +1,4 @@
+import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/features/theme";
 import {
@@ -121,18 +122,35 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     setGoalFilter(id);
   }
 
-  async function save(transaction: Transaction) {
-    if (!(await budget.saveTransaction(transaction))) return false;
+  async function save(transaction: Transaction, occurrences = 1) {
+    if (!(await budget.saveTransaction(transaction, occurrences))) return false;
     setMonth(transaction.date.slice(0, 7));
     setNotice({
       message: dialog?.transaction
         ? "Transação atualizada."
-        : "Transação adicionada.",
+        : occurrences > 1
+          ? `${occurrences} transações mensais adicionadas.`
+          : "Transação adicionada.",
     });
     return true;
   }
 
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const following = deleting
+    ? budget.state.transactions.filter(
+        (item) =>
+          item.recurrenceId === deleting.recurrenceId &&
+          item.recurrenceIndex !== undefined &&
+          deleting.recurrenceIndex !== undefined &&
+          item.recurrenceIndex > deleting.recurrenceIndex,
+      )
+    : [];
+
   async function remove(transaction: Transaction) {
+    if (transaction.recurrenceId) {
+      setDeleting(transaction);
+      return;
+    }
     if (await budget.removeTransaction(transaction))
       setNotice({ message: "Transação excluída.", undo: transaction });
   }
@@ -522,6 +540,30 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           serverError={budget.error}
           onSave={save}
           onClose={() => setDialog(null)}
+        />
+      )}
+      {deleting && (
+        <DeleteRecurrenceDialog
+          transaction={deleting}
+          count={following.length + 1}
+          busy={budget.busy}
+          error={budget.error}
+          onClose={() => setDeleting(null)}
+          onDelete={async (includeFollowing) => {
+            if (
+              await budget.removeTransaction(
+                deleting,
+                includeFollowing ? following : undefined,
+              )
+            ) {
+              setNotice(
+                includeFollowing
+                  ? { message: `${following.length + 1} transações excluídas.` }
+                  : { message: "Transação excluída.", undo: deleting },
+              );
+              setDeleting(null);
+            }
+          }}
         />
       )}
       {notice && (

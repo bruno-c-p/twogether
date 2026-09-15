@@ -11,6 +11,8 @@ export interface Transaction {
   date: string;
   goal: GoalId | null;
   tags: string[];
+  recurrenceId?: string;
+  recurrenceIndex?: number;
   memberId?: string;
   revision?: number;
   createdBy?: string;
@@ -59,8 +61,13 @@ export type BudgetCommand =
   | { action: "join"; token: string }
   | { action: "invite" }
   | { action: "revoke-invite" }
-  | { action: "save"; transaction: Transaction }
-  | { action: "delete"; id: string; revision: number }
+  | { action: "save"; transaction: Transaction; occurrences?: number }
+  | {
+      action: "delete";
+      id: string;
+      revision: number;
+      following?: { id: string; revision: number }[];
+    }
   | { action: "undo-delete"; id: string; revision: number }
   | { action: "percentages"; percentages: GoalPercentages; revision: number };
 export interface CommandResult {

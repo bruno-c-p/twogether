@@ -598,3 +598,132 @@ test("legacy household percentages migrate to both people once without changing 
     rmSync(dir, { recursive: true, force: true });
   }
 });
+
+describe("monthly recurring transactions", () => {
+  test("clamps month ends, persists for both members and edits only one occurrence", async () => {
+    const { a, b } = await couple();
+    const original = {
+      ...transaction(a.snapshot.user!.id),
+      date: "2028-01-31",
+    };
+    const result = await store.command(
+      { action: "save", transaction: original, occurrences: 3 },
+      a.session,
+    );
+    const rows = result.snapshot.budget.transactions.sort((a, b) =>
+      a.date.localeCompare(b.date),
+    );
+    expect(rows.map((row) => row.date)).toEqual([
+      "2028-01-31",
+      "2028-02-29",
+      "2028-03-31",
+    ]);
+    expect(new Set(rows.map((row) => row.id)).size).toBe(3);
+    expect((await store.snapshot(b.session)).budget.transactions).toHaveLength(
+      3,
+    );
+    await store.command(
+      { action: "save", transaction: { ...rows[1], amount: 20000 } },
+      b.session,
+    );
+    expect(
+      (await store.snapshot(a.session)).budget.transactions.filter(
+        (row) => row.amount === 20000,
+      ),
+    ).toHaveLength(1);
+    await expect(
+      store.command(
+        { action: "save", transaction: original, occurrences: 3 },
+        a.session,
+      ),
+    ).rejects.toThrow();
+    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+      3,
+    );
+  });
+  test("rejects invalid counts and rolls back dates beyond supported range", async () => {
+    const { a } = await couple();
+    const original = transaction(a.snapshot.user!.id);
+    for (const occurrences of [0, -1, 1.5, 121, "12"]) {
+      await expect(
+        store.command(
+          { action: "save", transaction: original, occurrences },
+          a.session,
+        ),
+      ).rejects.toThrow();
+    }
+    await expect(
+      store.command(
+        {
+          action: "save",
+          transaction: { ...original, date: "9999-12-31" },
+          occurrences: 2,
+        },
+        a.session,
+      ),
+    ).rejects.toThrow();
+    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+      0,
+    );
+  });
+});
+
+test("deletes only the selected series from its original occurrence onward and rejects stale batches", async () => {
+  const { a, b } = await couple();
+  const original = transaction(a.snapshot.user!.id);
+  await store.command(
+    { action: "save", transaction: original, occurrences: 4 },
+    a.session,
+  );
+  await store.command(
+    {
+      action: "save",
+      transaction: { ...original, id: "other" },
+      occurrences: 4,
+    },
+    a.session,
+  );
+  const snapshot = await store.snapshot(a.session);
+  const series = snapshot.budget.transactions
+    .filter(
+      (item) =>
+        item.recurrenceId ===
+        snapshot.budget.transactions.find((item) => item.id === original.id)!
+          .recurrenceId,
+    )
+    .sort((a, b) => a.recurrenceIndex! - b.recurrenceIndex!);
+  await store.command(
+    { action: "save", transaction: { ...series[2], date: "2020-01-01" } },
+    b.session,
+  );
+  const remove = (following: Transaction[]) =>
+    store.command(
+      {
+        action: "delete",
+        id: series[1].id,
+        revision: series[1].revision,
+        following: following.map((item) => ({
+          id: item.id,
+          revision: item.revision,
+        })),
+      },
+      a.session,
+    );
+  await expect(remove(series.slice(2))).rejects.toThrow();
+  expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(8);
+  const current = (await store.snapshot(a.session)).budget.transactions;
+  await remove(
+    current.filter(
+      (item) =>
+        item.recurrenceId === series[0].recurrenceId &&
+        item.recurrenceIndex! > 1,
+    ),
+  );
+  const remaining = (await store.snapshot(b.session)).budget.transactions;
+  expect(remaining).toHaveLength(5);
+  expect(
+    remaining
+      .filter((item) => item.recurrenceId === series[0].recurrenceId)
+      .map((item) => item.id),
+  ).toEqual([series[0].id]);
+});
