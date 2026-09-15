@@ -2497,6 +2497,9 @@ h1 {
   margin: -4px 0 24px;
   flex-wrap: wrap;
 }
+.page-heading + .couple-toolbar {
+  margin-top: 25px;
+}
 .person-filter {
   display: inline-flex;
   gap: 4px;

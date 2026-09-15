@@ -116,6 +116,14 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     ...new Set(budget.state.transactions.flatMap((t) => t.tags)),
   ].sort((a, b) => a.localeCompare(b, "pt-BR"));
   const displayMoney = (value: number) => (hidden ? "R$ ••••" : money(value));
+  const filterExplanation =
+    view === "accounts"
+      ? memberFilter === "all"
+        ? "O saldo de cada conta inclui as transações de todo o casal."
+        : "O saldo de cada conta considera só as transações da pessoa selecionada."
+      : memberFilter === "all"
+        ? "O planejado soma as metas individuais de cada pessoa."
+        : "Renda, gastos e metas da pessoa selecionada.";
 
   function navigate(next: View) {
     setView(next);
@@ -289,50 +297,50 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             </button>
           </div>
           {view !== "accounts" && (
-            <>
-              <div className="month-row">
-            <div className="month-picker">
-              <button
-                className="icon-button"
-                aria-label="Mês anterior"
-                disabled={!month}
-                onClick={() => setMonth(shiftMonth(month, -1))}
-              >
-                <ChevronLeft size={17} />
-              </button>
-              <input
-                className="month-input"
-                type="month"
-                aria-label="Selecionar mês e ano"
-                value={month}
-                required
-                onChange={(event) => {
-                  if (
-                    event.currentTarget.validity.valid &&
-                    event.currentTarget.value
-                  ) {
-                    setMonth(event.currentTarget.value);
-                  }
-                }}
-              />
-              <button
-                className="icon-button"
-                aria-label="Próximo mês"
-                disabled={!month}
-                onClick={() => setMonth(shiftMonth(month, 1))}
-              >
-                <ChevronRight size={17} />
-              </button>
+            <div className="month-row">
+              <div className="month-picker">
+                <button
+                  className="icon-button"
+                  aria-label="Mês anterior"
+                  disabled={!month}
+                  onClick={() => setMonth(shiftMonth(month, -1))}
+                >
+                  <ChevronLeft size={17} />
+                </button>
+                <input
+                  className="month-input"
+                  type="month"
+                  aria-label="Selecionar mês e ano"
+                  value={month}
+                  required
+                  onChange={(event) => {
+                    if (
+                      event.currentTarget.validity.valid &&
+                      event.currentTarget.value
+                    ) {
+                      setMonth(event.currentTarget.value);
+                    }
+                  }}
+                />
+                <button
+                  className="icon-button"
+                  aria-label="Próximo mês"
+                  disabled={!month}
+                  onClick={() => setMonth(shiftMonth(month, 1))}
+                >
+                  <ChevronRight size={17} />
+                </button>
+              </div>
+              {month && month !== localDate().slice(0, 7) && (
+                <button
+                  className="today-button"
+                  onClick={() => setMonth(localDate().slice(0, 7))}
+                >
+                  Voltar para este mês
+                </button>
+              )}
             </div>
-            {month && month !== localDate().slice(0, 7) && (
-              <button
-                className="today-button"
-                onClick={() => setMonth(localDate().slice(0, 7))}
-              >
-                Voltar para este mês
-              </button>
-            )}
-          </div>
+          )}
           <div className="couple-toolbar">
             <div className="person-filter" aria-label="Filtrar por pessoa">
               <button
@@ -360,13 +368,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                 ))}
             </div>
           </div>
-          <p className="filter-explanation">
-            {memberFilter === "all"
-              ? "O planejado soma as metas individuais de cada pessoa."
-              : "Renda, gastos e metas da pessoa selecionada."}
-          </p>
-            </>
-          )}
+          <p className="filter-explanation">{filterExplanation}</p>
           {budget.error && (
             <div role="alert" className="storage-error">
               {budget.error}
@@ -380,6 +382,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <AccountList
               accounts={budget.state.accounts}
               transactions={budget.state.transactions}
+              memberFilter={memberFilter}
               busy={budget.busy}
               hidden={hidden}
               onAdd={() => setAccountDialog({ account: null })}
