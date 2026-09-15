@@ -1,12 +1,10 @@
-import { resolve } from "node:path";
+import { RequestError, type BudgetStore } from "../services/shared.server";
 import {
-  createBudgetStore,
-  RequestError,
-  type BudgetStore,
-} from "../services/shared.server";
+  getBudgetStore,
+  readSessionToken,
+  sessionCookie,
+} from "./budget-store.server";
 
-let store: BudgetStore | undefined;
-const cookieName = "twogether_session";
 export async function handleBudgetRequest(
   request: Request,
   database?: BudgetStore,
@@ -18,25 +16,14 @@ export async function handleBudgetRequest(
   });
   try {
     const origin = process.env.APP_ORIGIN || new URL(request.url).origin;
-    const session = request.headers
-      .get("cookie")
-      ?.split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(`${cookieName}=`))
-      ?.slice(cookieName.length + 1);
+    const session = readSessionToken(request);
     if (
       request.method !== "GET" &&
       (request.headers.get("origin") !== origin ||
         !request.headers.get("content-type")?.startsWith("application/json"))
     )
       throw new RequestError("Origem da requisição inválida.", 403);
-    const db =
-      database ??
-      (store ??= createBudgetStore(
-        process.env.TURSO_DATABASE_URL ||
-          process.env.BUDGET_DATABASE_PATH ||
-          resolve("data/twogether.sqlite"),
-      ));
+    const db = database ?? getBudgetStore();
     if (request.method === "GET")
       return new Response(
         JSON.stringify({ snapshot: await db.snapshot(session) }),
@@ -68,7 +55,7 @@ export async function handleBudgetRequest(
     if (result.session !== session) {
       headers.set(
         "Set-Cookie",
-        `${cookieName}=${result.session ?? ""}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${result.session ? 30 * 86400 : 0}${origin.startsWith("https:") ? "; Secure" : ""}`,
+        `${sessionCookie}=${result.session ?? ""}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${result.session ? 30 * 86400 : 0}${origin.startsWith("https:") ? "; Secure" : ""}`,
       );
     }
     return new Response(
