@@ -10,6 +10,7 @@ const expense = (changes: Partial<Transaction> = {}): Transaction => ({
   date: "2026-09-01",
   goal: "fixed",
   tags: [],
+  accountId: "account-1",
   ...changes,
 });
 

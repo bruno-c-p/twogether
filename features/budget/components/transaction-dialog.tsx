@@ -14,7 +14,12 @@ import {
   normalizeTag,
   parseAmount,
 } from "../services/budget";
-import type { Transaction, TransactionKind, Member } from "../types";
+import type {
+  BankAccount,
+  Transaction,
+  TransactionKind,
+  Member,
+} from "../types";
 import { GoalIcon } from "./goal-icon";
 
 interface Props {
@@ -22,6 +27,7 @@ interface Props {
   defaultDate: string;
   existingTags: string[];
   members: Member[];
+  accounts: BankAccount[];
   currentUserId: string;
   serverError: string;
   onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
@@ -33,6 +39,7 @@ export function TransactionDialog({
   defaultDate,
   existingTags,
   members,
+  accounts,
   currentUserId,
   serverError,
   onSave,
@@ -99,6 +106,15 @@ export function TransactionDialog({
       setError("Escolha uma das seis metas para esta despesa.");
       return;
     }
+    const accountId = String(form.get("accountId") ?? "");
+    if (!accounts.some((item) => item.id === accountId)) {
+      setError(
+        accounts.length
+          ? "Escolha uma conta bancária."
+          : "Cadastre uma conta na aba Contas antes de lançar transações.",
+      );
+      return;
+    }
     if (
       !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
       Number.isNaN(new Date(`${date}T12:00:00`).getTime()) ||
@@ -124,6 +140,7 @@ export function TransactionDialog({
           kind,
           goal: kind === "income" ? null : goal,
           tags: completeTags,
+          accountId,
           memberId,
           revision: transaction?.revision,
         },
@@ -223,6 +240,26 @@ export function TransactionDialog({
                 />
               </label>
             </div>
+            <label className="account-field">
+              Conta
+              <select
+                name="accountId"
+                defaultValue={
+                  transaction?.accountId ??
+                  (accounts.length === 1 ? accounts[0].id : "")
+                }
+                required
+              >
+                {accounts.length !== 1 && (
+                  <option value="">Selecione uma conta</option>
+                )}
+                {accounts.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
             {!transaction && (
               <section
                 className={`recurrence-panel ${recurring ? "is-active" : ""}`}

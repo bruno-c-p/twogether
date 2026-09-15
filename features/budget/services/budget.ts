@@ -1,5 +1,10 @@
 import { GOALS } from "../constants";
-import type { Transaction, GoalPercentages, MemberBudget } from "../types";
+import type {
+  BankAccount,
+  Transaction,
+  GoalPercentages,
+  MemberBudget,
+} from "../types";
 
 export const money = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
@@ -31,15 +36,43 @@ export function monthLabel(month: string) {
     .replace(" de ", " ");
 }
 
-export function parseAmount(value: string): number | null {
+function parseCents(value: string, min: number): number | null {
   const normalized = value.trim().replace(/^R\$\s*/, "");
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(normalized))
     return null;
   const [whole, decimals = ""] = normalized.replaceAll(".", "").split(",");
   const cents = Number(whole) * 100 + Number(decimals.padEnd(2, "0"));
-  return Number.isSafeInteger(cents) && cents > 0 && cents <= 99999999999
+  return Number.isSafeInteger(cents) && cents >= min && cents <= 99999999999
     ? cents
     : null;
+}
+
+export function parseAmount(value: string): number | null {
+  return parseCents(value, 1);
+}
+
+export function parseBalance(value: string): number | null {
+  if (!value.trim()) return 0;
+  return parseCents(value, 0);
+}
+
+export function accountBalance(
+  account: BankAccount,
+  transactions: Transaction[],
+): number {
+  return transactions.reduce((balance, transaction) => {
+    if (transaction.accountId !== account.id) return balance;
+    switch (transaction.kind) {
+      case "income":
+        return balance + transaction.amount;
+      case "expense":
+        return balance - transaction.amount;
+      default: {
+        const _exhaustive: never = transaction.kind;
+        return _exhaustive;
+      }
+    }
+  }, account.openingBalance ?? 0);
 }
 
 export function normalizeTag(value: string) {
@@ -77,6 +110,21 @@ function isDate(value: unknown): value is string {
   return !Number.isNaN(date.getTime()) && localDate(date) === value;
 }
 
+export function isBankAccount(value: unknown): value is BankAccount {
+  if (!value || typeof value !== "object") return false;
+  const account = value as Record<string, unknown>;
+  return (
+    typeof account.id === "string" &&
+    account.id.length > 0 &&
+    typeof account.name === "string" &&
+    account.name.trim().length > 0 &&
+    typeof account.openingBalance === "number" &&
+    Number.isSafeInteger(account.openingBalance) &&
+    account.openingBalance >= 0 &&
+    account.openingBalance <= 99999999999
+  );
+}
+
 export function isTransaction(value: unknown): value is Transaction {
   if (!value || typeof value !== "object") return false;
   const t = value as Record<string, unknown>;
@@ -94,7 +142,9 @@ export function isTransaction(value: unknown): value is Transaction {
       ? t.goal === null
       : GOALS.some((g) => g.id === t.goal)) &&
     Array.isArray(t.tags) &&
-    t.tags.every((tag) => typeof tag === "string" && tag.length <= 24)
+    t.tags.every((tag) => typeof tag === "string" && tag.length <= 24) &&
+    typeof t.accountId === "string" &&
+    t.accountId.length > 0
   );
 }
 

@@ -42,8 +42,8 @@ export function CoupleDialog({
           </button>
         </header>
         <p className="percentage-intro">
-          Tudo aqui é dos dois. Ambos podem ver e editar transações, tags e
-          percentuais.
+          Tudo aqui é dos dois. Ambos podem ver e editar contas, transações,
+          tags e percentuais.
         </p>
         <div className="couple-members">
           {budget.household?.members.map((member) => (

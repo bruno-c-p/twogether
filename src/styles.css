@@ -1177,7 +1177,10 @@ h1 {
 .form-row label {
   min-width: 0;
 }
-.form-row input {
+.form-row input,
+.form-row select,
+.account-field input,
+.account-field select {
   margin-top: 8px;
   border: 1px solid var(--border, #e0e7d6);
   border-radius: 6px;
@@ -1188,8 +1191,41 @@ h1 {
   font-size: 13px;
   color: var(--text, #506344);
 }
-.form-row input::placeholder {
+.form-row input::placeholder,
+.account-field input::placeholder {
   color: var(--text-muted, #a3ad97);
+}
+.account-field {
+  margin-bottom: 15px;
+}
+.account-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 70px;
+  padding: 0 23px;
+  border-bottom: 1px solid var(--border, #f0f2eb);
+}
+.account-item:last-child {
+  border-bottom: 0;
+}
+.account-item:hover {
+  background: var(--surface-soft, #fcfdf9);
+}
+.account-item > div {
+  min-width: 0;
+}
+.account-item .transaction-name {
+  overflow-wrap: anywhere;
+}
+.account-item .row-actions {
+  opacity: 1;
+  margin-left: 0;
+  flex-shrink: 0;
+}
+.account-balance {
+  margin-left: auto;
+  flex-shrink: 0;
 }
 .goal-field {
   padding: 0;
@@ -2088,7 +2124,10 @@ h1 {
   .form-row {
     grid-template-columns: 1fr;
   }
-  .form-row input {
+  .form-row input,
+  .form-row select,
+  .account-field input,
+  .account-field select {
     font-size: 16px;
     height: 43px;
   }
@@ -2226,7 +2265,8 @@ h1 {
     white-space: normal;
     line-height: 1.5;
   }
-  .transaction-dialog input:not(#amount) {
+  .transaction-dialog input:not(#amount),
+  .transaction-dialog select {
     font-size: 16px;
   }
   .goal-option {
@@ -2562,6 +2602,10 @@ h1 {
     gap: 12px;
     margin-bottom: 20px;
   }
+  .account-item {
+    padding: 14px 12px;
+    min-height: 64px;
+  }
   .person-filter button {
     padding: 9px 14px;
     max-width: 135px;
@@ -2644,6 +2688,9 @@ select {
   .distribution-body {
     flex-wrap: wrap;
     justify-content: center;
+  }
+  .mobile-navigation button span {
+    font-size: 9px;
   }
 }
 .theme-toggle button {

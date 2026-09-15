@@ -3,9 +3,12 @@ import {
   normalizeTag,
   formatAmountInput,
   parseAmount,
+  parseBalance,
+  accountBalance,
   shiftMonth,
   summarize,
   planGoals,
+  isBankAccount,
   isTransaction,
 } from "./budget";
 import { DEFAULT_PERCENTAGES } from "../constants";
@@ -20,6 +23,7 @@ const transactions: Transaction[] = [
     date: "2026-09-01",
     goal: null,
     tags: [],
+    accountId: "account-1",
   },
   {
     id: "fixed",
@@ -29,6 +33,7 @@ const transactions: Transaction[] = [
     date: "2026-09-05",
     goal: "fixed",
     tags: ["casa"],
+    accountId: "account-1",
   },
   {
     id: "pleasure",
@@ -38,6 +43,7 @@ const transactions: Transaction[] = [
     date: "2026-09-11",
     goal: "pleasure",
     tags: ["a dois"],
+    accountId: "account-1",
   },
 ];
 
@@ -104,6 +110,52 @@ describe("tipo da transação", () => {
     expect(isTransaction({ ...transactions[0], goal: "fixed" })).toBe(false);
     expect(isTransaction({ ...transactions[1], goal: null })).toBe(false);
   });
+  it("exige uma conta bancária", () => {
+    expect(isTransaction({ ...transactions[0], accountId: "" })).toBe(false);
+    expect(
+      isTransaction({ ...transactions[0], accountId: undefined }),
+    ).toBe(false);
+  });
+});
+
+describe("conta bancária", () => {
+  it("exige identificador, nome e saldo inicial", () => {
+    expect(
+      isBankAccount({ id: "account-1", name: "Nubank", openingBalance: 0 }),
+    ).toBe(true);
+    expect(isBankAccount({ id: "account-1", name: "Nubank" })).toBe(false);
+    expect(
+      isBankAccount({ id: "", name: "Nubank", openingBalance: 0 }),
+    ).toBe(false);
+    expect(
+      isBankAccount({ id: "account-1", name: "   ", openingBalance: 0 }),
+    ).toBe(false);
+    expect(
+      isBankAccount({
+        id: "account-1",
+        name: "Nubank",
+        openingBalance: -1,
+      }),
+    ).toBe(false);
+  });
+  it("aceita saldo inicial zero e soma receitas e despesas da conta", () => {
+    expect(parseBalance("")).toBe(0);
+    expect(parseBalance("0,00")).toBe(0);
+    expect(parseBalance("1.250,50")).toBe(125050);
+    expect(parseBalance("abc")).toBeNull();
+    const account = {
+      id: "account-1",
+      name: "Nubank",
+      openingBalance: 100000,
+    };
+    expect(
+      accountBalance(account, [
+        { ...transactions[0], accountId: "account-1" },
+        { ...transactions[1], accountId: "account-1" },
+        { ...transactions[2], accountId: "other" },
+      ]),
+    ).toBe(170000);
+  });
 });
 
 describe("mês e tags", () => {
@@ -141,6 +193,7 @@ describe("individual goal planning", () => {
     date: "2026-09-14",
     goal: null,
     tags: [],
+    accountId: "account-1",
   });
   const monthly = [income("a", 500000), income("b", 300000)];
   it("sums each person's plan and weights the combined percentage by income", () => {

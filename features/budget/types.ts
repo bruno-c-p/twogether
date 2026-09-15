@@ -1,7 +1,14 @@
 export type GoalId =
   "fixed" | "pleasure" | "comfort" | "targets" | "knowledge" | "freedom";
 export type TransactionKind = "expense" | "income";
-export type View = "overview" | "transactions" | "goals";
+export type View = "overview" | "transactions" | "goals" | "accounts";
+
+export interface BankAccount {
+  id: string;
+  name: string;
+  openingBalance: number;
+  revision?: number;
+}
 
 export interface Transaction {
   id: string;
@@ -11,6 +18,7 @@ export interface Transaction {
   date: string;
   goal: GoalId | null;
   tags: string[];
+  accountId: string;
   recurrenceId?: string;
   recurrenceIndex?: number;
   memberId?: string;
@@ -25,6 +33,7 @@ export type GoalPercentages = Record<GoalId, number>;
 export interface BudgetState {
   percentages: GoalPercentages;
   transactions: Transaction[];
+  accounts: BankAccount[];
 }
 
 export interface Goal {
@@ -69,6 +78,8 @@ export type BudgetCommand =
       following?: { id: string; revision: number }[];
     }
   | { action: "undo-delete"; id: string; revision: number }
+  | { action: "save-account"; account: BankAccount }
+  | { action: "delete-account"; id: string; revision: number }
   | { action: "percentages"; percentages: GoalPercentages; revision: number };
 export interface CommandResult {
   snapshot: SharedSnapshot;

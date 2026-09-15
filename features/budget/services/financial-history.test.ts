@@ -3,7 +3,13 @@ import { summarizeHistory } from "./financial-history";
 import type { Transaction } from "../types";
 
 it("includes empty months, crosses years and keeps income and expenses in cents", () => {
-  const transaction = { id: "1", description: "Teste", goal: null, tags: [] };
+  const transaction = {
+    id: "1",
+    description: "Teste",
+    goal: null,
+    tags: [],
+    accountId: "account-1",
+  };
   const transactions: Transaction[] = [
     { ...transaction, date: "2025-12-31", kind: "income", amount: 500001 },
     { ...transaction, date: "2026-01-01", kind: "expense", amount: 101 },

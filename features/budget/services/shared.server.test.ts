@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { createBudgetStore, type BudgetStore } from "./shared.server";
 import { handleBudgetRequest } from "../actions/api.server";
 import { DEFAULT_PERCENTAGES } from "../constants";
-import type { Transaction } from "../types";
+import type { BankAccount, Transaction } from "../types";
 
 let store: BudgetStore;
 let previousOrigin: string | undefined;
@@ -46,7 +46,10 @@ async function couple() {
   await store.command({ action: "join", token: invite.inviteToken }, b.session);
   return { a, b };
 }
-function transaction(memberId: string): Transaction {
+function account(id = "account-1"): BankAccount {
+  return { id, name: "Nubank", openingBalance: 0 };
+}
+function transaction(memberId: string, accountId = "account-1"): Transaction {
   return {
     id: "transaction-1",
     description: "Mercado",
@@ -56,7 +59,16 @@ function transaction(memberId: string): Transaction {
     goal: "fixed",
     tags: ["casa"],
     memberId,
+    accountId,
   };
+}
+async function householdReady() {
+  const pair = await couple();
+  await store.command(
+    { action: "save-account", account: account() },
+    pair.a.session,
+  );
+  return pair;
 }
 
 describe("shared budget", () => {
@@ -244,7 +256,7 @@ describe("shared budget", () => {
     }
   });
   test("new transactions use the logged-in member and edits preserve attribution", async () => {
-    const { a, b } = await couple();
+    const { a, b } = await householdReady();
     const t = transaction(b.snapshot.user!.id);
     await store.command(
       {
@@ -267,7 +279,7 @@ describe("shared budget", () => {
     expect(edited.createdBy).toBe(a.snapshot.user!.id);
   });
   test("stale edits fail and unrelated concurrent additions survive", async () => {
-    const { a, b } = await couple();
+    const { a, b } = await householdReady();
     await store.command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
@@ -300,7 +312,7 @@ describe("shared budget", () => {
     ).toBe(20000);
   });
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
-    const { a, b } = await couple();
+    const { a, b } = await householdReady();
     await store.command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
@@ -331,7 +343,7 @@ describe("shared budget", () => {
     ).rejects.toThrow("mudou");
   });
   test("couples are isolated and transaction attribution comes from the session", async () => {
-    const { a } = await couple();
+    const { a } = await householdReady();
     const c = await signup("Cris");
     await store.command({ action: "create" }, c.session);
     await store.command(
@@ -427,6 +439,10 @@ describe("shared budget", () => {
       );
       await disk.command({ action: "profile", name: "Ana" }, a.session);
       await disk.command({ action: "create" }, a.session);
+      await disk.command(
+        { action: "save-account", account: account() },
+        a.session,
+      );
       await disk.command(
         { action: "save", transaction: transaction(a.snapshot.user!.id) },
         a.session,
@@ -601,7 +617,7 @@ test("legacy household percentages migrate to both people once without changing 
 
 describe("monthly recurring transactions", () => {
   test("clamps month ends, persists for both members and edits only one occurrence", async () => {
-    const { a, b } = await couple();
+    const { a, b } = await householdReady();
     const original = {
       ...transaction(a.snapshot.user!.id),
       date: "2028-01-31",
@@ -642,7 +658,7 @@ describe("monthly recurring transactions", () => {
     );
   });
   test("rejects invalid counts and rolls back dates beyond supported range", async () => {
-    const { a } = await couple();
+    const { a } = await householdReady();
     const original = transaction(a.snapshot.user!.id);
     for (const occurrences of [0, -1, 1.5, 121, "12"]) {
       await expect(
@@ -669,7 +685,7 @@ describe("monthly recurring transactions", () => {
 });
 
 test("deletes only the selected series from its original occurrence onward and rejects stale batches", async () => {
-  const { a, b } = await couple();
+  const { a, b } = await householdReady();
   const original = transaction(a.snapshot.user!.id);
   await store.command(
     { action: "save", transaction: original, occurrences: 4 },
@@ -726,4 +742,121 @@ test("deletes only the selected series from its original occurrence onward and r
       .filter((item) => item.recurrenceId === series[0].recurrenceId)
       .map((item) => item.id),
   ).toEqual([series[0].id]);
+});
+
+describe("bank accounts", () => {
+  test("creates, edits and shares accounts with both members", async () => {
+    const { a, b } = await couple();
+    const created = await store.command(
+      { action: "save-account", account: account() },
+      a.session,
+    );
+    expect(created.snapshot.budget.accounts).toEqual([
+      { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
+    ]);
+    expect((await store.snapshot(b.session)).budget.accounts).toHaveLength(1);
+    const current = created.snapshot.budget.accounts[0];
+    await store.command(
+      { action: "save-account", account: { ...current, name: "Itaú" } },
+      b.session,
+    );
+    expect((await store.snapshot(a.session)).budget.accounts[0]?.name).toBe(
+      "Itaú",
+    );
+  });
+  test("stores an opening balance on the account", async () => {
+    const { a } = await couple();
+    const created = await store.command(
+      {
+        action: "save-account",
+        account: { ...account(), openingBalance: 250000 },
+      },
+      a.session,
+    );
+    expect(created.snapshot.budget.accounts[0]?.openingBalance).toBe(250000);
+    await expect(
+      store.command(
+        {
+          action: "save-account",
+          account: { ...account("bad"), openingBalance: -1 },
+        },
+        a.session,
+      ),
+    ).rejects.toThrow("conta");
+  });
+  test("requires an existing account on every transaction save", async () => {
+    const { a } = await couple();
+    await expect(
+      store.command(
+        { action: "save", transaction: transaction(a.snapshot.user!.id) },
+        a.session,
+      ),
+    ).rejects.toThrow("conta bancária");
+    await store.command(
+      { action: "save-account", account: account() },
+      a.session,
+    );
+    await expect(
+      store.command(
+        {
+          action: "save",
+          transaction: transaction(a.snapshot.user!.id, "missing"),
+        },
+        a.session,
+      ),
+    ).rejects.toThrow("conta bancária");
+    await store.command(
+      { action: "save", transaction: transaction(a.snapshot.user!.id) },
+      a.session,
+    );
+    expect((await store.snapshot(a.session)).budget.transactions[0]?.accountId).toBe(
+      "account-1",
+    );
+  });
+  test("rejects deleting an account still used by a transaction", async () => {
+    const { a } = await householdReady();
+    await store.command(
+      { action: "save", transaction: transaction(a.snapshot.user!.id) },
+      a.session,
+    );
+    await expect(
+      store.command(
+        { action: "delete-account", id: "account-1", revision: 1 },
+        a.session,
+      ),
+    ).rejects.toThrow("transações desta conta");
+    expect((await store.snapshot(a.session)).budget.accounts).toHaveLength(1);
+    await store.command(
+      { action: "delete", id: "transaction-1", revision: 1 },
+      a.session,
+    );
+    await store.command(
+      { action: "delete-account", id: "account-1", revision: 1 },
+      a.session,
+    );
+    expect((await store.snapshot(a.session)).budget.accounts).toHaveLength(0);
+  });
+  test("stale account edits fail and households stay isolated", async () => {
+    const { a, b } = await householdReady();
+    const old = (await store.snapshot(a.session)).budget.accounts[0];
+    await store.command(
+      { action: "save-account", account: { ...old, name: "Caixa" } },
+      b.session,
+    );
+    await expect(
+      store.command(
+        { action: "save-account", account: { ...old, name: "Bradesco" } },
+        a.session,
+      ),
+    ).rejects.toThrow("mudou");
+    const c = await signup("Cris");
+    await store.command({ action: "create" }, c.session);
+    await expect(
+      store.command(
+        { action: "delete-account", id: "account-1", revision: 2 },
+        c.session,
+      ),
+    ).rejects.toThrow("mudou");
+    expect((await store.snapshot(c.session)).budget.accounts).toHaveLength(0);
+  });
 });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { DEFAULT_PERCENTAGES } from "../constants";
 import type {
+  BankAccount,
   Transaction,
   GoalPercentages,
   SharedSnapshot,
@@ -13,6 +14,7 @@ const initial: SharedSnapshot = {
   household: null,
   budget: {
     transactions: [],
+    accounts: [],
     percentages: { ...DEFAULT_PERCENTAGES },
   },
 };
@@ -152,6 +154,14 @@ export function useBudget() {
         action: "undo-delete",
         id: transaction.id,
         revision: (transaction.revision ?? 0) + 1,
+      })),
+    saveAccount: async (account: BankAccount) =>
+      !!(await command({ action: "save-account", account })),
+    removeAccount: async (account: BankAccount) =>
+      !!(await command({
+        action: "delete-account",
+        id: account.id,
+        revision: account.revision ?? 0,
       })),
     savePercentages: async (percentages: GoalPercentages, revision: number) =>
       !!(await command({ action: "percentages", percentages, revision })),
