@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { Copy, X } from "lucide-react";
+import { useState } from "react";
+import { Copy } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/src/ui/dialog";
+import { FieldHint, FormError, FormStack, Note } from "@/src/ui/field";
 import styles from "@/features/budget/components/couple-dialog.module.css";
 
 export function CoupleDialog({
@@ -11,46 +18,26 @@ export function CoupleDialog({
   budget: BudgetController;
   onClose: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
-  useEffect(() => {
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.current?.showModal();
-    return () => {
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
   return (
-    <dialog
-      ref={dialog}
-      className={`${ui.dialog} ${ui.narrow}`}
-      aria-labelledby="couple-title"
-      onCancel={onClose}
-    >
-      <div className={ui.dialogContent}>
-        <header className={ui.dialogHeader}>
+    <Dialog labelledBy="couple-title" narrow onClose={onClose}>
+      <DialogContent>
+        <DialogHeader
+          onClose={onClose}
+          closeLabel="Fechar nosso espaço"
+        >
           <h2 id="couple-title">Nosso espaço</h2>
-          <button
-            className={ui.iconButton}
-            aria-label="Fechar nosso espaço"
-            onClick={onClose}
-          >
-            <X size={21} />
-          </button>
-        </header>
-        <p className={ui.intro}>
+        </DialogHeader>
+        <p className={styles.intro}>
           Tudo aqui é dos dois. Ambos podem ver e editar contas, transações,
           tags e percentuais.
         </p>
         <div className={styles.coupleMembers}>
           {budget.household?.members.map((member) => (
             <div className={styles.coupleMember} key={member.id}>
-              <span className={`${ui.avatar} ${styles.memberAvatar}`}>
+              <span className={styles.avatar}>
                 {member.name.slice(0, 1).toUpperCase()}
               </span>
               <strong>{member.name}</strong>
@@ -59,13 +46,12 @@ export function CoupleDialog({
           ))}
         </div>
         {budget.household?.members.length === 1 ? (
-          <div className={ui.accountForm}>
+          <FormStack>
             <p>
               Falta seu par. Gere um convite e compartilhe o link com essa
               pessoa.
             </p>
-            <button
-              className={ui.primaryButton}
+            <Button
               disabled={budget.busy}
               onClick={async () => {
                 const result = await budget.command({ action: "invite" });
@@ -79,7 +65,7 @@ export function CoupleDialog({
               }}
             >
               {link ? "Gerar novo convite" : "Gerar convite"}
-            </button>
+            </Button>
             {link && (
               <>
                 <label>
@@ -90,8 +76,8 @@ export function CoupleDialog({
                     onFocus={(event) => event.target.select()}
                   />
                 </label>
-                <button
-                  className={ui.secondaryButton}
+                <Button
+                  variant="secondary"
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(link);
@@ -104,15 +90,15 @@ export function CoupleDialog({
                 >
                   <Copy size={16} />
                   {copied ? "Link copiado" : "Copiar convite"}
-                </button>
-                <p className={ui.accountFootnote}>
+                </Button>
+                <FieldHint>
                   Expira em 48 horas. Um novo convite invalida o anterior.
-                </p>
+                </FieldHint>
                 {copyError && <p role="status">{copyError}</p>}
               </>
             )}
-            <button
-              className={ui.textButton}
+            <Button
+              variant="text"
               disabled={budget.busy}
               onClick={async () => {
                 if (await budget.command({ action: "revoke-invite" })) {
@@ -122,30 +108,25 @@ export function CoupleDialog({
               }}
             >
               Cancelar convites pendentes
-            </button>
+            </Button>
             {!link && copyError && <p role="status">{copyError}</p>}
-          </div>
+          </FormStack>
         ) : (
-          <p className={ui.invitationNote}>
-            Vocês dois já estão aqui. O espaço está completo.
-          </p>
+          <Note>Vocês dois já estão aqui. O espaço está completo.</Note>
         )}
-        {budget.error && (
-          <p role="alert" className={ui.formError}>
-            {budget.error}
-          </p>
-        )}
-        <footer className={`${ui.dialogFooter} ${styles.footer}`}>
-          <span className={ui.accountEmail}>{budget.user?.email}</span>
-          <button
-            className={`${ui.textButton} ${styles.logout}`}
+        {budget.error && <FormError>{budget.error}</FormError>}
+        <DialogFooter className={styles.footer}>
+          <span className={styles.email}>{budget.user?.email}</span>
+          <Button
+            variant="text"
+            className={styles.logout}
             disabled={budget.busy}
             onClick={() => budget.command({ action: "logout" })}
           >
             Sair da conta
-          </button>
-        </footer>
-      </div>
-    </dialog>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

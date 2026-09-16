@@ -3,6 +3,12 @@
   gap: 12px;
 }
 
+.intro {
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+
 .percentage-fields label {
   display: flex;
   align-items: center;

@@ -1,9 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { useState } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/src/ui/dialog";
+import { FormError } from "@/src/ui/field";
 import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
@@ -17,7 +23,6 @@ export function GoalPercentagesDialog({
   onSave: (values: GoalPercentages) => Promise<boolean>;
   onClose: () => void;
 }) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const [values, setValues] = useState(percentages);
   const [saving, setSaving] = useState(false);
   const valid = isGoalPercentages(values);
@@ -26,25 +31,10 @@ export function GoalPercentagesDialog({
       sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
     0,
   );
-  useEffect(() => {
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.current?.showModal();
-    return () => {
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
   return (
-    <dialog
-      ref={dialog}
-      className={`${ui.dialog} ${ui.narrow}`}
-      aria-labelledby="percentages-title"
-      onCancel={onClose}
-    >
-      <form
-        className={ui.dialogContent}
+    <Dialog labelledBy="percentages-title" narrow onClose={onClose}>
+      <DialogContent
+        as="form"
         onSubmit={async (event) => {
           event.preventDefault();
           if (!valid || saving) return;
@@ -53,18 +43,10 @@ export function GoalPercentagesDialog({
           setSaving(false);
         }}
       >
-        <header className={ui.dialogHeader}>
+        <DialogHeader onClose={onClose} closeLabel="Fechar percentuais">
           <h2 id="percentages-title">Divisão da minha renda</h2>
-          <button
-            type="button"
-            className={ui.iconButton}
-            aria-label="Fechar percentuais"
-            onClick={onClose}
-          >
-            <X size={21} />
-          </button>
-        </header>
-        <p className={ui.intro}>
+        </DialogHeader>
+        <p className={styles.intro}>
           Defina a porcentagem da sua renda destinada a cada meta. A soma deve
           ser 100% e vale para todos os meses. Cada pessoa define seus próprios
           percentuais.
@@ -103,25 +85,19 @@ export function GoalPercentagesDialog({
           Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%
           {!valid && " · Ajuste os percentuais para somar 100%."}
         </p>
-        {error && (
-          <p role="alert" className={ui.formError}>
-            {error}
-          </p>
-        )}
-        <footer className={ui.dialogFooter}>
-          <button
+        {error && <FormError>{error}</FormError>}
+        <DialogFooter>
+          <Button
             type="button"
-            className={ui.textButton}
+            variant="text"
             disabled={saving}
             onClick={() => setValues({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
-          </button>
-          <button className={ui.primaryButton} disabled={!valid || saving}>
-            Salvar percentuais
-          </button>
-        </footer>
-      </form>
-    </dialog>
+          </Button>
+          <Button disabled={!valid || saving}>Salvar percentuais</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

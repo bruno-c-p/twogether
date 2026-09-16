@@ -1,4 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from "react";
 import {
   ArrowDownLeft,
   ArrowUpRight,
@@ -21,7 +27,22 @@ import type {
   Member,
 } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/src/ui/dialog";
+import {
+  AmountField,
+  Field,
+  FieldHint,
+  FieldRow,
+  Fieldset,
+  FormError,
+  Optional,
+} from "@/src/ui/field";
 import styles from "@/features/budget/components/transaction-dialog.module.css";
 
 interface Props {
@@ -47,7 +68,6 @@ export function TransactionDialog({
   onSave,
   onClose,
 }: Props) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const amountInput = useRef<HTMLInputElement>(null);
   const [kind, setKind] = useState<TransactionKind>(
     transaction?.kind ?? "expense",
@@ -65,16 +85,7 @@ export function TransactionDialog({
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
     amountInput.current?.focus();
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = "";
-      if (previous instanceof HTMLElement) previous.focus();
-    };
   }, []);
 
   useEffect(() => {
@@ -89,7 +100,7 @@ export function TransactionDialog({
     setTagInput("");
   }
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
     const form = new FormData(event.currentTarget);
@@ -154,28 +165,22 @@ export function TransactionDialog({
   }
 
   return (
-    <dialog
-      ref={dialog}
-      className={`${ui.dialog} ${styles.dialog}`}
-      aria-labelledby="dialog-title"
-      onCancel={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <Dialog
+      className={styles.dialog}
+      labelledBy="dialog-title"
+      onClose={onClose}
+      closeOnBackdrop
     >
-      <div className={ui.dialogContent}>
-        <header className={ui.dialogHeader}>
+      <DialogContent>
+        <DialogHeader onClose={onClose}>
           <div>
             <h2 id="dialog-title">
               {transaction ? "Editar transação" : "Nova transação"}
             </h2>
           </div>
-          <button className={ui.iconButton} aria-label="Fechar" onClick={onClose}>
-            <X size={22} />
-          </button>
-        </header>
+        </DialogHeader>
         <form onSubmit={submit}>
-          <fieldset className={ui.transactionFields} disabled={saving}>
+          <Fieldset disabled={saving}>
             <div className={styles.kindToggle} aria-label="Tipo da transação">
               <button
                 type="button"
@@ -197,11 +202,7 @@ export function TransactionDialog({
                 <ArrowDownLeft size={17} /> Receita
               </button>
             </div>
-            <label className={ui.amountLabel} htmlFor="amount">
-              Valor
-            </label>
-            <div className={ui.amountInput}>
-              <span>R$</span>
+            <AmountField label="Valor" htmlFor="amount">
               <input
                 id="amount"
                 ref={amountInput}
@@ -218,8 +219,8 @@ export function TransactionDialog({
                 }
                 aria-describedby={error ? "form-error" : undefined}
               />
-            </div>
-            <div className={ui.formRow}>
+            </AmountField>
+            <FieldRow>
               <label>
                 Descrição
                 <input
@@ -241,8 +242,8 @@ export function TransactionDialog({
                   required
                 />
               </label>
-            </div>
-            <label className={ui.accountField}>
+            </FieldRow>
+            <Field>
               Conta
               <select
                 name="accountId"
@@ -261,7 +262,7 @@ export function TransactionDialog({
                   </option>
                 ))}
               </select>
-            </label>
+            </Field>
             {!transaction && (
               <section
                 className={styles.recurrencePanel}
@@ -325,7 +326,7 @@ export function TransactionDialog({
                         {
                           "--goal-color": item.color,
                           "--goal-bg": item.background,
-                        } as React.CSSProperties
+                        } as CSSProperties
                       }
                       aria-pressed={goal === item.id}
                       onClick={() => setGoal(item.id)}
@@ -339,7 +340,7 @@ export function TransactionDialog({
               </fieldset>
             )}
             <label htmlFor="tag-input">
-              Tags <span className={ui.optional}>opcional · até 8</span>
+              Tags <Optional>opcional · até 8</Optional>
             </label>
             <div className={styles.tagInputWrapper}>
               <span>#</span>
@@ -357,29 +358,29 @@ export function TransactionDialog({
                   }
                 }}
               />
-              <button
+              <Button
                 type="button"
-                className={ui.iconButton}
+                variant="icon"
                 aria-label="Adicionar tag"
                 disabled={!tagInput.trim() || tags.length >= 8}
                 onClick={() => addTag(tagInput)}
               >
                 <Plus size={18} />
-              </button>
+              </Button>
             </div>
             {!!tags.length && (
               <div className={styles.selectedTags}>
                 {tags.map((tag) => (
-                  <button
+                  <Button
                     key={tag}
                     type="button"
-                    className={ui.tag}
+                    variant="tag"
                     aria-label={`Remover tag ${tag}`}
                     onClick={() => setTags(tags.filter((t) => t !== tag))}
                   >
                     #{tag}
                     <X size={12} />
-                  </button>
+                  </Button>
                 ))}
               </div>
             )}
@@ -401,18 +402,10 @@ export function TransactionDialog({
                     ))}
                 </div>
               )}
-            {error && (
-              <p id="form-error" role="alert" className={ui.formError}>
-                {error}
-              </p>
-            )}
-            {serverError && (
-              <p role="alert" className={ui.formError}>
-                {serverError}
-              </p>
-            )}
+            {error && <FormError id="form-error">{error}</FormError>}
+            {serverError && <FormError>{serverError}</FormError>}
             {transaction?.updatedBy && (
-              <p className={ui.accountFootnote}>
+              <FieldHint>
                 Registrado por{" "}
                 {members.find((member) => member.id === transaction.createdBy)
                   ?.name ?? "uma pessoa do casal"}
@@ -420,24 +413,24 @@ export function TransactionDialog({
                 {members.find((member) => member.id === transaction.updatedBy)
                   ?.name ?? "uma pessoa do casal"}
                 .
-              </p>
+              </FieldHint>
             )}
-            <footer className={ui.dialogFooter}>
-              <button type="button" className={ui.textButton} onClick={onClose}>
+            <DialogFooter>
+              <Button type="button" variant="text" onClick={onClose}>
                 Cancelar
-              </button>
-              <button type="submit" className={ui.primaryButton}>
+              </Button>
+              <Button type="submit">
                 <Check size={17} />
                 {saving
                   ? "Salvando…"
                   : transaction
                     ? "Salvar alterações"
                     : "Adicionar transação"}
-              </button>
-            </footer>
-          </fieldset>
+              </Button>
+            </DialogFooter>
+          </Fieldset>
         </form>
-      </div>
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

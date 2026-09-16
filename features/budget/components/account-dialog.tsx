@@ -1,6 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Check, X } from "lucide-react";
-import ui from "@/src/ui.module.css";
+import { useEffect, useRef, useState, type FormEvent } from "react";
+import { Check } from "lucide-react";
+import { Button } from "@/src/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/src/ui/dialog";
+import {
+  AmountField,
+  Field,
+  FieldHint,
+  Fieldset,
+  FormError,
+} from "@/src/ui/field";
 import { formatAmountInput, parseBalance } from "@/features/budget/services/budget";
 import type { BankAccount } from "@/features/budget/types";
 
@@ -17,7 +30,6 @@ export function AccountDialog({
   onSave,
   onClose,
 }: Props) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const amountInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -26,24 +38,12 @@ export function AccountDialog({
   );
 
   useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = "";
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
-
-  useEffect(() => {
     const input = amountInput.current;
     if (!input) return;
     input.setSelectionRange(input.value.length, input.value.length);
   }, [openingValue]);
 
-  async function submit(event: React.FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
     const name = String(
@@ -73,29 +73,22 @@ export function AccountDialog({
   }
 
   return (
-    <dialog
-      ref={dialog}
-      className={ui.dialog}
-      aria-labelledby="account-dialog-title"
-      onCancel={onClose}
-      onClick={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
+    <Dialog
+      labelledBy="account-dialog-title"
+      onClose={onClose}
+      closeOnBackdrop
     >
-      <div className={ui.dialogContent}>
-        <header className={ui.dialogHeader}>
+      <DialogContent>
+        <DialogHeader onClose={onClose}>
           <div>
             <h2 id="account-dialog-title">
               {account ? "Editar conta" : "Nova conta"}
             </h2>
           </div>
-          <button className={ui.iconButton} aria-label="Fechar" onClick={onClose}>
-            <X size={22} />
-          </button>
-        </header>
+        </DialogHeader>
         <form onSubmit={submit}>
-          <fieldset className={ui.transactionFields} disabled={saving}>
-            <label className={ui.accountField}>
+          <Fieldset disabled={saving}>
+            <Field>
               Nome da conta
               <input
                 name="name"
@@ -105,12 +98,8 @@ export function AccountDialog({
                 defaultValue={account?.name}
                 required
               />
-            </label>
-            <label className={ui.amountLabel} htmlFor="opening-balance">
-              Saldo inicial
-            </label>
-            <div className={ui.amountInput}>
-              <span>R$</span>
+            </Field>
+            <AmountField label="Saldo inicial" htmlFor="opening-balance">
               <input
                 id="opening-balance"
                 ref={amountInput}
@@ -126,37 +115,29 @@ export function AccountDialog({
                 }
                 aria-describedby={error ? "form-error" : undefined}
               />
-            </div>
-            <p className={ui.accountFootnote}>
+            </AmountField>
+            <FieldHint>
               O saldo da conta soma este valor com as receitas e subtrai as
               despesas.
-            </p>
-            {error && (
-              <p id="form-error" role="alert" className={ui.formError}>
-                {error}
-              </p>
-            )}
-            {serverError && (
-              <p role="alert" className={ui.formError}>
-                {serverError}
-              </p>
-            )}
-            <footer className={ui.dialogFooter}>
-              <button type="button" className={ui.textButton} onClick={onClose}>
+            </FieldHint>
+            {error && <FormError id="form-error">{error}</FormError>}
+            {serverError && <FormError>{serverError}</FormError>}
+            <DialogFooter>
+              <Button type="button" variant="text" onClick={onClose}>
                 Cancelar
-              </button>
-              <button type="submit" className={ui.primaryButton}>
+              </Button>
+              <Button type="submit">
                 <Check size={17} />
                 {saving
                   ? "Salvando…"
                   : account
                     ? "Salvar alterações"
                     : "Adicionar conta"}
-              </button>
-            </footer>
-          </fieldset>
+              </Button>
+            </DialogFooter>
+          </Fieldset>
         </form>
-      </div>
-    </dialog>
+      </DialogContent>
+    </Dialog>
   );
 }

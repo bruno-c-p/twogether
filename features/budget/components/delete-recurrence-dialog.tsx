@@ -1,7 +1,14 @@
-import { useEffect, useRef, useState } from "react";
-import { Trash2, X } from "lucide-react";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import type { Transaction } from "@/features/budget/types";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+} from "@/src/ui/dialog";
+import { Fieldset, FormError } from "@/src/ui/field";
 import styles from "@/features/budget/components/delete-recurrence-dialog.module.css";
 
 interface Props {
@@ -21,45 +28,23 @@ export function DeleteRecurrenceDialog({
   onClose,
   onDelete,
 }: Props) {
-  const dialog = useRef<HTMLDialogElement>(null);
   const [following, setFollowing] = useState(false);
-  useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
   return (
-    <dialog
-      ref={dialog}
-      className={`${ui.dialog} ${styles.deleteDialog}`}
-      aria-labelledby="delete-title"
+    <Dialog
+      className={styles.deleteDialog}
+      labelledBy="delete-title"
+      onClose={onClose}
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onClose();
       }}
     >
-      <div className={ui.dialogContent}>
-        <header className={ui.dialogHeader}>
+      <DialogContent>
+        <DialogHeader onClose={onClose} closeDisabled={busy}>
           <h2 id="delete-title">Excluir transação</h2>
-          <button
-            type="button"
-            className={ui.iconButton}
-            aria-label="Fechar"
-            disabled={busy}
-            onClick={onClose}
-          >
-            <X size={22} />
-          </button>
-        </header>
+        </DialogHeader>
         <p className={styles.deleteDescription}>{transaction.description}</p>
-        <fieldset className={ui.transactionFields} disabled={busy}>
+        <Fieldset disabled={busy}>
           <fieldset className={styles.deleteOptions}>
             <legend>O que você deseja excluir?</legend>
             <label
@@ -98,18 +83,14 @@ export function DeleteRecurrenceDialog({
               As anteriores serão mantidas. Esta exclusão não pode ser desfeita.
             </p>
           )}
-          {error && (
-            <p role="alert" className={ui.formError}>
-              {error}
-            </p>
-          )}
-          <footer className={ui.dialogFooter}>
-            <button type="button" className={ui.textButton} onClick={onClose}>
+          {error && <FormError>{error}</FormError>}
+          <DialogFooter>
+            <Button type="button" variant="text" onClick={onClose}>
               Cancelar
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
-              className={`${ui.primaryButton} ${styles.deleteConfirm}`}
+              className={styles.deleteConfirm}
               onClick={() => void onDelete(following)}
             >
               <Trash2 size={16} />
@@ -118,10 +99,10 @@ export function DeleteRecurrenceDialog({
                 : following
                   ? `Excluir ${count} transações`
                   : "Excluir transação"}
-            </button>
-          </footer>
-        </fieldset>
-      </div>
-    </dialog>
+            </Button>
+          </DialogFooter>
+        </Fieldset>
+      </DialogContent>
+    </Dialog>
   );
 }
