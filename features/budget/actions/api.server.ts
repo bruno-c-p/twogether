@@ -50,9 +50,15 @@ export async function handleBudgetRequest(
       }
       chunks.push(value);
     }
+    const bytes = new Uint8Array(size);
+    let offset = 0;
+    for (const chunk of chunks) {
+      bytes.set(chunk, offset);
+      offset += chunk.length;
+    }
     let input: unknown;
     try {
-      input = JSON.parse(Buffer.concat(chunks).toString("utf8"));
+      input = JSON.parse(new TextDecoder().decode(bytes));
     } catch {
       throw new RequestError("Requisição inválida.");
     }
