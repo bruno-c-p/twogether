@@ -3,6 +3,8 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/types";
+import ui from "@/src/ui.module.css";
+import styles from "@/features/budget/components/expense-charts.module.css";
 
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const compactMoney = new Intl.NumberFormat("pt-BR", {
@@ -45,15 +47,15 @@ export function ExpenseCharts({
   });
   return (
     <section
-      className="overview-grid expense-charts"
+      className={`${ui.overviewGrid} ${styles.expenseCharts}`}
       aria-label="Gráficos de despesas do mês"
     >
-      <article className="expense-chart-card">
+      <article className={styles.expenseChartCard}>
         <h2>Saídas por dia</h2>
-        <p className="expense-chart-caption">
+        <p className={styles.expenseChartCaption}>
           {monthLabel} · quanto saiu em cada dia (R$)
         </p>
-        <div className="expense-calendar-summary">
+        <div className={styles.expenseCalendarSummary}>
           <strong>{display(total)}</strong>
           <span>
             {hidden
@@ -61,9 +63,9 @@ export function ExpenseCharts({
               : `em ${activeDays} ${activeDays === 1 ? "dia com saída" : "dias com saída"}`}
           </span>
         </div>
-        <div className="expense-calendar">
+        <div className={styles.expenseCalendar}>
           {weekdays.map((day) => (
-            <span className="expense-weekday" key={day}>
+            <span className={styles.expenseWeekday} key={day}>
               {day}
             </span>
           ))}
@@ -73,7 +75,7 @@ export function ExpenseCharts({
           {days.map((amount, index) => (
             <div
               key={index}
-              className="expense-day"
+              className={styles.expenseDay}
               data-intense={!hidden && amount / max > 0.6}
               style={
                 {
@@ -94,7 +96,7 @@ export function ExpenseCharts({
             </div>
           ))}
         </div>
-        <div className="expense-heat-legend">
+        <div className={styles.expenseHeatLegend}>
           <span>
             {!hidden && total === 0 ? "Nenhuma despesa neste mês" : "Menos"}
           </span>
@@ -104,12 +106,12 @@ export function ExpenseCharts({
           <span>Mais</span>
         </div>
       </article>
-      <article className="expense-chart-card">
+      <article className={styles.expenseChartCard}>
         <h2>Despesas por tag</h2>
-        <p className="expense-chart-caption">
+        <p className={styles.expenseChartCaption}>
           Como os gastos se dividem no mês
         </p>
-        <div className="expense-tag-donut">
+        <div className={styles.expenseTagDonut}>
           <svg
             viewBox="0 0 200 200"
             role="img"
@@ -152,14 +154,14 @@ export function ExpenseCharts({
           </div>
         </div>
         {segments.length ? (
-          <ul className="expense-tag-list">
+          <ul className={styles.expenseTagList}>
             {segments.map((tag) => (
               <li key={JSON.stringify(tag.name)}>
-                <span className="color-dot" style={{ background: tag.color }} />
-                <span className="expense-tag-name">
+                <span className={ui.colorDot} style={{ background: tag.color }} />
+                <span className={styles.expenseTagName}>
                   {tag.name ?? "Sem tags"}
                 </span>
-                <span className="expense-tag-track" aria-hidden="true">
+                <span className={styles.expenseTagTrack} aria-hidden="true">
                   <i
                     style={{
                       width: hidden ? "0%" : `${tag.share}%`,
@@ -177,14 +179,14 @@ export function ExpenseCharts({
             ))}
           </ul>
         ) : (
-          <p className="expense-chart-empty">
+          <p className={styles.expenseChartEmpty}>
             Adicione uma despesa para ver a distribuição por tag.
           </p>
         )}
         {transactions.some(
           (t) => t.kind === "expense" && t.tags.length > 1,
         ) && (
-          <p className="expense-chart-caption expense-tag-note">
+          <p className={`${styles.expenseChartCaption} ${styles.expenseTagNote}`}>
             Despesas com várias tags têm o valor dividido entre elas.
           </p>
         )}

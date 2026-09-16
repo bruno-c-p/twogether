@@ -10,6 +10,8 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
+import ui from "@/src/ui.module.css";
+import styles from "@/features/budget/components/transaction-list.module.css";
 
 interface Props {
   transactions: Transaction[];
@@ -67,25 +69,25 @@ export function TransactionList(props: Props) {
     !!query || goalFilter !== "all" || !!tagFilter || kindFilter !== "all";
   return (
     <section
-      className="transactions-panel"
+      className={ui.panel}
       aria-labelledby="transactions-title"
     >
-      <div className="section-heading">
+      <div className={ui.sectionHeading}>
         <div>
           <h2 id="transactions-title">
             {compact ? "Últimas transações" : "Transações do mês"}
-            <span className="count-badge">{transactions.length}</span>
+            <span className={ui.countBadge}>{transactions.length}</span>
           </h2>
           <p>Entradas e despesas registradas no mês.</p>
         </div>
         {compact && (
-          <button className="text-button see-all" onClick={onViewAll}>
+          <button className={`${ui.textButton} ${styles.seeAll}`} onClick={onViewAll}>
             Ver todas <ArrowUpRight size={17} />
           </button>
         )}
       </div>
-      <div className="transaction-toolbar">
-        <div className="search-field">
+      <div className={styles.transactionToolbar}>
+        <div className={styles.searchField}>
           <Search size={18} />
           <input
             aria-label="Buscar transações"
@@ -95,7 +97,7 @@ export function TransactionList(props: Props) {
           />
           {query && (
             <button
-              className="icon-button"
+              className={ui.iconButton}
               onClick={() => onQuery("")}
               aria-label="Limpar busca"
             >
@@ -103,7 +105,7 @@ export function TransactionList(props: Props) {
             </button>
           )}
         </div>
-        <div className="filter-selects">
+        <div className={styles.filterSelects}>
           <select
             aria-label="Filtrar por meta"
             value={goalFilter}
@@ -131,31 +133,31 @@ export function TransactionList(props: Props) {
         </div>
       </div>
       {tagFilter && (
-        <div className="active-tag-filter">
+        <div className={styles.activeTagFilter}>
           <span>Filtrando por</span>
-          <button className="tag" onClick={() => onTag("")}>
+          <button className={ui.tag} onClick={() => onTag("")}>
             #{tagFilter}
             <X size={13} />
           </button>
         </div>
       )}
       {shown.length ? (
-        <div className="transaction-table">
-          <div className="table-head">
+        <div className={styles.transactionTable}>
+          <div className={styles.tableHead}>
             <span>TRANSAÇÃO</span>
             <span>META</span>
             <span>DATA</span>
             <span>VALOR</span>
-            <span className="sr-only">Ações</span>
+            <span className={ui.srOnly}>Ações</span>
           </div>
           {shown.map((t) => {
             const goal = GOALS.find((g) => g.id === t.goal);
             const date = new Date(`${t.date}T12:00:00`);
             return (
-              <div className="transaction-row" key={t.id}>
-                <div className="transaction-description">
+              <div className={styles.transactionRow} key={t.id}>
+                <div className={styles.transactionDescription}>
                   <span
-                    className={`transaction-icon ${t.kind === "income" ? "income-icon" : ""}`}
+                    className={`${styles.transactionIcon} ${t.kind === "income" ? styles.incomeIcon : ""}`}
                     style={
                       goal
                         ? { background: goal.background, color: goal.color }
@@ -172,13 +174,13 @@ export function TransactionList(props: Props) {
                   </span>
                   <div>
                     <button
-                      className="transaction-name"
+                      className={styles.transactionName}
                       disabled={props.busy}
                       onClick={() => onEdit(t)}
                     >
                       {t.description}
                     </button>
-                    <div className="transaction-person">
+                    <div className={styles.transactionPerson}>
                       {props.members.find((member) => member.id === t.memberId)
                         ?.name ?? "Pessoa do casal"}
                       {" · "}
@@ -186,7 +188,7 @@ export function TransactionList(props: Props) {
                         (account) => account.id === t.accountId,
                       )?.name ?? "Sem conta"}
                     </div>
-                    <div className="row-tags">
+                    <div className={styles.rowTags}>
                       {t.tags.length ? (
                         t.tags.map((tag) => (
                           <button key={tag} onClick={() => onTag(tag)}>
@@ -199,23 +201,23 @@ export function TransactionList(props: Props) {
                     </div>
                   </div>
                 </div>
-                <div className="transaction-goal">
+                <div className={styles.transactionGoal}>
                   {goal ? (
                     <span
-                      className="goal-badge"
+                      className={styles.goalBadge}
                       style={{ background: goal.background, color: goal.color }}
                     >
                       <span
-                        className="color-dot"
+                        className={ui.colorDot}
                         style={{ background: goal.color }}
                       />
                       {goal.name}
                     </span>
                   ) : (
-                    <span className="income-label">Receita</span>
+                    <span className={styles.incomeLabel}>Receita</span>
                   )}
                 </div>
-                <time className="transaction-date" dateTime={t.date}>
+                <time className={styles.transactionDate} dateTime={t.date}>
                   {new Intl.DateTimeFormat("pt-BR", {
                     day: "2-digit",
                     month: "short",
@@ -225,15 +227,15 @@ export function TransactionList(props: Props) {
                     .replace(".", "")}
                 </time>
                 <span
-                  className={`transaction-value ${t.kind === "income" ? "positive" : "negative"}`}
+                  className={`${styles.transactionValue} ${t.kind === "income" ? styles.positive : styles.negative}`}
                 >
                   {hidden
                     ? "R$ ••••"
                     : `${t.kind === "income" ? "+" : "−"} ${money(t.amount)}`}
                 </span>
-                <div className="row-actions">
+                <div className={styles.rowActions}>
                   <button
-                    className="icon-button"
+                    className={`${ui.iconButton} ${styles.actionButton}`}
                     disabled={props.busy}
                     aria-label={`Editar ${t.description}`}
                     onClick={() => onEdit(t)}
@@ -241,7 +243,7 @@ export function TransactionList(props: Props) {
                     <Pencil size={15} />
                   </button>
                   <button
-                    className="icon-button delete-button"
+                    className={`${ui.iconButton} ${styles.actionButton} ${styles.deleteButton}`}
                     disabled={props.busy}
                     aria-label={`Excluir ${t.description}`}
                     onClick={() => onDelete(t)}
@@ -254,8 +256,8 @@ export function TransactionList(props: Props) {
           })}
         </div>
       ) : (
-        <div className="empty-state">
-          <div className="empty-icon">
+        <div className={ui.emptyState}>
+          <div className={ui.emptyIcon}>
             <Search size={25} strokeWidth={1.5} />
           </div>
           <h3>
@@ -270,7 +272,7 @@ export function TransactionList(props: Props) {
           </p>
           {activeFilters ? (
             <button
-              className="secondary-button"
+              className={ui.secondaryButton}
               onClick={() => {
                 onQuery("");
                 onGoal("all");
@@ -281,14 +283,14 @@ export function TransactionList(props: Props) {
               Limpar filtros
             </button>
           ) : (
-            <button className="primary-button" onClick={onAdd}>
+            <button className={ui.primaryButton} onClick={onAdd}>
               Adicionar primeira transação
             </button>
           )}
         </div>
       )}
       {shown.length > 0 && (
-        <div className="table-footer">
+        <div className={styles.tableFooter}>
           <span>
             {compact && filtered.length > shown.length
               ? `${shown.length} de ${filtered.length} transações neste mês`

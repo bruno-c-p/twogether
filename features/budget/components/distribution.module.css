@@ -1,0 +1,222 @@
+.distribution {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 24px 25px;
+}
+
+.distribution h3 {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.4px;
+  font-size: 17px;
+  margin-top: 8px;
+}
+
+.distribution-body {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  margin-top: 13px;
+}
+
+.donut {
+  width: 137px;
+  height: 137px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.donut svg {
+  width: 100%;
+  height: 100%;
+}
+
+.donut-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.donut-flower {
+  font-size: 34px;
+  line-height: 1;
+  color: var(--text-muted);
+}
+
+.donut-center > span:last-child {
+  font-size: 8px;
+  color: var(--text-muted);
+}
+
+.chart-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.chart-legend > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chart-legend strong {
+  font-weight: 500;
+  font-size: 10px;
+  margin-left: auto;
+  padding-left: 5px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.chart-legend > div {
+  color: var(--text);
+}
+
+@media (min-width: 1450px) {
+  .distribution {
+    padding: 28px 30px;
+  }
+  
+  .distribution-body {
+    gap: 30px;
+  }
+  
+  .donut {
+    width: 152px;
+      height: 152px;
+  }
+  
+  .chart-legend > div {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1190px) {
+  .distribution {
+    padding: 20px;
+  }
+  
+  .distribution-body {
+    gap: 12px;
+  }
+  
+  .donut {
+    width: 112px;
+      height: 112px;
+  }
+  
+  .chart-legend > div {
+    font-size: 10px;
+  }
+  
+  .chart-legend {
+    gap: 12px;
+  }
+  
+  .distribution h3 {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 800px) {
+  .distribution {
+    padding: 20px 17px;
+  }
+  
+  .distribution h3 {
+    font-size: 14px;
+  }
+  
+  .distribution-body {
+    gap: 10px;
+  }
+  
+  .donut {
+    width: 95px;
+      height: 95px;
+  }
+  
+  .chart-legend > div {
+    font-size: 9px;
+      gap: 4px;
+  }
+  
+  .chart-legend strong {
+    font-size: 9px;
+  }
+  
+  .chart-legend {
+    gap: 11px;
+  }
+  
+  .donut-center > span:last-child {
+    font-size: 7px;
+  }
+  
+  .donut-flower {
+    font-size: 26px;
+  }
+}
+
+@media (max-width: 620px) {
+  .distribution {
+    padding: 21px 23px;
+  }
+  
+  .distribution-heading > span {
+    font-size: 8px;
+  }
+  
+  .distribution h3 {
+    font-size: 17px;
+      margin-top: 7px;
+  }
+  
+  .distribution-body {
+    margin-top: 13px;
+      gap: 24px;
+  }
+  
+  .donut {
+    width: 123px;
+      height: 123px;
+  }
+  
+  .donut-flower {
+    font-size: 31px;
+  }
+  
+  .donut-center > span:last-child {
+    font-size: 8px;
+  }
+  
+  .chart-legend > div {
+    font-size: 10px;
+      gap: 7px;
+  }
+  
+  .chart-legend strong {
+    font-size: 10px;
+  }
+  
+  .chart-legend {
+    gap: 13px;
+  }
+}
+
+@media (max-width: 360px) {
+  .distribution-body {
+    flex-wrap: wrap;
+      justify-content: center;
+  }
+}

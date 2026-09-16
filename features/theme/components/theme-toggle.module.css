@@ -1,0 +1,34 @@
+.theme-toggle {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.theme-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.theme-toggle button:hover {
+  background: var(--surface-soft);
+}
+
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--surface-soft);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--border);
+}

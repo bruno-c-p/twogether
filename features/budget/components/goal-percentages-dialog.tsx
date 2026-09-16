@@ -3,6 +3,8 @@ import { X } from "lucide-react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
+import ui from "@/src/ui.module.css";
+import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
   percentages,
@@ -37,12 +39,12 @@ export function GoalPercentagesDialog({
   return (
     <dialog
       ref={dialog}
-      className="help-dialog"
+      className={`${ui.dialog} ${ui.narrow}`}
       aria-labelledby="percentages-title"
       onCancel={onClose}
     >
       <form
-        className="dialog-content"
+        className={ui.dialogContent}
         onSubmit={async (event) => {
           event.preventDefault();
           if (!valid || saving) return;
@@ -51,23 +53,23 @@ export function GoalPercentagesDialog({
           setSaving(false);
         }}
       >
-        <header className="dialog-header">
+        <header className={ui.dialogHeader}>
           <h2 id="percentages-title">Divisão da minha renda</h2>
           <button
             type="button"
-            className="icon-button"
+            className={ui.iconButton}
             aria-label="Fechar percentuais"
             onClick={onClose}
           >
             <X size={21} />
           </button>
         </header>
-        <p className="percentage-intro">
+        <p className={ui.intro}>
           Defina a porcentagem da sua renda destinada a cada meta. A soma deve
           ser 100% e vale para todos os meses. Cada pessoa define seus próprios
           percentuais.
         </p>
-        <div className="percentage-fields">
+        <div className={styles.percentageFields}>
           {GOALS.map((goal) => (
             <label key={goal.id} htmlFor={`percentage-${goal.id}`}>
               <span>{goal.name}</span>
@@ -95,27 +97,27 @@ export function GoalPercentagesDialog({
           ))}
         </div>
         <p
-          className={`percentage-total ${valid ? "" : "invalid"}`}
+          className={`${styles.percentageTotal} ${valid ? "" : styles.invalid}`}
           role="status"
         >
           Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%
           {!valid && " · Ajuste os percentuais para somar 100%."}
         </p>
         {error && (
-          <p role="alert" className="form-error">
+          <p role="alert" className={ui.formError}>
             {error}
           </p>
         )}
-        <footer className="dialog-footer">
+        <footer className={ui.dialogFooter}>
           <button
             type="button"
-            className="text-button"
+            className={ui.textButton}
             disabled={saving}
             onClick={() => setValues({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
           </button>
-          <button className="primary-button" disabled={!valid || saving}>
+          <button className={ui.primaryButton} disabled={!valid || saving}>
             Salvar percentuais
           </button>
         </footer>
