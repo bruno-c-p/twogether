@@ -1,3 +1,8 @@
+// Deliberately a single hand-rolled endpoint instead of one createServerFn
+// per action: every command shares the same pipeline (origin check, streaming
+// body cap, session cookie rotation, full-snapshot response), which server
+// functions would force into per-action wrappers. The tradeoff is losing
+// wire-level type safety, so all input is validated in the store.
 import { RequestError, type BudgetStore } from "../services/shared.server";
 import {
   getBudgetStore,
