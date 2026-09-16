@@ -1,6 +1,6 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -42,6 +42,7 @@ import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
+import { withView } from "@/features/budget/search";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },
@@ -269,26 +270,32 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
-        <a className={`${ui.brand} ${styles.sidebarBrand}`} href="/" aria-label="twogether — início">
+        <Link
+          to="/"
+          className={`${ui.brand} ${styles.sidebarBrand}`}
+          aria-label="twogether — início"
+        >
           <span className={ui.brandMark}>
             <span />
             <span />
           </span>
           twogether<span className={ui.brandPeriod}>.</span>
-        </a>
+        </Link>
         <nav className={styles.desktopNavigation} aria-label="Navegação principal">
           {navigation.map((item) => (
-            <button
+            <Link
               key={item.id}
+              to="/"
+              search={(prev) => withView(prev, item.id)}
               className={`${styles.navItem} ${view === item.id ? styles.active : ""}`}
               aria-label={item.label}
               aria-current={view === item.id ? "page" : undefined}
-              onClick={() => navigate(item.id)}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             >
               <item.icon size={19} strokeWidth={1.7} />
               <span>{item.label}</span>
               {view === item.id && <span className={styles.navActiveDot} />}
-            </button>
+            </Link>
           ))}
         </nav>
       </aside>
@@ -299,13 +306,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {navigation.find((item) => item.id === view)?.label}
             </strong>
           </div>
-          <a className={`${ui.brand} ${styles.mobileBrand}`} href="/">
+          <Link to="/" className={`${ui.brand} ${styles.mobileBrand}`}>
             <span className={`${ui.brandMark} ${styles.mobileMark}`}>
               <span />
               <span />
             </span>
             twogether.
-          </a>
+          </Link>
           <div className={styles.topbarRight}>
             <ThemeToggle className={styles.topbarTheme} />
             <button
@@ -646,15 +653,17 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       </div>
       <nav className={styles.mobileNavigation} aria-label="Navegação mobile">
         {navigation.map((item) => (
-          <button
+          <Link
             key={item.id}
+            to="/"
+            search={(prev) => withView(prev, item.id)}
             className={view === item.id ? styles.active : ""}
             aria-current={view === item.id ? "page" : undefined}
-            onClick={() => navigate(item.id)}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <item.icon size={21} strokeWidth={1.7} />
             <span>{item.label}</span>
-          </button>
+          </Link>
         ))}
       </nav>
       {editingPercentages !== null && (
