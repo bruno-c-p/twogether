@@ -11,6 +11,7 @@ import ui from "@/src/ui.module.css";
 
 export const Route = createRootRoute({
   errorComponent: RouteError,
+  headers: () => ({ "Cache-Control": "private, no-store" }),
   head: () => ({
     meta: [
       { charSet: "utf-8" },

@@ -82,6 +82,5 @@ export type BudgetCommand =
   | { action: "delete-account"; id: string; revision: number }
   | { action: "percentages"; percentages: GoalPercentages; revision: number };
 export interface CommandResult {
-  snapshot: SharedSnapshot;
   inviteToken?: string;
 }
