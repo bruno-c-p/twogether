@@ -8,7 +8,13 @@ import {
 } from "lucide-react";
 import { GOALS } from "../constants";
 import { money } from "../services/budget";
-import type { BankAccount, GoalId, Transaction, Member } from "../types";
+import type {
+  BankAccount,
+  GoalId,
+  Transaction,
+  TransactionKind,
+  Member,
+} from "../types";
 import { GoalIcon } from "./goal-icon";
 
 interface Props {
@@ -20,11 +26,11 @@ interface Props {
   query: string;
   goalFilter: GoalId | "all";
   tagFilter: string;
-  kindFilter: string;
+  kindFilter: TransactionKind | "all";
   onQuery: (value: string) => void;
   onGoal: (value: GoalId | "all") => void;
   onTag: (value: string) => void;
-  onKind: (value: string) => void;
+  onKind: (value: TransactionKind | "all") => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
   onAdd: () => void;
@@ -122,7 +128,10 @@ export function TransactionList(props: Props) {
           <select
             aria-label="Filtrar por tipo"
             value={kindFilter}
-            onChange={(event) => onKind(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              onKind(value === "expense" || value === "income" ? value : "all");
+            }}
           >
             <option value="all">Todos os tipos</option>
             <option value="expense">Despesas</option>

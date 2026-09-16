@@ -27,7 +27,14 @@ import {
   summarize,
   planGoals,
 } from "../services/budget";
-import type { BankAccount, GoalId, SharedSnapshot, Transaction, View } from "../types";
+import type {
+  BankAccount,
+  GoalId,
+  SharedSnapshot,
+  Transaction,
+  TransactionKind,
+  View,
+} from "../types";
 import { GoalPercentagesDialog } from "./goal-percentages-dialog";
 import { AppFooter } from "./app-footer";
 import { AccountGate } from "./account-gate";
@@ -157,7 +164,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     }));
   }
 
-  function setKindFilter(kind: string) {
+  function setKindFilter(kind: TransactionKind | "all") {
     updateSearch((prev) => ({
       ...prev,
       kind: kind === "all" ? undefined : kind,

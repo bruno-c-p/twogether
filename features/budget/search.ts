@@ -1,4 +1,4 @@
-import type { GoalId, View } from "./types";
+import type { GoalId, TransactionKind, View } from "./types";
 
 const views: View[] = ["overview", "transactions", "accounts", "goals"];
 const goals: GoalId[] = [
@@ -18,7 +18,7 @@ export interface BudgetSearch {
   query?: string;
   goal?: GoalId;
   tag?: string;
-  kind?: string;
+  kind?: TransactionKind;
 }
 
 export function validateBudgetSearch(
@@ -51,8 +51,7 @@ export function validateBudgetSearch(
       ? search.tag
       : undefined;
   const kind =
-    typeof search.kind === "string" &&
-    (search.kind === "expense" || search.kind === "income")
+    search.kind === "expense" || search.kind === "income"
       ? search.kind
       : undefined;
   return { view, month, member, query, goal, tag, kind };
