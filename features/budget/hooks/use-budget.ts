@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "@tanstack/react-router";
+import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
 import { DEFAULT_PERCENTAGES } from "../constants";
 import type {
   BankAccount,
@@ -22,7 +22,9 @@ const emptySnapshot = (): SharedSnapshot => ({
 
 export function useBudget(initialSnapshot: SharedSnapshot) {
   const router = useRouter();
-  const [accessToken, setAccessToken] = useState("");
+  const search = useSearch({ from: "/" });
+  const navigate = useNavigate();
+  const accessToken = search.access ?? "";
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [error, setError] = useState("");
   const [syncError, setSyncError] = useState("");
@@ -50,12 +52,6 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
     }
   }, []);
   useEffect(() => {
-    const readAccessLink = () =>
-      setAccessToken(
-        new URLSearchParams(window.location.hash.slice(1)).get("access") ?? "",
-      );
-    readAccessLink();
-    window.addEventListener("hashchange", readAccessLink);
     const synchronize = () => {
       if (document.visibilityState === "visible") void refresh();
     };
@@ -67,7 +63,6 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
     };
     return () => {
       invalidateRequests();
-      window.removeEventListener("hashchange", readAccessLink);
       window.removeEventListener("focus", synchronize);
       window.removeEventListener("online", synchronize);
       document.removeEventListener("visibilitychange", synchronize);
@@ -115,14 +110,11 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
     accessToken,
     finishAccess: () => {
       setError("");
-      setAccessToken("");
-      const fragment = new URLSearchParams(window.location.hash.slice(1));
-      fragment.delete("access");
-      window.history.replaceState(
-        null,
-        "",
-        `${window.location.pathname}${fragment.size ? `#${fragment}` : ""}`,
-      );
+      void navigate({
+        to: "/",
+        search: (prev) => ({ ...prev, access: undefined }),
+        replace: true,
+      });
     },
     state: snapshot.budget,
     user: snapshot.user,

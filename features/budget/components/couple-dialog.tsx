@@ -69,7 +69,7 @@ export function CoupleDialog({
                 const result = await budget.command({ action: "invite" });
                 if (result?.inviteToken) {
                   setLink(
-                    `${window.location.origin}/#convite=${result.inviteToken}`,
+                    `${window.location.origin}/?convite=${result.inviteToken}`,
                   );
                   setCopied(false);
                   setCopyError("");
