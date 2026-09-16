@@ -20,10 +20,15 @@ export const Route = createRootRoute({
         content: "Organize transações, metas e tags em um orçamento pessoal.",
       },
       { name: "theme-color", content: "#173f35" },
+      { name: "mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-title", content: "twogether" },
     ],
     links: [
       { rel: "stylesheet", href: stylesheet },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
         rel: "preconnect",
