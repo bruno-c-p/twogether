@@ -158,6 +158,15 @@ describe("shared budget", () => {
       Date.now = now;
     }
   });
+  test("verify-link attempts are throttled", async () => {
+    for (let i = 0; i < 10; i++)
+      await expect(
+        store.command({ action: "verify-link", token: "forged" }, undefined),
+      ).rejects.toThrow("expirou");
+    await expect(
+      store.command({ action: "verify-link", token: "forged" }, undefined),
+    ).rejects.toThrow("Muitas tentativas");
+  });
   test("email request keeps invitation and limits repeated sends", async () => {
     const invite = "a".repeat(64);
     for (let i = 0; i < 5; i++)

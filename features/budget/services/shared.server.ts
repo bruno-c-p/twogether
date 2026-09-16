@@ -434,6 +434,8 @@ export function createBudgetStore(
       });
     } else if (data.action === "verify-link") {
       const accessToken = text(data.token, 128);
+      await throttle(`verify:${accessToken}`, 10);
+      await throttle("verify:global", 100);
       nextSession = token();
       await atomic(async (transaction) => {
         const link = await one<{ email: string }>(
