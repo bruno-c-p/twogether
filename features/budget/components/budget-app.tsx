@@ -1,32 +1,8 @@
-import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
-import { ThemeToggle } from "@/features/theme";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Check,
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  EyeOff,
-  Landmark,
-  LayoutGrid,
-  Plus,
-  ReceiptText,
-  Target,
-  TriangleAlert,
-  UsersRound,
-  X,
-} from "lucide-react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useBudget, type BudgetController } from "../hooks/use-budget";
-import {
-  localDate,
-  money,
-  shiftMonth,
-  summarize,
-  planGoals,
-} from "../services/budget";
+import { localDate, shiftMonth, summarize, planGoals } from "../services/budget";
 import type {
   BankAccount,
   GoalId,
@@ -42,18 +18,35 @@ import { CoupleDialog } from "./couple-dialog";
 import { FinancialHistory } from "./financial-history";
 import { ExpenseCharts } from "./expense-charts";
 import { Distribution } from "./distribution";
-import { GoalIcon } from "./goal-icon";
 import { TransactionDialog } from "./transaction-dialog";
 import { TransactionList } from "./transaction-list";
 import { AccountDialog } from "./account-dialog";
 import { AccountList } from "./account-list";
+import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
+import { AppNavigation, MobileNavigation } from "./app-navigation";
+import { Topbar } from "./topbar";
+import { BalanceCard } from "./balance-card";
+import { GoalsSection } from "./goals-section";
+import { NoticeToast } from "./notice-toast";
 
-const navigation = [
-  { id: "overview", label: "Visão geral", icon: LayoutGrid },
-  { id: "transactions", label: "Transações", icon: ReceiptText },
-  { id: "accounts", label: "Contas", icon: Landmark },
-  { id: "goals", label: "Metas", icon: Target },
-] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
+const titles: Record<View, { title: string; subtitle: string }> = {
+  overview: {
+    title: "Visão geral",
+    subtitle: "Saldo, entradas, despesas e metas do mês.",
+  },
+  transactions: {
+    title: "Transações",
+    subtitle: "Registre e acompanhe as entradas e despesas do mês.",
+  },
+  accounts: {
+    title: "Contas",
+    subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
+  },
+  goals: {
+    title: "Metas",
+    subtitle: "Divida sua renda por meta e compare gasto e planejado.",
+  },
+};
 
 export function BudgetApp({
   initialSnapshot,
@@ -70,6 +63,7 @@ export function BudgetApp({
     />
   );
 }
+
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const search = useSearch({ from: "/" });
   const routeNavigate = useNavigate();
@@ -98,6 +92,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const [editingPercentages, setEditingPercentages] = useState<number | null>(
     null,
   );
+  const [deleting, setDeleting] = useState<Transaction | null>(null);
 
   useEffect(() => {
     setFallbackMonth(localDate().slice(0, 7));
@@ -125,7 +120,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const allTags = [
     ...new Set(budget.state.transactions.flatMap((t) => t.tags)),
   ].sort((a, b) => a.localeCompare(b, "pt-BR"));
-  const displayMoney = (value: number) => (hidden ? "R$ ••••" : money(value));
   const filterExplanation =
     view === "accounts"
       ? memberFilter === "all"
@@ -134,6 +128,15 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       : memberFilter === "all"
         ? "O planejado soma as metas individuais de cada pessoa."
         : "Renda, gastos e metas da pessoa selecionada.";
+  const following = deleting
+    ? budget.state.transactions.filter(
+        (item) =>
+          item.recurrenceId === deleting.recurrenceId &&
+          item.recurrenceIndex !== undefined &&
+          deleting.recurrenceIndex !== undefined &&
+          item.recurrenceIndex > deleting.recurrenceIndex,
+      )
+    : [];
 
   function updateSearch(
     next: (prev: typeof search) => typeof search,
@@ -208,17 +211,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     return true;
   }
 
-  const [deleting, setDeleting] = useState<Transaction | null>(null);
-  const following = deleting
-    ? budget.state.transactions.filter(
-        (item) =>
-          item.recurrenceId === deleting.recurrenceId &&
-          item.recurrenceIndex !== undefined &&
-          deleting.recurrenceIndex !== undefined &&
-          item.recurrenceIndex > deleting.recurrenceIndex,
-      )
-    : [];
-
   async function remove(transaction: Transaction) {
     if (transaction.recurrenceId) {
       setDeleting(transaction);
@@ -227,25 +219,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     if (await budget.removeTransaction(transaction))
       setNotice({ message: "Transação excluída.", undo: transaction });
   }
-
-  const titles = {
-    overview: {
-      title: "Visão geral",
-      subtitle: "Saldo, entradas, despesas e metas do mês.",
-    },
-    transactions: {
-      title: "Transações",
-      subtitle: "Registre e acompanhe as entradas e despesas do mês.",
-    },
-    accounts: {
-      title: "Contas",
-      subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
-    },
-    goals: {
-      title: "Metas",
-      subtitle: "Divida sua renda por meta e compare gasto e planejado.",
-    },
-  };
 
   function openTransaction(transaction: Transaction | null) {
     if (!transaction && budget.state.accounts.length === 0) {
@@ -273,66 +246,15 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <Link className="brand" to="/" aria-label="twogether — início">
-          <span className="brand-mark">
-            <span />
-            <span />
-          </span>
-          twogether<span className="brand-period">.</span>
-        </Link>
-        <nav className="desktop-navigation" aria-label="Navegação principal">
-          {navigation.map((item) => (
-            <button
-              key={item.id}
-              className={view === item.id ? "nav-item active" : "nav-item"}
-              aria-label={item.label}
-              aria-current={view === item.id ? "page" : undefined}
-              onClick={() => navigate(item.id)}
-            >
-              <item.icon size={19} strokeWidth={1.7} />
-              <span>{item.label}</span>
-              {view === item.id && <span className="nav-active-dot" />}
-            </button>
-          ))}
-        </nav>
-      </aside>
+      <AppNavigation view={view} onNavigate={navigate} />
       <div className="main-shell">
-        <header className="topbar">
-          <div className="breadcrumb">
-            <strong>
-              {navigation.find((item) => item.id === view)?.label}
-            </strong>
-          </div>
-          <Link className="mobile-brand brand" to="/">
-            <span className="brand-mark">
-              <span />
-              <span />
-            </span>
-            twogether.
-          </Link>
-          <div className="topbar-right">
-            <ThemeToggle />
-            <button
-              className="icon-button visibility-button"
-              onClick={() => setHidden(!hidden)}
-              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
-              title={hidden ? "Mostrar valores" : "Ocultar valores"}
-            >
-              {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-            </button>
-            <button
-              className="space-button"
-              aria-label={`Abrir nosso espaço: ${memberLabel}`}
-              title={`Nosso espaço: ${memberLabel}`}
-              onClick={() => setCoupleOpen(true)}
-            >
-              <UsersRound size={17} strokeWidth={1.8} aria-hidden="true" />
-              <span className="space-button-label">Nosso espaço</span>
-              <span className="space-member-count">{memberLabel}</span>
-            </button>
-          </div>
-        </header>
+        <Topbar
+          view={view}
+          hidden={hidden}
+          memberLabel={memberLabel}
+          onToggleHidden={() => setHidden(!hidden)}
+          onOpenCouple={() => setCoupleOpen(true)}
+        />
         <main id="main-content">
           <div className="page-heading">
             <div>
@@ -445,54 +367,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <>
               {view === "overview" && (
                 <section className="overview-grid" aria-label="Resumo mensal">
-                  <div
-                    className={`balance-card${summary.balance < 0 ? " negative" : ""}`}
-                  >
-                    <div className="balance-top">
-                      {memberFilter === "all"
-                        ? "Nosso saldo do mês"
-                        : "Saldo desta pessoa"}
-                    </div>
-                    <div className="balance-amount">
-                      {displayMoney(summary.balance)}
-                    </div>
-                    <div className="balance-caption">
-                      <span className="balance-dot" />
-                      {summary.balance < 0
-                        ? "As despesas superam as entradas neste mês."
-                        : summary.income
-                          ? "Saldo = entradas - despesas."
-                          : "Nenhuma entrada registrada neste mês."}
-                    </div>
-                    <div className="balance-divider" />
-                    <div className="balance-bottom">
-                      <div>
-                        <span>
-                          <span className="money-icon">
-                            <ArrowDownLeft size={14} />
-                          </span>{" "}
-                          Entradas
-                        </span>
-                        <strong>{displayMoney(summary.income)}</strong>
-                      </div>
-                      <div>
-                        <span>
-                          <span className="money-icon">
-                            <ArrowUpRight size={14} />
-                          </span>{" "}
-                          Saídas
-                        </span>
-                        <strong>{displayMoney(summary.expenses)}</strong>
-                      </div>
-                      <div className="balance-decoration" aria-hidden="true">
-                        <i />
-                        <i />
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-                    </div>
-                  </div>
+                  <BalanceCard
+                    balance={summary.balance}
+                    income={summary.income}
+                    expenses={summary.expenses}
+                    filtered={memberFilter !== "all"}
+                    hidden={hidden}
+                  />
                   <Distribution transactions={monthly} hidden={hidden} />
                 </section>
               )}
@@ -505,116 +386,29 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               )}
               {view === "overview" && month && (
                 <FinancialHistory
-                  transactions={budget.state.transactions.filter((t) => memberFilter === "all" || t.memberId === memberFilter)}
+                  transactions={budget.state.transactions.filter(
+                    (t) =>
+                      memberFilter === "all" || t.memberId === memberFilter,
+                  )}
                   month={month}
                   hidden={hidden}
                 />
               )}
               {(view === "overview" || view === "goals") && (
-                <section
-                  className="goals-section"
-                  aria-labelledby="goals-title"
-                >
-                  <div className="section-heading">
-                    <div>
-                      <h2 id="goals-title">Metas do orçamento</h2>
-                    </div>
-                    {(memberFilter === "all" ||
-                      memberFilter === budget.user?.id) && (
-                      <button
-                        className="text-button"
-                        disabled={budget.busy}
-                        onClick={() =>
-                          setEditingPercentages(
-                            ownMember?.percentagesRevision ?? 0,
-                          )
-                        }
-                      >
-                        Editar meus percentuais
-                      </button>
-                    )}
-                  </div>
-                  <div
-                    className={`goals-grid ${view === "goals" ? "expanded-goals" : ""}`}
-                  >
-                    {summary.goals.map((goal) => {
-                      const plan = plans.find(
-                        (item) => item.id === goal.id,
-                      ) ?? { planned: 0, percentage: null };
-                      const overBudget = goal.amount > plan.planned;
-                      const overage = goal.amount - plan.planned;
-                      return (
-                        <button
-                          key={goal.id}
-                          className={`goal-card${overBudget ? " over-budget" : ""}`}
-                          aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
-                          style={
-                            {
-                              "--goal-color": goal.color,
-                              "--goal-bg": goal.background,
-                            } as React.CSSProperties
-                          }
-                          onClick={() => filterGoal(goal.id)}
-                        >
-                          <div className="goal-card-top">
-                            <span className="goal-icon">
-                              <GoalIcon goal={goal.id} size={21} />
-                            </span>
-                            <span className="goal-number">
-                              {plan.percentage === null
-                                ? "—"
-                                : `${plan.percentage.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%`}
-                            </span>
-                          </div>
-                          <h3>{goal.name}</h3>
-                          <strong>{displayMoney(goal.amount)}</strong>
-                          <p className="goal-budget">
-                            de {displayMoney(plan.planned)} planejados
-                          </p>
-                          <div className="goal-card-foot">
-                            <span>
-                              {goal.count}{" "}
-                              {goal.count === 1 ? "transação" : "transações"}
-                            </span>
-                            {overBudget ? (
-                              <span
-                                className="goal-status"
-                                title={
-                                  hidden
-                                    ? "Acima do planejado"
-                                    : `${displayMoney(overage)} acima do planejado`
-                                }
-                              >
-                                <TriangleAlert size={14} />
-                                <span>
-                                  {hidden
-                                    ? "Acima do planejado"
-                                    : `${displayMoney(overage)} acima`}
-                                </span>
-                              </span>
-                            ) : (
-                              <ArrowUpRight size={16} />
-                            )}
-                          </div>
-                          <div className="goal-bar">
-                            <span
-                              style={{
-                                width: hidden
-                                  ? "0%"
-                                  : `${plan.planned > 0 ? Math.min(100, (goal.amount / plan.planned) * 100) : goal.amount > 0 ? 100 : 0}%`,
-                              }}
-                            />
-                          </div>
-                          {view === "goals" && (
-                            <p className="goal-description">
-                              {goal.description}
-                            </p>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </section>
+                <GoalsSection
+                  expanded={view === "goals"}
+                  goals={summary.goals}
+                  plans={plans}
+                  hidden={hidden}
+                  canEdit={
+                    memberFilter === "all" || memberFilter === budget.user?.id
+                  }
+                  busy={budget.busy}
+                  onEditPercentages={() =>
+                    setEditingPercentages(ownMember?.percentagesRevision ?? 0)
+                  }
+                  onFilterGoal={filterGoal}
+                />
               )}
               {(view === "overview" || view === "transactions") && (
                 <TransactionList
@@ -649,19 +443,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         </main>
         <AppFooter />
       </div>
-      <nav className="mobile-navigation" aria-label="Navegação mobile">
-        {navigation.map((item) => (
-          <button
-            key={item.id}
-            className={view === item.id ? "active" : ""}
-            aria-current={view === item.id ? "page" : undefined}
-            onClick={() => navigate(item.id)}
-          >
-            <item.icon size={21} strokeWidth={1.7} />
-            <span>{item.label}</span>
-          </button>
-        ))}
-      </nav>
+      <MobileNavigation view={view} onNavigate={navigate} />
       {editingPercentages !== null && (
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
@@ -723,27 +505,15 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         />
       )}
       {notice && (
-        <div className="toast" role="status">
-          <Check size={18} />
-          <span>{notice.message}</span>
-          {notice.undo && (
-            <button
-              onClick={async () => {
-                if (notice.undo && (await budget.restore(notice.undo)))
-                  setNotice({ message: "Alteração desfeita." });
-              }}
-            >
-              Desfazer
-            </button>
-          )}
-          <button
-            className="toast-close"
-            aria-label="Fechar aviso"
-            onClick={() => setNotice(null)}
-          >
-            <X size={16} />
-          </button>
-        </div>
+        <NoticeToast
+          message={notice.message}
+          canUndo={!!notice.undo}
+          onUndo={async () => {
+            if (notice.undo && (await budget.restore(notice.undo)))
+              setNotice({ message: "Alteração desfeita." });
+          }}
+          onClose={() => setNotice(null)}
+        />
       )}
       {coupleOpen && (
         <CoupleDialog budget={budget} onClose={() => setCoupleOpen(false)} />
