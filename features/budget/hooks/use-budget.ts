@@ -26,9 +26,11 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
   const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const refreshing = useRef(false);
   const generation = useRef(0);
   const refresh = useCallback(async () => {
-    if (inFlight.current) return;
+    if (inFlight.current || refreshing.current) return;
+    refreshing.current = true;
     const current = ++generation.current;
     try {
       const response = await fetch("/api/budget", { cache: "no-store" });
@@ -45,6 +47,8 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
             ? error.message
             : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
         );
+    } finally {
+      refreshing.current = false;
     }
   }, []);
   useEffect(() => {
