@@ -1,0 +1,214 @@
+.expense-charts {
+  margin: 24px 0 32px;
+}
+
+.expense-chart-card {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--surface);
+}
+
+.expense-chart-card h2 {
+  font-size: 18px;
+}
+
+.expense-chart-caption {
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 6px;
+}
+
+.expense-calendar-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 12px;
+  margin: 20px 0;
+}
+
+.expense-calendar-summary > strong {
+  font-size: clamp(22px, 2.2vw, 30px);
+}
+
+.expense-calendar-summary > span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.expense-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.expense-weekday {
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 600;
+  padding-bottom: 6px;
+}
+
+.expense-day {
+  min-width: 0;
+  min-height: 62px;
+  padding: 7px;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  background: color-mix(
+    in srgb,
+    var(--danger) var(--day-strength),
+    var(--page)
+  );
+  font-size: 11px;
+}
+
+.expense-day strong {
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+.expense-heat-legend {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 5px;
+  margin-top: 16px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.expense-heat-legend i {
+  width: 13px;
+  height: 13px;
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--danger) 20%, var(--page));
+}
+
+.expense-heat-legend i:nth-of-type(2) {
+  background: color-mix(in srgb, var(--danger) 40%, var(--page));
+}
+
+.expense-heat-legend i:nth-of-type(3) {
+  background: color-mix(in srgb, var(--danger) 70%, var(--page));
+}
+
+.expense-tag-donut {
+  width: min(240px, 100%);
+  margin: 22px auto;
+  position: relative;
+}
+
+.expense-tag-donut svg {
+  width: 100%;
+  display: block;
+}
+
+.expense-tag-donut > div {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 7px;
+  pointer-events: none;
+}
+
+.expense-tag-donut strong {
+  font-size: 17px;
+}
+
+.expense-tag-donut span {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.expense-tag-list {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  display: grid;
+  gap: 14px;
+}
+
+.expense-tag-list li {
+  display: grid;
+  grid-template-columns: 8px minmax(60px, 1fr) minmax(30px, 1fr) auto 42px;
+  gap: 9px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.expense-tag-name {
+  overflow-wrap: anywhere;
+}
+
+.expense-tag-list li > span:last-child {
+  text-align: right;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.expense-tag-track {
+  height: 6px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--page);
+}
+
+.expense-tag-track i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.expense-chart-empty {
+  color: var(--muted);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.expense-tag-note {
+  margin-top: 20px;
+}
+
+.expense-day[data-intense="true"] {
+  color: var(--surface);
+}
+
+@media (max-width: 1100px) {
+  .expense-chart-card {
+    padding: 16px;
+  }
+  
+  .expense-calendar {
+    gap: 3px;
+  }
+  
+  .expense-day {
+    padding: 5px 3px;
+      min-height: 58px;
+  }
+  
+  .expense-day strong {
+    font-size: 9px;
+  }
+  
+  .expense-tag-list li {
+    grid-template-columns: 8px minmax(0, 1fr) auto 38px;
+      gap: 7px;
+  }
+  
+  .expense-tag-track {
+    display: none;
+  }
+}

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import type { Transaction } from "@/features/budget/types";
+import chrome from "@/src/chrome.module.css";
+import styles from "@/features/budget/components/delete-recurrence-dialog.module.css";
 
 interface Props {
   transaction: Transaction;
@@ -36,19 +38,19 @@ export function DeleteRecurrenceDialog({
   return (
     <dialog
       ref={dialog}
-      className="transaction-dialog delete-dialog"
+      className={`${chrome.dialog} ${styles.deleteDialog}`}
       aria-labelledby="delete-title"
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onClose();
       }}
     >
-      <div className="dialog-content">
-        <header className="dialog-header">
+      <div className={chrome.dialogContent}>
+        <header className={chrome.dialogHeader}>
           <h2 id="delete-title">Excluir transação</h2>
           <button
             type="button"
-            className="icon-button"
+            className={chrome.iconButton}
             aria-label="Fechar"
             disabled={busy}
             onClick={onClose}
@@ -56,12 +58,12 @@ export function DeleteRecurrenceDialog({
             <X size={22} />
           </button>
         </header>
-        <p className="delete-description">{transaction.description}</p>
-        <fieldset className="transaction-fields" disabled={busy}>
-          <fieldset className="delete-options">
+        <p className={styles.deleteDescription}>{transaction.description}</p>
+        <fieldset className={chrome.transactionFields} disabled={busy}>
+          <fieldset className={styles.deleteOptions}>
             <legend>O que você deseja excluir?</legend>
             <label
-              className={`delete-option ${!following ? "is-selected" : ""}`}
+              className={`${styles.deleteOption} ${!following ? styles.isSelected : ""}`}
             >
               <input
                 type="radio"
@@ -76,7 +78,7 @@ export function DeleteRecurrenceDialog({
             </label>
             {count > 1 && (
               <label
-                className={`delete-option ${following ? "is-selected" : ""}`}
+                className={`${styles.deleteOption} ${following ? styles.isSelected : ""}`}
               >
                 <input
                   type="radio"
@@ -92,22 +94,22 @@ export function DeleteRecurrenceDialog({
             )}
           </fieldset>
           {following && (
-            <p className="delete-warning">
+            <p className={styles.deleteWarning}>
               As anteriores serão mantidas. Esta exclusão não pode ser desfeita.
             </p>
           )}
           {error && (
-            <p role="alert" className="form-error">
+            <p role="alert" className={chrome.formError}>
               {error}
             </p>
           )}
-          <footer className="dialog-footer">
-            <button type="button" className="text-button" onClick={onClose}>
+          <footer className={chrome.dialogFooter}>
+            <button type="button" className={chrome.textButton} onClick={onClose}>
               Cancelar
             </button>
             <button
               type="button"
-              className="primary-button delete-confirm"
+              className={`${chrome.primaryButton} ${styles.deleteConfirm}`}
               onClick={() => void onDelete(following)}
             >
               <Trash2 size={16} />

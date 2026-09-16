@@ -21,6 +21,8 @@ import type {
   Member,
 } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
+import chrome from "@/src/chrome.module.css";
+import styles from "@/features/budget/components/transaction-dialog.module.css";
 
 interface Props {
   transaction: Transaction | null;
@@ -154,30 +156,30 @@ export function TransactionDialog({
   return (
     <dialog
       ref={dialog}
-      className="transaction-dialog"
+      className={`${chrome.dialog} ${styles.dialog}`}
       aria-labelledby="dialog-title"
       onCancel={onClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="dialog-content">
-        <header className="dialog-header">
+      <div className={chrome.dialogContent}>
+        <header className={chrome.dialogHeader}>
           <div>
             <h2 id="dialog-title">
               {transaction ? "Editar transação" : "Nova transação"}
             </h2>
           </div>
-          <button className="icon-button" aria-label="Fechar" onClick={onClose}>
+          <button className={chrome.iconButton} aria-label="Fechar" onClick={onClose}>
             <X size={22} />
           </button>
         </header>
         <form onSubmit={submit}>
-          <fieldset className="transaction-fields" disabled={saving}>
-            <div className="kind-toggle" aria-label="Tipo da transação">
+          <fieldset className={chrome.transactionFields} disabled={saving}>
+            <div className={styles.kindToggle} aria-label="Tipo da transação">
               <button
                 type="button"
-                className={kind === "expense" ? "active" : ""}
+                className={kind === "expense" ? styles.active : ""}
                 aria-pressed={kind === "expense"}
                 onClick={() => setKind("expense")}
               >
@@ -185,7 +187,7 @@ export function TransactionDialog({
               </button>
               <button
                 type="button"
-                className={kind === "income" ? "active income" : ""}
+                className={kind === "income" ? styles.active : ""}
                 aria-pressed={kind === "income"}
                 onClick={() => {
                   setKind("income");
@@ -195,10 +197,10 @@ export function TransactionDialog({
                 <ArrowDownLeft size={17} /> Receita
               </button>
             </div>
-            <label className="amount-label" htmlFor="amount">
+            <label className={chrome.amountLabel} htmlFor="amount">
               Valor
             </label>
-            <div className="amount-input">
+            <div className={chrome.amountInput}>
               <span>R$</span>
               <input
                 id="amount"
@@ -217,7 +219,7 @@ export function TransactionDialog({
                 aria-describedby={error ? "form-error" : undefined}
               />
             </div>
-            <div className="form-row">
+            <div className={chrome.formRow}>
               <label>
                 Descrição
                 <input
@@ -240,7 +242,7 @@ export function TransactionDialog({
                 />
               </label>
             </div>
-            <label className="account-field">
+            <label className={chrome.accountField}>
               Conta
               <select
                 name="accountId"
@@ -262,20 +264,20 @@ export function TransactionDialog({
             </label>
             {!transaction && (
               <section
-                className={`recurrence-panel ${recurring ? "is-active" : ""}`}
+                className={styles.recurrencePanel}
                 aria-label="Recorrência"
               >
-                <div className="recurrence-heading">
-                  <span className="recurrence-icon">
+                <div className={styles.recurrenceHeading}>
+                  <span className={styles.recurrenceIcon}>
                     <Repeat2 size={18} />
                   </span>
-                  <div className="recurrence-copy">
+                  <div className={styles.recurrenceCopy}>
                     <label htmlFor="recurring">Repetir mensalmente</label>
                     <p>Para contas e entradas que se repetem.</p>
                   </div>
                   <input
                     id="recurring"
-                    className="recurrence-switch"
+                    className={styles.recurrenceSwitch}
                     type="checkbox"
                     role="switch"
                     checked={recurring}
@@ -283,10 +285,10 @@ export function TransactionDialog({
                   />
                 </div>
                 {recurring && (
-                  <div className="recurrence-details">
-                    <div className="recurrence-count">
+                  <div className={styles.recurrenceDetails}>
+                    <div className={styles.recurrenceCount}>
                       <label htmlFor="occurrences">Por quantos meses?</label>
-                      <div className="recurrence-number">
+                      <div className={styles.recurrenceNumber}>
                         <input
                           id="occurrences"
                           type="number"
@@ -311,14 +313,14 @@ export function TransactionDialog({
               </section>
             )}
             {kind === "expense" && (
-              <fieldset className="goal-field">
+              <fieldset className={styles.goalField}>
                 <legend>Para qual meta?</legend>
-                <div className="goal-options">
+                <div className={styles.goalOptions}>
                   {GOALS.map((item) => (
                     <button
                       key={item.id}
                       type="button"
-                      className={`goal-option ${goal === item.id ? "selected" : ""}`}
+                      className={`${styles.goalOption} ${goal === item.id ? styles.selected : ""}`}
                       style={
                         {
                           "--goal-color": item.color,
@@ -337,9 +339,9 @@ export function TransactionDialog({
               </fieldset>
             )}
             <label htmlFor="tag-input">
-              Tags <span className="optional">opcional · até 8</span>
+              Tags <span className={chrome.optional}>opcional · até 8</span>
             </label>
-            <div className="tag-input-wrapper">
+            <div className={styles.tagInputWrapper}>
               <span>#</span>
               <input
                 id="tag-input"
@@ -357,7 +359,7 @@ export function TransactionDialog({
               />
               <button
                 type="button"
-                className="icon-button"
+                className={chrome.iconButton}
                 aria-label="Adicionar tag"
                 disabled={!tagInput.trim() || tags.length >= 8}
                 onClick={() => addTag(tagInput)}
@@ -366,12 +368,12 @@ export function TransactionDialog({
               </button>
             </div>
             {!!tags.length && (
-              <div className="selected-tags">
+              <div className={styles.selectedTags}>
                 {tags.map((tag) => (
                   <button
                     key={tag}
                     type="button"
-                    className="tag selected-tag"
+                    className={chrome.tag}
                     aria-label={`Remover tag ${tag}`}
                     onClick={() => setTags(tags.filter((t) => t !== tag))}
                   >
@@ -383,7 +385,7 @@ export function TransactionDialog({
             )}
             {existingTags.some((tag) => !tags.includes(tag)) &&
               tags.length < 8 && (
-                <div className="tag-suggestions">
+                <div className={styles.tagSuggestions}>
                   <span>Sugestões</span>
                   {existingTags
                     .filter((tag) => !tags.includes(tag))
@@ -400,17 +402,17 @@ export function TransactionDialog({
                 </div>
               )}
             {error && (
-              <p id="form-error" role="alert" className="form-error">
+              <p id="form-error" role="alert" className={chrome.formError}>
                 {error}
               </p>
             )}
             {serverError && (
-              <p role="alert" className="form-error">
+              <p role="alert" className={chrome.formError}>
                 {serverError}
               </p>
             )}
             {transaction?.updatedBy && (
-              <p className="account-footnote">
+              <p className={chrome.accountFootnote}>
                 Registrado por{" "}
                 {members.find((member) => member.id === transaction.createdBy)
                   ?.name ?? "uma pessoa do casal"}
@@ -420,11 +422,11 @@ export function TransactionDialog({
                 .
               </p>
             )}
-            <footer className="dialog-footer">
-              <button type="button" className="text-button" onClick={onClose}>
+            <footer className={chrome.dialogFooter}>
+              <button type="button" className={chrome.textButton} onClick={onClose}>
                 Cancelar
               </button>
-              <button type="submit" className="primary-button">
+              <button type="submit" className={chrome.primaryButton}>
                 <Check size={17} />
                 {saving
                   ? "Salvando…"

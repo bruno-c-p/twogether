@@ -1,10 +1,11 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
+import chrome from "@/src/chrome.module.css";
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   return (
-    <div className="route-error" role="alert">
+    <div className={chrome.routeError} role="alert">
       <h1>Algo deu errado.</h1>
       <p>
         {error instanceof Error
@@ -12,7 +13,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
           : "Não foi possível carregar esta parte do orçamento."}
       </p>
       <button
-        className="primary-button"
+        className={chrome.primaryButton}
         onClick={() => {
           router.invalidate();
           reset();

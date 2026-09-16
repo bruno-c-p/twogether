@@ -1,6 +1,8 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { accountBalance, money } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
+import chrome from "@/src/chrome.module.css";
+import list from "@/features/budget/styles/list-row.module.css";
 
 interface Props {
   accounts: BankAccount[];
@@ -33,50 +35,50 @@ export function AccountList({
     a.name.localeCompare(b.name, "pt-BR"),
   );
   return (
-    <section className="transactions-panel" aria-labelledby="accounts-title">
-      <div className="section-heading">
+    <section className={chrome.panel} aria-labelledby="accounts-title">
+      <div className={chrome.sectionHeading}>
         <div>
           <h2 id="accounts-title">
             Contas cadastradas
-            <span className="count-badge">{accounts.length}</span>
+            <span className={chrome.countBadge}>{accounts.length}</span>
           </h2>
           <p>Saldo inicial mais receitas, menos despesas de cada conta.</p>
         </div>
       </div>
       {sorted.length ? (
-        <div className="account-table">
+        <div>
           {sorted.map((account) => {
             const used = transactions.some(
               (transaction) => transaction.accountId === account.id,
             );
             const balance = accountBalance(account, visibleTransactions);
             return (
-              <div className="account-item" key={account.id}>
-                <span className="transaction-icon income-icon">
+              <div className={list.row} key={account.id}>
+                <span className={list.icon}>
                   <Landmark size={18} />
                 </span>
                 <div>
                   <button
-                    className="transaction-name"
+                    className={list.name}
                     disabled={busy}
                     onClick={() => onEdit(account)}
                   >
                     {account.name}
                   </button>
-                  <div className="transaction-person">
+                  <div className={list.meta}>
                     {used
                       ? "Em uso nas transações"
                       : "Nenhuma transação nesta conta"}
                   </div>
                 </div>
                 <span
-                  className={`transaction-value account-balance${balance < 0 ? " negative" : " positive"}`}
+                  className={`${list.value} ${balance < 0 ? list.negative : list.positive}`}
                 >
                   {hidden ? "R$ ••••" : money(balance)}
                 </span>
-                <div className="row-actions">
+                <div className={list.actions}>
                   <button
-                    className="icon-button"
+                    className={`${chrome.iconButton} ${list.actionButton}`}
                     disabled={busy}
                     aria-label={`Editar ${account.name}`}
                     onClick={() => onEdit(account)}
@@ -84,7 +86,7 @@ export function AccountList({
                     <Pencil size={15} />
                   </button>
                   <button
-                    className="icon-button delete-button"
+                    className={`${chrome.iconButton} ${list.actionButton} ${list.deleteButton}`}
                     disabled={busy || used}
                     title={
                       used
@@ -102,13 +104,13 @@ export function AccountList({
           })}
         </div>
       ) : (
-        <div className="empty-state">
-          <div className="empty-icon">
+        <div className={chrome.emptyState}>
+          <div className={chrome.emptyIcon}>
             <Landmark size={25} strokeWidth={1.5} />
           </div>
           <h3>Nenhuma conta cadastrada.</h3>
           <p>Cadastre uma conta para lançar receitas e despesas.</p>
-          <button className="primary-button" onClick={onAdd}>
+          <button className={chrome.primaryButton} onClick={onAdd}>
             <Plus size={18} /> Adicionar primeira conta
           </button>
         </div>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
+import chrome from "@/src/chrome.module.css";
 import { formatAmountInput, parseBalance } from "@/features/budget/services/budget";
 import type { BankAccount } from "@/features/budget/types";
 
@@ -74,27 +75,27 @@ export function AccountDialog({
   return (
     <dialog
       ref={dialog}
-      className="transaction-dialog"
+      className={chrome.dialog}
       aria-labelledby="account-dialog-title"
       onCancel={onClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className="dialog-content">
-        <header className="dialog-header">
+      <div className={chrome.dialogContent}>
+        <header className={chrome.dialogHeader}>
           <div>
             <h2 id="account-dialog-title">
               {account ? "Editar conta" : "Nova conta"}
             </h2>
           </div>
-          <button className="icon-button" aria-label="Fechar" onClick={onClose}>
+          <button className={chrome.iconButton} aria-label="Fechar" onClick={onClose}>
             <X size={22} />
           </button>
         </header>
         <form onSubmit={submit}>
-          <fieldset className="transaction-fields" disabled={saving}>
-            <label className="account-field">
+          <fieldset className={chrome.transactionFields} disabled={saving}>
+            <label className={chrome.accountField}>
               Nome da conta
               <input
                 name="name"
@@ -105,10 +106,10 @@ export function AccountDialog({
                 required
               />
             </label>
-            <label className="amount-label" htmlFor="opening-balance">
+            <label className={chrome.amountLabel} htmlFor="opening-balance">
               Saldo inicial
             </label>
-            <div className="amount-input">
+            <div className={chrome.amountInput}>
               <span>R$</span>
               <input
                 id="opening-balance"
@@ -126,25 +127,25 @@ export function AccountDialog({
                 aria-describedby={error ? "form-error" : undefined}
               />
             </div>
-            <p className="account-footnote">
+            <p className={chrome.accountFootnote}>
               O saldo da conta soma este valor com as receitas e subtrai as
               despesas.
             </p>
             {error && (
-              <p id="form-error" role="alert" className="form-error">
+              <p id="form-error" role="alert" className={chrome.formError}>
                 {error}
               </p>
             )}
             {serverError && (
-              <p role="alert" className="form-error">
+              <p role="alert" className={chrome.formError}>
                 {serverError}
               </p>
             )}
-            <footer className="dialog-footer">
-              <button type="button" className="text-button" onClick={onClose}>
+            <footer className={chrome.dialogFooter}>
+              <button type="button" className={chrome.textButton} onClick={onClose}>
                 Cancelar
               </button>
-              <button type="submit" className="primary-button">
+              <button type="submit" className={chrome.primaryButton}>
                 <Check size={17} />
                 {saving
                   ? "Salvando…"

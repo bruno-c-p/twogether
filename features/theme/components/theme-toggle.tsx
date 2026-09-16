@@ -1,5 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { Monitor, Moon, Sun } from "lucide-react";
+import styles from "@/features/theme/components/theme-toggle.module.css";
 
 const storageKey = "twogether.theme.v1";
 const changeEvent = "twogether:theme";
@@ -37,10 +38,13 @@ function subscribe(notify: () => void) {
   };
 }
 
-export function ThemeToggle() {
+export function ThemeToggle({ className }: { className?: string } = {}) {
   const theme = useSyncExternalStore(subscribe, preference, () => "system");
   return (
-    <div className="theme-toggle" role="group" aria-label="Aparência">
+    <div
+      className={
+        className ? `${styles.themeToggle} ${className}` : styles.themeToggle
+      } role="group" aria-label="Aparência">
       {(
         [
           ["light", "Claro", Sun],

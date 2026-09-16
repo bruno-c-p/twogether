@@ -1,6 +1,8 @@
 import { GOALS } from "@/features/budget/constants";
 import { money, summarize } from "@/features/budget/services/budget";
 import type { Transaction } from "@/features/budget/types";
+import chrome from "@/src/chrome.module.css";
+import styles from "@/features/budget/components/distribution.module.css";
 
 export function Distribution({
   transactions,
@@ -12,13 +14,13 @@ export function Distribution({
   const { goals, expenses } = summarize(transactions);
   let offset = 0;
   return (
-    <div className="distribution">
-      <div className="distribution-heading">
-        <span className="eyebrow">DESPESAS DO MÊS</span>
+    <div className={styles.distribution}>
+      <div className={styles.distributionHeading}>
+        <span className={chrome.eyebrow}>DESPESAS DO MÊS</span>
         <h3>Distribuição por meta</h3>
       </div>
-      <div className="distribution-body">
-        <div className="donut">
+      <div className={styles.distributionBody}>
+        <div className={styles.donut}>
           <svg
             viewBox="0 0 160 160"
             role="img"
@@ -60,15 +62,15 @@ export function Distribution({
                 );
               })}
           </svg>
-          <div className="donut-center">
-            <span className="donut-flower">✳</span>
+          <div className={styles.donutCenter}>
+            <span className={styles.donutFlower}>✳</span>
             <span>Total gasto</span>
           </div>
         </div>
-        <div className="chart-legend">
+        <div className={styles.chartLegend}>
           {GOALS.map((goal) => (
             <div key={goal.id}>
-              <span className="color-dot" style={{ background: goal.color }} />
+              <span className={chrome.colorDot} style={{ background: goal.color }} />
               <span>{goal.name}</span>
               <strong>
                 {hidden

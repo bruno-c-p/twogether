@@ -1,0 +1,91 @@
+.delete-dialog header {
+  margin-bottom: 8px;
+}
+
+.delete-description {
+  margin: 0 0 24px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.delete-options {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.delete-options legend {
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+
+.delete-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.delete-option.is-selected {
+  border-color: var(--text-muted);
+  background: var(--surface-soft);
+}
+
+.delete-option input {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+.delete-option strong,
+.delete-option small {
+  display: block;
+}
+
+.delete-option strong {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+.delete-option small {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.delete-warning {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 14px 0 0;
+}
+
+.delete-confirm {
+  border-color: transparent;
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+.delete-confirm:hover {
+  background: color-mix(in srgb, var(--danger) 82%, #000);
+}
+
+@media (max-width: 480px) {
+  .delete-dialog footer {
+    gap: 10px;
+  }
+
+  .delete-confirm {
+    flex: 1;
+    justify-content: center;
+  }
+}
