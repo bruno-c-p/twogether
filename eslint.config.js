@@ -3,6 +3,11 @@ import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
 
+const typeChecked = tseslint.configs.recommendedTypeChecked.map((config) => ({
+  ...config,
+  files: ["**/*.{ts,tsx}"],
+}));
+
 export default tseslint.config(
   {
     ignores: [
@@ -14,7 +19,7 @@ export default tseslint.config(
     ],
   },
   js.configs.recommended,
-  ...tseslint.configs.recommended,
+  ...typeChecked,
   {
     files: ["**/*.{ts,tsx,js}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
@@ -22,6 +27,26 @@ export default tseslint.config(
     rules: {
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: {
+        projectService: true,
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+    },
+  },
+  {
+    files: ["**/*.test.ts"],
+    rules: {
+      "@typescript-eslint/await-thenable": "off",
+      "@typescript-eslint/require-await": "off",
     },
   },
 );

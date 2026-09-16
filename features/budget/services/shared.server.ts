@@ -13,6 +13,7 @@ import { isBankAccount, isGoalPercentages, isTransaction } from "./budget";
 import type {
   BankAccount,
   BudgetState,
+  GoalPercentages,
   SharedSnapshot,
   Transaction,
 } from "../types";
@@ -247,21 +248,21 @@ export function createBudgetStore(
           members: members.map((member) => ({
             id: member.id,
             name: member.name,
-            percentages: JSON.parse(member.percentages),
+            percentages: JSON.parse(member.percentages) as GoalPercentages,
             percentagesRevision: member.revision,
           })),
         },
         budget: {
           ...emptyBudget(),
           percentages: ownPercentages
-            ? JSON.parse(ownPercentages.percentages)
+            ? (JSON.parse(ownPercentages.percentages) as GoalPercentages)
             : { ...DEFAULT_PERCENTAGES },
           transactions: rows.map((row) => ({
-            ...JSON.parse(row.payload),
+            ...(JSON.parse(row.payload) as Transaction),
             revision: row.revision,
           })),
           accounts: accountRows.map((row) => ({
-            ...JSON.parse(row.payload),
+            ...(JSON.parse(row.payload) as BankAccount),
             revision: row.revision,
           })),
         },
@@ -684,27 +685,30 @@ export function createBudgetStore(
           );
           if (!previous) throw conflict();
           if (!undo && data.following !== undefined) {
-            const source: Transaction = JSON.parse(previous.payload);
+            const source = JSON.parse(previous.payload) as Transaction;
             if (
               !source.recurrenceId ||
               source.recurrenceIndex === undefined ||
               !Array.isArray(data.following)
             )
               throw new RequestError("Recorrência inválida.");
-            const candidates = await execute(
+            const candidates = await all<TransactionRow & { id: string }>(
               transaction,
               "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
               [home.id],
             );
-            const following = candidates.rows.filter((row) => {
-              const item: Transaction = JSON.parse(String(row.payload));
+            const following = candidates.filter((row) => {
+              const item = JSON.parse(row.payload) as Transaction;
               return (
                 item.recurrenceId === source.recurrenceId &&
                 item.recurrenceIndex !== undefined &&
                 item.recurrenceIndex > source.recurrenceIndex!
               );
             });
-            const expected = data.following;
+            const expected = data.following as {
+              id: string;
+              revision: number;
+            }[];
             if (
               expected.length !== following.length ||
               following.some(
@@ -727,7 +731,7 @@ export function createBudgetStore(
                 "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
                 [
                   JSON.stringify({
-                    ...JSON.parse(String(row.payload)),
+                    ...(JSON.parse(row.payload) as Transaction),
                     updatedBy: user.id,
                     updatedAt: new Date().toISOString(),
                   }),
@@ -738,7 +742,7 @@ export function createBudgetStore(
             }
           }
           const payload = JSON.stringify({
-            ...JSON.parse(previous.payload),
+            ...(JSON.parse(previous.payload) as Transaction),
             updatedBy: user.id,
             updatedAt: new Date().toISOString(),
           });
@@ -785,7 +789,12 @@ export function createBudgetStore(
             "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
             [home.id],
           );
-          if (rows.some((row) => JSON.parse(row.payload).accountId === id))
+          if (
+            rows.some(
+              (row) =>
+                (JSON.parse(row.payload) as Transaction).accountId === id,
+            )
+          )
             throw new RequestError(
               "Exclua ou mova as transações desta conta antes de apagá-la.",
             );

@@ -251,6 +251,11 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       setNotice({ message: "Conta excluída." });
   }
 
+  async function undoNotice() {
+    if (notice?.undo && (await budget.restore(notice.undo)))
+      setNotice({ message: "Alteração desfeita." });
+  }
+
   return (
     <div className="app-shell">
       <AppNavigation view={view} onNavigate={navigate} />
@@ -368,7 +373,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               hidden={hidden}
               onAdd={() => setAccountDialog({ account: null })}
               onEdit={(account) => setAccountDialog({ account })}
-              onDelete={removeAccount}
+              onDelete={(account) => void removeAccount(account)}
             />
           ) : (
             <>
@@ -439,7 +444,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   }
                   onKind={setKindFilter}
                   onEdit={(transaction) => openTransaction(transaction)}
-                  onDelete={remove}
+                  onDelete={(transaction) => void remove(transaction)}
                   onAdd={() => openTransaction(null)}
                   compact={view === "overview"}
                   onViewAll={() => navigate("transactions")}
@@ -515,10 +520,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         <NoticeToast
           message={notice.message}
           canUndo={!!notice.undo}
-          onUndo={async () => {
-            if (notice.undo && (await budget.restore(notice.undo)))
-              setNotice({ message: "Alteração desfeita." });
-          }}
+          onUndo={() => void undoNotice()}
           onClose={() => setNotice(null)}
         />
       )}

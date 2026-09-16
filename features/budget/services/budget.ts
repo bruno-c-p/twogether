@@ -26,6 +26,11 @@ export function formatAmountInput(value: string): string {
   return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents}`;
 }
 
+export function formText(form: FormData, name: string): string {
+  const value = form.get(name);
+  return typeof value === "string" ? value : "";
+}
+
 export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }

@@ -26,6 +26,13 @@ export function GoalPercentagesDialog({
     0,
   );
   useModalDialog(dialog);
+  async function submit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!valid || saving) return;
+    setSaving(true);
+    if (await onSave(values)) onClose();
+    setSaving(false);
+  }
   return (
     <dialog
       ref={dialog}
@@ -33,16 +40,7 @@ export function GoalPercentagesDialog({
       aria-labelledby="percentages-title"
       onCancel={onClose}
     >
-      <form
-        className="dialog-content"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          if (!valid || saving) return;
-          setSaving(true);
-          if (await onSave(values)) onClose();
-          setSaving(false);
-        }}
-      >
+      <form className="dialog-content" onSubmit={(event) => void submit(event)}>
         <header className="dialog-header">
           <h2 id="percentages-title">Divisão da minha renda</h2>
           <button

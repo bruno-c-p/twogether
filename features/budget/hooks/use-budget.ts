@@ -36,7 +36,7 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
       const response = await fetch("/api/budget", { cache: "no-store" });
       if (!response.ok)
         throw new Error("Não foi possível sincronizar. Tente novamente.");
-      const result: CommandResult = await response.json();
+      const result = (await response.json()) as CommandResult;
       if (current !== generation.current) return;
       setSnapshot(result.snapshot);
       setSyncError("");
@@ -89,7 +89,9 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         });
-        const result = await response.json();
+        const result = (await response.json()) as CommandResult & {
+          error?: string;
+        };
         if (!response.ok) {
           if (response.status === 401) setSnapshot(emptySnapshot());
           throw new Error(result.error || "Não foi possível salvar.");

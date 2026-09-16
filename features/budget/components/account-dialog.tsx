@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { Check, X } from "lucide-react";
 import { useCaretToEnd, useModalDialog } from "../hooks/use-modal-dialog";
-import { formatAmountInput, parseBalance } from "../services/budget";
+import { formatAmountInput, formText, parseBalance } from "../services/budget";
 import type { BankAccount } from "../types";
 
 interface Props {
@@ -31,9 +31,7 @@ export function AccountDialog({
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
-    const name = String(
-      new FormData(event.currentTarget).get("name") ?? "",
-    ).trim();
+    const name = formText(new FormData(event.currentTarget), "name").trim();
     const openingBalance = parseBalance(openingValue);
     if (!name) {
       setError("Dê um nome para esta conta.");
@@ -78,7 +76,7 @@ export function AccountDialog({
             <X size={22} />
           </button>
         </header>
-        <form onSubmit={submit}>
+        <form onSubmit={(event) => void submit(event)}>
           <fieldset className="transaction-fields" disabled={saving}>
             <label className="account-field">
               Nome da conta

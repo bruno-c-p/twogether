@@ -11,6 +11,7 @@ import { useCaretToEnd, useModalDialog } from "../hooks/use-modal-dialog";
 import { GOALS } from "../constants";
 import {
   formatAmountInput,
+  formText,
   localDate,
   normalizeTag,
   parseAmount,
@@ -79,9 +80,9 @@ export function TransactionDialog({
     event.preventDefault();
     if (saving) return;
     const form = new FormData(event.currentTarget);
-    const amount = parseAmount(String(form.get("amount") ?? ""));
-    const description = String(form.get("description") ?? "").trim();
-    const date = String(form.get("date") ?? "");
+    const amount = parseAmount(formText(form, "amount"));
+    const description = formText(form, "description").trim();
+    const date = formText(form, "date");
     if (!amount) {
       setError("Digite um valor válido, como 45,90.");
       return;
@@ -94,7 +95,7 @@ export function TransactionDialog({
       setError("Escolha uma das seis metas para esta despesa.");
       return;
     }
-    const accountId = String(form.get("accountId") ?? "");
+    const accountId = formText(form, "accountId");
     if (!accounts.some((item) => item.id === accountId)) {
       setError(
         accounts.length
@@ -160,7 +161,7 @@ export function TransactionDialog({
             <X size={22} />
           </button>
         </header>
-        <form onSubmit={submit}>
+        <form onSubmit={(event) => void submit(event)}>
           <fieldset className="transaction-fields" disabled={saving}>
             <div className="kind-toggle" aria-label="Tipo da transação">
               <button

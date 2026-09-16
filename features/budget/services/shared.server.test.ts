@@ -537,7 +537,9 @@ test("Resend transport sends HTML and text with the configured origin and never 
   let key = "";
   globalThis.fetch = Object.assign(
     async (_input: string | URL | Request, init?: RequestInit) => {
-      payload = JSON.parse(String(init?.body));
+      payload = JSON.parse(
+        typeof init?.body === "string" ? init.body : "{}",
+      ) as Record<string, unknown>;
       key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
       return Response.json({ id: "test-message" });
     },
