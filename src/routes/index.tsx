@@ -3,13 +3,11 @@ import { BudgetApp } from "@/features/budget";
 import { loadBudget } from "@/features/budget/actions/load-budget";
 import { validateBudgetSearch } from "@/features/budget/search";
 import { RouteError } from "@/src/route-error";
-import ui from "@/src/ui.module.css";
+import { LoadingState } from "@/src/ui/empty-state";
 
 function BudgetPending() {
   return (
-    <div className={ui.loadingState} aria-live="polite">
-      Carregando orçamento…
-    </div>
+    <LoadingState>Carregando orçamento…</LoadingState>
   );
 }
 

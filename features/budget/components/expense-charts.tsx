@@ -3,7 +3,8 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/types";
-import ui from "@/src/ui.module.css";
+import { ColorDot } from "@/src/ui/color-dot";
+import { OverviewGrid } from "@/src/ui/panel";
 import styles from "@/features/budget/components/expense-charts.module.css";
 
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -46,8 +47,8 @@ export function ExpenseCharts({
     };
   });
   return (
-    <section
-      className={`${ui.overviewGrid} ${styles.expenseCharts}`}
+    <OverviewGrid
+      className={styles.expenseCharts}
       aria-label="Gráficos de despesas do mês"
     >
       <article className={styles.expenseChartCard}>
@@ -157,7 +158,7 @@ export function ExpenseCharts({
           <ul className={styles.expenseTagList}>
             {segments.map((tag) => (
               <li key={JSON.stringify(tag.name)}>
-                <span className={ui.colorDot} style={{ background: tag.color }} />
+                <ColorDot style={{ background: tag.color }} />
                 <span className={styles.expenseTagName}>
                   {tag.name ?? "Sem tags"}
                 </span>
@@ -191,6 +192,6 @@ export function ExpenseCharts({
           </p>
         )}
       </article>
-    </section>
+    </OverviewGrid>
   );
 }

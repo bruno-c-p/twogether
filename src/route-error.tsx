@@ -1,26 +1,35 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { useRouter } from "@tanstack/react-router";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import styles from "@/src/route-error.module.css";
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   return (
-    <div className={ui.routeError} role="alert">
+    <div className={styles.routeError} role="alert">
       <h1>Algo deu errado.</h1>
       <p>
         {error instanceof Error
           ? error.message
           : "Não foi possível carregar esta parte do orçamento."}
       </p>
-      <button
-        className={ui.primaryButton}
+      <Button
         onClick={() => {
           router.invalidate();
           reset();
         }}
       >
         Tentar novamente
-      </button>
+      </Button>
     </div>
+  );
+}
+
+export function NotFoundPage() {
+  return (
+    <main className={styles.notFound}>
+      <h1>Página não encontrada.</h1>
+      <a href="/">Voltar para a visão geral</a>
+    </main>
   );
 }

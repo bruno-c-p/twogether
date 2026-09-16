@@ -38,10 +38,12 @@ import { Distribution } from "@/features/budget/components/distribution";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog";
 import { TransactionList } from "@/features/budget/components/transaction-list";
-import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
+import { Brand } from "@/src/ui/brand";
+import { Button } from "@/src/ui/button";
+import { OverviewGrid, SectionHeading } from "@/src/ui/panel";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },
@@ -269,13 +271,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
-        <a className={`${ui.brand} ${styles.sidebarBrand}`} href="/" aria-label="twogether — início">
-          <span className={ui.brandMark}>
-            <span />
-            <span />
-          </span>
-          twogether<span className={ui.brandPeriod}>.</span>
-        </a>
+        <Brand
+          className={styles.sidebarBrand}
+          mark
+          href="/"
+          aria-label="twogether — início"
+        />
         <nav className={styles.desktopNavigation} aria-label="Navegação principal">
           {navigation.map((item) => (
             <button
@@ -299,23 +300,20 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {navigation.find((item) => item.id === view)?.label}
             </strong>
           </div>
-          <a className={`${ui.brand} ${styles.mobileBrand}`} href="/">
-            <span className={`${ui.brandMark} ${styles.mobileMark}`}>
-              <span />
-              <span />
-            </span>
+          <Brand className={styles.mobileBrand} mark markClassName={styles.mobileMark}>
             twogether.
-          </a>
+          </Brand>
           <div className={styles.topbarRight}>
             <ThemeToggle className={styles.topbarTheme} />
-            <button
-              className={`${ui.iconButton} ${styles.visibilityButton}`}
+            <Button
+              variant="icon"
+              className={styles.visibilityButton}
               onClick={() => setHidden(!hidden)}
               aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
               title={hidden ? "Mostrar valores" : "Ocultar valores"}
             >
               {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-            </button>
+            </Button>
             <button
               className={styles.spaceButton}
               aria-label={`Abrir nosso espaço: ${memberLabel}`}
@@ -334,8 +332,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               <h1>{titles[view].title}</h1>
               <p>{titles[view].subtitle}</p>
             </div>
-            <button
-              className={`${ui.primaryButton} ${styles.addTransaction}`}
+            <Button
+              className={styles.addTransaction}
               disabled={budget.busy}
               onClick={() =>
                 view === "accounts"
@@ -345,19 +343,20 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             >
               <Plus size={19} />{" "}
               {view === "accounts" ? "Nova conta" : "Nova transação"}
-            </button>
+            </Button>
           </div>
           {view !== "accounts" && (
             <div className={styles.monthRow}>
               <div className={styles.monthPicker}>
-                <button
-                  className={`${ui.iconButton} ${styles.monthIcon}`}
+                <Button
+                  variant="icon"
+                  className={styles.monthIcon}
                   aria-label="Mês anterior"
                   disabled={!month}
                   onClick={() => setMonth(shiftMonth(month, -1))}
                 >
                   <ChevronLeft size={17} />
-                </button>
+                </Button>
                 <input
                   className={styles.monthInput}
                   type="month"
@@ -373,14 +372,15 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                     }
                   }}
                 />
-                <button
-                  className={`${ui.iconButton} ${styles.monthIcon}`}
+                <Button
+                  variant="icon"
+                  className={styles.monthIcon}
                   aria-label="Próximo mês"
                   disabled={!month}
                   onClick={() => setMonth(shiftMonth(month, 1))}
                 >
                   <ChevronRight size={17} />
-                </button>
+                </Button>
               </div>
               {month && month !== localDate().slice(0, 7) && (
                 <button
@@ -439,7 +439,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           ) : (
             <>
               {view === "overview" && (
-                <section className={ui.overviewGrid} aria-label="Resumo mensal">
+                <OverviewGrid aria-label="Resumo mensal">
                   <div
                     className={`${styles.balanceCard} ${summary.balance < 0 ? styles.negative : ""}`}
                   >
@@ -489,7 +489,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                     </div>
                   </div>
                   <Distribution transactions={monthly} hidden={hidden} />
-                </section>
+                </OverviewGrid>
               )}
               {view === "overview" && month && (
                 <ExpenseCharts
@@ -510,14 +510,11 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   className={styles.goalsSection}
                   aria-labelledby="goals-title"
                 >
-                  <div className={ui.sectionHeading}>
-                    <div>
-                      <h2 id="goals-title">Metas do orçamento</h2>
-                    </div>
+                  <SectionHeading title="Metas do orçamento" titleId="goals-title">
                     {(memberFilter === "all" ||
                       memberFilter === budget.user?.id) && (
-                      <button
-                        className={ui.textButton}
+                      <Button
+                        variant="text"
                         disabled={budget.busy}
                         onClick={() =>
                           setEditingPercentages(
@@ -526,9 +523,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                         }
                       >
                         Editar meus percentuais
-                      </button>
+                      </Button>
                     )}
-                  </div>
+                  </SectionHeading>
                   <div
                     className={`${styles.goalsGrid} ${view === "goals" ? styles.expandedGoals : ""}`}
                   >

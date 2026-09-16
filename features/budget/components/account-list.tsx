@@ -1,8 +1,19 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { accountBalance, money } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
-import ui from "@/src/ui.module.css";
-import list from "@/features/budget/styles/list-row.module.css";
+import { Button } from "@/src/ui/button";
+import { EmptyState } from "@/src/ui/empty-state";
+import {
+  ListRow,
+  ListRowActions,
+  ListRowIcon,
+  ListRowMeta,
+  ListRowName,
+  ListRowValue,
+  listRowAction,
+  listRowDelete,
+} from "@/src/ui/list-row";
+import { Panel, SectionHeading } from "@/src/ui/panel";
 
 interface Props {
   accounts: BankAccount[];
@@ -35,16 +46,13 @@ export function AccountList({
     a.name.localeCompare(b.name, "pt-BR"),
   );
   return (
-    <section className={ui.panel} aria-labelledby="accounts-title">
-      <div className={ui.sectionHeading}>
-        <div>
-          <h2 id="accounts-title">
-            Contas cadastradas
-            <span className={ui.countBadge}>{accounts.length}</span>
-          </h2>
-          <p>Saldo inicial mais receitas, menos despesas de cada conta.</p>
-        </div>
-      </div>
+    <Panel aria-labelledby="accounts-title">
+      <SectionHeading
+        title="Contas cadastradas"
+        titleId="accounts-title"
+        count={accounts.length}
+        description="Saldo inicial mais receitas, menos despesas de cada conta."
+      />
       {sorted.length ? (
         <div>
           {sorted.map((account) => {
@@ -53,40 +61,39 @@ export function AccountList({
             );
             const balance = accountBalance(account, visibleTransactions);
             return (
-              <div className={list.row} key={account.id}>
-                <span className={list.icon}>
+              <ListRow key={account.id}>
+                <ListRowIcon>
                   <Landmark size={18} />
-                </span>
+                </ListRowIcon>
                 <div>
-                  <button
-                    className={list.name}
+                  <ListRowName
                     disabled={busy}
                     onClick={() => onEdit(account)}
                   >
                     {account.name}
-                  </button>
-                  <div className={list.meta}>
+                  </ListRowName>
+                  <ListRowMeta>
                     {used
                       ? "Em uso nas transações"
                       : "Nenhuma transação nesta conta"}
-                  </div>
+                  </ListRowMeta>
                 </div>
-                <span
-                  className={`${list.value} ${balance < 0 ? list.negative : list.positive}`}
-                >
+                <ListRowValue tone={balance < 0 ? "negative" : "positive"}>
                   {hidden ? "R$ ••••" : money(balance)}
-                </span>
-                <div className={list.actions}>
-                  <button
-                    className={`${ui.iconButton} ${list.actionButton}`}
+                </ListRowValue>
+                <ListRowActions>
+                  <Button
+                    variant="icon"
+                    className={listRowAction}
                     disabled={busy}
                     aria-label={`Editar ${account.name}`}
                     onClick={() => onEdit(account)}
                   >
                     <Pencil size={15} />
-                  </button>
-                  <button
-                    className={`${ui.iconButton} ${list.actionButton} ${list.deleteButton}`}
+                  </Button>
+                  <Button
+                    variant="icon"
+                    className={`${listRowAction} ${listRowDelete}`}
                     disabled={busy || used}
                     title={
                       used
@@ -97,24 +104,25 @@ export function AccountList({
                     onClick={() => onDelete(account)}
                   >
                     <Trash2 size={15} />
-                  </button>
-                </div>
-              </div>
+                  </Button>
+                </ListRowActions>
+              </ListRow>
             );
           })}
         </div>
       ) : (
-        <div className={ui.emptyState}>
-          <div className={ui.emptyIcon}>
-            <Landmark size={25} strokeWidth={1.5} />
-          </div>
-          <h3>Nenhuma conta cadastrada.</h3>
-          <p>Cadastre uma conta para lançar receitas e despesas.</p>
-          <button className={ui.primaryButton} onClick={onAdd}>
-            <Plus size={18} /> Adicionar primeira conta
-          </button>
-        </div>
+        <EmptyState
+          icon={<Landmark size={25} strokeWidth={1.5} />}
+          title="Nenhuma conta cadastrada."
+          action={
+            <Button onClick={onAdd}>
+              <Plus size={18} /> Adicionar primeira conta
+            </Button>
+          }
+        >
+          Cadastre uma conta para lançar receitas e despesas.
+        </EmptyState>
       )}
-    </section>
+    </Panel>
   );
 }

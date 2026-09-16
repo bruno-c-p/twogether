@@ -10,7 +10,10 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import ui from "@/src/ui.module.css";
+import { Button } from "@/src/ui/button";
+import { ColorDot } from "@/src/ui/color-dot";
+import { EmptyState } from "@/src/ui/empty-state";
+import { Panel, SectionHeading } from "@/src/ui/panel";
 import styles from "@/features/budget/components/transaction-list.module.css";
 
 interface Props {
@@ -68,24 +71,19 @@ export function TransactionList(props: Props) {
   const activeFilters =
     !!query || goalFilter !== "all" || !!tagFilter || kindFilter !== "all";
   return (
-    <section
-      className={ui.panel}
-      aria-labelledby="transactions-title"
-    >
-      <div className={ui.sectionHeading}>
-        <div>
-          <h2 id="transactions-title">
-            {compact ? "Últimas transações" : "Transações do mês"}
-            <span className={ui.countBadge}>{transactions.length}</span>
-          </h2>
-          <p>Entradas e despesas registradas no mês.</p>
-        </div>
+    <Panel aria-labelledby="transactions-title">
+      <SectionHeading
+        title={compact ? "Últimas transações" : "Transações do mês"}
+        titleId="transactions-title"
+        count={transactions.length}
+        description="Entradas e despesas registradas no mês."
+      >
         {compact && (
-          <button className={`${ui.textButton} ${styles.seeAll}`} onClick={onViewAll}>
+          <Button variant="text" className={styles.seeAll} onClick={onViewAll}>
             Ver todas <ArrowUpRight size={17} />
-          </button>
+          </Button>
         )}
-      </div>
+      </SectionHeading>
       <div className={styles.transactionToolbar}>
         <div className={styles.searchField}>
           <Search size={18} />
@@ -96,13 +94,13 @@ export function TransactionList(props: Props) {
             onChange={(event) => onQuery(event.target.value)}
           />
           {query && (
-            <button
-              className={ui.iconButton}
+            <Button
+              variant="icon"
               onClick={() => onQuery("")}
               aria-label="Limpar busca"
             >
               <X size={15} />
-            </button>
+            </Button>
           )}
         </div>
         <div className={styles.filterSelects}>
@@ -135,10 +133,10 @@ export function TransactionList(props: Props) {
       {tagFilter && (
         <div className={styles.activeTagFilter}>
           <span>Filtrando por</span>
-          <button className={ui.tag} onClick={() => onTag("")}>
+          <Button variant="tag" onClick={() => onTag("")}>
             #{tagFilter}
             <X size={13} />
-          </button>
+          </Button>
         </div>
       )}
       {shown.length ? (
@@ -148,7 +146,7 @@ export function TransactionList(props: Props) {
             <span>META</span>
             <span>DATA</span>
             <span>VALOR</span>
-            <span className={ui.srOnly}>Ações</span>
+            <span className={styles.srOnly}>Ações</span>
           </div>
           {shown.map((t) => {
             const goal = GOALS.find((g) => g.id === t.goal);
@@ -207,8 +205,8 @@ export function TransactionList(props: Props) {
                       className={styles.goalBadge}
                       style={{ background: goal.background, color: goal.color }}
                     >
-                      <span
-                        className={ui.colorDot}
+                      <ColorDot
+                        className={styles.goalDot}
                         style={{ background: goal.color }}
                       />
                       {goal.name}
@@ -234,60 +232,59 @@ export function TransactionList(props: Props) {
                     : `${t.kind === "income" ? "+" : "−"} ${money(t.amount)}`}
                 </span>
                 <div className={styles.rowActions}>
-                  <button
-                    className={`${ui.iconButton} ${styles.actionButton}`}
+                  <Button
+                    variant="icon"
+                    className={styles.actionButton}
                     disabled={props.busy}
                     aria-label={`Editar ${t.description}`}
                     onClick={() => onEdit(t)}
                   >
                     <Pencil size={15} />
-                  </button>
-                  <button
-                    className={`${ui.iconButton} ${styles.actionButton} ${styles.deleteButton}`}
+                  </Button>
+                  <Button
+                    variant="icon"
+                    className={`${styles.actionButton} ${styles.deleteButton}`}
                     disabled={props.busy}
                     aria-label={`Excluir ${t.description}`}
                     onClick={() => onDelete(t)}
                   >
                     <Trash2 size={15} />
-                  </button>
+                  </Button>
                 </div>
               </div>
             );
           })}
         </div>
       ) : (
-        <div className={ui.emptyState}>
-          <div className={ui.emptyIcon}>
-            <Search size={25} strokeWidth={1.5} />
-          </div>
-          <h3>
-            {activeFilters
+        <EmptyState
+          icon={<Search size={25} strokeWidth={1.5} />}
+          title={
+            activeFilters
               ? "Nenhuma transação encontrada."
-              : "Nenhuma transação neste mês."}
-          </h3>
-          <p>
-            {activeFilters
-              ? "Ajuste a busca ou os filtros."
-              : "Adicione uma receita ou despesa para começar."}
-          </p>
-          {activeFilters ? (
-            <button
-              className={ui.secondaryButton}
-              onClick={() => {
-                onQuery("");
-                onGoal("all");
-                onTag("");
-                onKind("all");
-              }}
-            >
-              Limpar filtros
-            </button>
-          ) : (
-            <button className={ui.primaryButton} onClick={onAdd}>
-              Adicionar primeira transação
-            </button>
-          )}
-        </div>
+              : "Nenhuma transação neste mês."
+          }
+          action={
+            activeFilters ? (
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  onQuery("");
+                  onGoal("all");
+                  onTag("");
+                  onKind("all");
+                }}
+              >
+                Limpar filtros
+              </Button>
+            ) : (
+              <Button onClick={onAdd}>Adicionar primeira transação</Button>
+            )
+          }
+        >
+          {activeFilters
+            ? "Ajuste a busca ou os filtros."
+            : "Adicione uma receita ou despesa para começar."}
+        </EmptyState>
       )}
       {shown.length > 0 && (
         <div className={styles.tableFooter}>
@@ -298,6 +295,6 @@ export function TransactionList(props: Props) {
           </span>
         </div>
       )}
-    </section>
+    </Panel>
   );
 }

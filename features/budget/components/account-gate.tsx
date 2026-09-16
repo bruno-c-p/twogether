@@ -4,7 +4,9 @@ import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
-import ui from "@/src/ui.module.css";
+import { Brand } from "@/src/ui/brand";
+import { Button } from "@/src/ui/button";
+import { FieldHint, Form, FormError, FormStack, Note } from "@/src/ui/field";
 import styles from "@/features/budget/components/account-gate.module.css";
 
 const isDevelopment = import.meta.env.DEV;
@@ -57,9 +59,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
-      <a href="/" className={`${ui.brand} ${styles.pageBrand}`}>
-        twogether.
-      </a>
+      <Brand className={styles.pageBrand}>twogether.</Brand>
       <section className={styles.accountCard}>
         <div className={styles.accountSymbol}>
           {sentTo ? (
@@ -68,7 +68,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             <HeartHandshake size={30} strokeWidth={1.5} />
           )}
         </div>
-        <p className={`${ui.eyebrow} ${styles.cardEyebrow}`}>DUAS PESSOAS. UM ORÇAMENTO.</p>
+        <p className={styles.cardEyebrow}>DUAS PESSOAS. UM ORÇAMENTO.</p>
         <h1>
           {budget.accessToken
             ? "Seu espaço está aqui."
@@ -92,9 +92,8 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                   : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
         </p>
         {budget.accessToken ? (
-          <div className={ui.accountForm}>
-            <button
-              className={ui.primaryButton}
+          <FormStack>
+            <Button
               disabled={budget.busy}
               onClick={async () => {
                 if (
@@ -108,42 +107,41 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             >
               {budget.busy ? "Aguarde…" : "Continuar"}
               <ArrowRight size={18} />
-            </button>
-            <button
-              className={ui.textButton}
+            </Button>
+            <Button
+              variant="text"
               disabled={budget.busy}
               onClick={budget.finishAccess}
             >
               Pedir outro link
-            </button>
-          </div>
+            </Button>
+          </FormStack>
         ) : !budget.user ? (
           <>
             {invitation && (
-              <p className={ui.invitationNote}>
+              <Note>
                 Seu par convidou você. Confirme seu e-mail para compartilhar o
                 orçamento.
-              </p>
+              </Note>
             )}
             {sentTo ? (
-              <div className={ui.accountForm}>
-                <p className={ui.invitationNote}>
+              <FormStack>
+                <Note>
                   O link vale por 15 minutos. Se não encontrar, confira o spam.
-                </p>
-                <button
-                  className={ui.secondaryButton}
+                </Note>
+                <Button
+                  variant="secondary"
                   disabled={budget.busy || cooldown > 0}
                   onClick={() => requestAccess(sentTo)}
                 >
                   {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar link"}
-                </button>
-                <button className={ui.textButton} onClick={() => setSentTo("")}>
+                </Button>
+                <Button variant="text" onClick={() => setSentTo("")}>
                   Usar outro e-mail
-                </button>
-              </div>
+                </Button>
+              </FormStack>
             ) : (
-              <form
-                className={ui.accountForm}
+              <Form
                 onSubmit={async (event) => {
                   event.preventDefault();
                   await requestAccess(
@@ -164,7 +162,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                     required
                   />
                 </label>
-                <button className={ui.primaryButton} disabled={budget.busy}>
+                <Button disabled={budget.busy}>
                   {budget.busy
                     ? isDevelopment
                       ? "Entrando…"
@@ -173,13 +171,12 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                       ? "Entrar localmente"
                       : "Receber meu link"}
                   <ArrowRight size={18} />
-                </button>
-              </form>
+                </Button>
+              </Form>
             )}
           </>
         ) : !budget.user.name ? (
-          <form
-            className={ui.accountForm}
+          <Form
             onSubmit={async (event) => {
               event.preventDefault();
               await budget.command({
@@ -200,20 +197,19 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 required
               />
             </label>
-            <button className={ui.primaryButton} disabled={budget.busy}>
+            <Button disabled={budget.busy}>
               Continuar
               <ArrowRight size={18} />
-            </button>
-          </form>
+            </Button>
+          </Form>
         ) : (
-          <div className={ui.accountForm}>
+          <FormStack>
             {invitation ? (
               <>
-                <p className={ui.invitationNote}>
+                <Note>
                   Ao aceitar, vocês dois poderão ver e editar todo o orçamento.
-                </p>
-                <button
-                  className={ui.primaryButton}
+                </Note>
+                <Button
                   disabled={budget.busy}
                   onClick={async () => {
                     if (
@@ -227,27 +223,22 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 >
                   {budget.busy ? "Aguarde…" : "Aceitar convite"}
                   <ArrowRight size={18} />
-                </button>
-                <button
-                  className={ui.textButton}
-                  onClick={clearInvitation}
-                >
+                </Button>
+                <Button variant="text" onClick={clearInvitation}>
                   Usar outro convite ou começar do zero
-                </button>
+                </Button>
               </>
             ) : (
               <>
-                <button
-                  className={ui.primaryButton}
+                <Button
                   disabled={budget.busy}
                   onClick={() => budget.command({ action: "create" })}
                 >
                   Começar nosso orçamento
                   <ArrowRight size={18} />
-                </button>
-                <span className={ui.accountDivider}>já recebeu um convite?</span>
-                <form
-                  className={ui.accountForm}
+                </Button>
+                <span className={styles.divider}>já recebeu um convite?</span>
+                <Form
                   onSubmit={async (event) => {
                     event.preventDefault();
                     await budget.command({
@@ -268,31 +259,27 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                       required
                     />
                   </label>
-                  <button className={ui.secondaryButton} disabled={budget.busy}>
+                  <Button variant="secondary" disabled={budget.busy}>
                     Aceitar convite
-                  </button>
-                </form>
+                  </Button>
+                </Form>
               </>
             )}
-            <button
-              className={ui.textButton}
+            <Button
+              variant="text"
               disabled={budget.busy}
               onClick={() => budget.command({ action: "logout" })}
             >
               Sair de {budget.user.email}
-            </button>
-          </div>
+            </Button>
+          </FormStack>
         )}
-        {budget.error && (
-          <p className={ui.formError} role="alert">
-            {budget.error}
-          </p>
-        )}
-        <p className={ui.accountFootnote}>
+        {budget.error && <FormError>{budget.error}</FormError>}
+        <FieldHint>
           {isDevelopment
             ? "Modo desenvolvimento: o acesso local não envia e-mail."
             : "Sem senha. Um espaço exclusivo para vocês dois."}
-        </p>
+        </FieldHint>
       </section>
       <AppFooter className={styles.pageFooter} />
     </main>
