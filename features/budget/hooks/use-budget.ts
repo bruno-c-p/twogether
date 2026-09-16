@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { DEFAULT_PERCENTAGES } from "../constants";
+import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type {
   BankAccount,
   Transaction,
@@ -8,7 +8,7 @@ import type {
   SharedSnapshot,
   BudgetCommand,
   CommandResult,
-} from "../types";
+} from "@/features/budget/types";
 
 const emptySnapshot = (): SharedSnapshot => ({
   user: null,

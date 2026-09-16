@@ -1,5 +1,5 @@
 import { Armchair, BookOpen, House, Target, Sprout, Wine } from "lucide-react";
-import type { GoalId } from "../types";
+import type { GoalId } from "@/features/budget/types";
 
 const icons = {
   fixed: House,

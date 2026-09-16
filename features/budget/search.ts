@@ -1,4 +1,4 @@
-import type { GoalId, View } from "./types";
+import type { GoalId, View } from "@/features/budget/types";
 
 const tokenPattern = /^[0-9a-f]{64}$/;
 const views: View[] = ["overview", "transactions", "accounts", "goals"];

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Check, X } from "lucide-react";
-import { formatAmountInput, parseBalance } from "../services/budget";
-import type { BankAccount } from "../types";
+import { formatAmountInput, parseBalance } from "@/features/budget/services/budget";
+import type { BankAccount } from "@/features/budget/types";
 
 interface Props {
   account: BankAccount | null;

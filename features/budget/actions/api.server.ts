@@ -1,9 +1,9 @@
-import { RequestError, type BudgetStore } from "../services/shared.server";
+import { RequestError, type BudgetStore } from "@/features/budget/services/shared.server";
 import {
   getBudgetStore,
   readSessionToken,
   sessionCookie,
-} from "./budget-store.server";
+} from "@/features/budget/actions/budget-store.server";
 
 export async function handleBudgetRequest(
   request: Request,

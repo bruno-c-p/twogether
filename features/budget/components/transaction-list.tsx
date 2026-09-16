@@ -6,10 +6,10 @@ import {
   Trash2,
   X,
 } from "lucide-react";
-import { GOALS } from "../constants";
-import { money } from "../services/budget";
-import type { BankAccount, GoalId, Transaction, Member } from "../types";
-import { GoalIcon } from "./goal-icon";
+import { GOALS } from "@/features/budget/constants";
+import { money } from "@/features/budget/services/budget";
+import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
+import { GoalIcon } from "@/features/budget/components/goal-icon";
 
 interface Props {
   transactions: Transaction[];

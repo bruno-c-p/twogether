@@ -31,3 +31,15 @@
   concluir a verificação.
 - Na resposta final, registre sucintamente o que foi testado no app, os
   resultados das verificações automatizadas e quaisquer limitações reais.
+
+## Importações absolutas
+
+- Importações de código-fonte do repositório devem usar o alias `@/` (raiz do
+  repo), nunca caminhos relativos (`./` ou `../`).
+- Não altere URLs públicas em runtime, `url()` em CSS, nem importações de
+  pacotes externos.
+- Mantenha os imports no topo do arquivo. Sem imports inline, salvo quando a
+  toolchain exigir carregamento preguiçoso.
+- Exceção: arquivos gerados que a toolchain reescreve com imports relativos
+  (ex.: `src/routeTree.gen.ts` do TanStack Router). Não os edite para forçar o
+  alias.

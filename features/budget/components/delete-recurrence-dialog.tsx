@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
-import type { Transaction } from "../types";
+import type { Transaction } from "@/features/budget/types";
 
 interface Props {
   transaction: Transaction;

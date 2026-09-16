@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, X } from "lucide-react";
-import type { BudgetController } from "../hooks/use-budget";
+import type { BudgetController } from "@/features/budget/hooks/use-budget";
 
 export function CoupleDialog({
   budget,

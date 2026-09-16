@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
-import type { BudgetController } from "../hooks/use-budget";
-import { AppFooter } from "./app-footer";
+import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { AppFooter } from "@/features/budget/components/app-footer";
 
 const isDevelopment = import.meta.env.DEV;
 

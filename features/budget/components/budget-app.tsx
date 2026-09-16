@@ -1,4 +1,4 @@
-import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
+import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
 import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
@@ -19,27 +19,27 @@ import {
   UsersRound,
   X,
 } from "lucide-react";
-import { useBudget, type BudgetController } from "../hooks/use-budget";
+import { useBudget, type BudgetController } from "@/features/budget/hooks/use-budget";
 import {
   localDate,
   money,
   shiftMonth,
   summarize,
   planGoals,
-} from "../services/budget";
-import type { BankAccount, GoalId, SharedSnapshot, Transaction, View } from "../types";
-import { GoalPercentagesDialog } from "./goal-percentages-dialog";
-import { AppFooter } from "./app-footer";
-import { AccountGate } from "./account-gate";
-import { CoupleDialog } from "./couple-dialog";
-import { FinancialHistory } from "./financial-history";
-import { ExpenseCharts } from "./expense-charts";
-import { Distribution } from "./distribution";
-import { GoalIcon } from "./goal-icon";
-import { TransactionDialog } from "./transaction-dialog";
-import { TransactionList } from "./transaction-list";
-import { AccountDialog } from "./account-dialog";
-import { AccountList } from "./account-list";
+} from "@/features/budget/services/budget";
+import type { BankAccount, GoalId, SharedSnapshot, Transaction, View } from "@/features/budget/types";
+import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
+import { AppFooter } from "@/features/budget/components/app-footer";
+import { AccountGate } from "@/features/budget/components/account-gate";
+import { CoupleDialog } from "@/features/budget/components/couple-dialog";
+import { FinancialHistory } from "@/features/budget/components/financial-history";
+import { ExpenseCharts } from "@/features/budget/components/expense-charts";
+import { Distribution } from "@/features/budget/components/distribution";
+import { GoalIcon } from "@/features/budget/components/goal-icon";
+import { TransactionDialog } from "@/features/budget/components/transaction-dialog";
+import { TransactionList } from "@/features/budget/components/transaction-list";
+import { AccountDialog } from "@/features/budget/components/account-dialog";
+import { AccountList } from "@/features/budget/components/account-list";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },

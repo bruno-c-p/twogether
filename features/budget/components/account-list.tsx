@@ -1,6 +1,6 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
-import { accountBalance, money } from "../services/budget";
-import type { BankAccount, Transaction } from "../types";
+import { accountBalance, money } from "@/features/budget/services/budget";
+import type { BankAccount, Transaction } from "@/features/budget/types";
 
 interface Props {
   accounts: BankAccount[];
