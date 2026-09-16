@@ -6,10 +6,16 @@ import type {
   MemberBudget,
 } from "../types";
 
-export const money = (cents: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
-    cents / 100,
-  );
+const moneyFormatter = new Intl.NumberFormat("pt-BR", {
+  style: "currency",
+  currency: "BRL",
+});
+const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+});
+
+export const money = (cents: number) => moneyFormatter.format(cents / 100);
 
 export function formatAmountInput(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -31,7 +37,7 @@ export function shiftMonth(month: string, offset: number) {
 
 export function monthLabel(month: string) {
   const [year, number] = month.split("-").map(Number);
-  return new Intl.DateTimeFormat("pt-BR", { month: "long", year: "numeric" })
+  return monthFormatter
     .format(new Date(year, number - 1, 1))
     .replace(" de ", " ");
 }

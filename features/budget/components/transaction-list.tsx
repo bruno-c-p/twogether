@@ -17,6 +17,11 @@ import type {
 } from "../types";
 import { GoalIcon } from "./goal-icon";
 
+const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+});
+
 interface Props {
   transactions: Transaction[];
   members: Member[];
@@ -225,13 +230,7 @@ export function TransactionList(props: Props) {
                   )}
                 </div>
                 <time className="transaction-date" dateTime={t.date}>
-                  {new Intl.DateTimeFormat("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                  })
-                    .format(date)
-                    .replace(" de ", " ")
-                    .replace(".", "")}
+                  {dayFormatter.format(date).replace(" de ", " ").replace(".", "")}
                 </time>
                 <span
                   className={`transaction-value ${t.kind === "income" ? "positive" : "negative"}`}
