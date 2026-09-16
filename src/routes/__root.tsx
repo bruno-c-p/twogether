@@ -5,9 +5,11 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import stylesheet from "../styles.css?url";
+import { RouteError } from "../route-error";
 import { themeScript } from "@/features/theme";
 
 export const Route = createRootRoute({
+  errorComponent: RouteError,
   head: () => ({
     meta: [
       { charSet: "utf-8" },
