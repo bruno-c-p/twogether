@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { useBudget, type BudgetController } from "../hooks/use-budget";
-import { localDate, shiftMonth, summarize, planGoals } from "../services/budget";
+import {
+  localDate,
+  shiftMonth,
+  summarize,
+  planGoals,
+} from "../services/budget";
 import type {
   BankAccount,
   GoalId,
@@ -234,7 +239,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   async function saveAccount(account: BankAccount) {
     if (!(await budget.saveAccount(account))) return false;
     setNotice({
-      message: accountDialog?.account ? "Conta atualizada." : "Conta adicionada.",
+      message: accountDialog?.account
+        ? "Conta atualizada."
+        : "Conta adicionada.",
     });
     return true;
   }

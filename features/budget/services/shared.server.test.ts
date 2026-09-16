@@ -839,9 +839,9 @@ describe("bank accounts", () => {
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
-    expect((await store.snapshot(a.session)).budget.transactions[0]?.accountId).toBe(
-      "account-1",
-    );
+    expect(
+      (await store.snapshot(a.session)).budget.transactions[0]?.accountId,
+    ).toBe("account-1");
   });
   test("rejects deleting an account still used by a transaction", async () => {
     const { a } = await householdReady();

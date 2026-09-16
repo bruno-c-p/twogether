@@ -198,9 +198,8 @@ export function TransactionList({
                       {members.find((member) => member.id === t.memberId)
                         ?.name ?? "Pessoa do casal"}
                       {" · "}
-                      {accounts.find(
-                        (account) => account.id === t.accountId,
-                      )?.name ?? "Sem conta"}
+                      {accounts.find((account) => account.id === t.accountId)
+                        ?.name ?? "Sem conta"}
                     </div>
                     <div className="row-tags">
                       {t.tags.length ? (
@@ -232,7 +231,10 @@ export function TransactionList({
                   )}
                 </div>
                 <time className="transaction-date" dateTime={t.date}>
-                  {dayFormatter.format(date).replace(" de ", " ").replace(".", "")}
+                  {dayFormatter
+                    .format(date)
+                    .replace(" de ", " ")
+                    .replace(".", "")}
                 </time>
                 <span
                   className={`transaction-value ${t.kind === "income" ? "positive" : "negative"}`}

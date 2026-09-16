@@ -1,8 +1,6 @@
 import { useEffect, type RefObject } from "react";
 
-export function useModalDialog(
-  dialog: RefObject<HTMLDialogElement | null>,
-) {
+export function useModalDialog(dialog: RefObject<HTMLDialogElement | null>) {
   useEffect(() => {
     const element = dialog.current;
     const previous = document.activeElement;

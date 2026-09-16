@@ -74,7 +74,9 @@ export function GoalsSection({
               </div>
               <h3>{goal.name}</h3>
               <strong>{display(goal.amount)}</strong>
-              <p className="goal-budget">de {display(plan.planned)} planejados</p>
+              <p className="goal-budget">
+                de {display(plan.planned)} planejados
+              </p>
               <div className="goal-card-foot">
                 <span>
                   {goal.count} {goal.count === 1 ? "transação" : "transações"}
@@ -108,7 +110,9 @@ export function GoalsSection({
                   }}
                 />
               </div>
-              {expanded && <p className="goal-description">{goal.description}</p>}
+              {expanded && (
+                <p className="goal-description">{goal.description}</p>
+              )}
             </button>
           );
         })}

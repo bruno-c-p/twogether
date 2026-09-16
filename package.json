@@ -8,6 +8,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run && bun test features/budget/services/shared.server.test.ts"
   },
   "dependencies": {

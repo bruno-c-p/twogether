@@ -38,15 +38,11 @@ export function ExpenseCharts({
     { month: "long", year: "numeric" },
   );
   const display = (amount: number) => (hidden ? "R$ ••••" : money(amount));
-  const segments = donutSegments(tags, (tag) => tag.amount).map(
-    (segment) => ({
-      ...segment,
-      color:
-        segment.item.name === null
-          ? "var(--muted)"
-          : tagColor(segment.item.name),
-    }),
-  );
+  const segments = donutSegments(tags, (tag) => tag.amount).map((segment) => ({
+    ...segment,
+    color:
+      segment.item.name === null ? "var(--muted)" : tagColor(segment.item.name),
+  }));
   return (
     <section
       className="overview-grid expense-charts"

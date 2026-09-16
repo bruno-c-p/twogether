@@ -17,7 +17,11 @@ it("includes empty months, crosses years and keeps income and expenses in cents"
     { ...transaction, date: "2025-11-30", kind: "expense", amount: 999 },
     { ...transaction, date: "2026-03-01", kind: "income", amount: 999 },
   ];
-  expect(summarizeHistory(transactions, "2026-02", 3).map(({ month, income, expense }) => ({ month, income, expense }))).toEqual([
+  expect(
+    summarizeHistory(transactions, "2026-02", 3).map(
+      ({ month, income, expense }) => ({ month, income, expense }),
+    ),
+  ).toEqual([
     { month: "2025-12", income: 500001, expense: 0 },
     { month: "2026-01", income: 0, expense: 153 },
     { month: "2026-02", income: 0, expense: 0 },

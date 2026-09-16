@@ -13,7 +13,11 @@ export function NoticeToast({ message, canUndo, onUndo, onClose }: Props) {
       <Check size={18} />
       <span>{message}</span>
       {canUndo && <button onClick={onUndo}>Desfazer</button>}
-      <button className="toast-close" aria-label="Fechar aviso" onClick={onClose}>
+      <button
+        className="toast-close"
+        aria-label="Fechar aviso"
+        onClick={onClose}
+      >
         <X size={16} />
       </button>
     </div>
