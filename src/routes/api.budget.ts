@@ -1,16 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { handleBudgetRequest } from "@/features/budget/actions/api.server";
 
 export const Route = createFileRoute("/api/budget")({
   server: {
     handlers: {
-      GET: async ({ request }) =>
-        (
-          await import("@/features/budget/actions/api.server")
-        ).handleBudgetRequest(request),
-      POST: async ({ request }) =>
-        (
-          await import("@/features/budget/actions/api.server")
-        ).handleBudgetRequest(request),
+      GET: ({ request }) => handleBudgetRequest(request),
+      POST: ({ request }) => handleBudgetRequest(request),
     },
   },
 });
