@@ -43,24 +43,26 @@ interface Props {
   onViewAll: () => void;
 }
 
-export function TransactionList(props: Props) {
-  const {
-    transactions,
-    hidden,
-    query,
-    goalFilter,
-    tagFilter,
-    kindFilter,
-    onQuery,
-    onGoal,
-    onTag,
-    onKind,
-    onEdit,
-    onDelete,
-    onAdd,
-    compact,
-    onViewAll,
-  } = props;
+export function TransactionList({
+  transactions,
+  members,
+  accounts,
+  busy,
+  hidden,
+  query,
+  goalFilter,
+  tagFilter,
+  kindFilter,
+  onQuery,
+  onGoal,
+  onTag,
+  onKind,
+  onEdit,
+  onDelete,
+  onAdd,
+  compact,
+  onViewAll,
+}: Props) {
   const filtered = transactions
     .filter(
       (t) =>
@@ -187,16 +189,16 @@ export function TransactionList(props: Props) {
                   <div>
                     <button
                       className="transaction-name"
-                      disabled={props.busy}
+                      disabled={busy}
                       onClick={() => onEdit(t)}
                     >
                       {t.description}
                     </button>
                     <div className="transaction-person">
-                      {props.members.find((member) => member.id === t.memberId)
+                      {members.find((member) => member.id === t.memberId)
                         ?.name ?? "Pessoa do casal"}
                       {" · "}
-                      {props.accounts.find(
+                      {accounts.find(
                         (account) => account.id === t.accountId,
                       )?.name ?? "Sem conta"}
                     </div>
@@ -242,7 +244,7 @@ export function TransactionList(props: Props) {
                 <div className="row-actions">
                   <button
                     className="icon-button"
-                    disabled={props.busy}
+                    disabled={busy}
                     aria-label={`Editar ${t.description}`}
                     onClick={() => onEdit(t)}
                   >
@@ -250,7 +252,7 @@ export function TransactionList(props: Props) {
                   </button>
                   <button
                     className="icon-button delete-button"
-                    disabled={props.busy}
+                    disabled={busy}
                     aria-label={`Excluir ${t.description}`}
                     onClick={() => onDelete(t)}
                   >
