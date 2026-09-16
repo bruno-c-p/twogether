@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Copy, X } from "lucide-react";
 import type { BudgetController } from "../hooks/use-budget";
+import { useModalDialog } from "../hooks/use-modal-dialog";
 
 export function CoupleDialog({
   budget,
@@ -13,16 +14,7 @@ export function CoupleDialog({
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
-  useEffect(() => {
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.current?.showModal();
-    return () => {
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
+  useModalDialog(dialog);
   return (
     <dialog
       ref={dialog}

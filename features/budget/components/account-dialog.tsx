@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Check, X } from "lucide-react";
+import { useCaretToEnd, useModalDialog } from "../hooks/use-modal-dialog";
 import { formatAmountInput, parseBalance } from "../services/budget";
 import type { BankAccount } from "../types";
 
@@ -24,23 +25,8 @@ export function AccountDialog({
     account ? formatAmountInput(String(account.openingBalance)) : "",
   );
 
-  useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = "";
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
-
-  useEffect(() => {
-    const input = amountInput.current;
-    if (!input) return;
-    input.setSelectionRange(input.value.length, input.value.length);
-  }, [openingValue]);
+  useModalDialog(dialog);
+  useCaretToEnd(amountInput, openingValue);
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();

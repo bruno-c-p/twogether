@@ -7,6 +7,7 @@ import {
   Repeat2,
   X,
 } from "lucide-react";
+import { useCaretToEnd, useModalDialog } from "../hooks/use-modal-dialog";
 import { GOALS } from "../constants";
 import {
   formatAmountInput,
@@ -62,24 +63,11 @@ export function TransactionDialog({
   const memberId = transaction?.memberId ?? currentUserId;
   const [error, setError] = useState("");
 
+  useModalDialog(dialog);
   useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
     amountInput.current?.focus();
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = "";
-      if (previous instanceof HTMLElement) previous.focus();
-    };
   }, []);
-
-  useEffect(() => {
-    const input = amountInput.current;
-    if (!input) return;
-    input.setSelectionRange(input.value.length, input.value.length);
-  }, [amountValue]);
+  useCaretToEnd(amountInput, amountValue);
 
   function addTag(value: string) {
     const tag = normalizeTag(value);

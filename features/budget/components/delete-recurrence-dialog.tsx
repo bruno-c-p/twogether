@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
+import { useModalDialog } from "../hooks/use-modal-dialog";
 import type { Transaction } from "../types";
 
 interface Props {
@@ -21,18 +22,7 @@ export function DeleteRecurrenceDialog({
 }: Props) {
   const dialog = useRef<HTMLDialogElement>(null);
   const [following, setFollowing] = useState(false);
-  useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    element?.showModal();
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
+  useModalDialog(dialog);
   return (
     <dialog
       ref={dialog}

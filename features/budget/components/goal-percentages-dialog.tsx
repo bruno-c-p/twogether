@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useModalDialog } from "../hooks/use-modal-dialog";
 import { DEFAULT_PERCENTAGES, GOALS } from "../constants";
 import { isGoalPercentages } from "../services/budget";
 import type { GoalPercentages } from "../types";
@@ -24,16 +25,7 @@ export function GoalPercentagesDialog({
       sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
     0,
   );
-  useEffect(() => {
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.current?.showModal();
-    return () => {
-      document.body.style.overflow = overflow;
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
+  useModalDialog(dialog);
   return (
     <dialog
       ref={dialog}
