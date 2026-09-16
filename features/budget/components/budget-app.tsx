@@ -1,6 +1,6 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -27,7 +27,7 @@ import {
   summarize,
   planGoals,
 } from "@/features/budget/services/budget";
-import type { BankAccount, GoalId, SharedSnapshot, Transaction, View } from "@/features/budget/types";
+import type { BankAccount, GoalId, Transaction, View } from "@/features/budget/types";
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { AccountGate } from "@/features/budget/components/account-gate";
@@ -41,6 +41,7 @@ import { TransactionList } from "@/features/budget/components/transaction-list";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
+import { withView } from "@/features/budget/search";
 import { Brand } from "@/src/ui/brand";
 import { Button } from "@/src/ui/button";
 import { OverviewGrid, SectionHeading } from "@/src/ui/panel";
@@ -52,13 +53,9 @@ const navigation = [
   { id: "goals", label: "Metas", icon: Target },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
-export function BudgetApp({
-  initialSnapshot,
-}: {
-  initialSnapshot: SharedSnapshot;
-}) {
-  const budget = useBudget(initialSnapshot);
-  if (budget.accessToken || !budget.user?.name || !budget.household)
+export function BudgetApp() {
+  const budget = useBudget();
+  if (!budget.user?.name || !budget.household)
     return <AccountGate budget={budget} />;
   return (
     <BudgetWorkspace
@@ -274,22 +271,23 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         <Brand
           className={styles.sidebarBrand}
           mark
-          href="/"
           aria-label="twogether — início"
         />
         <nav className={styles.desktopNavigation} aria-label="Navegação principal">
           {navigation.map((item) => (
-            <button
+            <Link
               key={item.id}
+              to="/"
+              search={(prev) => withView(prev, item.id)}
               className={`${styles.navItem} ${view === item.id ? styles.active : ""}`}
               aria-label={item.label}
               aria-current={view === item.id ? "page" : undefined}
-              onClick={() => navigate(item.id)}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
             >
               <item.icon size={19} strokeWidth={1.7} />
               <span>{item.label}</span>
               {view === item.id && <span className={styles.navActiveDot} />}
-            </button>
+            </Link>
           ))}
         </nav>
       </aside>
@@ -643,15 +641,17 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       </div>
       <nav className={styles.mobileNavigation} aria-label="Navegação mobile">
         {navigation.map((item) => (
-          <button
+          <Link
             key={item.id}
+            to="/"
+            search={(prev) => withView(prev, item.id)}
             className={view === item.id ? styles.active : ""}
             aria-current={view === item.id ? "page" : undefined}
-            onClick={() => navigate(item.id)}
+            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
           >
             <item.icon size={21} strokeWidth={1.7} />
             <span>{item.label}</span>
-          </button>
+          </Link>
         ))}
       </nav>
       {editingPercentages !== null && (

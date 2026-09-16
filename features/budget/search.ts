@@ -1,6 +1,8 @@
 import type { GoalId, View } from "@/features/budget/types";
 
-const tokenPattern = /^[0-9a-f]{64}$/;
+export function isBudgetToken(value: unknown): value is string {
+  return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
+}
 const views: View[] = ["overview", "transactions", "accounts", "goals"];
 const goals: GoalId[] = [
   "fixed",
@@ -22,6 +24,10 @@ export interface BudgetSearch {
   kind?: string;
   access?: string;
   convite?: string;
+}
+
+export function withView(search: BudgetSearch, view: View): BudgetSearch {
+  return { ...search, view };
 }
 
 export function validateBudgetSearch(
@@ -58,13 +64,7 @@ export function validateBudgetSearch(
     (search.kind === "expense" || search.kind === "income")
       ? search.kind
       : undefined;
-  const access =
-    typeof search.access === "string" && tokenPattern.test(search.access)
-      ? search.access
-      : undefined;
-  const convite =
-    typeof search.convite === "string" && tokenPattern.test(search.convite)
-      ? search.convite
-      : undefined;
+  const access = isBudgetToken(search.access) ? search.access : undefined;
+  const convite = isBudgetToken(search.convite) ? search.convite : undefined;
   return { view, month, member, query, goal, tag, kind, access, convite };
 }

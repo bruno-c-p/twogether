@@ -1,21 +1,21 @@
 import type { ComponentPropsWithoutRef } from "react";
+import { Link } from "@tanstack/react-router";
 import styles from "@/src/ui/brand.module.css";
 
 export function Brand({
   className,
   mark = false,
   markClassName,
-  href = "/",
   children,
   ...props
-}: ComponentPropsWithoutRef<"a"> & {
+}: Omit<ComponentPropsWithoutRef<typeof Link>, "to"> & {
   mark?: boolean;
   markClassName?: string;
 }) {
   return (
-    <a
+    <Link
+      to="/"
       className={className ? `${styles.brand} ${className}` : styles.brand}
-      href={href}
       {...props}
     >
       {mark ? (
@@ -33,6 +33,6 @@ export function Brand({
           twogether<span className={styles.period}>.</span>
         </>
       )}
-    </a>
+    </Link>
   );
 }

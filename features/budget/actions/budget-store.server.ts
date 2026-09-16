@@ -1,11 +1,20 @@
 import { resolve } from "node:path";
 import {
+  getRequestProtocol,
+  setCookie,
+} from "@tanstack/react-start/server";
+import {
   createBudgetStore,
   type BudgetStore,
 } from "@/features/budget/services/shared.server";
+import {
+  sessionCookie,
+  sessionCookieOptions,
+} from "@/features/budget/session-cookie";
+
+export { sessionCookie, sessionCookieOptions };
 
 let store: BudgetStore | undefined;
-export const sessionCookie = "twogether_session";
 
 export function getBudgetStore(): BudgetStore {
   return (store ??= createBudgetStore(
@@ -15,13 +24,10 @@ export function getBudgetStore(): BudgetStore {
   ));
 }
 
-export function readSessionToken(request: Request): string {
-  return (
-    request.headers
-      .get("cookie")
-      ?.split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(`${sessionCookie}=`))
-      ?.slice(sessionCookie.length + 1) ?? ""
+export function applySessionCookie(session: string | undefined) {
+  setCookie(
+    sessionCookie,
+    session ?? "",
+    sessionCookieOptions(getRequestProtocol() === "https", session),
   );
 }

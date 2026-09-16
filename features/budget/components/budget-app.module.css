@@ -33,6 +33,7 @@
   text-align: left;
   font-size: 13px;
   font-weight: 500;
+  cursor: pointer;
 }
 
 .nav-item:hover {
@@ -891,7 +892,7 @@
       height: calc(68px + env(safe-area-inset-bottom));
   }
   
-  .mobile-navigation button {
+  .mobile-navigation a {
     border: 0;
       background: none;
       display: flex;
@@ -901,17 +902,18 @@
       flex: 1;
       color: var(--text-muted);
       padding: 3px;
+      cursor: pointer;
   }
   
-  .mobile-navigation button span {
+  .mobile-navigation a span {
     font-size: 10px;
   }
   
-  .mobile-navigation button.active {
+  .mobile-navigation a.active {
     color: var(--green);
   }
   
-  .mobile-navigation button.active svg {
+  .mobile-navigation a.active svg {
     background: var(--surface-soft);
       box-shadow: 0 0 0 5px var(--surface-soft);
       border-radius: 4px;
@@ -1126,7 +1128,7 @@
 }
 
 @media (max-width: 360px) {
-  .mobile-navigation button span {
+  .mobile-navigation a span {
     font-size: 9px;
   }
   

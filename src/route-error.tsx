@@ -1,5 +1,5 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
-import { useRouter } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 import { Button } from "@/src/ui/button";
 import styles from "@/src/route-error.module.css";
 
@@ -29,7 +29,7 @@ export function NotFoundPage() {
   return (
     <main className={styles.notFound}>
       <h1>Página não encontrada.</h1>
-      <a href="/">Voltar para a visão geral</a>
+      <Link to="/">Voltar para a visão geral</Link>
     </main>
   );
 }

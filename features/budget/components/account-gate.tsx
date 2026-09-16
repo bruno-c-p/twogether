@@ -70,53 +70,24 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
         </div>
         <p className={styles.cardEyebrow}>DUAS PESSOAS. UM ORÇAMENTO.</p>
         <h1>
-          {budget.accessToken
-            ? "Seu espaço está aqui."
-            : sentTo && !budget.user
-              ? "Confira seu e-mail."
-              : budget.user
-                ? budget.user.name
-                  ? `Vamos começar, ${budget.user.name}?`
-                  : "Como chamamos você?"
-                : "A vida a dois.\nAs contas também."}
+          {sentTo && !budget.user
+            ? "Confira seu e-mail."
+            : budget.user
+              ? budget.user.name
+                ? `Vamos começar, ${budget.user.name}?`
+                : "Como chamamos você?"
+              : "A vida a dois.\nAs contas também."}
         </h1>
         <p className={styles.accountIntro}>
-          {budget.accessToken
-            ? "Confirme para abrir seu orçamento com segurança."
-            : budget.user
-              ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
-              : sentTo
-                ? `Enviamos seu link para ${sentTo}. Abra o e-mail para continuar.`
-                : isDevelopment
-                  ? "Modo desenvolvimento: informe um e-mail para entrar ou criar uma conta."
-                  : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
+          {budget.user
+            ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
+            : sentTo
+              ? `Enviamos seu link para ${sentTo}. Abra o e-mail para continuar.`
+              : isDevelopment
+                ? "Modo desenvolvimento: informe um e-mail para entrar ou criar uma conta."
+                : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
         </p>
-        {budget.accessToken ? (
-          <FormStack>
-            <Button
-              disabled={budget.busy}
-              onClick={async () => {
-                if (
-                  await budget.command({
-                    action: "verify-link",
-                    token: budget.accessToken,
-                  })
-                )
-                  budget.finishAccess();
-              }}
-            >
-              {budget.busy ? "Aguarde…" : "Continuar"}
-              <ArrowRight size={18} />
-            </Button>
-            <Button
-              variant="text"
-              disabled={budget.busy}
-              onClick={budget.finishAccess}
-            >
-              Pedir outro link
-            </Button>
-          </FormStack>
-        ) : !budget.user ? (
+        {!budget.user ? (
           <>
             {invitation && (
               <Note>
