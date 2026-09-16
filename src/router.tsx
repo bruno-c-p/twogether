@@ -14,6 +14,7 @@ export function getRouter() {
     scrollRestoration: true,
     parseSearch,
     stringifySearch: stringifySearchWith(String),
+    defaultPreload: "intent",
   });
 }
 

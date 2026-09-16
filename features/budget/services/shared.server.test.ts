@@ -526,10 +526,10 @@ test("Resend transport sends HTML and text with the configured origin and never 
     });
     expect(payload.to).toEqual(["ana@example.test"]);
     expect(payload.html).toContain(
-      "https://budget.test/#access=test-token&amp;convite=test-invite",
+      "https://budget.test/?access=test-token&amp;convite=test-invite",
     );
     expect(payload.text).toContain(
-      "https://budget.test/#access=test-token&convite=test-invite",
+      "https://budget.test/?access=test-token&convite=test-invite",
     );
     expect(key).not.toContain("test-token");
     globalThis.fetch = Object.assign(

@@ -44,11 +44,11 @@ export const sendMagicLink: MagicLinkSender = async ({
     );
   if (process.env.NODE_ENV === "production" && origin.protocol !== "https:")
     throw new Error("APP_ORIGIN precisa usar HTTPS em produção.");
-  const fragment = new URLSearchParams({
+  const search = new URLSearchParams({
     access: token,
     ...(invite ? { convite: invite } : {}),
   });
-  const url = `${origin.origin}/#${fragment}`;
+  const url = `${origin.origin}/?${search}`;
   const message = magicLinkEmail(url);
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",

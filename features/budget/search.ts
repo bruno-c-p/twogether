@@ -1,5 +1,6 @@
 import type { GoalId, View } from "./types";
 
+const tokenPattern = /^[0-9a-f]{64}$/;
 const views: View[] = ["overview", "transactions", "accounts", "goals"];
 const goals: GoalId[] = [
   "fixed",
@@ -19,6 +20,8 @@ export interface BudgetSearch {
   goal?: GoalId;
   tag?: string;
   kind?: string;
+  access?: string;
+  convite?: string;
 }
 
 export function validateBudgetSearch(
@@ -55,5 +58,13 @@ export function validateBudgetSearch(
     (search.kind === "expense" || search.kind === "income")
       ? search.kind
       : undefined;
-  return { view, month, member, query, goal, tag, kind };
+  const access =
+    typeof search.access === "string" && tokenPattern.test(search.access)
+      ? search.access
+      : undefined;
+  const convite =
+    typeof search.convite === "string" && tokenPattern.test(search.convite)
+      ? search.convite
+      : undefined;
+  return { view, month, member, query, goal, tag, kind, access, convite };
 }
