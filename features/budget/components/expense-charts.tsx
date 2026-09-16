@@ -1,5 +1,4 @@
 import type { CSSProperties } from "react";
-import { GOALS } from "../constants";
 import { money } from "../services/budget";
 import { summarizeExpenses } from "../services/expense-charts";
 import type { Transaction } from "../types";
@@ -9,6 +8,14 @@ const compactMoney = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+const TAG_PALETTE_SIZE = 8;
+
+function tagColor(name: string) {
+  let hash = 0;
+  for (let index = 0; index < name.length; index++)
+    hash = (hash * 31 + name.charCodeAt(index)) | 0;
+  return `var(--tag-${(Math.abs(hash) % TAG_PALETTE_SIZE) + 1})`;
+}
 
 export function ExpenseCharts({
   transactions,
@@ -31,7 +38,7 @@ export function ExpenseCharts({
   );
   const display = (amount: number) => (hidden ? "R$ ••••" : money(amount));
   let offset = 0;
-  const segments = tags.map((tag, index) => {
+  const segments = tags.map((tag) => {
     const share = total ? (tag.amount / total) * 100 : 0;
     const start = offset;
     offset += share;
@@ -39,8 +46,7 @@ export function ExpenseCharts({
       ...tag,
       share,
       start,
-      color:
-        tag.name === null ? "var(--muted)" : GOALS[index % GOALS.length].color,
+      color: tag.name === null ? "var(--muted)" : tagColor(tag.name),
     };
   });
   return (
