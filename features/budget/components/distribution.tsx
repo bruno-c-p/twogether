@@ -1,5 +1,5 @@
-import { GOALS } from "../constants";
 import { money, summarize } from "../services/budget";
+import { donutSegments } from "../services/donut";
 import type { Transaction } from "../types";
 
 export function Distribution({
@@ -10,7 +10,7 @@ export function Distribution({
   hidden: boolean;
 }) {
   const { goals, expenses } = summarize(transactions);
-  let offset = 0;
+  const segments = donutSegments(goals, (goal) => goal.amount);
   return (
     <div className="distribution">
       <div className="distribution-heading">
@@ -37,11 +37,8 @@ export function Distribution({
               strokeWidth="19"
             />
             {!hidden &&
-              goals.map((goal) => {
-                const share = expenses ? (goal.amount / expenses) * 100 : 0;
-                const start = offset;
-                offset += share;
-                return (
+              segments.map(
+                ({ item: goal, share, start }) =>
                   share > 0 && (
                     <circle
                       key={goal.id}
@@ -56,9 +53,8 @@ export function Distribution({
                       strokeDashoffset={-start}
                       transform="rotate(-90 80 80)"
                     />
-                  )
-                );
-              })}
+                  ),
+              )}
           </svg>
           <div className="donut-center">
             <span className="donut-flower">✳</span>
@@ -66,14 +62,14 @@ export function Distribution({
           </div>
         </div>
         <div className="chart-legend">
-          {GOALS.map((goal) => (
+          {goals.map((goal) => (
             <div key={goal.id}>
               <span className="color-dot" style={{ background: goal.color }} />
               <span>{goal.name}</span>
               <strong>
                 {hidden
                   ? "••"
-                  : `${expenses ? Math.round(((goals.find((g) => g.id === goal.id)?.amount ?? 0) / expenses) * 100) : 0}%`}
+                  : `${expenses ? Math.round((goal.amount / expenses) * 100) : 0}%`}
               </strong>
             </div>
           ))}

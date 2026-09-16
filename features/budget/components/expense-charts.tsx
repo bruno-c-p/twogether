@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { money } from "../services/budget";
+import { donutSegments } from "../services/donut";
 import { summarizeExpenses } from "../services/expense-charts";
 import type { Transaction } from "../types";
 
@@ -37,18 +38,15 @@ export function ExpenseCharts({
     { month: "long", year: "numeric" },
   );
   const display = (amount: number) => (hidden ? "R$ ••••" : money(amount));
-  let offset = 0;
-  const segments = tags.map((tag) => {
-    const share = total ? (tag.amount / total) * 100 : 0;
-    const start = offset;
-    offset += share;
-    return {
-      ...tag,
-      share,
-      start,
-      color: tag.name === null ? "var(--muted)" : tagColor(tag.name),
-    };
-  });
+  const segments = donutSegments(tags, (tag) => tag.amount).map(
+    (segment) => ({
+      ...segment,
+      color:
+        segment.item.name === null
+          ? "var(--muted)"
+          : tagColor(segment.item.name),
+    }),
+  );
   return (
     <section
       className="overview-grid expense-charts"
@@ -135,19 +133,19 @@ export function ExpenseCharts({
             />
             {!hidden &&
               segments
-                .filter((tag) => tag.share > 0)
-                .map((tag) => (
+                .filter((segment) => segment.share > 0)
+                .map((segment) => (
                   <circle
-                    key={JSON.stringify(tag.name)}
+                    key={JSON.stringify(segment.item.name)}
                     cx="100"
                     cy="100"
                     r="78"
                     fill="none"
-                    stroke={tag.color}
+                    stroke={segment.color}
                     strokeWidth="28"
                     pathLength="100"
-                    strokeDasharray={`${tag.share} ${100 - tag.share}`}
-                    strokeDashoffset={-tag.start}
+                    strokeDasharray={`${segment.share} ${100 - segment.share}`}
+                    strokeDashoffset={-segment.start}
                     transform="rotate(-90 100 100)"
                   />
                 ))}
@@ -159,25 +157,28 @@ export function ExpenseCharts({
         </div>
         {segments.length ? (
           <ul className="expense-tag-list">
-            {segments.map((tag) => (
-              <li key={JSON.stringify(tag.name)}>
-                <span className="color-dot" style={{ background: tag.color }} />
+            {segments.map((segment) => (
+              <li key={JSON.stringify(segment.item.name)}>
+                <span
+                  className="color-dot"
+                  style={{ background: segment.color }}
+                />
                 <span className="expense-tag-name">
-                  {tag.name ?? "Sem tags"}
+                  {segment.item.name ?? "Sem tags"}
                 </span>
                 <span className="expense-tag-track" aria-hidden="true">
                   <i
                     style={{
-                      width: hidden ? "0%" : `${tag.share}%`,
-                      background: tag.color,
+                      width: hidden ? "0%" : `${segment.share}%`,
+                      background: segment.color,
                     }}
                   />
                 </span>
-                <strong>{display(tag.amount)}</strong>
+                <strong>{display(segment.item.amount)}</strong>
                 <span>
                   {hidden
                     ? "••"
-                    : `${tag.share.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
+                    : `${segment.share.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
                 </span>
               </li>
             ))}
