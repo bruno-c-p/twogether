@@ -2,7 +2,6 @@ import {
   createClient,
   type Client,
   type InArgs,
-  type ResultSet,
   type Transaction as DatabaseTransaction,
 } from "@libsql/client";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -82,22 +81,12 @@ async function execute(
   return database.execute({ sql, args });
 }
 
-function rowsOf<T extends object>(result: ResultSet): T[] {
-  return result.rows.map((row) => {
-    const values: Record<string, unknown> = {};
-    result.columns.forEach((column, index) => {
-      values[column] = row[index];
-    });
-    return values as T;
-  });
-}
-
 async function all<T extends object>(
   database: DatabaseExecutor,
   sql: string,
   args: InArgs = [],
 ) {
-  return rowsOf<T>(await execute(database, sql, args));
+  return (await execute(database, sql, args)).rows as unknown as T[];
 }
 
 async function one<T extends object>(
