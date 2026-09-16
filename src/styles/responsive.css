@@ -1,0 +1,890 @@
+@media (min-width: 1450px) {
+  :root {
+    font-size: 16px;
+  }
+  main {
+    padding-top: 45px;
+  }
+  .page-heading h1 {
+    font-size: 35px;
+  }
+  .overview-grid {
+    gap: 24px;
+  }
+  .balance-card {
+    padding: 28px 32px;
+  }
+  .balance-amount {
+    font-size: 46px;
+  }
+  .balance-divider {
+    margin-top: 25px;
+  }
+  .balance-bottom strong {
+    font-size: 21px;
+  }
+  .distribution {
+    padding: 28px 30px;
+  }
+  .distribution-body {
+    gap: 30px;
+  }
+  .donut {
+    width: 152px;
+    height: 152px;
+  }
+  .chart-legend > div {
+    font-size: 12px;
+  }
+  .goal-card h3 {
+    font-size: 13px;
+  }
+  .goal-card > strong {
+    font-size: 23px;
+  }
+  .goal-card {
+    padding: 20px;
+  }
+  .goal-card-foot {
+    font-size: 11px;
+  }
+  .goal-icon {
+    width: 39px;
+    height: 39px;
+  }
+  .transaction-name,
+  .transaction-value {
+    font-size: 13px;
+  }
+  .row-tags button,
+  .row-tags span {
+    font-size: 11px;
+  }
+  .goal-badge {
+    font-size: 11px;
+  }
+  .transaction-date {
+    font-size: 12px;
+  }
+  .table-head {
+    font-size: 10px;
+    height: 38px;
+  }
+  .transaction-row {
+    min-height: 76px;
+  }
+  .table-footer {
+    font-size: 11px;
+  }
+  .page-heading p {
+    font-size: 15px;
+  }
+  .primary-button {
+    font-size: 14px;
+  }
+  .section-heading h2 {
+    font-size: 19px;
+  }
+  .section-heading p {
+    font-size: 13px;
+  }
+  .goals-heading-note {
+    font-size: 12px;
+  }
+  .search-field {
+    height: 40px;
+  }
+  .search-field input,
+  .filter-selects select {
+    font-size: 12px;
+  }
+  .section-heading .text-button {
+    font-size: 13px;
+  }
+}
+@media (max-width: 1190px) {
+  .sidebar {
+    width: 200px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .brand {
+    font-size: 23px;
+  }
+  .main-shell {
+    margin-left: 200px;
+  }
+  .topbar {
+    padding: 0 28px;
+  }
+  .site-footer {
+    padding-left: 28px;
+    padding-right: 28px;
+  }
+  main {
+    padding: 30px 28px 0;
+  }
+  h1 {
+    font-size: 27px;
+  }
+  .overview-grid {
+    gap: 15px;
+  }
+  .distribution {
+    padding: 20px;
+  }
+  .distribution-body {
+    gap: 12px;
+  }
+  .donut {
+    width: 112px;
+    height: 112px;
+  }
+  .chart-legend > div {
+    font-size: 10px;
+  }
+  .chart-legend {
+    gap: 12px;
+  }
+  .distribution h3 {
+    font-size: 16px;
+  }
+  .balance-card {
+    padding: 21px 23px;
+  }
+  .balance-amount {
+    font-size: 35px;
+  }
+  .balance-bottom {
+    gap: 25px;
+  }
+  .goal-card {
+    padding: 13px 11px;
+  }
+  .goal-card h3 {
+    font-size: 10px;
+  }
+  .goal-card > strong {
+    font-size: 17px;
+  }
+  .goals-grid {
+    gap: 9px;
+  }
+  .table-head,
+  .transaction-row {
+    grid-template-columns:
+      minmax(160px, 2fr) minmax(100px, 1.3fr)
+      55px 105px 25px;
+    gap: 9px;
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .row-actions {
+    flex-direction: column;
+    opacity: 1;
+  }
+  .row-actions .icon-button {
+    height: 24px;
+  }
+  .transaction-name {
+    font-size: 10px;
+  }
+  .transaction-description {
+    gap: 8px;
+  }
+  .transaction-toolbar {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+  .goal-badge {
+    font-size: 8px;
+  }
+  .toast {
+    left: calc(50% + 100px);
+  }
+}
+@media (max-width: 1000px) {
+  .sidebar {
+    width: 76px;
+    padding: 30px 12px 0;
+    align-items: center;
+  }
+  .sidebar > .brand {
+    font-size: 0;
+    gap: 0;
+  }
+  .sidebar .brand-mark {
+    margin-left: 0;
+  }
+  .sidebar .brand-period {
+    display: none;
+  }
+  .nav-item > span {
+    display: none;
+  }
+  .desktop-navigation {
+    margin-top: 56px;
+    width: 100%;
+    gap: 12px;
+  }
+  .nav-item {
+    padding: 14px;
+    justify-content: center;
+    border-radius: 10px;
+  }
+  .main-shell {
+    margin-left: 76px;
+  }
+  .topbar {
+    height: 67px;
+  }
+  .toast {
+    left: calc(50% + 38px);
+  }
+  .balance-decoration {
+    opacity: 0.2;
+  }
+  .expanded-goals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@media (max-width: 800px) {
+  main {
+    padding: 27px 22px 0;
+  }
+  .topbar {
+    padding: 0 22px;
+  }
+  .site-footer {
+    padding-left: 22px;
+    padding-right: 22px;
+  }
+  .overview-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .balance-card {
+    padding: 20px;
+    min-height: 230px;
+  }
+  .balance-amount {
+    font-size: 31px;
+  }
+  .balance-caption {
+    font-size: 9px;
+  }
+  .balance-bottom {
+    gap: 20px;
+  }
+  .balance-bottom strong {
+    font-size: 15px;
+  }
+  .distribution {
+    padding: 20px 17px;
+  }
+  .distribution h3 {
+    font-size: 14px;
+  }
+  .distribution-body {
+    gap: 10px;
+  }
+  .donut {
+    width: 95px;
+    height: 95px;
+  }
+  .chart-legend > div {
+    font-size: 9px;
+    gap: 4px;
+  }
+  .chart-legend strong {
+    font-size: 9px;
+  }
+  .chart-legend {
+    gap: 11px;
+  }
+  .donut-center > span:last-child {
+    font-size: 7px;
+  }
+  .donut-flower {
+    font-size: 26px;
+  }
+  .page-heading h1 {
+    font-size: 24px;
+  }
+  .page-heading p {
+    font-size: 11px;
+  }
+  .primary-button {
+    font-size: 11px;
+    padding: 12px;
+  }
+  .goals-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .goal-card {
+    padding: 16px;
+  }
+  .goal-card h3 {
+    font-size: 12px;
+  }
+  .goal-card > strong {
+    font-size: 20px;
+  }
+  .goal-card-foot {
+    font-size: 10px;
+  }
+  .goals-heading-note {
+    font-size: 9px;
+  }
+  .table-head,
+  .transaction-row {
+    grid-template-columns: minmax(130px, 1.8fr) minmax(100px, 1.15fr) 85px 25px;
+    gap: 7px;
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  .table-head > span:nth-child(3),
+  .transaction-date {
+    display: none;
+  }
+  .transaction-value {
+    font-size: 10px;
+  }
+  .transaction-description {
+    gap: 7px;
+  }
+  .transaction-icon {
+    width: 29px;
+    height: 29px;
+  }
+  .transaction-icon svg {
+    width: 17px;
+  }
+  .transaction-name {
+    font-size: 10px;
+  }
+  .filter-selects select {
+    padding-left: 7px;
+    padding-right: 7px;
+    max-width: 135px;
+  }
+  .topbar-right {
+    gap: 13px;
+  }
+}
+@media (max-width: 620px) {
+  .sidebar {
+    display: none;
+  }
+  .main-shell {
+    margin-left: 0;
+  }
+  .topbar {
+    height: 67px;
+    padding: 0 20px;
+  }
+  .main-shell > .site-footer {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 24px 19px 94px;
+    gap: 6px;
+  }
+  .breadcrumb {
+    display: none;
+  }
+  .mobile-brand {
+    display: flex;
+    font-size: 23px;
+  }
+  .mobile-brand .brand-mark {
+    scale: 0.8;
+    width: 23px;
+  }
+  .visibility-button {
+    width: 40px;
+    height: 40px;
+  }
+  .mobile-navigation {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 30;
+    background: #fffffff5;
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border, #e5ebde);
+    justify-content: space-around;
+    padding: 9px 8px max(10px, env(safe-area-inset-bottom));
+    height: calc(68px + env(safe-area-inset-bottom));
+  }
+  .mobile-navigation button {
+    border: 0;
+    background: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+    flex: 1;
+    color: var(--text-muted, #98a08e);
+    padding: 3px;
+  }
+  .mobile-navigation button span {
+    font-size: 10px;
+  }
+  .mobile-navigation button.active {
+    color: var(--green);
+  }
+  .mobile-navigation button.active svg {
+    background: var(--surface-soft, #e8efdf);
+    box-shadow: 0 0 0 5px #e8efdf;
+    border-radius: 4px;
+  }
+  main {
+    padding: 26px 19px 85px;
+  }
+  .page-heading {
+    align-items: flex-start;
+    gap: 17px;
+    flex-wrap: wrap;
+  }
+  .page-heading h1 {
+    font-size: 27px;
+    letter-spacing: -1.25px;
+  }
+  .page-heading p {
+    font-size: 12px;
+    line-height: 1.65;
+    margin-top: 7px;
+  }
+  .add-transaction {
+    margin: 0;
+    padding: 11px 14px;
+    min-height: 41px;
+    font-size: 12px;
+    width: 100%;
+  }
+  .month-row {
+    margin: 21px 0 17px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .month-picker {
+    gap: 6px;
+  }
+  .month-picker .month-input {
+    font-size: 12px;
+    min-width: 100px;
+  }
+  .month-picker .icon-button {
+    width: 28px;
+    height: 30px;
+  }
+  .today-button {
+    font-size: 10px;
+    order: 3;
+    width: 100%;
+    text-align: left;
+    padding-left: 0;
+  }
+  .overview-grid {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .balance-card {
+    padding: 23px 24px;
+    min-height: 233px;
+    border-radius: 11px;
+  }
+  .balance-top {
+    font-size: 12px;
+  }
+  .balance-amount {
+    font-size: 39px;
+    margin-top: 2px;
+  }
+  .balance-caption {
+    font-size: 10px;
+  }
+  .balance-divider {
+    margin: 22px 0 18px;
+  }
+  .balance-bottom {
+    gap: 43px;
+  }
+  .balance-bottom strong {
+    font-size: 19px;
+  }
+  .balance-decoration {
+    opacity: 0.35;
+  }
+  .distribution {
+    padding: 21px 23px;
+  }
+  .distribution-heading .eyebrow {
+    font-size: 8px;
+  }
+  .distribution h3 {
+    font-size: 17px;
+    margin-top: 7px;
+  }
+  .distribution-body {
+    margin-top: 13px;
+    gap: 24px;
+  }
+  .donut {
+    width: 123px;
+    height: 123px;
+  }
+  .donut-flower {
+    font-size: 31px;
+  }
+  .donut-center > span:last-child {
+    font-size: 8px;
+  }
+  .chart-legend > div {
+    font-size: 10px;
+    gap: 7px;
+  }
+  .chart-legend strong {
+    font-size: 10px;
+  }
+  .chart-legend {
+    gap: 13px;
+  }
+  .goals-section {
+    margin-top: 29px;
+  }
+  .section-heading {
+    margin-bottom: 15px;
+  }
+  .section-heading h2 {
+    font-size: 17px;
+  }
+  .goals-heading-note {
+    display: none;
+  }
+  .goals-grid {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+  .goal-card {
+    padding: 17px;
+  }
+  .goal-card h3 {
+    font-size: 12px;
+  }
+  .goal-card > strong {
+    font-size: 21px;
+  }
+  .goal-card-top {
+    margin-bottom: 13px;
+  }
+  .goal-card-foot {
+    font-size: 10px;
+  }
+  .transactions-panel {
+    margin-top: 27px;
+    border-radius: 9px;
+  }
+  .transactions-panel > .section-heading {
+    padding: 20px 16px 0;
+  }
+  .section-heading p {
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  .section-heading .text-button {
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .section-heading h2 {
+    gap: 6px;
+  }
+  .transaction-toolbar {
+    flex-wrap: wrap;
+    padding: 0 16px 14px;
+    gap: 9px;
+  }
+  .search-field {
+    max-width: none;
+    flex-basis: 100%;
+    height: 39px;
+  }
+  .search-field input {
+    font-size: 12px;
+  }
+  .filter-selects {
+    width: 100%;
+  }
+  .filter-selects select {
+    font-size: 11px;
+    height: 34px;
+    padding: 7px;
+    max-width: none;
+    flex: 1;
+    width: 50%;
+  }
+  .table-head {
+    display: none;
+  }
+  .transaction-row {
+    grid-template-columns: minmax(0, 1fr) auto 25px;
+    gap: 7px;
+    min-height: 86px;
+    padding: 14px 12px;
+    border-top: 1px solid var(--border, #f0f2eb);
+    border-bottom: 0;
+    position: relative;
+  }
+  .transaction-description {
+    gap: 9px;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+  .transaction-description > div {
+    padding-bottom: 19px;
+  }
+  .transaction-icon {
+    width: 32px;
+    height: 32px;
+  }
+  .transaction-name {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+  .row-tags {
+    gap: 5px;
+    max-width: 180px;
+  }
+  .row-tags button,
+  .row-tags span {
+    font-size: 9px;
+  }
+  .transaction-value {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    font-size: 11px;
+  }
+  .transaction-goal {
+    position: absolute;
+    left: 53px;
+    bottom: 10px;
+  }
+  .goal-badge {
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+  .income-label {
+    font-size: 9px;
+  }
+  .row-actions {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+  .row-actions .icon-button {
+    width: 24px;
+    height: 27px;
+  }
+  .row-actions .icon-button svg {
+    width: 13px;
+  }
+  .table-footer {
+    padding: 0 14px;
+    font-size: 8px;
+    border-top: 1px solid var(--border, #eef0e8);
+  }
+  .toast {
+    bottom: 85px;
+    left: 50%;
+    font-size: 12px;
+    padding: 13px;
+    gap: 8px;
+    max-width: calc(100% - 24px);
+  }
+  .toast > span {
+    max-width: 210px;
+    line-height: 1.5;
+  }
+  .transaction-dialog {
+    max-height: calc(100dvh - 20px);
+    max-width: calc(100vw - 20px);
+    border-radius: 13px;
+  }
+  .dialog-content {
+    padding: 22px;
+  }
+  .dialog-header h2 {
+    font-size: 23px;
+  }
+  .transaction-dialog label,
+  .goal-field legend {
+    font-size: 13px;
+  }
+  .goal-option {
+    font-size: 11px;
+    padding: 10px 8px;
+  }
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  .form-row input,
+  .form-row select,
+  .account-field input,
+  .account-field select {
+    font-size: 16px;
+    height: 43px;
+  }
+  .amount-input input {
+    font-size: 42px;
+  }
+  .tag-input-wrapper input {
+    font-size: 13px;
+  }
+  .dialog-footer {
+    gap: 20px;
+  }
+  .dialog-footer .primary-button {
+    font-size: 12px;
+  }
+  .expanded-goals .goal-card {
+    padding: 16px;
+  }
+  .expanded-goals .goal-card h3 {
+    font-size: 12px;
+    white-space: normal;
+    min-height: 32px;
+    line-height: 1.6;
+  }
+  .expanded-goals .goal-card > strong {
+    font-size: 21px;
+  }
+  .goal-description {
+    font-size: 11px;
+  }
+  .help-dialog {
+    max-width: calc(100vw - 25px);
+  }
+}
+
+/* Keep working controls legible, including on compact screens. */
+.nav-item {
+  font-size: 14px;
+}
+.goal-card h3 {
+  font-size: 12px;
+}
+.transaction-name,
+.transaction-value {
+  font-size: 12px;
+}
+.search-field input,
+.filter-selects select {
+  font-size: 12px;
+}
+.row-tags button,
+.row-tags span {
+  color: var(--text-muted, #76826c);
+  font-size: 11px;
+}
+.goal-card-foot,
+.transaction-date {
+  color: var(--text-muted, #748168);
+  font-size: 11px;
+}
+.section-heading p,
+.page-heading p {
+  color: var(--text-muted, #75816f);
+}
+.chart-legend > div {
+  color: var(--text, #687761);
+}
+.goal-badge {
+  font-size: 10px;
+}
+.transaction-row {
+  min-height: 76px;
+}
+.amount-input input {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (min-width: 1450px) {
+  .goal-card h3,
+  .transaction-name,
+  .transaction-value {
+    font-size: 14px;
+  }
+}
+@media (max-width: 1190px) and (min-width: 801px) {
+  .goal-card h3 {
+    font-size: 11px;
+  }
+  .transaction-name,
+  .transaction-value {
+    font-size: 11px;
+  }
+  .goal-badge {
+    font-size: 9px;
+  }
+}
+@media (max-width: 800px) {
+  .transaction-goal .goal-badge {
+    font-size: 9px;
+  }
+  .transaction-name,
+  .transaction-value {
+    font-size: 11px;
+  }
+}
+@media (max-width: 620px) {
+  .transaction-row {
+    min-height: 100px;
+    padding-bottom: 22px;
+  }
+  .transaction-description > div {
+    padding-bottom: 5px;
+  }
+  .transaction-goal {
+    bottom: 9px;
+  }
+  .transaction-date {
+    display: block;
+    position: absolute;
+    bottom: 12px;
+    right: 45px;
+    font-size: 10px;
+  }
+  .transaction-name {
+    font-size: 12px;
+  }
+  .row-tags button,
+  .row-tags span {
+    font-size: 10px;
+  }
+  .transaction-value {
+    font-size: 11px;
+  }
+  .goal-card h3 {
+    white-space: normal;
+    line-height: 1.5;
+  }
+  .transaction-dialog input:not(#amount),
+  .transaction-dialog select {
+    font-size: 16px;
+  }
+  .goal-option {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *:before,
+  *:after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

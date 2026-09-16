@@ -1,0 +1,462 @@
+.goal-budget {
+  font-size: 12px;
+  color: var(--text, #68736c);
+  margin: 8px 0 0;
+}
+.percentage-intro {
+  color: var(--text, #68736c);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+.percentage-fields {
+  display: grid;
+  gap: 12px;
+}
+.percentage-fields label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.percentage-fields input {
+  width: 90px;
+  border: 1px solid var(--border, #dce3dc);
+  border-radius: 8px;
+  padding: 10px;
+  font: inherit;
+}
+.percentage-total {
+  margin-top: 20px;
+  padding: 12px;
+  border-radius: 8px;
+  background: var(--surface-soft, #edf1e7);
+}
+.percentage-total.invalid {
+  background: var(--surface-soft, #f8eaf0);
+  color: var(--danger, #923648);
+}
+
+/* Shared space and account flow */
+.account-page {
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 38px 20px;
+  background:
+    radial-gradient(ellipse at top left, #e7edde, transparent 60%), #f8f9f5;
+}
+.account-page > .brand {
+  margin-bottom: 36px;
+}
+.account-page > .site-footer {
+  width: 100%;
+  max-width: 470px;
+  margin-top: auto;
+  padding-left: 0;
+  padding-right: 0;
+}
+.account-card {
+  width: 100%;
+  max-width: 470px;
+  padding: 36px;
+  border: 1px solid var(--border, #e1e5db);
+  border-radius: 24px;
+  background: var(--surface, #fff);
+  box-shadow: 0 12px 60px #183f3510;
+}
+.account-loading-card {
+  min-height: 220px;
+}
+.account-loading-message {
+  color: var(--text-muted, #72816c);
+  line-height: 1.6;
+  font-size: 14px;
+  margin-top: 24px;
+}
+.account-symbol {
+  width: 58px;
+  height: 58px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: var(--surface-soft, #eaf0df);
+  color: var(--text, #194539);
+  margin-bottom: 22px;
+}
+.account-card h1 {
+  font-size: clamp(29px, 5vw, 38px);
+  white-space: pre-line;
+  line-height: 1.15;
+  letter-spacing: -1.3px;
+  margin: 10px 0 16px;
+  overflow-wrap: anywhere;
+}
+.account-card .eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: var(--text-muted, #718169);
+}
+.account-intro,
+.account-form > p {
+  color: var(--text-muted, #72816c);
+  line-height: 1.6;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+.account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.account-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text, #445443);
+}
+.account-form input {
+  min-width: 0;
+  width: 100%;
+  padding: 13px 14px;
+  border: 1px solid var(--border, #dce2d8);
+  border-radius: 10px;
+  background: var(--surface-soft, #fcfdfa);
+  color: var(--text, #243c32);
+  font: inherit;
+  font-weight: 400;
+}
+.account-form .primary-button,
+.account-form .secondary-button {
+  justify-content: center;
+  min-height: 46px;
+}
+.account-footnote {
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--text-muted, #7a8875);
+  margin: 20px 0 0;
+}
+.account-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted, #87917f);
+  font-size: 11px;
+  text-align: center;
+}
+.account-divider::before,
+.account-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--surface-soft, #e3e7df);
+}
+.account-email {
+  font-size: 12px;
+  color: var(--text-muted, #72816c);
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.invitation-note {
+  background: var(--surface-soft, #f0f4e9);
+  color: var(--text, #4e6746);
+  padding: 15px;
+  font-size: 13px;
+  line-height: 1.6;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+.space-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 9px;
+  padding: 6px 8px;
+  background: transparent;
+  color: var(--text, #667862);
+  font-size: 12px;
+  font-weight: 550;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.space-button:hover {
+  background: var(--surface-soft, #edf2e9);
+  color: var(--text, #35513f);
+}
+.space-button > svg {
+  color: var(--text-muted, #7b9371);
+  flex-shrink: 0;
+}
+.space-member-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: 10px;
+  background: var(--surface-soft, #e9efdf);
+  color: var(--text, #4e6746);
+  font-size: 11px;
+  font-weight: 600;
+}
+.couple-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin: -4px 0 24px;
+  flex-wrap: wrap;
+}
+.page-heading + .couple-toolbar {
+  margin-top: 25px;
+}
+.person-filter {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--border, #e1e6db);
+  border-radius: 12px;
+  background: var(--surface, #fff);
+  max-width: 100%;
+}
+.person-filter button {
+  border: 0;
+  padding: 9px 17px;
+  background: transparent;
+  border-radius: 8px;
+  color: var(--text-muted, #73816c);
+  font-size: 13px;
+  font-weight: 600;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.person-filter button.active {
+  background: var(--surface-soft, #e9efdf);
+  color: var(--text, #204738);
+}
+.couple-members {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 22px 0;
+}
+.couple-member {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: var(--surface-soft, #f8faf5);
+  border-radius: 12px;
+}
+.couple-member strong {
+  font-size: 14px;
+  overflow-wrap: anywhere;
+  min-width: 0;
+}
+.couple-member > span:last-child {
+  color: var(--text-muted, #829077);
+  margin-left: auto;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+.couple-member .avatar {
+  flex-shrink: 0;
+}
+.couple-dialog .dialog-footer {
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+.couple-dialog .logout-button {
+  border-radius: 6px;
+  padding-inline: 10px;
+  color: var(--danger, #b45454);
+}
+.couple-dialog .logout-button:hover {
+  background: var(--warning-soft, #fff0ef);
+  color: var(--danger, #963d3d);
+}
+.filter-explanation {
+  color: var(--text-muted, #7b8772);
+  font-size: 12px;
+  line-height: 1.5;
+  margin: -12px 0 22px;
+}
+.transaction-fields {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+.transaction-person {
+  color: var(--text, #59764f);
+  font-size: 11px;
+  margin: 4px 0;
+}
+@media (max-width: 620px) {
+  .account-page {
+    padding: 24px 16px;
+  }
+  .account-page > .brand {
+    margin-bottom: 24px;
+  }
+  .account-page > .site-footer {
+    align-items: center;
+    padding: 24px 0;
+  }
+  .account-card {
+    padding: 26px 22px;
+    border-radius: 20px;
+  }
+  .couple-toolbar {
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .account-item {
+    padding: 14px 12px;
+    min-height: 64px;
+  }
+  .person-filter button {
+    padding: 9px 14px;
+    max-width: 135px;
+  }
+  .topbar-right {
+    gap: 8px;
+  }
+  .space-button {
+    gap: 5px;
+    padding: 6px 4px;
+  }
+  .space-button-label {
+    display: none;
+  }
+}
+
+/* Forest at night: warm ivory type, moss surfaces and botanical accents. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #111a17;
+  --surface: #1a2621;
+  --surface-soft: #24332b;
+  --text: #e5ebe2;
+  --text-muted: #acb9a7;
+  --border: #35463b;
+  --accent: #b6ce98;
+  --green: #b6ce98;
+  --muted: #acb9a7;
+  --danger: #f1a3a5;
+  --danger-soft: #40292e;
+  --warning: #e4b184;
+  --warning-soft: #3c3024;
+}
+:root[data-theme="dark"] .topbar {
+  background: #16201cef;
+}
+:root[data-theme="dark"] .balance-card {
+  background: #1e4438;
+  border: 1px solid #3b6350;
+}
+:root[data-theme="dark"] .balance-card.negative {
+  border-color: var(--danger-on-brand);
+}
+:root[data-theme="dark"] .primary-button {
+  color: #19271c;
+}
+:root[data-theme="dark"] .primary-button:hover {
+  background: #c8ddae;
+}
+:root[data-theme="dark"] .account-page {
+  background: var(--page);
+}
+:root[data-theme="dark"] .transaction-dialog::backdrop,
+:root[data-theme="dark"] .help-dialog::backdrop {
+  background: #060e0bc9;
+}
+:root[data-theme="dark"] .mobile-navigation {
+  background: #16201cf5;
+}
+input,
+select {
+  color: inherit;
+}
+.percentage-fields input {
+  background: var(--surface);
+}
+.theme-toggle {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  flex-shrink: 0;
+}
+@media (max-width: 360px) {
+  .overview-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .distribution-body {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mobile-navigation button span {
+    font-size: 9px;
+  }
+}
+.theme-toggle button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 34px;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-muted, #68736c);
+  font-size: 11px;
+}
+.theme-toggle button:hover {
+  background: var(--surface-soft, #f1f3ee);
+}
+.theme-toggle button[aria-pressed="true"] {
+  background: var(--surface-soft, #edf2e9);
+  color: var(--accent, #35513f);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+.account-page > .theme-toggle {
+  margin-bottom: 24px;
+}
+@media (max-width: 1100px) {
+  .topbar .theme-toggle button span {
+    display: none;
+  }
+}
+@media (max-width: 620px) {
+  .topbar-right {
+    gap: 4px;
+  }
+  .topbar .space-member-count {
+    display: none;
+  }
+  .topbar .mobile-brand {
+    font-size: 21px;
+    gap: 6px;
+  }
+  .topbar .theme-toggle {
+    gap: 0;
+    padding: 2px;
+  }
+  .topbar .theme-toggle button {
+    min-width: 30px;
+    padding: 6px;
+  }
+}

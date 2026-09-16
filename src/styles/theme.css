@@ -1,0 +1,50 @@
+:root {
+  --category-fixed: #617c58;
+  --category-fixed-bg: #edf1e7;
+  --category-pleasure: #c1834a;
+  --category-pleasure-bg: #fcf0e2;
+  --category-comfort: #6a81a5;
+  --category-comfort-bg: #edf1f8;
+  --category-targets: #b66d7a;
+  --category-targets-bg: #f8eaf0;
+  --category-knowledge: #9676ac;
+  --category-knowledge-bg: #f2edf7;
+  --category-freedom: #498c7e;
+  --category-freedom-bg: #e7f2ec;
+}
+:root[data-theme="dark"] {
+  --category-fixed: #b6ce98;
+  --category-fixed-bg: #2d3b29;
+  --category-pleasure: #e3b180;
+  --category-pleasure-bg: #3e3126;
+  --category-comfort: #a5bcdf;
+  --category-comfort-bg: #293444;
+  --category-targets: #dfa5b1;
+  --category-targets-bg: #3e2b34;
+  --category-knowledge: #c6addf;
+  --category-knowledge-bg: #352d41;
+  --category-freedom: #8fcdbb;
+  --category-freedom-bg: #243d35;
+}
+
+/* Tag chart palette: separate from goal colors, picked by stable name hash. */
+:root {
+  --tag-1: #4f7cac;
+  --tag-2: #bc8a5f;
+  --tag-3: #8e7cc3;
+  --tag-4: #b56576;
+  --tag-5: #2a9d8f;
+  --tag-6: #c9a227;
+  --tag-7: #6d6875;
+  --tag-8: #7f9c96;
+}
+:root[data-theme="dark"] {
+  --tag-1: #8fb4d9;
+  --tag-2: #d9b08c;
+  --tag-3: #b8a6e3;
+  --tag-4: #d98c99;
+  --tag-5: #7ccbc0;
+  --tag-6: #e3c565;
+  --tag-7: #a39fab;
+  --tag-8: #a7c4bf;
+}
