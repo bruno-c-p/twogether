@@ -10,7 +10,7 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/transaction-list.module.css";
 
 interface Props {
@@ -69,19 +69,19 @@ export function TransactionList(props: Props) {
     !!query || goalFilter !== "all" || !!tagFilter || kindFilter !== "all";
   return (
     <section
-      className={chrome.panel}
+      className={ui.panel}
       aria-labelledby="transactions-title"
     >
-      <div className={chrome.sectionHeading}>
+      <div className={ui.sectionHeading}>
         <div>
           <h2 id="transactions-title">
             {compact ? "Últimas transações" : "Transações do mês"}
-            <span className={chrome.countBadge}>{transactions.length}</span>
+            <span className={ui.countBadge}>{transactions.length}</span>
           </h2>
           <p>Entradas e despesas registradas no mês.</p>
         </div>
         {compact && (
-          <button className={`${chrome.textButton} ${styles.seeAll}`} onClick={onViewAll}>
+          <button className={`${ui.textButton} ${styles.seeAll}`} onClick={onViewAll}>
             Ver todas <ArrowUpRight size={17} />
           </button>
         )}
@@ -97,7 +97,7 @@ export function TransactionList(props: Props) {
           />
           {query && (
             <button
-              className={chrome.iconButton}
+              className={ui.iconButton}
               onClick={() => onQuery("")}
               aria-label="Limpar busca"
             >
@@ -135,7 +135,7 @@ export function TransactionList(props: Props) {
       {tagFilter && (
         <div className={styles.activeTagFilter}>
           <span>Filtrando por</span>
-          <button className={chrome.tag} onClick={() => onTag("")}>
+          <button className={ui.tag} onClick={() => onTag("")}>
             #{tagFilter}
             <X size={13} />
           </button>
@@ -148,7 +148,7 @@ export function TransactionList(props: Props) {
             <span>META</span>
             <span>DATA</span>
             <span>VALOR</span>
-            <span className={chrome.srOnly}>Ações</span>
+            <span className={ui.srOnly}>Ações</span>
           </div>
           {shown.map((t) => {
             const goal = GOALS.find((g) => g.id === t.goal);
@@ -208,7 +208,7 @@ export function TransactionList(props: Props) {
                       style={{ background: goal.background, color: goal.color }}
                     >
                       <span
-                        className={chrome.colorDot}
+                        className={ui.colorDot}
                         style={{ background: goal.color }}
                       />
                       {goal.name}
@@ -235,7 +235,7 @@ export function TransactionList(props: Props) {
                 </span>
                 <div className={styles.rowActions}>
                   <button
-                    className={`${chrome.iconButton} ${styles.actionButton}`}
+                    className={`${ui.iconButton} ${styles.actionButton}`}
                     disabled={props.busy}
                     aria-label={`Editar ${t.description}`}
                     onClick={() => onEdit(t)}
@@ -243,7 +243,7 @@ export function TransactionList(props: Props) {
                     <Pencil size={15} />
                   </button>
                   <button
-                    className={`${chrome.iconButton} ${styles.actionButton} ${styles.deleteButton}`}
+                    className={`${ui.iconButton} ${styles.actionButton} ${styles.deleteButton}`}
                     disabled={props.busy}
                     aria-label={`Excluir ${t.description}`}
                     onClick={() => onDelete(t)}
@@ -256,8 +256,8 @@ export function TransactionList(props: Props) {
           })}
         </div>
       ) : (
-        <div className={chrome.emptyState}>
-          <div className={chrome.emptyIcon}>
+        <div className={ui.emptyState}>
+          <div className={ui.emptyIcon}>
             <Search size={25} strokeWidth={1.5} />
           </div>
           <h3>
@@ -272,7 +272,7 @@ export function TransactionList(props: Props) {
           </p>
           {activeFilters ? (
             <button
-              className={chrome.secondaryButton}
+              className={ui.secondaryButton}
               onClick={() => {
                 onQuery("");
                 onGoal("all");
@@ -283,7 +283,7 @@ export function TransactionList(props: Props) {
               Limpar filtros
             </button>
           ) : (
-            <button className={chrome.primaryButton} onClick={onAdd}>
+            <button className={ui.primaryButton} onClick={onAdd}>
               Adicionar primeira transação
             </button>
           )}

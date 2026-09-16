@@ -3,7 +3,7 @@ import { X } from "lucide-react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
@@ -39,12 +39,12 @@ export function GoalPercentagesDialog({
   return (
     <dialog
       ref={dialog}
-      className={`${chrome.dialog} ${chrome.narrow}`}
+      className={`${ui.dialog} ${ui.narrow}`}
       aria-labelledby="percentages-title"
       onCancel={onClose}
     >
       <form
-        className={chrome.dialogContent}
+        className={ui.dialogContent}
         onSubmit={async (event) => {
           event.preventDefault();
           if (!valid || saving) return;
@@ -53,18 +53,18 @@ export function GoalPercentagesDialog({
           setSaving(false);
         }}
       >
-        <header className={chrome.dialogHeader}>
+        <header className={ui.dialogHeader}>
           <h2 id="percentages-title">Divisão da minha renda</h2>
           <button
             type="button"
-            className={chrome.iconButton}
+            className={ui.iconButton}
             aria-label="Fechar percentuais"
             onClick={onClose}
           >
             <X size={21} />
           </button>
         </header>
-        <p className={chrome.intro}>
+        <p className={ui.intro}>
           Defina a porcentagem da sua renda destinada a cada meta. A soma deve
           ser 100% e vale para todos os meses. Cada pessoa define seus próprios
           percentuais.
@@ -104,20 +104,20 @@ export function GoalPercentagesDialog({
           {!valid && " · Ajuste os percentuais para somar 100%."}
         </p>
         {error && (
-          <p role="alert" className={chrome.formError}>
+          <p role="alert" className={ui.formError}>
             {error}
           </p>
         )}
-        <footer className={chrome.dialogFooter}>
+        <footer className={ui.dialogFooter}>
           <button
             type="button"
-            className={chrome.textButton}
+            className={ui.textButton}
             disabled={saving}
             onClick={() => setValues({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
           </button>
-          <button className={chrome.primaryButton} disabled={!valid || saving}>
+          <button className={ui.primaryButton} disabled={!valid || saving}>
             Salvar percentuais
           </button>
         </footer>

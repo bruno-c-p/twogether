@@ -4,7 +4,7 @@ import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/account-gate.module.css";
 
 const isDevelopment = import.meta.env.DEV;
@@ -57,7 +57,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
-      <a href="/" className={`${chrome.brand} ${styles.pageBrand}`}>
+      <a href="/" className={`${ui.brand} ${styles.pageBrand}`}>
         twogether.
       </a>
       <section className={styles.accountCard}>
@@ -68,7 +68,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             <HeartHandshake size={30} strokeWidth={1.5} />
           )}
         </div>
-        <p className={`${chrome.eyebrow} ${styles.cardEyebrow}`}>DUAS PESSOAS. UM ORÇAMENTO.</p>
+        <p className={`${ui.eyebrow} ${styles.cardEyebrow}`}>DUAS PESSOAS. UM ORÇAMENTO.</p>
         <h1>
           {budget.accessToken
             ? "Seu espaço está aqui."
@@ -92,9 +92,9 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                   : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
         </p>
         {budget.accessToken ? (
-          <div className={chrome.accountForm}>
+          <div className={ui.accountForm}>
             <button
-              className={chrome.primaryButton}
+              className={ui.primaryButton}
               disabled={budget.busy}
               onClick={async () => {
                 if (
@@ -110,7 +110,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
               <ArrowRight size={18} />
             </button>
             <button
-              className={chrome.textButton}
+              className={ui.textButton}
               disabled={budget.busy}
               onClick={budget.finishAccess}
             >
@@ -120,30 +120,30 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
         ) : !budget.user ? (
           <>
             {invitation && (
-              <p className={chrome.invitationNote}>
+              <p className={ui.invitationNote}>
                 Seu par convidou você. Confirme seu e-mail para compartilhar o
                 orçamento.
               </p>
             )}
             {sentTo ? (
-              <div className={chrome.accountForm}>
-                <p className={chrome.invitationNote}>
+              <div className={ui.accountForm}>
+                <p className={ui.invitationNote}>
                   O link vale por 15 minutos. Se não encontrar, confira o spam.
                 </p>
                 <button
-                  className={chrome.secondaryButton}
+                  className={ui.secondaryButton}
                   disabled={budget.busy || cooldown > 0}
                   onClick={() => requestAccess(sentTo)}
                 >
                   {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar link"}
                 </button>
-                <button className={chrome.textButton} onClick={() => setSentTo("")}>
+                <button className={ui.textButton} onClick={() => setSentTo("")}>
                   Usar outro e-mail
                 </button>
               </div>
             ) : (
               <form
-                className={chrome.accountForm}
+                className={ui.accountForm}
                 onSubmit={async (event) => {
                   event.preventDefault();
                   await requestAccess(
@@ -164,7 +164,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                     required
                   />
                 </label>
-                <button className={chrome.primaryButton} disabled={budget.busy}>
+                <button className={ui.primaryButton} disabled={budget.busy}>
                   {budget.busy
                     ? isDevelopment
                       ? "Entrando…"
@@ -179,7 +179,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
           </>
         ) : !budget.user.name ? (
           <form
-            className={chrome.accountForm}
+            className={ui.accountForm}
             onSubmit={async (event) => {
               event.preventDefault();
               await budget.command({
@@ -200,20 +200,20 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 required
               />
             </label>
-            <button className={chrome.primaryButton} disabled={budget.busy}>
+            <button className={ui.primaryButton} disabled={budget.busy}>
               Continuar
               <ArrowRight size={18} />
             </button>
           </form>
         ) : (
-          <div className={chrome.accountForm}>
+          <div className={ui.accountForm}>
             {invitation ? (
               <>
-                <p className={chrome.invitationNote}>
+                <p className={ui.invitationNote}>
                   Ao aceitar, vocês dois poderão ver e editar todo o orçamento.
                 </p>
                 <button
-                  className={chrome.primaryButton}
+                  className={ui.primaryButton}
                   disabled={budget.busy}
                   onClick={async () => {
                     if (
@@ -229,7 +229,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                   <ArrowRight size={18} />
                 </button>
                 <button
-                  className={chrome.textButton}
+                  className={ui.textButton}
                   onClick={clearInvitation}
                 >
                   Usar outro convite ou começar do zero
@@ -238,16 +238,16 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             ) : (
               <>
                 <button
-                  className={chrome.primaryButton}
+                  className={ui.primaryButton}
                   disabled={budget.busy}
                   onClick={() => budget.command({ action: "create" })}
                 >
                   Começar nosso orçamento
                   <ArrowRight size={18} />
                 </button>
-                <span className={chrome.accountDivider}>já recebeu um convite?</span>
+                <span className={ui.accountDivider}>já recebeu um convite?</span>
                 <form
-                  className={chrome.accountForm}
+                  className={ui.accountForm}
                   onSubmit={async (event) => {
                     event.preventDefault();
                     await budget.command({
@@ -268,14 +268,14 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                       required
                     />
                   </label>
-                  <button className={chrome.secondaryButton} disabled={budget.busy}>
+                  <button className={ui.secondaryButton} disabled={budget.busy}>
                     Aceitar convite
                   </button>
                 </form>
               </>
             )}
             <button
-              className={chrome.textButton}
+              className={ui.textButton}
               disabled={budget.busy}
               onClick={() => budget.command({ action: "logout" })}
             >
@@ -284,11 +284,11 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
           </div>
         )}
         {budget.error && (
-          <p className={chrome.formError} role="alert">
+          <p className={ui.formError} role="alert">
             {budget.error}
           </p>
         )}
-        <p className={chrome.accountFootnote}>
+        <p className={ui.accountFootnote}>
           {isDevelopment
             ? "Modo desenvolvimento: o acesso local não envia e-mail."
             : "Sem senha. Um espaço exclusivo para vocês dois."}

@@ -1,7 +1,7 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { accountBalance, money } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import list from "@/features/budget/styles/list-row.module.css";
 
 interface Props {
@@ -35,12 +35,12 @@ export function AccountList({
     a.name.localeCompare(b.name, "pt-BR"),
   );
   return (
-    <section className={chrome.panel} aria-labelledby="accounts-title">
-      <div className={chrome.sectionHeading}>
+    <section className={ui.panel} aria-labelledby="accounts-title">
+      <div className={ui.sectionHeading}>
         <div>
           <h2 id="accounts-title">
             Contas cadastradas
-            <span className={chrome.countBadge}>{accounts.length}</span>
+            <span className={ui.countBadge}>{accounts.length}</span>
           </h2>
           <p>Saldo inicial mais receitas, menos despesas de cada conta.</p>
         </div>
@@ -78,7 +78,7 @@ export function AccountList({
                 </span>
                 <div className={list.actions}>
                   <button
-                    className={`${chrome.iconButton} ${list.actionButton}`}
+                    className={`${ui.iconButton} ${list.actionButton}`}
                     disabled={busy}
                     aria-label={`Editar ${account.name}`}
                     onClick={() => onEdit(account)}
@@ -86,7 +86,7 @@ export function AccountList({
                     <Pencil size={15} />
                   </button>
                   <button
-                    className={`${chrome.iconButton} ${list.actionButton} ${list.deleteButton}`}
+                    className={`${ui.iconButton} ${list.actionButton} ${list.deleteButton}`}
                     disabled={busy || used}
                     title={
                       used
@@ -104,13 +104,13 @@ export function AccountList({
           })}
         </div>
       ) : (
-        <div className={chrome.emptyState}>
-          <div className={chrome.emptyIcon}>
+        <div className={ui.emptyState}>
+          <div className={ui.emptyIcon}>
             <Landmark size={25} strokeWidth={1.5} />
           </div>
           <h3>Nenhuma conta cadastrada.</h3>
           <p>Cadastre uma conta para lançar receitas e despesas.</p>
-          <button className={chrome.primaryButton} onClick={onAdd}>
+          <button className={ui.primaryButton} onClick={onAdd}>
             <Plus size={18} /> Adicionar primeira conta
           </button>
         </div>

@@ -21,7 +21,7 @@ import type {
   Member,
 } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/transaction-dialog.module.css";
 
 interface Props {
@@ -156,26 +156,26 @@ export function TransactionDialog({
   return (
     <dialog
       ref={dialog}
-      className={`${chrome.dialog} ${styles.dialog}`}
+      className={`${ui.dialog} ${styles.dialog}`}
       aria-labelledby="dialog-title"
       onCancel={onClose}
       onClick={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
-      <div className={chrome.dialogContent}>
-        <header className={chrome.dialogHeader}>
+      <div className={ui.dialogContent}>
+        <header className={ui.dialogHeader}>
           <div>
             <h2 id="dialog-title">
               {transaction ? "Editar transação" : "Nova transação"}
             </h2>
           </div>
-          <button className={chrome.iconButton} aria-label="Fechar" onClick={onClose}>
+          <button className={ui.iconButton} aria-label="Fechar" onClick={onClose}>
             <X size={22} />
           </button>
         </header>
         <form onSubmit={submit}>
-          <fieldset className={chrome.transactionFields} disabled={saving}>
+          <fieldset className={ui.transactionFields} disabled={saving}>
             <div className={styles.kindToggle} aria-label="Tipo da transação">
               <button
                 type="button"
@@ -197,10 +197,10 @@ export function TransactionDialog({
                 <ArrowDownLeft size={17} /> Receita
               </button>
             </div>
-            <label className={chrome.amountLabel} htmlFor="amount">
+            <label className={ui.amountLabel} htmlFor="amount">
               Valor
             </label>
-            <div className={chrome.amountInput}>
+            <div className={ui.amountInput}>
               <span>R$</span>
               <input
                 id="amount"
@@ -219,7 +219,7 @@ export function TransactionDialog({
                 aria-describedby={error ? "form-error" : undefined}
               />
             </div>
-            <div className={chrome.formRow}>
+            <div className={ui.formRow}>
               <label>
                 Descrição
                 <input
@@ -242,7 +242,7 @@ export function TransactionDialog({
                 />
               </label>
             </div>
-            <label className={chrome.accountField}>
+            <label className={ui.accountField}>
               Conta
               <select
                 name="accountId"
@@ -339,7 +339,7 @@ export function TransactionDialog({
               </fieldset>
             )}
             <label htmlFor="tag-input">
-              Tags <span className={chrome.optional}>opcional · até 8</span>
+              Tags <span className={ui.optional}>opcional · até 8</span>
             </label>
             <div className={styles.tagInputWrapper}>
               <span>#</span>
@@ -359,7 +359,7 @@ export function TransactionDialog({
               />
               <button
                 type="button"
-                className={chrome.iconButton}
+                className={ui.iconButton}
                 aria-label="Adicionar tag"
                 disabled={!tagInput.trim() || tags.length >= 8}
                 onClick={() => addTag(tagInput)}
@@ -373,7 +373,7 @@ export function TransactionDialog({
                   <button
                     key={tag}
                     type="button"
-                    className={chrome.tag}
+                    className={ui.tag}
                     aria-label={`Remover tag ${tag}`}
                     onClick={() => setTags(tags.filter((t) => t !== tag))}
                   >
@@ -402,17 +402,17 @@ export function TransactionDialog({
                 </div>
               )}
             {error && (
-              <p id="form-error" role="alert" className={chrome.formError}>
+              <p id="form-error" role="alert" className={ui.formError}>
                 {error}
               </p>
             )}
             {serverError && (
-              <p role="alert" className={chrome.formError}>
+              <p role="alert" className={ui.formError}>
                 {serverError}
               </p>
             )}
             {transaction?.updatedBy && (
-              <p className={chrome.accountFootnote}>
+              <p className={ui.accountFootnote}>
                 Registrado por{" "}
                 {members.find((member) => member.id === transaction.createdBy)
                   ?.name ?? "uma pessoa do casal"}
@@ -422,11 +422,11 @@ export function TransactionDialog({
                 .
               </p>
             )}
-            <footer className={chrome.dialogFooter}>
-              <button type="button" className={chrome.textButton} onClick={onClose}>
+            <footer className={ui.dialogFooter}>
+              <button type="button" className={ui.textButton} onClick={onClose}>
                 Cancelar
               </button>
-              <button type="submit" className={chrome.primaryButton}>
+              <button type="submit" className={ui.primaryButton}>
                 <Check size={17} />
                 {saving
                   ? "Salvando…"

@@ -1,7 +1,7 @@
 import { GOALS } from "@/features/budget/constants";
 import { money, summarize } from "@/features/budget/services/budget";
 import type { Transaction } from "@/features/budget/types";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/distribution.module.css";
 
 export function Distribution({
@@ -16,7 +16,7 @@ export function Distribution({
   return (
     <div className={styles.distribution}>
       <div className={styles.distributionHeading}>
-        <span className={chrome.eyebrow}>DESPESAS DO MÊS</span>
+        <span className={ui.eyebrow}>DESPESAS DO MÊS</span>
         <h3>Distribuição por meta</h3>
       </div>
       <div className={styles.distributionBody}>
@@ -70,7 +70,7 @@ export function Distribution({
         <div className={styles.chartLegend}>
           {GOALS.map((goal) => (
             <div key={goal.id}>
-              <span className={chrome.colorDot} style={{ background: goal.color }} />
+              <span className={ui.colorDot} style={{ background: goal.color }} />
               <span>{goal.name}</span>
               <strong>
                 {hidden

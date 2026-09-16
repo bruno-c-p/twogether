@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Copy, X } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/couple-dialog.module.css";
 
 export function CoupleDialog({
@@ -28,29 +28,29 @@ export function CoupleDialog({
   return (
     <dialog
       ref={dialog}
-      className={`${chrome.dialog} ${chrome.narrow}`}
+      className={`${ui.dialog} ${ui.narrow}`}
       aria-labelledby="couple-title"
       onCancel={onClose}
     >
-      <div className={chrome.dialogContent}>
-        <header className={chrome.dialogHeader}>
+      <div className={ui.dialogContent}>
+        <header className={ui.dialogHeader}>
           <h2 id="couple-title">Nosso espaço</h2>
           <button
-            className={chrome.iconButton}
+            className={ui.iconButton}
             aria-label="Fechar nosso espaço"
             onClick={onClose}
           >
             <X size={21} />
           </button>
         </header>
-        <p className={chrome.intro}>
+        <p className={ui.intro}>
           Tudo aqui é dos dois. Ambos podem ver e editar contas, transações,
           tags e percentuais.
         </p>
         <div className={styles.coupleMembers}>
           {budget.household?.members.map((member) => (
             <div className={styles.coupleMember} key={member.id}>
-              <span className={`${chrome.avatar} ${styles.memberAvatar}`}>
+              <span className={`${ui.avatar} ${styles.memberAvatar}`}>
                 {member.name.slice(0, 1).toUpperCase()}
               </span>
               <strong>{member.name}</strong>
@@ -59,13 +59,13 @@ export function CoupleDialog({
           ))}
         </div>
         {budget.household?.members.length === 1 ? (
-          <div className={chrome.accountForm}>
+          <div className={ui.accountForm}>
             <p>
               Falta seu par. Gere um convite e compartilhe o link com essa
               pessoa.
             </p>
             <button
-              className={chrome.primaryButton}
+              className={ui.primaryButton}
               disabled={budget.busy}
               onClick={async () => {
                 const result = await budget.command({ action: "invite" });
@@ -91,7 +91,7 @@ export function CoupleDialog({
                   />
                 </label>
                 <button
-                  className={chrome.secondaryButton}
+                  className={ui.secondaryButton}
                   onClick={async () => {
                     try {
                       await navigator.clipboard.writeText(link);
@@ -105,14 +105,14 @@ export function CoupleDialog({
                   <Copy size={16} />
                   {copied ? "Link copiado" : "Copiar convite"}
                 </button>
-                <p className={chrome.accountFootnote}>
+                <p className={ui.accountFootnote}>
                   Expira em 48 horas. Um novo convite invalida o anterior.
                 </p>
                 {copyError && <p role="status">{copyError}</p>}
               </>
             )}
             <button
-              className={chrome.textButton}
+              className={ui.textButton}
               disabled={budget.busy}
               onClick={async () => {
                 if (await budget.command({ action: "revoke-invite" })) {
@@ -126,19 +126,19 @@ export function CoupleDialog({
             {!link && copyError && <p role="status">{copyError}</p>}
           </div>
         ) : (
-          <p className={chrome.invitationNote}>
+          <p className={ui.invitationNote}>
             Vocês dois já estão aqui. O espaço está completo.
           </p>
         )}
         {budget.error && (
-          <p role="alert" className={chrome.formError}>
+          <p role="alert" className={ui.formError}>
             {budget.error}
           </p>
         )}
-        <footer className={`${chrome.dialogFooter} ${styles.footer}`}>
-          <span className={chrome.accountEmail}>{budget.user?.email}</span>
+        <footer className={`${ui.dialogFooter} ${styles.footer}`}>
+          <span className={ui.accountEmail}>{budget.user?.email}</span>
           <button
-            className={`${chrome.textButton} ${styles.logout}`}
+            className={`${ui.textButton} ${styles.logout}`}
             disabled={budget.busy}
             onClick={() => budget.command({ action: "logout" })}
           >

@@ -38,7 +38,7 @@ import { Distribution } from "@/features/budget/components/distribution";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog";
 import { TransactionList } from "@/features/budget/components/transaction-list";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
@@ -269,12 +269,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   return (
     <div className={styles.appShell}>
       <aside className={styles.sidebar}>
-        <a className={`${chrome.brand} ${styles.sidebarBrand}`} href="/" aria-label="twogether — início">
-          <span className={chrome.brandMark}>
+        <a className={`${ui.brand} ${styles.sidebarBrand}`} href="/" aria-label="twogether — início">
+          <span className={ui.brandMark}>
             <span />
             <span />
           </span>
-          twogether<span className={chrome.brandPeriod}>.</span>
+          twogether<span className={ui.brandPeriod}>.</span>
         </a>
         <nav className={styles.desktopNavigation} aria-label="Navegação principal">
           {navigation.map((item) => (
@@ -299,8 +299,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {navigation.find((item) => item.id === view)?.label}
             </strong>
           </div>
-          <a className={`${chrome.brand} ${styles.mobileBrand}`} href="/">
-            <span className={`${chrome.brandMark} ${styles.mobileMark}`}>
+          <a className={`${ui.brand} ${styles.mobileBrand}`} href="/">
+            <span className={`${ui.brandMark} ${styles.mobileMark}`}>
               <span />
               <span />
             </span>
@@ -309,7 +309,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           <div className={styles.topbarRight}>
             <ThemeToggle className={styles.topbarTheme} />
             <button
-              className={`${chrome.iconButton} ${styles.visibilityButton}`}
+              className={`${ui.iconButton} ${styles.visibilityButton}`}
               onClick={() => setHidden(!hidden)}
               aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
               title={hidden ? "Mostrar valores" : "Ocultar valores"}
@@ -335,7 +335,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               <p>{titles[view].subtitle}</p>
             </div>
             <button
-              className={`${chrome.primaryButton} ${styles.addTransaction}`}
+              className={`${ui.primaryButton} ${styles.addTransaction}`}
               disabled={budget.busy}
               onClick={() =>
                 view === "accounts"
@@ -351,7 +351,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             <div className={styles.monthRow}>
               <div className={styles.monthPicker}>
                 <button
-                  className={`${chrome.iconButton} ${styles.monthIcon}`}
+                  className={`${ui.iconButton} ${styles.monthIcon}`}
                   aria-label="Mês anterior"
                   disabled={!month}
                   onClick={() => setMonth(shiftMonth(month, -1))}
@@ -374,7 +374,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   }}
                 />
                 <button
-                  className={`${chrome.iconButton} ${styles.monthIcon}`}
+                  className={`${ui.iconButton} ${styles.monthIcon}`}
                   aria-label="Próximo mês"
                   disabled={!month}
                   onClick={() => setMonth(shiftMonth(month, 1))}
@@ -439,7 +439,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           ) : (
             <>
               {view === "overview" && (
-                <section className={chrome.overviewGrid} aria-label="Resumo mensal">
+                <section className={ui.overviewGrid} aria-label="Resumo mensal">
                   <div
                     className={`${styles.balanceCard} ${summary.balance < 0 ? styles.negative : ""}`}
                   >
@@ -510,14 +510,14 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   className={styles.goalsSection}
                   aria-labelledby="goals-title"
                 >
-                  <div className={chrome.sectionHeading}>
+                  <div className={ui.sectionHeading}>
                     <div>
                       <h2 id="goals-title">Metas do orçamento</h2>
                     </div>
                     {(memberFilter === "all" ||
                       memberFilter === budget.user?.id) && (
                       <button
-                        className={chrome.textButton}
+                        className={ui.textButton}
                         disabled={budget.busy}
                         onClick={() =>
                           setEditingPercentages(

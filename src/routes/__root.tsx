@@ -7,7 +7,7 @@ import {
 import stylesheet from "@/src/styles.css?url";
 import { RouteError } from "@/src/route-error";
 import { themeScript } from "@/features/theme";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 
 export const Route = createRootRoute({
   errorComponent: RouteError,
@@ -55,7 +55,7 @@ export const Route = createRootRoute({
     </html>
   ),
   notFoundComponent: () => (
-    <main className={chrome.notFound}>
+    <main className={ui.notFound}>
       <h1>Página não encontrada.</h1>
       <a href="/">Voltar para a visão geral</a>
     </main>

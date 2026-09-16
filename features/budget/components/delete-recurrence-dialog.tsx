@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Trash2, X } from "lucide-react";
 import type { Transaction } from "@/features/budget/types";
-import chrome from "@/src/chrome.module.css";
+import ui from "@/src/ui.module.css";
 import styles from "@/features/budget/components/delete-recurrence-dialog.module.css";
 
 interface Props {
@@ -38,19 +38,19 @@ export function DeleteRecurrenceDialog({
   return (
     <dialog
       ref={dialog}
-      className={`${chrome.dialog} ${styles.deleteDialog}`}
+      className={`${ui.dialog} ${styles.deleteDialog}`}
       aria-labelledby="delete-title"
       onCancel={(event) => {
         event.preventDefault();
         if (!busy) onClose();
       }}
     >
-      <div className={chrome.dialogContent}>
-        <header className={chrome.dialogHeader}>
+      <div className={ui.dialogContent}>
+        <header className={ui.dialogHeader}>
           <h2 id="delete-title">Excluir transação</h2>
           <button
             type="button"
-            className={chrome.iconButton}
+            className={ui.iconButton}
             aria-label="Fechar"
             disabled={busy}
             onClick={onClose}
@@ -59,7 +59,7 @@ export function DeleteRecurrenceDialog({
           </button>
         </header>
         <p className={styles.deleteDescription}>{transaction.description}</p>
-        <fieldset className={chrome.transactionFields} disabled={busy}>
+        <fieldset className={ui.transactionFields} disabled={busy}>
           <fieldset className={styles.deleteOptions}>
             <legend>O que você deseja excluir?</legend>
             <label
@@ -99,17 +99,17 @@ export function DeleteRecurrenceDialog({
             </p>
           )}
           {error && (
-            <p role="alert" className={chrome.formError}>
+            <p role="alert" className={ui.formError}>
               {error}
             </p>
           )}
-          <footer className={chrome.dialogFooter}>
-            <button type="button" className={chrome.textButton} onClick={onClose}>
+          <footer className={ui.dialogFooter}>
+            <button type="button" className={ui.textButton} onClick={onClose}>
               Cancelar
             </button>
             <button
               type="button"
-              className={`${chrome.primaryButton} ${styles.deleteConfirm}`}
+              className={`${ui.primaryButton} ${styles.deleteConfirm}`}
               onClick={() => void onDelete(following)}
             >
               <Trash2 size={16} />
