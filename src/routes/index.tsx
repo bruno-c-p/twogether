@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
 import { loadBudget } from "@/features/budget/actions/load-budget";
-import { validateAccessSearch } from "@/features/budget/search";
+import { validateBudgetSearch } from "@/features/budget/search";
 
 export const Route = createFileRoute("/")({
   component: BudgetRoute,
-  validateSearch: validateAccessSearch,
+  validateSearch: validateBudgetSearch,
   loader: () => loadBudget(),
 });
 
