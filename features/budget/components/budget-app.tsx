@@ -1,5 +1,6 @@
 import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
 import { useEffect, useState } from "react";
+import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -63,12 +64,19 @@ export function BudgetApp({
   );
 }
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+  const search = useSearch({ from: "/" });
+  const routeNavigate = useNavigate();
   const memberCount = budget.household?.members.length ?? 0;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
-  const [memberFilter, setMemberFilter] = useState("all");
+  const view = search.view ?? "overview";
+  const memberFilter = search.member ?? "all";
+  const query = search.query ?? "";
+  const goalFilter = search.goal ?? "all";
+  const tagFilter = search.tag ?? "";
+  const kindFilter = search.kind ?? "all";
+  const [fallbackMonth, setFallbackMonth] = useState("");
+  const month = search.month ?? fallbackMonth;
   const [coupleOpen, setCoupleOpen] = useState(false);
-  const [month, setMonth] = useState("");
-  const [view, setView] = useState<View>("overview");
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
@@ -76,10 +84,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const [accountDialog, setAccountDialog] = useState<{
     account: BankAccount | null;
   } | null>(null);
-  const [query, setQuery] = useState("");
-  const [goalFilter, setGoalFilter] = useState<GoalId | "all">("all");
-  const [tagFilter, setTagFilter] = useState("");
-  const [kindFilter, setKindFilter] = useState("all");
   const [notice, setNotice] = useState<{
     message: string;
     undo?: Transaction;
@@ -89,7 +93,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   );
 
   useEffect(() => {
-    setMonth(localDate().slice(0, 7));
+    setFallbackMonth(localDate().slice(0, 7));
   }, []);
   useEffect(() => {
     if (!notice) return;
@@ -124,18 +128,64 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         ? "O planejado soma as metas individuais de cada pessoa."
         : "Renda, gastos e metas da pessoa selecionada.";
 
+  function updateSearch(
+    next: (prev: typeof search) => typeof search,
+    replace = false,
+  ) {
+    void routeNavigate({ to: "/", search: next, replace });
+  }
+
+  function setMonth(value: string) {
+    updateSearch((prev) => ({ ...prev, month: value }));
+  }
+
+  function setMemberFilter(member: string) {
+    updateSearch((prev) => ({
+      ...prev,
+      member: member === "all" ? undefined : member,
+    }));
+  }
+
+  function setQuery(value: string) {
+    updateSearch((prev) => ({ ...prev, query: value || undefined }), true);
+  }
+
+  function setGoalFilter(goal: GoalId | "all") {
+    updateSearch((prev) => ({
+      ...prev,
+      goal: goal === "all" ? undefined : goal,
+    }));
+  }
+
+  function setKindFilter(kind: string) {
+    updateSearch((prev) => ({
+      ...prev,
+      kind: kind === "all" ? undefined : kind,
+    }));
+  }
+
   function navigate(next: View) {
-    setView(next);
-    setQuery("");
-    setGoalFilter("all");
-    setTagFilter("");
-    setKindFilter("all");
+    updateSearch((prev) => ({
+      ...prev,
+      view: next,
+      query: undefined,
+      goal: undefined,
+      tag: undefined,
+      kind: undefined,
+    }));
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   function filterGoal(id: GoalId) {
-    navigate("transactions");
-    setGoalFilter(id);
+    updateSearch((prev) => ({
+      ...prev,
+      view: "transactions",
+      goal: id,
+      query: undefined,
+      tag: undefined,
+      kind: undefined,
+    }));
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   async function save(transaction: Transaction, occurrences = 1) {
@@ -572,10 +622,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   kindFilter={kindFilter}
                   onQuery={setQuery}
                   onGoal={setGoalFilter}
-                  onTag={(tag) => {
-                    setTagFilter(tag);
-                    setView("transactions");
-                  }}
+                  onTag={(tag) =>
+                    updateSearch((prev) => ({
+                      ...prev,
+                      view: "transactions",
+                      tag: tag || undefined,
+                    }))
+                  }
                   onKind={setKindFilter}
                   onEdit={(transaction) => openTransaction(transaction)}
                   onDelete={remove}

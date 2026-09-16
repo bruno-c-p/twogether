@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
 import { loadBudget } from "@/features/budget/actions/load-budget";
+import { validateBudgetSearch } from "@/features/budget/search";
 import { RouteError } from "../route-error";
 
 function BudgetPending() {
@@ -13,6 +14,7 @@ function BudgetPending() {
 
 export const Route = createFileRoute("/")({
   component: BudgetRoute,
+  validateSearch: validateBudgetSearch,
   loader: () => loadBudget(),
   pendingComponent: BudgetPending,
   errorComponent: RouteError,
