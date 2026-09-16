@@ -1,4 +1,4 @@
-import type { ComponentPropsWithoutRef } from "react";
+import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import styles from "@/src/ui/brand.module.css";
 
@@ -8,9 +8,10 @@ export function Brand({
   markClassName,
   children,
   ...props
-}: Omit<ComponentPropsWithoutRef<typeof Link>, "to"> & {
+}: Omit<ComponentPropsWithoutRef<typeof Link>, "to" | "children"> & {
   mark?: boolean;
   markClassName?: string;
+  children?: ReactNode;
 }) {
   return (
     <Link
