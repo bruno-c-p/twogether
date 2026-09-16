@@ -311,6 +311,22 @@ describe("shared budget", () => {
       )?.amount,
     ).toBe(20000);
   });
+  test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
+    const { a } = await householdReady();
+    const t = transaction(a.snapshot.user!.id);
+    await store.command({ action: "save", transaction: t }, a.session);
+    const retry = await store.command(
+      { action: "save", transaction: t },
+      a.session,
+    );
+    expect(retry.snapshot.budget.transactions).toHaveLength(1);
+    await expect(
+      store.command(
+        { action: "save", transaction: { ...t, amount: 999 } },
+        a.session,
+      ),
+    ).rejects.toThrow("mudou");
+  });
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
     const { a, b } = await householdReady();
     await store.command(
@@ -647,12 +663,17 @@ describe("monthly recurring transactions", () => {
         (row) => row.amount === 20000,
       ),
     ).toHaveLength(1);
+    const retried = await store.command(
+      { action: "save", transaction: original, occurrences: 3 },
+      a.session,
+    );
+    expect(retried.snapshot.budget.transactions).toHaveLength(3);
     await expect(
       store.command(
-        { action: "save", transaction: original, occurrences: 3 },
+        { action: "save", transaction: rows[0], occurrences: 3 },
         a.session,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("individualmente");
     expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
       3,
     );

@@ -607,6 +607,22 @@ export function createBudgetStore(
           const given = isTransaction(rawTransaction)
             ? rawTransaction.revision
             : undefined;
+          if (old && !old.deleted && given === undefined) {
+            // A create retried after a lost response carries no revision;
+            // accept it when the stored row already matches the submission.
+            const stored = JSON.parse(old.payload) as Transaction;
+            const same =
+              stored.description === t.description &&
+              stored.amount === t.amount &&
+              stored.date === t.date &&
+              stored.kind === t.kind &&
+              stored.goal === t.goal &&
+              stored.accountId === t.accountId &&
+              stored.memberId === user.id &&
+              stored.tags.length === t.tags.length &&
+              stored.tags.every((tag, index) => tag === t.tags[index]);
+            if (same) return;
+          }
           if (old ? old.deleted || old.revision !== given : given !== undefined)
             throw conflict();
           if (old && occurrences !== 1)
