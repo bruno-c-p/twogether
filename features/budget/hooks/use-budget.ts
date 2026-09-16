@@ -1,56 +1,33 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useRouter, useSearch } from "@tanstack/react-router";
-import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
+import { useLoaderData, useRouter } from "@tanstack/react-router";
+import { mutateBudget } from "@/features/budget/actions/load-budget";
 import type {
   BankAccount,
   Transaction,
   GoalPercentages,
-  SharedSnapshot,
   BudgetCommand,
   CommandResult,
 } from "@/features/budget/types";
 
-const emptySnapshot = (): SharedSnapshot => ({
-  user: null,
-  household: null,
-  budget: {
-    transactions: [],
-    accounts: [],
-    percentages: { ...DEFAULT_PERCENTAGES },
-  },
-});
-
-export function useBudget(initialSnapshot: SharedSnapshot) {
+export function useBudget() {
   const router = useRouter();
-  const search = useSearch({ from: "/" });
-  const navigate = useNavigate();
-  const accessToken = search.access ?? "";
-  const [snapshot, setSnapshot] = useState(initialSnapshot);
+  const snapshot = useLoaderData({ from: "/" });
   const [error, setError] = useState("");
   const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
-  const generation = useRef(0);
   const refresh = useCallback(async () => {
-    if (inFlight.current) return;
-    const current = ++generation.current;
     try {
-      const response = await fetch("/api/budget", { cache: "no-store" });
-      if (!response.ok)
-        throw new Error("Não foi possível sincronizar. Tente novamente.");
-      const result: CommandResult = await response.json();
-      if (current !== generation.current) return;
-      setSnapshot(result.snapshot);
+      await router.invalidate();
       setSyncError("");
     } catch (error) {
-      if (current === generation.current)
-        setSyncError(
-          error instanceof Error && !(error instanceof TypeError)
-            ? error.message
-            : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
-        );
+      setSyncError(
+        error instanceof Error && !(error instanceof TypeError)
+          ? error.message
+          : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
+      );
     }
-  }, []);
+  }, [router]);
   useEffect(() => {
     const synchronize = () => {
       if (document.visibilityState === "visible") void refresh();
@@ -58,11 +35,7 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
     window.addEventListener("focus", synchronize);
     window.addEventListener("online", synchronize);
     document.addEventListener("visibilitychange", synchronize);
-    const invalidateRequests = () => {
-      generation.current++;
-    };
     return () => {
-      invalidateRequests();
       window.removeEventListener("focus", synchronize);
       window.removeEventListener("online", synchronize);
       document.removeEventListener("visibilitychange", synchronize);
@@ -73,30 +46,20 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
     async (data: BudgetCommand): Promise<CommandResult | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
-      generation.current++;
       setBusy(true);
       setError("");
       try {
-        const response = await fetch("/api/budget", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
-        const result = await response.json();
-        if (!response.ok) {
-          if (response.status === 401) setSnapshot(emptySnapshot());
-          throw new Error(result.error || "Não foi possível salvar.");
-        }
-        const success: CommandResult = result;
-        setSnapshot(success.snapshot);
-        void router.invalidate();
-        return success;
+        const result = await mutateBudget({ data });
+        await router.invalidate();
+        return result;
       } catch (error) {
-        setError(
+        const message =
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
-            : "Sem conexão. Confira o orçamento antes de tentar novamente.",
-        );
+            : "Sem conexão. Confira o orçamento antes de tentar novamente.";
+        setError(message);
+        if (message === "Sua sessão expirou. Entre novamente.")
+          void router.invalidate();
         return null;
       } finally {
         inFlight.current = false;
@@ -107,15 +70,6 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
   );
 
   return {
-    accessToken,
-    finishAccess: () => {
-      setError("");
-      void navigate({
-        to: "/",
-        search: (prev) => ({ ...prev, access: undefined }),
-        replace: true,
-      });
-    },
     state: snapshot.budget,
     user: snapshot.user,
     household: snapshot.household,

@@ -4,7 +4,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { createBudgetStore, type BudgetStore } from "@/features/budget/services/shared.server";
-import { handleBudgetRequest } from "@/features/budget/actions/api.server";
+import { sessionCookieOptions } from "@/features/budget/session-cookie";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BankAccount, Transaction } from "@/features/budget/types";
 
@@ -457,43 +457,21 @@ describe("shared budget", () => {
       rmSync(dir, { recursive: true });
     }
   });
-  test("HTTP rejects cross-origin writes, sets private session cookies and never exposes credentials", async () => {
-    const request = (origin: string) =>
-      new Request("https://budget.test/api/budget", {
-        method: "POST",
-        headers: { Origin: origin, "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "request-link",
-          email: "ana@example.test",
-        }),
-      });
-    expect(
-      (await handleBudgetRequest(request("https://evil.test"), store)).status,
-    ).toBe(403);
-    await handleBudgetRequest(request("https://budget.test"), store);
-    const good = await handleBudgetRequest(
-      new Request("https://budget.test/api/budget", {
-        method: "POST",
-        headers: {
-          Origin: "https://budget.test",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          action: "verify-link",
-          token: deliveries.at(-1)!.token,
-        }),
-      }),
-      store,
-    );
-    expect(good.status).toBe(200);
-    expect(good.headers.get("set-cookie")).toContain(
-      "HttpOnly; SameSite=Strict",
-    );
-    expect(good.headers.get("set-cookie")).toContain("Secure");
-    expect(good.headers.get("cache-control")).toBe("no-store");
-    const body = await good.text();
-    expect(body).not.toContain("password");
-    expect(body).not.toContain("session");
+  test("session cookies are private, HttpOnly, Lax and Secure on HTTPS", () => {
+    expect(sessionCookieOptions(true, "token")).toEqual({
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: true,
+      maxAge: 30 * 86400,
+    });
+    expect(sessionCookieOptions(false, undefined)).toEqual({
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: false,
+      maxAge: 0,
+    });
   });
 });
 

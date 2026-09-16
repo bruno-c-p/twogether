@@ -24,7 +24,7 @@ Reinicie o servidor após alterar o ambiente. Em `bun run dev`, o acesso local u
 ## Acesso e casal
 
 1. Em desenvolvimento, informe o e-mail para entrar diretamente; se ainda não existir, a conta é criada e segue para o onboarding. Nos demais ambientes, receba um link mágico pelo Resend. Não existe senha nem distinção entre cadastro e login.
-2. No desenvolvimento, a conta nova segue diretamente para o nome; nos demais ambientes, abra o link e pressione Continuar. Na primeira visita, informe seu nome.
+2. No desenvolvimento, a conta nova segue diretamente para o nome; nos demais ambientes, abra o link mágico — o servidor consome o token, grava o cookie de sessão e redireciona para `/` sem deixar `?access=` na URL. Na primeira visita, informe seu nome.
 3. Comece o orçamento ou aceite um convite. Convites podem acompanhar o e-mail de acesso.
 4. Em **Nosso espaço**, gere e copie um convite para seu par. O link aceita uma única pessoa, expira em 48 horas e pode ser cancelado. Gerar outro invalida o anterior.
 
@@ -38,11 +38,11 @@ O link de acesso expira em 15 minutos, funciona uma vez e autentica somente quem
 - Seis metas fixas com percentuais editáveis que somam 100%: custo fixo 30%, prazeres 10%, conforto 15%, metas 15%, liberdade financeira 25% e conhecimento 5%. A divisão vale para todos os meses.
 - Edição, exclusão e desfazer por transação, busca e filtros por meta, tipo e tag. Valores em centavos inteiros.
 - Autoria original e última pessoa que editou preservadas.
-- Cada alteração salva já retorna o orçamento atualizado e é aplicada imediatamente; ao voltar à aba, focar a janela ou reconectar à internet, o orçamento é sincronizado com as alterações do seu par. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
+- Cada alteração é uma `createServerFn` validada; a UI lê o snapshot do loader e chama `router.invalidate()` após gravar. Ao voltar à aba, focar a janela ou reconectar à internet, o orçamento é sincronizado com as alterações do seu par. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
 
 ## Persistência e publicação
 
-Turso Cloud fornece o SQLite compartilhado de produção por HTTP; o cliente libSQL inicializa o schema e usa transações no servidor. Sem as variáveis Turso, o desenvolvimento local usa SQLite em `data/` (ignorado pelo Git). Sessões e tokens são armazenados por hash. Cookies HttpOnly/SameSite e Secure sob HTTPS. A API valida origem, dados, membros e versões no servidor; respostas não são cacheadas. Env e credenciais não integram o bundle cliente.
+Turso Cloud fornece o SQLite compartilhado de produção por HTTP; o cliente libSQL inicializa o schema e usa transações no servidor. Sem as variáveis Turso, o desenvolvimento local usa SQLite em `data/` (ignorado pelo Git). Sessões e tokens são armazenados por hash. Cookies HttpOnly/`SameSite=Lax` e Secure sob HTTPS. Leituras e escritas do app passam por server functions com `.validator()`; o documento SSR e os payloads autenticados usam `Cache-Control: private, no-store`. Env e credenciais não integram o bundle cliente.
 
 Para configurar localmente após conectar o recurso no Vercel, rode `vercel env pull .env.local --yes`. A publicação usa Nitro para gerar o handler TanStack Start compatível com Vercel. E-mails são transacionais; o app não dispara convites para terceiros automaticamente.
 
@@ -55,6 +55,6 @@ bun run test
 bun run build
 ```
 
-Vitest cobre cálculos/validação; Bun testa SQLite, isolamento, limite de membros, convites, acesso por link, expiração, edição concorrente e contrato HTTP. E-mail é substituído por um transporte de teste nos testes, sem enviar mensagens reais.
+Vitest cobre cálculos/validação; Bun testa SQLite, isolamento, limite de membros, convites, acesso por link, expiração, edição concorrente e cookies de sessão. E-mail é substituído por um transporte de teste nos testes, sem enviar mensagens reais.
 
-Referências: [rotas de servidor do TanStack Start](https://tanstack.com/start/latest/docs/framework/react/guide/server-routes), [API de envio do Resend](https://resend.com/docs/api-reference/emails/send-email).
+Referências: [funções de servidor do TanStack Start](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [API de envio do Resend](https://resend.com/docs/api-reference/emails/send-email).
