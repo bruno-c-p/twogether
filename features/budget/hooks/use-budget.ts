@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "@tanstack/react-router";
 import { DEFAULT_PERCENTAGES } from "../constants";
 import type {
   BankAccount,
@@ -21,7 +20,6 @@ const emptySnapshot = (): SharedSnapshot => ({
 });
 
 export function useBudget(initialSnapshot: SharedSnapshot) {
-  const router = useRouter();
   const [accessToken, setAccessToken] = useState("");
   const [snapshot, setSnapshot] = useState(initialSnapshot);
   const [error, setError] = useState("");
@@ -94,7 +92,6 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
         }
         const success: CommandResult = result;
         setSnapshot(success.snapshot);
-        void router.invalidate();
         return success;
       } catch (error) {
         setError(
@@ -108,7 +105,7 @@ export function useBudget(initialSnapshot: SharedSnapshot) {
         setBusy(false);
       }
     },
-    [router],
+    [],
   );
 
   return {
