@@ -1,6 +1,6 @@
 import { DeleteRecurrenceDialog } from "./delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -267,13 +267,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   return (
     <div className="app-shell">
       <aside className="sidebar">
-        <a className="brand" href="/" aria-label="twogether — início">
+        <Link className="brand" to="/" aria-label="twogether — início">
           <span className="brand-mark">
             <span />
             <span />
           </span>
           twogether<span className="brand-period">.</span>
-        </a>
+        </Link>
         <nav className="desktop-navigation" aria-label="Navegação principal">
           {navigation.map((item) => (
             <button
@@ -297,13 +297,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               {navigation.find((item) => item.id === view)?.label}
             </strong>
           </div>
-          <a className="mobile-brand brand" href="/">
+          <Link className="mobile-brand brand" to="/">
             <span className="brand-mark">
               <span />
               <span />
             </span>
             twogether.
-          </a>
+          </Link>
           <div className="topbar-right">
             <ThemeToggle />
             <button

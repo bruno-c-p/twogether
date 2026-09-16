@@ -1,6 +1,7 @@
 import {
   createRootRoute,
   HeadContent,
+  Link,
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
@@ -49,7 +50,7 @@ export const Route = createRootRoute({
   notFoundComponent: () => (
     <main className="not-found">
       <h1>Página não encontrada.</h1>
-      <a href="/">Voltar para a visão geral</a>
+      <Link to="/">Voltar para a visão geral</Link>
     </main>
   ),
 });
