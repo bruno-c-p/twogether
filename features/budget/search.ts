@@ -24,6 +24,10 @@ export interface BudgetSearch {
   convite?: string;
 }
 
+export function withView(search: BudgetSearch, view: View): BudgetSearch {
+  return { ...search, view };
+}
+
 export function validateBudgetSearch(
   search: Record<string, unknown>,
 ): BudgetSearch {

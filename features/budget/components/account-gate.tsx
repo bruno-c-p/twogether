@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -57,9 +57,9 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
-      <a href="/" className={`${ui.brand} ${styles.pageBrand}`}>
+      <Link to="/" className={`${ui.brand} ${styles.pageBrand}`}>
         twogether.
-      </a>
+      </Link>
       <section className={styles.accountCard}>
         <div className={styles.accountSymbol}>
           {sentTo ? (
