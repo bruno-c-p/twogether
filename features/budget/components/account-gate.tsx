@@ -3,20 +3,11 @@ import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "../hooks/use-budget";
+import { inviteToken } from "../services/invite";
 import { AppFooter } from "./app-footer";
 
 const isDevelopment = import.meta.env.DEV;
 
-export function inviteToken(value: string) {
-  try {
-    return (
-      new URLSearchParams(new URL(value).hash.slice(1)).get("convite") ??
-      value.trim()
-    );
-  } catch {
-    return value.trim();
-  }
-}
 export function AccountGate({ budget }: { budget: BudgetController }) {
   const [invitation, setInvitation] = useState("");
   const [sentTo, setSentTo] = useState("");
