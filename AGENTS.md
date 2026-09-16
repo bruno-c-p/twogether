@@ -32,6 +32,15 @@
 - Na resposta final, registre sucintamente o que foi testado no app, os
   resultados das verificações automatizadas e quaisquer limitações reais.
 
+## Sem mídia em `.github/`
+
+- Não anexe, faça commit nem deixe screenshots ou vídeos sob `.github/`
+  (sem `.github/assets`, sem dumps de imagens de PR nessa árvore).
+- Validação visual continua no corpo do PR: imagens hospedadas/do agente e
+  embeds markdown que não são arquivos em `.github/`.
+- Não use o git do repositório como substituto para guardar essa mídia em
+  outro caminho.
+
 ## Importações absolutas
 
 - Importações de código-fonte do repositório devem usar o alias `@/` (raiz do
