@@ -372,11 +372,11 @@ export function createBudgetStore(
           "DELETE FROM magic_links WHERE expires <= ?",
           [Date.now()],
         );
-        await execute(transaction, "INSERT INTO magic_links VALUES (?,?,?)", [
-          digest(accessToken),
-          email,
-          Date.now() + 15 * 60_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO magic_links(hash, email, expires) VALUES (?,?,?)",
+          [digest(accessToken), email, Date.now() + 15 * 60_000],
+        );
       });
       try {
         await (options.sendMagicLink ?? sendMagicLink)({
@@ -426,11 +426,11 @@ export function createBudgetStore(
           "DELETE FROM sessions WHERE expires <= ? OR hash = ?",
           [Date.now(), digest(session ?? "")],
         );
-        await execute(transaction, "INSERT INTO sessions VALUES (?,?,?)", [
-          digest(nextSession!),
-          user.id,
-          Date.now() + 30 * 86400_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO sessions(hash, user_id, expires) VALUES (?,?,?)",
+          [digest(nextSession!), user.id, Date.now() + 30 * 86400_000],
+        );
       });
     } else if (data.action === "verify-link") {
       const accessToken = text(data.token, 128);
@@ -471,11 +471,11 @@ export function createBudgetStore(
           "DELETE FROM sessions WHERE expires <= ? OR hash = ?",
           [Date.now(), digest(session ?? "")],
         );
-        await execute(transaction, "INSERT INTO sessions VALUES (?,?,?)", [
-          digest(nextSession!),
-          user.id,
-          Date.now() + 30 * 86400_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO sessions(hash, user_id, expires) VALUES (?,?,?)",
+          [digest(nextSession!), user.id, Date.now() + 30 * 86400_000],
+        );
       });
     } else if (data.action === "logout") {
       if (session)
@@ -573,7 +573,7 @@ export function createBudgetStore(
           inviteToken = token();
           await execute(
             transaction,
-            "INSERT INTO invites VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
+            "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
             [digest(inviteToken), home.id, Date.now() + 48 * 3600_000],
           );
         } else if (data.action === "revoke-invite") {
