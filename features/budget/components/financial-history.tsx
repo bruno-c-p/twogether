@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { money } from "../services/budget";
-import { summarizeHistory } from "../services/financial-history";
-import type { Transaction } from "../types";
+import { money } from "@/features/budget/services/budget";
+import { summarizeHistory } from "@/features/budget/services/financial-history";
+import type { Transaction } from "@/features/budget/types";
 
 const compact = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
 

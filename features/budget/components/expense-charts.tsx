@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
-import { GOALS } from "../constants";
-import { money } from "../services/budget";
-import { summarizeExpenses } from "../services/expense-charts";
-import type { Transaction } from "../types";
+import { GOALS } from "@/features/budget/constants";
+import { money } from "@/features/budget/services/budget";
+import { summarizeExpenses } from "@/features/budget/services/expense-charts";
+import type { Transaction } from "@/features/budget/types";
 
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const compactMoney = new Intl.NumberFormat("pt-BR", {

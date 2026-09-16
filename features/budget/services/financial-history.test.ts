@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
-import { summarizeHistory } from "./financial-history";
-import type { Transaction } from "../types";
+import { summarizeHistory } from "@/features/budget/services/financial-history";
+import type { Transaction } from "@/features/budget/types";
 
 it("includes empty months, crosses years and keeps income and expenses in cents", () => {
   const transaction = {

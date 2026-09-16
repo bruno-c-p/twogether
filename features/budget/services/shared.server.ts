@@ -8,15 +8,15 @@ import {
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
-import { sendMagicLink, type MagicLinkSender } from "./email.server";
-import { DEFAULT_PERCENTAGES } from "../constants";
-import { isBankAccount, isGoalPercentages, isTransaction } from "./budget";
+import { sendMagicLink, type MagicLinkSender } from "@/features/budget/services/email.server";
+import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
+import { isBankAccount, isGoalPercentages, isTransaction } from "@/features/budget/services/budget";
 import type {
   BankAccount,
   BudgetState,
   SharedSnapshot,
   Transaction,
-} from "../types";
+} from "@/features/budget/types";
 
 export class RequestError extends Error {
   constructor(

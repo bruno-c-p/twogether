@@ -1,1 +1,1 @@
-export { BudgetApp } from "./components/budget-app";
+export { BudgetApp } from "@/features/budget/components/budget-app";

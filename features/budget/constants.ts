@@ -1,4 +1,4 @@
-import type { Goal, GoalPercentages } from "./types";
+import type { Goal, GoalPercentages } from "@/features/budget/types";
 
 export const GOALS: Goal[] = [
   {

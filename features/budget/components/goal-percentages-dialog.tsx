@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
-import { DEFAULT_PERCENTAGES, GOALS } from "../constants";
-import { isGoalPercentages } from "../services/budget";
-import type { GoalPercentages } from "../types";
+import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
+import { isGoalPercentages } from "@/features/budget/services/budget";
+import type { GoalPercentages } from "@/features/budget/types";
 
 export function GoalPercentagesDialog({
   percentages,

@@ -1,6 +1,6 @@
-import { GOALS } from "../constants";
-import { money, summarize } from "../services/budget";
-import type { Transaction } from "../types";
+import { GOALS } from "@/features/budget/constants";
+import { money, summarize } from "@/features/budget/services/budget";
+import type { Transaction } from "@/features/budget/types";
 
 export function Distribution({
   transactions,

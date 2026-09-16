@@ -1,4 +1,4 @@
-import type { Transaction } from "../types";
+import type { Transaction } from "@/features/budget/types";
 
 export function summarizeHistory(transactions: Transaction[], month: string, count: number) {
   const [year, monthNumber] = month.split("-").map(Number);

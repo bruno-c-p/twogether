@@ -2,7 +2,7 @@ import { resolve } from "node:path";
 import {
   createBudgetStore,
   type BudgetStore,
-} from "../services/shared.server";
+} from "@/features/budget/services/shared.server";
 
 let store: BudgetStore | undefined;
 export const sessionCookie = "twogether_session";

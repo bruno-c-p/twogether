@@ -3,10 +3,10 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createBudgetStore, type BudgetStore } from "./shared.server";
-import { handleBudgetRequest } from "../actions/api.server";
-import { DEFAULT_PERCENTAGES } from "../constants";
-import type { BankAccount, Transaction } from "../types";
+import { createBudgetStore, type BudgetStore } from "@/features/budget/services/shared.server";
+import { handleBudgetRequest } from "@/features/budget/actions/api.server";
+import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
+import type { BankAccount, Transaction } from "@/features/budget/types";
 
 let store: BudgetStore;
 let previousOrigin: string | undefined;
@@ -498,7 +498,7 @@ describe("shared budget", () => {
 });
 
 test("Resend transport sends HTML and text with the configured origin and never accepts a failed send", async () => {
-  const { sendMagicLink } = await import("./email.server");
+  const { sendMagicLink } = await import("@/features/budget/services/email.server");
   const old = {
     key: process.env.RESEND_API_KEY,
     from: process.env.RESEND_FROM,

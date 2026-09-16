@@ -1,10 +1,10 @@
-import { GOALS } from "../constants";
+import { GOALS } from "@/features/budget/constants";
 import type {
   BankAccount,
   Transaction,
   GoalPercentages,
   MemberBudget,
-} from "../types";
+} from "@/features/budget/types";
 
 export const money = (cents: number) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(

@@ -7,20 +7,20 @@ import {
   Repeat2,
   X,
 } from "lucide-react";
-import { GOALS } from "../constants";
+import { GOALS } from "@/features/budget/constants";
 import {
   formatAmountInput,
   localDate,
   normalizeTag,
   parseAmount,
-} from "../services/budget";
+} from "@/features/budget/services/budget";
 import type {
   BankAccount,
   Transaction,
   TransactionKind,
   Member,
-} from "../types";
-import { GoalIcon } from "./goal-icon";
+} from "@/features/budget/types";
+import { GoalIcon } from "@/features/budget/components/goal-icon";
 
 interface Props {
   transaction: Transaction | null;

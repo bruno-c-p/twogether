@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
 import { loadBudget } from "@/features/budget/actions/load-budget";
 import { validateBudgetSearch } from "@/features/budget/search";
-import { RouteError } from "../route-error";
+import { RouteError } from "@/src/route-error";
 
 function BudgetPending() {
   return (

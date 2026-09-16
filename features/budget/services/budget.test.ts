@@ -10,9 +10,9 @@ import {
   planGoals,
   isBankAccount,
   isTransaction,
-} from "./budget";
-import { DEFAULT_PERCENTAGES } from "../constants";
-import type { Transaction } from "../types";
+} from "@/features/budget/services/budget";
+import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
+import type { Transaction } from "@/features/budget/types";
 
 const transactions: Transaction[] = [
   {
