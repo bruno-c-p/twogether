@@ -8,7 +8,12 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
-import { FieldHint, FormError, FormStack, Note } from "@/components/ui/field/field";
+import {
+  FieldHint,
+  FormError,
+  FormStack,
+  Note,
+} from "@/components/ui/field/field";
 import styles from "@/features/budget/components/couple-dialog.module.css";
 
 export function CoupleDialog({
@@ -47,10 +52,7 @@ export function CoupleDialog({
   return (
     <Dialog labelledBy="couple-title" narrow onClose={onClose}>
       <DialogContent>
-        <DialogHeader
-          onClose={onClose}
-          closeLabel="Fechar nosso espaço"
-        >
+        <DialogHeader onClose={onClose} closeLabel="Fechar nosso espaço">
           <h2 id="couple-title">Nosso espaço</h2>
         </DialogHeader>
         <p className={styles.intro}>
@@ -58,26 +60,23 @@ export function CoupleDialog({
           tags e percentuais.
         </p>
         <div className={styles.coupleMembers}>
-          {budget.household?.members.map((member) => (
+          {budget.household.members.map((member) => (
             <div className={styles.coupleMember} key={member.id}>
               <span className={styles.avatar}>
                 {member.name.slice(0, 1).toUpperCase()}
               </span>
               <strong>{member.name}</strong>
-              <span>{member.id === budget.user?.id ? "Você" : "Seu par"}</span>
+              <span>{member.id === budget.user.id ? "Você" : "Seu par"}</span>
             </div>
           ))}
         </div>
-        {budget.household?.members.length === 1 ? (
+        {budget.household.members.length === 1 ? (
           <FormStack>
             <p>
               Falta seu par. Gere um convite e compartilhe o link com essa
               pessoa.
             </p>
-            <Button
-              disabled={budget.busy}
-              onClick={() => void createInvite()}
-            >
+            <Button disabled={budget.busy} onClick={() => void createInvite()}>
               {link ? "Gerar novo convite" : "Gerar convite"}
             </Button>
             {link && (
@@ -90,10 +89,7 @@ export function CoupleDialog({
                     onFocus={(event) => event.target.select()}
                   />
                 </label>
-                <Button
-                  variant="secondary"
-                  onClick={() => void copyInvite()}
-                >
+                <Button variant="secondary" onClick={() => void copyInvite()}>
                   <Copy size={16} />
                   {copied ? "Link copiado" : "Copiar convite"}
                 </Button>
@@ -117,7 +113,7 @@ export function CoupleDialog({
         )}
         {budget.error && <FormError>{budget.error}</FormError>}
         <DialogFooter className={styles.footer}>
-          <span className={styles.email}>{budget.user?.email}</span>
+          <span className={styles.email}>{budget.user.email}</span>
           <Button
             variant="text"
             className={styles.logout}

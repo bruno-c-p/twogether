@@ -52,12 +52,19 @@ export interface MemberBudget extends Member {
   percentages: GoalPercentages;
   percentagesRevision: number;
 }
+export type WorkspaceUser = Member & { email: string };
+export interface WorkspaceHousehold {
+  id: string;
+  members: MemberBudget[];
+}
 export interface SharedSnapshot {
-  user: (Member & { email: string }) | null;
-  household: {
-    id: string;
-    members: MemberBudget[];
-  } | null;
+  user: WorkspaceUser | null;
+  household: WorkspaceHousehold | null;
+  budget: BudgetState;
+}
+export interface WorkspaceSnapshot {
+  user: WorkspaceUser;
+  household: WorkspaceHousehold;
   budget: BudgetState;
 }
 export type BudgetCommand =

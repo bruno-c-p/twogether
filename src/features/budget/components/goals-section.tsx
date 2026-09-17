@@ -25,7 +25,7 @@ export function GoalsSection({
   hidden: boolean;
   displayMoney: (value: number) => string;
   memberFilter: string;
-  userId?: string;
+  userId: string;
   busy: boolean;
   onEditPercentages: () => void;
   onFilterGoal: (id: GoalId) => void;
@@ -34,11 +34,7 @@ export function GoalsSection({
     <section className={styles.goalsSection} aria-labelledby="goals-title">
       <SectionHeading title="Metas do orçamento" titleId="goals-title">
         {(memberFilter === "all" || memberFilter === userId) && (
-          <Button
-            variant="text"
-            disabled={busy}
-            onClick={onEditPercentages}
-          >
+          <Button variant="text" disabled={busy} onClick={onEditPercentages}>
             Editar meus percentuais
           </Button>
         )}
