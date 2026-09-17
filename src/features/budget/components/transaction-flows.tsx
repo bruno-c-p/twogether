@@ -67,9 +67,9 @@ export function TransactionFlows({
             month === localDate().slice(0, 7) ? localDate() : `${month}-01`
           }
           existingTags={allTags}
-          members={budget.household?.members ?? []}
+          members={budget.household.members}
           accounts={budget.state.accounts}
-          currentUserId={budget.user?.id ?? ""}
+          currentUserId={budget.user.id}
           serverError={budget.error}
           onSave={onSave}
           onClose={onCloseDialog}

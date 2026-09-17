@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
-  ChevronLeft,
-  ChevronRight,
-  Plus,
-} from "lucide-react";
-import { useBudget, type BudgetController } from "@/features/budget/hooks/use-budget";
+  useBudget,
+  type BudgetController,
+} from "@/features/budget/hooks/use-budget";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
 import {
   localDate,
@@ -15,7 +14,6 @@ import {
 } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
-import { AccountGate } from "@/features/budget/components/account-gate";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section";
 import { NoticeToast, useNotice } from "@/features/budget/components/notice";
@@ -28,8 +26,6 @@ import { Button } from "@/components/ui/button/button";
 
 export function BudgetApp() {
   const budget = useBudget();
-  if (!budget.user?.name || !budget.household)
-    return <AccountGate budget={budget} />;
   return (
     <BudgetWorkspace
       key={`${budget.household.id}:${budget.user.id}`}
@@ -56,7 +52,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     setView,
     filterGoal,
   } = useBudgetSearch();
-  const memberCount = budget.household?.members.length ?? 0;
+  const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const [fallbackMonth, setFallbackMonth] = useState("");
   const month = searchMonth ?? fallbackMonth;
@@ -78,7 +74,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     setFallbackMonth(localDate().slice(0, 7));
   }, []);
 
-  const members = budget.household?.members ?? [];
+  const members = budget.household.members;
   const monthly = useMemo(
     () =>
       budget.state.transactions.filter(
@@ -89,16 +85,16 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     [budget.state.transactions, month, memberFilter],
   );
   const summary = useMemo(() => summarize(monthly), [monthly]);
-  const ownMember = members.find((member) => member.id === budget.user?.id);
+  const ownMember = members.find((member) => member.id === budget.user.id);
   const plans = useMemo(
     () =>
       planGoals(
         monthly,
-        (budget.household?.members ?? []).filter(
+        members.filter(
           (member) => memberFilter === "all" || member.id === memberFilter,
         ),
       ),
-    [monthly, budget.household?.members, memberFilter],
+    [monthly, members, memberFilter],
   );
   const allTags = useMemo(
     () =>
@@ -173,7 +169,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   async function saveAccount(account: BankAccount) {
     if (!(await budget.saveAccount(account))) return false;
     setNotice({
-      message: accountDialog?.account ? "Conta atualizada." : "Conta adicionada.",
+      message: accountDialog?.account
+        ? "Conta atualizada."
+        : "Conta adicionada.",
     });
     return true;
   }
@@ -303,8 +301,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           {[...members]
             .sort(
               (a, b) =>
-                Number(b.id === budget.user?.id) -
-                Number(a.id === budget.user?.id),
+                Number(b.id === budget.user.id) -
+                Number(a.id === budget.user.id),
             )
             .map((member) => (
               <button
@@ -313,7 +311,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                 className={memberFilter === member.id ? styles.active : ""}
                 onClick={() => setMemberFilter(member.id)}
               >
-                {member.id === budget.user?.id ? "Eu" : member.name}
+                {member.id === budget.user.id ? "Eu" : member.name}
               </button>
             ))}
         </div>
@@ -356,7 +354,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               hidden={hidden}
               displayMoney={displayMoney}
               memberFilter={memberFilter}
-              userId={budget.user?.id}
+              userId={budget.user.id}
               busy={budget.busy}
               onEditPercentages={() =>
                 setEditingPercentages(ownMember?.percentagesRevision ?? 0)

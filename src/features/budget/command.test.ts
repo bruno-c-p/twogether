@@ -1,17 +1,19 @@
 import { describe, expect, test } from "vitest";
-import { parseAccessPayload, parseBudgetCommand } from "@/features/budget/command";
+import {
+  parseAccessPayload,
+  parseBudgetCommand,
+  parseDevLogin,
+  parseRequestLink,
+} from "@/features/budget/command";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 
 const token = "a".repeat(64);
 
 describe("parseBudgetCommand", () => {
   test("accepts known actions and rejects unknown ones", () => {
-    expect(parseBudgetCommand({ action: "logout" })).toEqual({
-      action: "logout",
+    expect(parseBudgetCommand({ action: "create" })).toEqual({
+      action: "create",
     });
-    expect(
-      parseBudgetCommand({ action: "request-link", email: "ana@example.test" }),
-    ).toEqual({ action: "request-link", email: "ana@example.test" });
     expect(
       parseBudgetCommand({
         action: "percentages",
@@ -23,27 +25,41 @@ describe("parseBudgetCommand", () => {
       "Requisição inválida.",
     );
     expect(() => parseBudgetCommand(null)).toThrow("Requisição inválida.");
+    expect(() => parseBudgetCommand({ action: "logout" })).toThrow(
+      "Requisição inválida.",
+    );
   });
+});
 
+describe("parseRequestLink", () => {
   test("requires a valid invite token when present", () => {
     expect(
-      parseBudgetCommand({
-        action: "request-link",
+      parseRequestLink({
         email: "ana@example.test",
         invite: token,
       }),
     ).toEqual({
-      action: "request-link",
       email: "ana@example.test",
       invite: token,
     });
+    expect(parseRequestLink({ email: "ana@example.test" })).toEqual({
+      email: "ana@example.test",
+    });
     expect(() =>
-      parseBudgetCommand({
-        action: "request-link",
+      parseRequestLink({
         email: "ana@example.test",
         invite: "not-a-token",
       }),
     ).toThrow("Requisição inválida.");
+  });
+});
+
+describe("parseDevLogin", () => {
+  test("requires an email", () => {
+    expect(parseDevLogin({ email: "ana@example.test" })).toEqual({
+      email: "ana@example.test",
+    });
+    expect(() => parseDevLogin({})).toThrow("Requisição inválida.");
   });
 });
 

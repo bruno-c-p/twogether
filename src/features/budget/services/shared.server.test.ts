@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createBudgetStore, type BudgetStore } from "@/features/budget/services/shared.server";
+import {
+  createBudgetStore,
+  RequestError,
+  type BudgetStore,
+} from "@/features/budget/services/shared.server";
 import { sessionCookieOptions } from "@/features/budget/session-cookie";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BankAccount, Transaction } from "@/features/budget/types";
@@ -26,29 +30,61 @@ afterEach(() => {
   if (previousOrigin === undefined) delete process.env.APP_ORIGIN;
   else process.env.APP_ORIGIN = previousOrigin;
 });
+async function command(
+  input: unknown,
+  session: string | undefined,
+  target: BudgetStore = store,
+): Promise<{ session?: string; inviteToken?: string }> {
+  if (!input || typeof input !== "object" || !("action" in input))
+    throw new RequestError("Requisição inválida.");
+  const data = input as {
+    action?: string;
+    email?: unknown;
+    invite?: unknown;
+    token?: unknown;
+  };
+  switch (data.action) {
+    case "request-link":
+      return target.requestLink({ email: data.email, invite: data.invite });
+    case "dev-login":
+      return target.devLogin({ email: data.email }, session);
+    case "verify-link":
+      return target.verifyLink({ token: data.token }, session);
+    case "logout":
+      return target.logout(session);
+    default: {
+      const user = await target.sessionUser(session);
+      if (!user)
+        throw new RequestError("Sua sessão expirou. Entre novamente.", 401);
+      const household = await target.householdFor(user);
+      return { ...(await target.command(input, user, household)), session };
+    }
+  }
+}
 const signup = async (name: string) => {
-  await store.command(
+  await command(
     { action: "request-link", email: `${name.toLowerCase()}@example.test` },
     undefined,
   );
-  const result = await store.command(
+  const result = await command(
     { action: "verify-link", token: deliveries.at(-1)!.token },
     undefined,
   );
-  await store.command({ action: "profile", name }, result.session);
+  await command({ action: "profile", name }, result.session);
   return { ...result, snapshot: await store.snapshot(result.session) };
 };
-async function withSnapshot(
-  result: Awaited<ReturnType<BudgetStore["command"]>>,
-) {
+async function withSnapshot(result: {
+  session?: string;
+  inviteToken?: string;
+}) {
   return { ...result, snapshot: await store.snapshot(result.session) };
 }
 async function couple() {
   const a = await signup("Ana");
-  await store.command({ action: "create" }, a.session);
-  const invite = await store.command({ action: "invite" }, a.session);
+  await command({ action: "create" }, a.session);
+  const invite = await command({ action: "invite" }, a.session);
   const b = await signup("Bia");
-  await store.command({ action: "join", token: invite.inviteToken }, b.session);
+  await command({ action: "join", token: invite.inviteToken }, b.session);
   return { a, b };
 }
 function account(id = "account-1"): BankAccount {
@@ -69,17 +105,14 @@ function transaction(memberId: string, accountId = "account-1"): Transaction {
 }
 async function householdReady() {
   const pair = await couple();
-  await store.command(
-    { action: "save-account", account: account() },
-    pair.a.session,
-  );
+  await command({ action: "save-account", account: account() }, pair.a.session);
   return pair;
 }
 
 describe("shared budget", () => {
   test("magic links verify ownership once and reuse existing accounts", async () => {
     const requested = await withSnapshot(
-      await store.command(
+      await command(
         { action: "request-link", email: "ANA@example.test" },
         undefined,
       ),
@@ -87,30 +120,27 @@ describe("shared budget", () => {
     expect(requested.snapshot.user).toBeNull();
     expect(JSON.stringify(requested)).not.toContain(deliveries[0].token);
     const verified = await withSnapshot(
-      await store.command(
+      await command(
         { action: "verify-link", token: deliveries[0].token },
         undefined,
       ),
     );
     expect(verified.snapshot.user?.email).toBe("ana@example.test");
     await expect(
-      store.command(
-        { action: "verify-link", token: deliveries[0].token },
-        undefined,
-      ),
+      command({ action: "verify-link", token: deliveries[0].token }, undefined),
     ).rejects.toThrow("já foi usado");
-    await store.command(
+    await command(
       { action: "request-link", email: "ana@example.test" },
       undefined,
     );
     const again = await withSnapshot(
-      await store.command(
+      await command(
         { action: "verify-link", token: deliveries[1].token },
         undefined,
       ),
     );
     expect(again.snapshot.user?.id).toBe(verified.snapshot.user?.id);
-    await store.command({ action: "logout" }, again.session);
+    await command({ action: "logout" }, again.session);
     expect((await store.snapshot(again.session)).user).toBeNull();
     expect((await store.snapshot("forged")).user).toBeNull();
   });
@@ -119,7 +149,7 @@ describe("shared budget", () => {
     process.env.NODE_ENV = "development";
     try {
       const first = await withSnapshot(
-        await store.command(
+        await command(
           { action: "dev-login", email: "ANA@example.test" },
           undefined,
         ),
@@ -129,9 +159,9 @@ describe("shared budget", () => {
         name: "",
       });
 
-      await store.command({ action: "profile", name: "Ana" }, first.session);
+      await command({ action: "profile", name: "Ana" }, first.session);
       const existing = await withSnapshot(
-        await store.command(
+        await command(
           { action: "dev-login", email: "ana@example.test" },
           undefined,
         ),
@@ -141,10 +171,7 @@ describe("shared budget", () => {
 
       process.env.NODE_ENV = "production";
       await expect(
-        store.command(
-          { action: "dev-login", email: "ana@example.test" },
-          undefined,
-        ),
+        command({ action: "dev-login", email: "ana@example.test" }, undefined),
       ).rejects.toThrow("indisponível");
     } finally {
       if (previousNodeEnvironment === undefined) delete process.env.NODE_ENV;
@@ -152,19 +179,19 @@ describe("shared budget", () => {
     }
   });
   test("magic links expire after 15 minutes and forged tokens fail", async () => {
-    await store.command(
+    await command(
       { action: "request-link", email: "ana@example.test" },
       undefined,
     );
     await expect(
-      store.command({ action: "verify-link", token: "forged" }, undefined),
+      command({ action: "verify-link", token: "forged" }, undefined),
     ).rejects.toThrow("expirou");
     const now = Date.now;
     const time = now();
     try {
       Date.now = () => time + 16 * 60_000;
       await expect(
-        store.command(
+        command(
           { action: "verify-link", token: deliveries[0].token },
           undefined,
         ),
@@ -176,25 +203,22 @@ describe("shared budget", () => {
   test("verify-link attempts are throttled", async () => {
     for (let i = 0; i < 10; i++)
       await expect(
-        store.command({ action: "verify-link", token: "forged" }, undefined),
+        command({ action: "verify-link", token: "forged" }, undefined),
       ).rejects.toThrow("expirou");
     await expect(
-      store.command({ action: "verify-link", token: "forged" }, undefined),
+      command({ action: "verify-link", token: "forged" }, undefined),
     ).rejects.toThrow("Muitas tentativas");
   });
   test("email request keeps invitation and limits repeated sends", async () => {
     const invite = "a".repeat(64);
     for (let i = 0; i < 5; i++)
-      await store.command(
+      await command(
         { action: "request-link", email: "ana@example.test", invite },
         undefined,
       );
     expect(deliveries[0].invite).toBe(invite);
     await expect(
-      store.command(
-        { action: "request-link", email: "ana@example.test" },
-        undefined,
-      ),
+      command({ action: "request-link", email: "ana@example.test" }, undefined),
     ).rejects.toThrow("Muitas tentativas");
   });
   test("failed email delivery never leaves a usable login token", async () => {
@@ -207,13 +231,14 @@ describe("shared budget", () => {
     });
     try {
       await expect(
-        failed.command(
+        command(
           { action: "request-link", email: "ana@example.test" },
           undefined,
+          failed,
         ),
       ).rejects.toThrow("enviar o e-mail");
       await expect(
-        failed.command({ action: "verify-link", token }, undefined),
+        command({ action: "verify-link", token }, undefined, failed),
       ).rejects.toThrow("expirou");
     } finally {
       failed.close();
@@ -221,60 +246,57 @@ describe("shared budget", () => {
   });
   test("invitation is single use and a household admits exactly two", async () => {
     const a = await signup("Ana");
-    await store.command({ action: "create" }, a.session);
-    const invite = await store.command({ action: "invite" }, a.session);
+    await command({ action: "create" }, a.session);
+    const invite = await command({ action: "invite" }, a.session);
     const b = await signup("Bia");
     const c = await signup("Cris");
     const results = await Promise.allSettled(
       [b, c].map((person) =>
-        store.command(
-          { action: "join", token: invite.inviteToken },
-          person.session,
-        ),
+        command({ action: "join", token: invite.inviteToken }, person.session),
       ),
     );
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
     expect((await store.snapshot(a.session)).household?.members).toHaveLength(
       2,
     );
+    await expect(command({ action: "invite" }, a.session)).rejects.toThrow(
+      "duas pessoas",
+    );
     await expect(
-      store.command({ action: "invite" }, a.session),
-    ).rejects.toThrow("duas pessoas");
-    await expect(
-      store.command({ action: "join", token: invite.inviteToken }, a.session),
+      command({ action: "join", token: invite.inviteToken }, a.session),
     ).rejects.toThrow("já faz parte");
   });
   test("replacing or revoking invitations invalidates old links", async () => {
     const a = await signup("Ana");
-    await store.command({ action: "create" }, a.session);
+    await command({ action: "create" }, a.session);
     const b = await signup("Bia");
-    const old = await store.command({ action: "invite" }, a.session);
-    const next = await store.command({ action: "invite" }, a.session);
+    const old = await command({ action: "invite" }, a.session);
+    const next = await command({ action: "invite" }, a.session);
     await expect(
-      store.command({ action: "join", token: old.inviteToken }, b.session),
+      command({ action: "join", token: old.inviteToken }, b.session),
     ).rejects.toThrow("expirado");
-    await store.command({ action: "revoke-invite" }, a.session);
+    await command({ action: "revoke-invite" }, a.session);
     await expect(
-      store.command({ action: "join", token: next.inviteToken }, b.session),
+      command({ action: "join", token: next.inviteToken }, b.session),
     ).rejects.toThrow("expirado");
   });
   test("invites and sessions expire", async () => {
     const a = await signup("Ana");
-    await store.command({ action: "create" }, a.session);
+    await command({ action: "create" }, a.session);
     const b = await signup("Bia");
-    const invite = await store.command({ action: "invite" }, a.session);
+    const invite = await command({ action: "invite" }, a.session);
     const now = Date.now;
     const time = now();
     try {
       Date.now = () => time + 49 * 3600_000;
       await expect(
-        store.command({ action: "join", token: invite.inviteToken }, b.session),
+        command({ action: "join", token: invite.inviteToken }, b.session),
       ).rejects.toThrow("expirado");
       Date.now = () => time + 31 * 86400_000;
       expect((await store.snapshot(a.session)).user).toBeNull();
-      await expect(
-        store.command({ action: "invite" }, a.session),
-      ).rejects.toThrow("sessão expirou");
+      await expect(command({ action: "invite" }, a.session)).rejects.toThrow(
+        "sessão expirou",
+      );
     } finally {
       Date.now = now;
     }
@@ -282,7 +304,7 @@ describe("shared budget", () => {
   test("new transactions use the logged-in member and edits preserve attribution", async () => {
     const { a, b } = await householdReady();
     const t = transaction(b.snapshot.user!.id);
-    await store.command(
+    await command(
       {
         action: "save",
         transaction: { ...t, createdBy: "forged", updatedBy: "forged" },
@@ -292,7 +314,7 @@ describe("shared budget", () => {
     const received = (await store.snapshot(b.session)).budget.transactions[0];
     expect(received.memberId).toBe(a.snapshot.user!.id);
     expect(received.createdBy).toBe(a.snapshot.user!.id);
-    await store.command(
+    await command(
       { action: "save", transaction: { ...received, amount: 15000 } },
       b.session,
     );
@@ -304,22 +326,22 @@ describe("shared budget", () => {
   });
   test("stale edits fail and unrelated concurrent additions survive", async () => {
     const { a, b } = await householdReady();
-    await store.command(
+    await command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
     const old = (await store.snapshot(a.session)).budget.transactions[0];
-    await store.command(
+    await command(
       { action: "save", transaction: { ...old, amount: 20000 } },
       b.session,
     );
     await expect(
-      store.command(
+      command(
         { action: "save", transaction: { ...old, amount: 1 } },
         a.session,
       ),
     ).rejects.toThrow("mudou");
-    await store.command(
+    await command(
       {
         action: "save",
         transaction: { ...transaction(b.snapshot.user!.id), id: "second" },
@@ -338,13 +360,13 @@ describe("shared budget", () => {
   test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
     const { a } = await householdReady();
     const t = transaction(a.snapshot.user!.id);
-    await store.command({ action: "save", transaction: t }, a.session);
+    await command({ action: "save", transaction: t }, a.session);
     const retry = await withSnapshot(
-      await store.command({ action: "save", transaction: t }, a.session),
+      await command({ action: "save", transaction: t }, a.session),
     );
     expect(retry.snapshot.budget.transactions).toHaveLength(1);
     await expect(
-      store.command(
+      command(
         { action: "save", transaction: { ...t, amount: 999 } },
         a.session,
       ),
@@ -352,22 +374,22 @@ describe("shared budget", () => {
   });
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
     const { a, b } = await householdReady();
-    await store.command(
+    await command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
-    await store.command(
+    await command(
       { action: "delete", id: "transaction-1", revision: 1 },
       b.session,
     );
-    await store.command(
+    await command(
       {
         action: "save",
         transaction: { ...transaction(b.snapshot.user!.id), id: "second" },
       },
       b.session,
     );
-    await store.command(
+    await command(
       { action: "undo-delete", id: "transaction-1", revision: 2 },
       a.session,
     );
@@ -375,7 +397,7 @@ describe("shared budget", () => {
       2,
     );
     await expect(
-      store.command(
+      command(
         { action: "undo-delete", id: "transaction-1", revision: 2 },
         a.session,
       ),
@@ -384,8 +406,8 @@ describe("shared budget", () => {
   test("couples are isolated and transaction attribution comes from the session", async () => {
     const { a } = await householdReady();
     const c = await signup("Cris");
-    await store.command({ action: "create" }, c.session);
-    await store.command(
+    await command({ action: "create" }, c.session);
+    await command(
       { action: "save", transaction: transaction(c.snapshot.user!.id) },
       a.session,
     );
@@ -396,13 +418,13 @@ describe("shared budget", () => {
       0,
     );
     await expect(
-      store.command(
+      command(
         { action: "delete", id: "transaction-1", revision: 1 },
         c.session,
       ),
     ).rejects.toThrow("mudou");
     await expect(
-      store.command(
+      command(
         { action: "save", transaction: transaction(a.snapshot.user!.id) },
         undefined,
       ),
@@ -411,7 +433,7 @@ describe("shared budget", () => {
   test("individual percentages validate totals and reject same-person concurrent overwrite", async () => {
     const { a, b } = await couple();
     const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
-    await store.command(
+    await command(
       { action: "percentages", percentages, revision: 0 },
       a.session,
     );
@@ -421,7 +443,7 @@ describe("shared budget", () => {
     expect((await store.snapshot(b.session)).budget.percentages).toEqual(
       DEFAULT_PERCENTAGES,
     );
-    await store.command(
+    await command(
       {
         action: "percentages",
         percentages: DEFAULT_PERCENTAGES,
@@ -439,7 +461,7 @@ describe("shared budget", () => {
       )?.percentages,
     ).toEqual(percentages);
     await expect(
-      store.command(
+      command(
         {
           action: "percentages",
           percentages: DEFAULT_PERCENTAGES,
@@ -449,7 +471,7 @@ describe("shared budget", () => {
       ),
     ).rejects.toThrow("mudou");
     await expect(
-      store.command(
+      command(
         {
           action: "percentages",
           percentages: { ...percentages, fixed: 90 },
@@ -468,24 +490,28 @@ describe("shared budget", () => {
       },
     });
     try {
-      await disk.command(
+      await command(
         { action: "request-link", email: "disk@example.test" },
         undefined,
+        disk,
       );
-      const a = await disk.command(
+      const a = await command(
         { action: "verify-link", token: deliveries.at(-1)!.token },
         undefined,
+        disk,
       );
       const userId = (await disk.snapshot(a.session)).user!.id;
-      await disk.command({ action: "profile", name: "Ana" }, a.session);
-      await disk.command({ action: "create" }, a.session);
-      await disk.command(
+      await command({ action: "profile", name: "Ana" }, a.session, disk);
+      await command({ action: "create" }, a.session, disk);
+      await command(
         { action: "save-account", account: account() },
         a.session,
+        disk,
       );
-      await disk.command(
+      await command(
         { action: "save", transaction: transaction(userId) },
         a.session,
+        disk,
       );
       disk.close();
       disk = createBudgetStore(file);
@@ -516,7 +542,8 @@ describe("shared budget", () => {
 });
 
 test("Resend transport sends HTML and text with the configured origin and never accepts a failed send", async () => {
-  const { sendMagicLink } = await import("@/features/budget/services/email.server");
+  const { sendMagicLink } =
+    await import("@/features/budget/services/email.server");
   const old = {
     key: process.env.RESEND_API_KEY,
     from: process.env.RESEND_FROM,
@@ -643,7 +670,7 @@ describe("monthly recurring transactions", () => {
       date: "2028-01-31",
     };
     const result = await withSnapshot(
-      await store.command(
+      await command(
         { action: "save", transaction: original, occurrences: 3 },
         a.session,
       ),
@@ -660,7 +687,7 @@ describe("monthly recurring transactions", () => {
     expect((await store.snapshot(b.session)).budget.transactions).toHaveLength(
       3,
     );
-    await store.command(
+    await command(
       { action: "save", transaction: { ...rows[1], amount: 20000 } },
       b.session,
     );
@@ -670,14 +697,14 @@ describe("monthly recurring transactions", () => {
       ),
     ).toHaveLength(1);
     const retried = await withSnapshot(
-      await store.command(
+      await command(
         { action: "save", transaction: original, occurrences: 3 },
         a.session,
       ),
     );
     expect(retried.snapshot.budget.transactions).toHaveLength(3);
     await expect(
-      store.command(
+      command(
         { action: "save", transaction: rows[0], occurrences: 3 },
         a.session,
       ),
@@ -691,14 +718,14 @@ describe("monthly recurring transactions", () => {
     const original = transaction(a.snapshot.user!.id);
     for (const occurrences of [0, -1, 1.5, 121, "12"]) {
       await expect(
-        store.command(
+        command(
           { action: "save", transaction: original, occurrences },
           a.session,
         ),
       ).rejects.toThrow();
     }
     await expect(
-      store.command(
+      command(
         {
           action: "save",
           transaction: { ...original, date: "9999-12-31" },
@@ -716,11 +743,11 @@ describe("monthly recurring transactions", () => {
 test("deletes only the selected series from its original occurrence onward and rejects stale batches", async () => {
   const { a, b } = await householdReady();
   const original = transaction(a.snapshot.user!.id);
-  await store.command(
+  await command(
     { action: "save", transaction: original, occurrences: 4 },
     a.session,
   );
-  await store.command(
+  await command(
     {
       action: "save",
       transaction: { ...original, id: "other" },
@@ -737,12 +764,12 @@ test("deletes only the selected series from its original occurrence onward and r
           .recurrenceId,
     )
     .sort((a, b) => a.recurrenceIndex! - b.recurrenceIndex!);
-  await store.command(
+  await command(
     { action: "save", transaction: { ...series[2], date: "2020-01-01" } },
     b.session,
   );
   const remove = (following: Transaction[]) =>
-    store.command(
+    command(
       {
         action: "delete",
         id: series[1].id,
@@ -777,17 +804,14 @@ describe("bank accounts", () => {
   test("creates, edits and shares accounts with both members", async () => {
     const { a, b } = await couple();
     const created = await withSnapshot(
-      await store.command(
-        { action: "save-account", account: account() },
-        a.session,
-      ),
+      await command({ action: "save-account", account: account() }, a.session),
     );
     expect(created.snapshot.budget.accounts).toEqual([
       { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
     ]);
     expect((await store.snapshot(b.session)).budget.accounts).toHaveLength(1);
     const current = created.snapshot.budget.accounts[0];
-    await store.command(
+    await command(
       { action: "save-account", account: { ...current, name: "Itaú" } },
       b.session,
     );
@@ -798,7 +822,7 @@ describe("bank accounts", () => {
   test("stores an opening balance on the account", async () => {
     const { a } = await couple();
     const created = await withSnapshot(
-      await store.command(
+      await command(
         {
           action: "save-account",
           account: { ...account(), openingBalance: 250000 },
@@ -808,7 +832,7 @@ describe("bank accounts", () => {
     );
     expect(created.snapshot.budget.accounts[0]?.openingBalance).toBe(250000);
     await expect(
-      store.command(
+      command(
         {
           action: "save-account",
           account: { ...account("bad"), openingBalance: -1 },
@@ -820,17 +844,14 @@ describe("bank accounts", () => {
   test("requires an existing account on every transaction save", async () => {
     const { a } = await couple();
     await expect(
-      store.command(
+      command(
         { action: "save", transaction: transaction(a.snapshot.user!.id) },
         a.session,
       ),
     ).rejects.toThrow("conta bancária");
-    await store.command(
-      { action: "save-account", account: account() },
-      a.session,
-    );
+    await command({ action: "save-account", account: account() }, a.session);
     await expect(
-      store.command(
+      command(
         {
           action: "save",
           transaction: transaction(a.snapshot.user!.id, "missing"),
@@ -838,32 +859,32 @@ describe("bank accounts", () => {
         a.session,
       ),
     ).rejects.toThrow("conta bancária");
-    await store.command(
+    await command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
-    expect((await store.snapshot(a.session)).budget.transactions[0]?.accountId).toBe(
-      "account-1",
-    );
+    expect(
+      (await store.snapshot(a.session)).budget.transactions[0]?.accountId,
+    ).toBe("account-1");
   });
   test("rejects deleting an account still used by a transaction", async () => {
     const { a } = await householdReady();
-    await store.command(
+    await command(
       { action: "save", transaction: transaction(a.snapshot.user!.id) },
       a.session,
     );
     await expect(
-      store.command(
+      command(
         { action: "delete-account", id: "account-1", revision: 1 },
         a.session,
       ),
     ).rejects.toThrow("transações desta conta");
     expect((await store.snapshot(a.session)).budget.accounts).toHaveLength(1);
-    await store.command(
+    await command(
       { action: "delete", id: "transaction-1", revision: 1 },
       a.session,
     );
-    await store.command(
+    await command(
       { action: "delete-account", id: "account-1", revision: 1 },
       a.session,
     );
@@ -872,20 +893,20 @@ describe("bank accounts", () => {
   test("stale account edits fail and households stay isolated", async () => {
     const { a, b } = await householdReady();
     const old = (await store.snapshot(a.session)).budget.accounts[0];
-    await store.command(
+    await command(
       { action: "save-account", account: { ...old, name: "Caixa" } },
       b.session,
     );
     await expect(
-      store.command(
+      command(
         { action: "save-account", account: { ...old, name: "Bradesco" } },
         a.session,
       ),
     ).rejects.toThrow("mudou");
     const c = await signup("Cris");
-    await store.command({ action: "create" }, c.session);
+    await command({ action: "create" }, c.session);
     await expect(
-      store.command(
+      command(
         { action: "delete-account", id: "account-1", revision: 2 },
         c.session,
       ),

@@ -1,16 +1,31 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { getRouteApi } from "@tanstack/react-router";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FormEvent,
+} from "react";
+import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
-import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { devLogin, logout, requestLink } from "@/features/auth/auth.functions";
+import { mutateBudget } from "@/features/budget/actions/load-budget";
+import type { BudgetCommand, CommandResult } from "@/features/budget/types";
 import { formText } from "@/features/budget/services/budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
-import { FieldHint, Form, FormError, FormStack, Note } from "@/components/ui/field/field";
+import {
+  FieldHint,
+  Form,
+  FormError,
+  FormStack,
+  Note,
+} from "@/components/ui/field/field";
 import styles from "@/features/budget/components/account-gate.module.css";
 
 const isDevelopment = import.meta.env.DEV;
+const gateRoute = getRouteApi("/entrar");
 
 export function inviteToken(value: string) {
   try {
@@ -24,15 +39,65 @@ export function inviteToken(value: string) {
     return value.trim();
   }
 }
-const workspaceRoute = getRouteApi("/");
 
-export function AccountGate({ budget }: { budget: BudgetController }) {
-  const search = workspaceRoute.useSearch();
-  const navigate = workspaceRoute.useNavigate();
+function useGate() {
+  const router = useRouter();
+  const snapshot = gateRoute.useLoaderData();
+  const search = gateRoute.useSearch();
+  const navigate = gateRoute.useNavigate();
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const inFlight = useRef(false);
+  const run = useCallback(
+    async <T,>(fn: () => Promise<T>): Promise<T | null> => {
+      if (inFlight.current) return null;
+      inFlight.current = true;
+      setBusy(true);
+      setError("");
+      try {
+        const result = await fn();
+        await router.invalidate();
+        return result;
+      } catch (error) {
+        if (isRedirect(error)) {
+          await router.navigate(router.resolveRedirect(error).options);
+          return null;
+        }
+        const message =
+          error instanceof Error && !(error instanceof TypeError)
+            ? error.message
+            : "Sem conexão. Confira o orçamento antes de tentar novamente.";
+        setError(message);
+        return null;
+      } finally {
+        inFlight.current = false;
+        setBusy(false);
+      }
+    },
+    [router],
+  );
+  const command = useCallback(
+    async (data: BudgetCommand): Promise<CommandResult | null> =>
+      run(() => mutateBudget({ data })),
+    [run],
+  );
+  return {
+    user: snapshot.user,
+    error,
+    busy,
+    search,
+    navigate,
+    command,
+    run,
+  };
+}
+
+export function AccountGate() {
+  const { user, error, busy, search, navigate, command, run } = useGate();
   const invitation = search.convite ?? "";
   const clearInvitation = () =>
     void navigate({
-      to: "/",
+      to: "/entrar",
       search: (prev) => ({ ...prev, convite: undefined }),
       replace: true,
     });
@@ -45,15 +110,18 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   }, [cooldown]);
   async function requestAccess(email: string) {
     if (isDevelopment) {
-      await budget.command({ action: "dev-login", email });
+      await run(() => devLogin({ data: { email } }));
       return;
     }
     if (
-      await budget.command({
-        action: "request-link",
-        email,
-        ...(invitation ? { invite: inviteToken(invitation) } : {}),
-      })
+      (await run(() =>
+        requestLink({
+          data: {
+            email,
+            ...(invitation ? { invite: inviteToken(invitation) } : {}),
+          },
+        }),
+      )) !== null
     ) {
       setSentTo(email);
       setCooldown(60);
@@ -67,23 +135,20 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
   }
   async function submitName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await budget.command({
+    await command({
       action: "profile",
       name: formText(new FormData(event.currentTarget), "name"),
     });
   }
   async function acceptInvitation() {
-    if (
-      await budget.command({
-        action: "join",
-        token: inviteToken(invitation),
-      })
-    )
-      clearInvitation();
+    await command({
+      action: "join",
+      token: inviteToken(invitation),
+    });
   }
   async function submitInvitation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await budget.command({
+    await command({
       action: "join",
       token: inviteToken(formText(new FormData(event.currentTarget), "invite")),
     });
@@ -102,16 +167,16 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
         </div>
         <p className={styles.cardEyebrow}>DUAS PESSOAS. UM ORÇAMENTO.</p>
         <h1>
-          {sentTo && !budget.user
+          {sentTo && !user
             ? "Confira seu e-mail."
-            : budget.user
-              ? budget.user.name
-                ? `Vamos começar, ${budget.user.name}?`
+            : user
+              ? user.name
+                ? `Vamos começar, ${user.name}?`
                 : "Como chamamos você?"
               : "A vida a dois.\nAs contas também."}
         </h1>
         <p className={styles.accountIntro}>
-          {budget.user
+          {user
             ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
             : sentTo
               ? `Enviamos seu link para ${sentTo}. Abra o e-mail para continuar.`
@@ -119,7 +184,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 ? "Modo desenvolvimento: informe um e-mail para entrar ou criar uma conta."
                 : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
         </p>
-        {!budget.user ? (
+        {!user ? (
           <>
             {invitation && (
               <Note>
@@ -134,7 +199,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 </Note>
                 <Button
                   variant="secondary"
-                  disabled={budget.busy || cooldown > 0}
+                  disabled={busy || cooldown > 0}
                   onClick={() => void requestAccess(sentTo)}
                 >
                   {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar link"}
@@ -156,8 +221,8 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                     required
                   />
                 </label>
-                <Button disabled={budget.busy}>
-                  {budget.busy
+                <Button disabled={busy}>
+                  {busy
                     ? isDevelopment
                       ? "Entrando…"
                       : "Enviando…"
@@ -169,7 +234,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
               </Form>
             )}
           </>
-        ) : !budget.user.name ? (
+        ) : !user.name ? (
           <Form onSubmit={(event) => void submitName(event)}>
             <label>
               Seu nome
@@ -181,7 +246,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 required
               />
             </label>
-            <Button disabled={budget.busy}>
+            <Button disabled={busy}>
               Continuar
               <ArrowRight size={18} />
             </Button>
@@ -193,11 +258,8 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 <Note>
                   Ao aceitar, vocês dois poderão ver e editar todo o orçamento.
                 </Note>
-                <Button
-                  disabled={budget.busy}
-                  onClick={() => void acceptInvitation()}
-                >
-                  {budget.busy ? "Aguarde…" : "Aceitar convite"}
+                <Button disabled={busy} onClick={() => void acceptInvitation()}>
+                  {busy ? "Aguarde…" : "Aceitar convite"}
                   <ArrowRight size={18} />
                 </Button>
                 <Button variant="text" onClick={clearInvitation}>
@@ -207,8 +269,8 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             ) : (
               <>
                 <Button
-                  disabled={budget.busy}
-                  onClick={() => void budget.command({ action: "create" })}
+                  disabled={busy}
+                  onClick={() => void command({ action: "create" })}
                 >
                   Começar nosso orçamento
                   <ArrowRight size={18} />
@@ -223,7 +285,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                       required
                     />
                   </label>
-                  <Button variant="secondary" disabled={budget.busy}>
+                  <Button variant="secondary" disabled={busy}>
                     Aceitar convite
                   </Button>
                 </Form>
@@ -231,14 +293,14 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             )}
             <Button
               variant="text"
-              disabled={budget.busy}
-              onClick={() => void budget.command({ action: "logout" })}
+              disabled={busy}
+              onClick={() => void run(() => logout())}
             >
-              Sair de {budget.user.email}
+              Sair de {user.email}
             </Button>
           </FormStack>
         )}
-        {budget.error && <FormError>{budget.error}</FormError>}
+        {error && <FormError>{error}</FormError>}
         <FieldHint>
           {isDevelopment
             ? "Modo desenvolvimento: o acesso local não envia e-mail."

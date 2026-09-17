@@ -25,6 +25,7 @@ test.describe("auth", () => {
     expect(response?.status()).toBe(200);
     expect(response?.headers()["cache-control"]).toContain("private, no-store");
     await waitForGate(page);
+    expect(new URL(page.url()).pathname).toBe("/entrar");
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
     await expect(page).toHaveTitle("twogether — Orçamento a dois");
     await expect(page.getByText("DUAS PESSOAS. UM ORÇAMENTO.")).toBeVisible();
@@ -42,7 +43,9 @@ test.describe("auth", () => {
 
     await withMobile(page, async () => {
       await expect(page.getByLabel("Seu e-mail")).toBeEnabled();
-      await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
+      await expect(
+        page.getByRole("group", { name: "Aparência" }),
+      ).toBeVisible();
       await expect(
         page.getByRole("button", { name: "Tema escuro" }),
       ).toBeEnabled();
@@ -62,16 +65,19 @@ test.describe("auth", () => {
     ).toBeVisible();
     await setName(page, "Ana");
     await createHousehold(page);
-    await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Visão geral" }),
+    ).toBeVisible();
     await expect(
       page.getByText("Saldo, entradas, despesas e metas do mês."),
     ).toBeVisible();
     await expect(page.locator("header").getByText("Visão geral")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nós", exact: true })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
-    await expect(page.getByRole("button", { name: "Eu", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Nós", exact: true }),
+    ).toHaveAttribute("aria-pressed", "true");
+    await expect(
+      page.getByRole("button", { name: "Eu", exact: true }),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeVisible();
@@ -95,6 +101,9 @@ test.describe("auth", () => {
   }) => {
     const convite = randomToken();
     await page.goto(`/?convite=${convite}`);
+    await waitForGate(page);
+    expect(new URL(page.url()).pathname).toBe("/entrar");
+    expect(new URL(page.url()).searchParams.get("convite")).toBe(convite);
     await expect(page.getByText("Seu par convidou você")).toBeVisible();
 
     const email = uniqueEmail("bia");
@@ -105,13 +114,16 @@ test.describe("auth", () => {
       page.getByRole("heading", { name: "Como chamamos você?" }),
     ).toBeVisible();
     const after = new URL(page.url());
+    expect(after.pathname).toBe("/entrar");
     expect(after.searchParams.has("access")).toBe(false);
     expect(after.searchParams.get("convite")).toBe(convite);
     const cookie = await sessionCookie(page);
     expect(cookie?.value).toBeTruthy();
     expect(cookie?.httpOnly).toBe(true);
     await setName(page, "Bia");
-    await expect(page.getByText("Ao aceitar, vocês dois poderão ver")).toBeVisible();
+    await expect(
+      page.getByText("Ao aceitar, vocês dois poderão ver"),
+    ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Aceitar convite" }),
     ).toBeVisible();

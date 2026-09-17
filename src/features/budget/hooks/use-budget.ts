@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getRouteApi, useRouter } from "@tanstack/react-router";
+import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { mutateBudget } from "@/features/budget/actions/load-budget";
 import type {
   BankAccount,
@@ -60,13 +60,15 @@ export function useBudget() {
         await router.invalidate();
         return result;
       } catch (error) {
+        if (isRedirect(error)) {
+          await router.navigate(router.resolveRedirect(error).options);
+          return null;
+        }
         const message =
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
             : "Sem conexão. Confira o orçamento antes de tentar novamente.";
         setError(message);
-        if (message === "Sua sessão expirou. Entre novamente.")
-          void router.invalidate();
         return null;
       } finally {
         inFlight.current = false;

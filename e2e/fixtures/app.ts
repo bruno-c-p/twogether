@@ -21,13 +21,16 @@ export async function reloadApp(page: Page) {
 }
 
 export async function waitForGate(page: Page) {
-  await expect(page.getByRole("heading", { name: /A vida a dois/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/entrar(?:\?|$)/);
+  await expect(
+    page.getByRole("heading", { name: /A vida a dois/ }),
+  ).toBeVisible();
   await expect(page.getByText("Carregando orçamento…")).toHaveCount(0);
   await waitForHydrated(page);
 }
 
 export async function loginDev(page: Page, email: string) {
-  if (!/^https?:/.test(page.url())) await page.goto("/");
+  if (!/^https?:/.test(page.url())) await page.goto("/entrar");
   await waitForGate(page);
   await page.getByLabel("Seu e-mail").fill(email);
   await page.getByRole("button", { name: "Entrar localmente" }).click();
@@ -53,10 +56,16 @@ export async function setName(page: Page, name: string) {
 
 export async function createHousehold(page: Page) {
   await page.getByRole("button", { name: "Começar nosso orçamento" }).click();
-  await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Visão geral" }),
+  ).toBeVisible();
 }
 
-export async function onboard(page: Page, name: string, email = uniqueEmail(name)) {
+export async function onboard(
+  page: Page,
+  name: string,
+  email = uniqueEmail(name),
+) {
   await loginDev(page, email);
   await setName(page, name);
   await createHousehold(page);
@@ -65,7 +74,9 @@ export async function onboard(page: Page, name: string, email = uniqueEmail(name
 
 export async function openCouple(page: Page) {
   await page.getByRole("button", { name: /Abrir nosso espaço/ }).click();
-  await expect(page.getByRole("heading", { name: "Nosso espaço" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Nosso espaço" }),
+  ).toBeVisible();
 }
 
 export async function dismissToast(page: Page) {
@@ -74,7 +85,9 @@ export async function dismissToast(page: Page) {
 }
 
 export async function expectToast(page: Page, message: string) {
-  await expect(page.getByRole("status").filter({ hasText: message })).toBeVisible();
+  await expect(
+    page.getByRole("status").filter({ hasText: message }),
+  ).toBeVisible();
   await dismissToast(page);
 }
 

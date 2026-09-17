@@ -1,10 +1,14 @@
 import { resolve } from "node:path";
+import { isRedirect } from "@tanstack/react-router";
 import {
+  getCookie,
   getRequestProtocol,
   setCookie,
+  setResponseStatus,
 } from "@tanstack/react-start/server";
 import {
   createBudgetStore,
+  RequestError,
   type BudgetStore,
 } from "@/features/budget/services/shared.server";
 import {
@@ -24,10 +28,24 @@ export function getBudgetStore(): BudgetStore {
   ));
 }
 
+export function sessionToken() {
+  return getCookie(sessionCookie) ?? "";
+}
+
 export function applySessionCookie(session: string | undefined) {
   setCookie(
     sessionCookie,
     session ?? "",
     sessionCookieOptions(getRequestProtocol() === "https", session),
   );
+}
+
+export function throwHttpError(error: unknown): never {
+  if (isRedirect(error)) throw error;
+  if (error instanceof RequestError) {
+    setResponseStatus(error.status);
+    throw new Error(error.message);
+  }
+  console.error("Budget mutation failed", error);
+  throw new Error("Não foi possível concluir. Tente novamente.");
 }

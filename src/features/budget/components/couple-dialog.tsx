@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { isRedirect, useRouter } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
+import { logout } from "@/features/auth/auth.functions";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -8,7 +10,12 @@ import {
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
-import { FieldHint, FormError, FormStack, Note } from "@/components/ui/field/field";
+import {
+  FieldHint,
+  FormError,
+  FormStack,
+  Note,
+} from "@/components/ui/field/field";
 import styles from "@/features/budget/components/couple-dialog.module.css";
 
 export function CoupleDialog({
@@ -18,6 +25,7 @@ export function CoupleDialog({
   budget: BudgetController;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
@@ -44,13 +52,25 @@ export function CoupleDialog({
       setCopyError("Convites anteriores cancelados.");
     }
   }
+  async function signOut() {
+    try {
+      await logout();
+    } catch (error) {
+      if (isRedirect(error)) {
+        await router.navigate(router.resolveRedirect(error).options);
+        return;
+      }
+      setCopyError(
+        error instanceof Error && !(error instanceof TypeError)
+          ? error.message
+          : "Sem conexão. Confira o orçamento antes de tentar novamente.",
+      );
+    }
+  }
   return (
     <Dialog labelledBy="couple-title" narrow onClose={onClose}>
       <DialogContent>
-        <DialogHeader
-          onClose={onClose}
-          closeLabel="Fechar nosso espaço"
-        >
+        <DialogHeader onClose={onClose} closeLabel="Fechar nosso espaço">
           <h2 id="couple-title">Nosso espaço</h2>
         </DialogHeader>
         <p className={styles.intro}>
@@ -58,26 +78,23 @@ export function CoupleDialog({
           tags e percentuais.
         </p>
         <div className={styles.coupleMembers}>
-          {budget.household?.members.map((member) => (
+          {budget.household.members.map((member) => (
             <div className={styles.coupleMember} key={member.id}>
               <span className={styles.avatar}>
                 {member.name.slice(0, 1).toUpperCase()}
               </span>
               <strong>{member.name}</strong>
-              <span>{member.id === budget.user?.id ? "Você" : "Seu par"}</span>
+              <span>{member.id === budget.user.id ? "Você" : "Seu par"}</span>
             </div>
           ))}
         </div>
-        {budget.household?.members.length === 1 ? (
+        {budget.household.members.length === 1 ? (
           <FormStack>
             <p>
               Falta seu par. Gere um convite e compartilhe o link com essa
               pessoa.
             </p>
-            <Button
-              disabled={budget.busy}
-              onClick={() => void createInvite()}
-            >
+            <Button disabled={budget.busy} onClick={() => void createInvite()}>
               {link ? "Gerar novo convite" : "Gerar convite"}
             </Button>
             {link && (
@@ -90,10 +107,7 @@ export function CoupleDialog({
                     onFocus={(event) => event.target.select()}
                   />
                 </label>
-                <Button
-                  variant="secondary"
-                  onClick={() => void copyInvite()}
-                >
+                <Button variant="secondary" onClick={() => void copyInvite()}>
                   <Copy size={16} />
                   {copied ? "Link copiado" : "Copiar convite"}
                 </Button>
@@ -117,12 +131,12 @@ export function CoupleDialog({
         )}
         {budget.error && <FormError>{budget.error}</FormError>}
         <DialogFooter className={styles.footer}>
-          <span className={styles.email}>{budget.user?.email}</span>
+          <span className={styles.email}>{budget.user.email}</span>
           <Button
             variant="text"
             className={styles.logout}
             disabled={budget.busy}
-            onClick={() => void budget.command({ action: "logout" })}
+            onClick={() => void signOut()}
           >
             Sair da conta
           </Button>

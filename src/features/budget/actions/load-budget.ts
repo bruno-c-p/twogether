@@ -1,56 +1,27 @@
-import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import { getCookie, setResponseStatus } from "@tanstack/react-start/server";
 import {
-  applySessionCookie,
   getBudgetStore,
-  sessionCookie,
+  sessionToken,
+  throwHttpError,
 } from "@/features/budget/actions/budget-store.server";
-import { parseAccessPayload, parseBudgetCommand } from "@/features/budget/command";
-import { accessRedirectSearch } from "@/features/budget/search";
-import { RequestError } from "@/features/budget/services/shared.server";
-
-function sessionToken() {
-  return getCookie(sessionCookie) ?? "";
-}
+import { parseBudgetCommand } from "@/features/budget/command";
+import { householdMiddleware } from "@/server/middleware";
 
 export const loadBudget = createServerFn({ method: "GET" }).handler(() => {
   return getBudgetStore().snapshot(sessionToken());
 });
 
 export const mutateBudget = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
   .validator(parseBudgetCommand)
-  .handler(async ({ data }) => {
-    const previous = sessionToken();
+  .handler(async ({ data, context }) => {
     try {
-      const result = await getBudgetStore().command(data, previous);
-      if (result.session !== previous) applySessionCookie(result.session);
-      return { inviteToken: result.inviteToken };
-    } catch (error) {
-      if (error instanceof RequestError) {
-        setResponseStatus(error.status);
-        throw new Error(error.message);
-      }
-      console.error("Budget mutation failed", error);
-      throw new Error("Não foi possível concluir. Tente novamente.");
-    }
-  });
-
-export const consumeAccess = createServerFn({ method: "POST" })
-  .validator(parseAccessPayload)
-  .handler(async ({ data }) => {
-    try {
-      const result = await getBudgetStore().command(
-        { action: "verify-link", token: data.token },
-        sessionToken(),
+      return await getBudgetStore().command(
+        data,
+        context.user,
+        context.household,
       );
-      applySessionCookie(result.session);
     } catch (error) {
-      if (!(error instanceof RequestError))
-        console.error("Magic link failed", error);
+      throwHttpError(error);
     }
-    throw redirect({
-      to: "/",
-      search: accessRedirectSearch(data.convite),
-    });
   });

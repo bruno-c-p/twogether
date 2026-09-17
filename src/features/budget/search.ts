@@ -66,9 +66,24 @@ export function accessRedirectSearch(
   return convite ? { convite } : {};
 }
 
-export function validateBudgetSearch(
+export function gateRedirectSearch(search: AccessSearch): AccessSearch {
+  return {
+    ...(search.access ? { access: search.access } : {}),
+    ...(search.convite ? { convite: search.convite } : {}),
+  };
+}
+
+export function validateAccessSearch(
   search: Record<string, unknown>,
-): BudgetSearch {
+): AccessSearch {
+  const access = isBudgetToken(search.access) ? search.access : undefined;
+  const convite = isBudgetToken(search.convite) ? search.convite : undefined;
+  return { access, convite };
+}
+
+export function validateBudgetFilters(
+  search: Record<string, unknown>,
+): BudgetFilters {
   const view =
     typeof search.view === "string" && views.includes(search.view as View)
       ? (search.view as View)
@@ -99,7 +114,14 @@ export function validateBudgetSearch(
     search.kind === "expense" || search.kind === "income"
       ? search.kind
       : undefined;
-  const access = isBudgetToken(search.access) ? search.access : undefined;
-  const convite = isBudgetToken(search.convite) ? search.convite : undefined;
-  return { view, month, member, query, goal, tag, kind, access, convite };
+  return { view, month, member, query, goal, tag, kind };
+}
+
+export function validateBudgetSearch(
+  search: Record<string, unknown>,
+): BudgetSearch {
+  return {
+    ...validateBudgetFilters(search),
+    ...validateAccessSearch(search),
+  };
 }
