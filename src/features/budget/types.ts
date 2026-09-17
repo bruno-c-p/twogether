@@ -68,11 +68,7 @@ export interface WorkspaceSnapshot {
   budget: BudgetState;
 }
 export type BudgetCommand =
-  | { action: "request-link"; email: string; invite?: string }
-  | { action: "dev-login"; email: string }
-  | { action: "verify-link"; token: string }
   | { action: "profile"; name: string }
-  | { action: "logout" }
   | { action: "create" }
   | { action: "join"; token: string }
   | { action: "invite" }

@@ -22,11 +22,7 @@ function revision(value: unknown): number {
 
 function parseAction(value: unknown): BudgetCommand["action"] {
   switch (value) {
-    case "request-link":
-    case "dev-login":
-    case "verify-link":
     case "profile":
-    case "logout":
     case "create":
     case "join":
     case "invite":
@@ -41,6 +37,23 @@ function parseAction(value: unknown): BudgetCommand["action"] {
     default:
       invalid();
   }
+}
+
+export function parseRequestLink(input: unknown): {
+  email: string;
+  invite?: string;
+} {
+  if (!input || typeof input !== "object") invalid();
+  const data = input as Record<string, unknown>;
+  const email = text(data.email);
+  if (data.invite === undefined) return { email };
+  if (!isBudgetToken(data.invite)) invalid();
+  return { email, invite: data.invite };
+}
+
+export function parseDevLogin(input: unknown): { email: string } {
+  if (!input || typeof input !== "object") invalid();
+  return { email: text((input as Record<string, unknown>).email) };
 }
 
 export function parseAccessPayload(input: unknown): {
@@ -61,20 +74,10 @@ export function parseBudgetCommand(input: unknown): BudgetCommand {
   const data = input as Record<string, unknown>;
   const action = parseAction(data.action);
   switch (action) {
-    case "request-link": {
-      const email = text(data.email);
-      if (data.invite === undefined) return { action, email };
-      if (!isBudgetToken(data.invite)) invalid();
-      return { action, email, invite: data.invite };
-    }
-    case "dev-login":
-      return { action, email: text(data.email) };
-    case "verify-link":
     case "join":
       return { action, token: text(data.token) };
     case "profile":
       return { action, name: text(data.name) };
-    case "logout":
     case "create":
     case "invite":
     case "revoke-invite":

@@ -1,5 +1,7 @@
 import { useState } from "react";
+import { isRedirect, useRouter } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
+import { logout } from "@/features/auth/auth.functions";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -23,6 +25,7 @@ export function CoupleDialog({
   budget: BudgetController;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
@@ -47,6 +50,21 @@ export function CoupleDialog({
     if (await budget.command({ action: "revoke-invite" })) {
       setLink("");
       setCopyError("Convites anteriores cancelados.");
+    }
+  }
+  async function signOut() {
+    try {
+      await logout();
+    } catch (error) {
+      if (isRedirect(error)) {
+        await router.navigate(router.resolveRedirect(error).options);
+        return;
+      }
+      setCopyError(
+        error instanceof Error && !(error instanceof TypeError)
+          ? error.message
+          : "Sem conexão. Confira o orçamento antes de tentar novamente.",
+      );
     }
   }
   return (
@@ -118,7 +136,7 @@ export function CoupleDialog({
             variant="text"
             className={styles.logout}
             disabled={budget.busy}
-            onClick={() => void budget.command({ action: "logout" })}
+            onClick={() => void signOut()}
           >
             Sair da conta
           </Button>

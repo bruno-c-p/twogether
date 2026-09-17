@@ -5,9 +5,10 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { getRouteApi, useRouter } from "@tanstack/react-router";
+import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
+import { devLogin, logout, requestLink } from "@/features/auth/auth.functions";
 import { mutateBudget } from "@/features/budget/actions/load-budget";
 import type { BudgetCommand, CommandResult } from "@/features/budget/types";
 import { formText } from "@/features/budget/services/budget";
@@ -47,24 +48,26 @@ function useGate() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
-  const command = useCallback(
-    async (data: BudgetCommand): Promise<CommandResult | null> => {
+  const run = useCallback(
+    async <T,>(fn: () => Promise<T>): Promise<T | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
       setBusy(true);
       setError("");
       try {
-        const result = await mutateBudget({ data });
+        const result = await fn();
         await router.invalidate();
         return result;
       } catch (error) {
+        if (isRedirect(error)) {
+          await router.navigate(router.resolveRedirect(error).options);
+          return null;
+        }
         const message =
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
             : "Sem conexão. Confira o orçamento antes de tentar novamente.";
         setError(message);
-        if (message === "Sua sessão expirou. Entre novamente.")
-          void router.invalidate();
         return null;
       } finally {
         inFlight.current = false;
@@ -73,6 +76,11 @@ function useGate() {
     },
     [router],
   );
+  const command = useCallback(
+    async (data: BudgetCommand): Promise<CommandResult | null> =>
+      run(() => mutateBudget({ data })),
+    [run],
+  );
   return {
     user: snapshot.user,
     error,
@@ -80,11 +88,12 @@ function useGate() {
     search,
     navigate,
     command,
+    run,
   };
 }
 
 export function AccountGate() {
-  const { user, error, busy, search, navigate, command } = useGate();
+  const { user, error, busy, search, navigate, command, run } = useGate();
   const invitation = search.convite ?? "";
   const clearInvitation = () =>
     void navigate({
@@ -101,15 +110,18 @@ export function AccountGate() {
   }, [cooldown]);
   async function requestAccess(email: string) {
     if (isDevelopment) {
-      await command({ action: "dev-login", email });
+      await run(() => devLogin({ data: { email } }));
       return;
     }
     if (
-      await command({
-        action: "request-link",
-        email,
-        ...(invitation ? { invite: inviteToken(invitation) } : {}),
-      })
+      (await run(() =>
+        requestLink({
+          data: {
+            email,
+            ...(invitation ? { invite: inviteToken(invitation) } : {}),
+          },
+        }),
+      )) !== null
     ) {
       setSentTo(email);
       setCooldown(60);
@@ -282,7 +294,7 @@ export function AccountGate() {
             <Button
               variant="text"
               disabled={busy}
-              onClick={() => void command({ action: "logout" })}
+              onClick={() => void run(() => logout())}
             >
               Sair de {user.email}
             </Button>
