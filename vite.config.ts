@@ -5,7 +5,7 @@ import { nitro } from "nitro/vite";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  resolve: { alias: { "@": fileURLToPath(new URL(".", import.meta.url)) } },
+  resolve: { alias: { "@": fileURLToPath(new URL("./src/", import.meta.url)) } },
   css: { modules: { localsConvention: "camelCase" } },
   plugins: [tanstackStart(), nitro(), react()],
 });

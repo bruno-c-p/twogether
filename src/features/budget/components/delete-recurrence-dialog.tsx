@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { Transaction } from "@/features/budget/types";
-import { Button } from "@/src/ui/button";
+import { Button } from "@/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/src/ui/dialog";
-import { Fieldset, FormError } from "@/src/ui/field";
+} from "@/ui/dialog";
+import { Fieldset, FormError } from "@/ui/field";
 import styles from "@/features/budget/components/delete-recurrence-dialog.module.css";
 
 interface Props {

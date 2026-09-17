@@ -4,8 +4,8 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
-import stylesheet from "@/src/styles.css?url";
-import { NotFoundPage, RouteError } from "@/src/route-error";
+import stylesheet from "@/styles.css?url";
+import { NotFoundPage, RouteError } from "@/route-error";
 import { themeScript } from "@/features/theme";
 
 export const Route = createRootRoute({

@@ -10,10 +10,10 @@ import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
 import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import { Button } from "@/src/ui/button";
-import { ColorDot } from "@/src/ui/color-dot";
-import { EmptyState } from "@/src/ui/empty-state";
-import { Panel, SectionHeading } from "@/src/ui/panel";
+import { Button } from "@/ui/button";
+import { ColorDot } from "@/ui/color-dot";
+import { EmptyState } from "@/ui/empty-state";
+import { Panel, SectionHeading } from "@/ui/panel";
 import styles from "@/features/budget/components/transaction-list.module.css";
 
 interface Props {

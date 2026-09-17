@@ -1,5 +1,5 @@
 import { createRouter, stringifySearchWith } from "@tanstack/react-router";
-import { routeTree } from "@/src/routeTree.gen";
+import { routeTree } from "@/routeTree.gen";
 
 function parseSearch(searchStr: string): Record<string, string> {
   const query: Record<string, string> = {};

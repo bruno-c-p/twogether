@@ -1,8 +1,8 @@
 import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { accountBalance, money } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
-import { Button } from "@/src/ui/button";
-import { EmptyState } from "@/src/ui/empty-state";
+import { Button } from "@/ui/button";
+import { EmptyState } from "@/ui/empty-state";
 import {
   ListRow,
   ListRowActions,
@@ -12,8 +12,8 @@ import {
   ListRowValue,
   listRowAction,
   listRowDelete,
-} from "@/src/ui/list-row";
-import { Panel, SectionHeading } from "@/src/ui/panel";
+} from "@/ui/list-row";
+import { Panel, SectionHeading } from "@/ui/panel";
 
 interface Props {
   accounts: BankAccount[];

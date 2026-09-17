@@ -4,9 +4,9 @@ import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
-import { Brand } from "@/src/ui/brand";
-import { Button } from "@/src/ui/button";
-import { FieldHint, Form, FormError, FormStack, Note } from "@/src/ui/field";
+import { Brand } from "@/ui/brand";
+import { Button } from "@/ui/button";
+import { FieldHint, Form, FormError, FormStack, Note } from "@/ui/field";
 import styles from "@/features/budget/components/account-gate.module.css";
 
 const isDevelopment = import.meta.env.DEV;

@@ -6,8 +6,8 @@ import {
   type SyntheticEvent,
 } from "react";
 import { X } from "lucide-react";
-import { Button } from "@/src/ui/button";
-import styles from "@/src/ui/dialog.module.css";
+import { Button } from "@/ui/button";
+import styles from "@/ui/dialog.module.css";
 
 export function Dialog({
   children,

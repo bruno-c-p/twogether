@@ -1,19 +1,19 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
-import { Button } from "@/src/ui/button";
+import { Button } from "@/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/src/ui/dialog";
+} from "@/ui/dialog";
 import {
   AmountField,
   Field,
   FieldHint,
   Fieldset,
   FormError,
-} from "@/src/ui/field";
+} from "@/ui/field";
 import { formatAmountInput, parseBalance } from "@/features/budget/services/budget";
 import type { BankAccount } from "@/features/budget/types";
 

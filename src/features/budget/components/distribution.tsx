@@ -1,7 +1,7 @@
 import { GOALS } from "@/features/budget/constants";
 import { money, summarize } from "@/features/budget/services/budget";
 import type { Transaction } from "@/features/budget/types";
-import { ColorDot } from "@/src/ui/color-dot";
+import { ColorDot } from "@/ui/color-dot";
 import styles from "@/features/budget/components/distribution.module.css";
 
 export function Distribution({

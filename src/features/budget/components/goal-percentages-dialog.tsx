@@ -2,14 +2,14 @@ import { useState } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
-import { Button } from "@/src/ui/button";
+import { Button } from "@/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/src/ui/dialog";
-import { FormError } from "@/src/ui/field";
+} from "@/ui/dialog";
+import { FormError } from "@/ui/field";
 import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({

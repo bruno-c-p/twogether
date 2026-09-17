@@ -42,9 +42,9 @@ import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
 import { withView } from "@/features/budget/search";
-import { Brand } from "@/src/ui/brand";
-import { Button } from "@/src/ui/button";
-import { OverviewGrid, SectionHeading } from "@/src/ui/panel";
+import { Brand } from "@/ui/brand";
+import { Button } from "@/ui/button";
+import { OverviewGrid, SectionHeading } from "@/ui/panel";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },

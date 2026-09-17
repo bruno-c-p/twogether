@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ComponentPropsWithoutRef } from "react";
-import styles from "@/src/ui/list-row.module.css";
+import styles from "@/ui/list-row.module.css";
 
 export function ListRow({
   className,

@@ -13,7 +13,7 @@
     "resolveJsonModule": true,
     "types": ["vite/client", "node"],
     "baseUrl": ".",
-    "paths": { "@/*": ["./*"] }
+    "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src", "features", "vite.config.ts", "vitest.config.ts"]
+  "include": ["src", "vite.config.ts", "vitest.config.ts"]
 }
