@@ -821,7 +821,6 @@ export function createBudgetStore(
       });
     }
     return {
-      snapshot: await snapshot(nextSession),
       session: nextSession,
       inviteToken,
     };

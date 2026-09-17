@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useLoaderData, useRouter } from "@tanstack/react-router";
+import { getRouteApi, useRouter } from "@tanstack/react-router";
 import { mutateBudget } from "@/features/budget/actions/load-budget";
 import type {
   BankAccount,
@@ -9,9 +9,11 @@ import type {
   CommandResult,
 } from "@/features/budget/types";
 
+const workspaceRoute = getRouteApi("/");
+
 export function useBudget() {
   const router = useRouter();
-  const snapshot = useLoaderData({ from: "/" });
+  const snapshot = workspaceRoute.useLoaderData();
   const [error, setError] = useState("");
   const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);

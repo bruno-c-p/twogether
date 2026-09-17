@@ -5,7 +5,6 @@ import {
   loadBudget,
 } from "@/features/budget/actions/load-budget";
 import { validateBudgetSearch } from "@/features/budget/search";
-import { RouteError } from "@/route-error";
 import { LoadingState } from "@/features/budget/components/empty-state";
 
 function BudgetPending() {
@@ -33,7 +32,6 @@ export const Route = createFileRoute("/")({
     return loadBudget();
   },
   pendingComponent: BudgetPending,
-  errorComponent: RouteError,
   pendingMs: 300,
   pendingMinMs: 500,
 });

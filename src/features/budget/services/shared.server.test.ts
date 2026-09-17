@@ -38,6 +38,11 @@ const signup = async (name: string) => {
   await store.command({ action: "profile", name }, result.session);
   return { ...result, snapshot: await store.snapshot(result.session) };
 };
+async function withSnapshot(
+  result: Awaited<ReturnType<BudgetStore["command"]>>,
+) {
+  return { ...result, snapshot: await store.snapshot(result.session) };
+}
 async function couple() {
   const a = await signup("Ana");
   await store.command({ action: "create" }, a.session);
@@ -73,15 +78,19 @@ async function householdReady() {
 
 describe("shared budget", () => {
   test("magic links verify ownership once and reuse existing accounts", async () => {
-    const requested = await store.command(
-      { action: "request-link", email: "ANA@example.test" },
-      undefined,
+    const requested = await withSnapshot(
+      await store.command(
+        { action: "request-link", email: "ANA@example.test" },
+        undefined,
+      ),
     );
     expect(requested.snapshot.user).toBeNull();
     expect(JSON.stringify(requested)).not.toContain(deliveries[0].token);
-    const verified = await store.command(
-      { action: "verify-link", token: deliveries[0].token },
-      undefined,
+    const verified = await withSnapshot(
+      await store.command(
+        { action: "verify-link", token: deliveries[0].token },
+        undefined,
+      ),
     );
     expect(verified.snapshot.user?.email).toBe("ana@example.test");
     await expect(
@@ -94,9 +103,11 @@ describe("shared budget", () => {
       { action: "request-link", email: "ana@example.test" },
       undefined,
     );
-    const again = await store.command(
-      { action: "verify-link", token: deliveries[1].token },
-      undefined,
+    const again = await withSnapshot(
+      await store.command(
+        { action: "verify-link", token: deliveries[1].token },
+        undefined,
+      ),
     );
     expect(again.snapshot.user?.id).toBe(verified.snapshot.user?.id);
     await store.command({ action: "logout" }, again.session);
@@ -107,9 +118,11 @@ describe("shared budget", () => {
     const previousNodeEnvironment = process.env.NODE_ENV;
     process.env.NODE_ENV = "development";
     try {
-      const first = await store.command(
-        { action: "dev-login", email: "ANA@example.test" },
-        undefined,
+      const first = await withSnapshot(
+        await store.command(
+          { action: "dev-login", email: "ANA@example.test" },
+          undefined,
+        ),
       );
       expect(first.snapshot.user).toMatchObject({
         email: "ana@example.test",
@@ -117,9 +130,11 @@ describe("shared budget", () => {
       });
 
       await store.command({ action: "profile", name: "Ana" }, first.session);
-      const existing = await store.command(
-        { action: "dev-login", email: "ana@example.test" },
-        undefined,
+      const existing = await withSnapshot(
+        await store.command(
+          { action: "dev-login", email: "ana@example.test" },
+          undefined,
+        ),
       );
       expect(existing.snapshot.user?.id).toBe(first.snapshot.user?.id);
       expect(existing.snapshot.user?.name).toBe("Ana");
@@ -324,9 +339,8 @@ describe("shared budget", () => {
     const { a } = await householdReady();
     const t = transaction(a.snapshot.user!.id);
     await store.command({ action: "save", transaction: t }, a.session);
-    const retry = await store.command(
-      { action: "save", transaction: t },
-      a.session,
+    const retry = await withSnapshot(
+      await store.command({ action: "save", transaction: t }, a.session),
     );
     expect(retry.snapshot.budget.transactions).toHaveLength(1);
     await expect(
@@ -627,9 +641,11 @@ describe("monthly recurring transactions", () => {
       ...transaction(a.snapshot.user!.id),
       date: "2028-01-31",
     };
-    const result = await store.command(
-      { action: "save", transaction: original, occurrences: 3 },
-      a.session,
+    const result = await withSnapshot(
+      await store.command(
+        { action: "save", transaction: original, occurrences: 3 },
+        a.session,
+      ),
     );
     const rows = result.snapshot.budget.transactions.sort((a, b) =>
       a.date.localeCompare(b.date),
@@ -652,9 +668,11 @@ describe("monthly recurring transactions", () => {
         (row) => row.amount === 20000,
       ),
     ).toHaveLength(1);
-    const retried = await store.command(
-      { action: "save", transaction: original, occurrences: 3 },
-      a.session,
+    const retried = await withSnapshot(
+      await store.command(
+        { action: "save", transaction: original, occurrences: 3 },
+        a.session,
+      ),
     );
     expect(retried.snapshot.budget.transactions).toHaveLength(3);
     await expect(
@@ -757,9 +775,11 @@ test("deletes only the selected series from its original occurrence onward and r
 describe("bank accounts", () => {
   test("creates, edits and shares accounts with both members", async () => {
     const { a, b } = await couple();
-    const created = await store.command(
-      { action: "save-account", account: account() },
-      a.session,
+    const created = await withSnapshot(
+      await store.command(
+        { action: "save-account", account: account() },
+        a.session,
+      ),
     );
     expect(created.snapshot.budget.accounts).toEqual([
       { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
@@ -776,12 +796,14 @@ describe("bank accounts", () => {
   });
   test("stores an opening balance on the account", async () => {
     const { a } = await couple();
-    const created = await store.command(
-      {
-        action: "save-account",
-        account: { ...account(), openingBalance: 250000 },
-      },
-      a.session,
+    const created = await withSnapshot(
+      await store.command(
+        {
+          action: "save-account",
+          account: { ...account(), openingBalance: 250000 },
+        },
+        a.session,
+      ),
     );
     expect(created.snapshot.budget.accounts[0]?.openingBalance).toBe(250000);
     await expect(
