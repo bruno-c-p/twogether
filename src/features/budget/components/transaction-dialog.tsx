@@ -16,6 +16,7 @@ import {
 import { GOALS } from "@/features/budget/constants";
 import {
   formatAmountInput,
+  formText,
   localDate,
   normalizeTag,
   parseAmount,
@@ -104,9 +105,9 @@ export function TransactionDialog({
     event.preventDefault();
     if (saving) return;
     const form = new FormData(event.currentTarget);
-    const amount = parseAmount(String(form.get("amount") ?? ""));
-    const description = String(form.get("description") ?? "").trim();
-    const date = String(form.get("date") ?? "");
+    const amount = parseAmount(formText(form, "amount"));
+    const description = formText(form, "description").trim();
+    const date = formText(form, "date");
     if (!amount) {
       setError("Digite um valor válido, como 45,90.");
       return;
@@ -119,7 +120,7 @@ export function TransactionDialog({
       setError("Escolha uma das seis metas para esta despesa.");
       return;
     }
-    const accountId = String(form.get("accountId") ?? "");
+    const accountId = formText(form, "accountId");
     if (!accounts.some((item) => item.id === accountId)) {
       setError(
         accounts.length
@@ -179,7 +180,7 @@ export function TransactionDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={submit}>
+        <form onSubmit={(event) => void submit(event)}>
           <Fieldset disabled={saving}>
             <div className={styles.kindToggle} aria-label="Tipo da transação">
               <button

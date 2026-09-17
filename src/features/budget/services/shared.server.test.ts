@@ -158,6 +158,15 @@ describe("shared budget", () => {
       Date.now = now;
     }
   });
+  test("verify-link attempts are throttled", async () => {
+    for (let i = 0; i < 10; i++)
+      await expect(
+        store.command({ action: "verify-link", token: "forged" }, undefined),
+      ).rejects.toThrow("expirou");
+    await expect(
+      store.command({ action: "verify-link", token: "forged" }, undefined),
+    ).rejects.toThrow("Muitas tentativas");
+  });
   test("email request keeps invitation and limits repeated sends", async () => {
     const invite = "a".repeat(64);
     for (let i = 0; i < 5; i++)
@@ -310,6 +319,22 @@ describe("shared budget", () => {
         (t) => t.id === old.id,
       )?.amount,
     ).toBe(20000);
+  });
+  test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
+    const { a } = await householdReady();
+    const t = transaction(a.snapshot.user!.id);
+    await store.command({ action: "save", transaction: t }, a.session);
+    const retry = await store.command(
+      { action: "save", transaction: t },
+      a.session,
+    );
+    expect(retry.snapshot.budget.transactions).toHaveLength(1);
+    await expect(
+      store.command(
+        { action: "save", transaction: { ...t, amount: 999 } },
+        a.session,
+      ),
+    ).rejects.toThrow("mudou");
   });
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
     const { a, b } = await householdReady();
@@ -490,7 +515,9 @@ test("Resend transport sends HTML and text with the configured origin and never 
   let key = "";
   globalThis.fetch = Object.assign(
     async (_input: string | URL | Request, init?: RequestInit) => {
-      payload = JSON.parse(String(init?.body));
+      payload = JSON.parse(
+        typeof init?.body === "string" ? init.body : "{}",
+      ) as Record<string, unknown>;
       key = new Headers(init?.headers).get("Idempotency-Key") ?? "";
       return Response.json({ id: "test-message" });
     },
@@ -625,12 +652,17 @@ describe("monthly recurring transactions", () => {
         (row) => row.amount === 20000,
       ),
     ).toHaveLength(1);
+    const retried = await store.command(
+      { action: "save", transaction: original, occurrences: 3 },
+      a.session,
+    );
+    expect(retried.snapshot.budget.transactions).toHaveLength(3);
     await expect(
       store.command(
-        { action: "save", transaction: original, occurrences: 3 },
+        { action: "save", transaction: rows[0], occurrences: 3 },
         a.session,
       ),
-    ).rejects.toThrow();
+    ).rejects.toThrow("individualmente");
     expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
       3,
     );

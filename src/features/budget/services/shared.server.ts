@@ -2,7 +2,6 @@ import {
   createClient,
   type Client,
   type InArgs,
-  type ResultSet,
   type Transaction as DatabaseTransaction,
 } from "@libsql/client";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
@@ -14,6 +13,7 @@ import { isBankAccount, isGoalPercentages, isTransaction } from "@/features/budg
 import type {
   BankAccount,
   BudgetState,
+  GoalPercentages,
   SharedSnapshot,
   Transaction,
 } from "@/features/budget/types";
@@ -82,22 +82,12 @@ async function execute(
   return database.execute({ sql, args });
 }
 
-function rowsOf<T extends object>(result: ResultSet): T[] {
-  return result.rows.map((row) => {
-    const values: Record<string, unknown> = {};
-    result.columns.forEach((column, index) => {
-      values[column] = row[index];
-    });
-    return values as T;
-  });
-}
-
 async function all<T extends object>(
   database: DatabaseExecutor,
   sql: string,
   args: InArgs = [],
 ) {
-  return rowsOf<T>(await execute(database, sql, args));
+  return (await execute(database, sql, args)).rows as unknown as T[];
 }
 
 async function one<T extends object>(
@@ -258,21 +248,21 @@ export function createBudgetStore(
           members: members.map((member) => ({
             id: member.id,
             name: member.name,
-            percentages: JSON.parse(member.percentages),
+            percentages: JSON.parse(member.percentages) as GoalPercentages,
             percentagesRevision: member.revision,
           })),
         },
         budget: {
           ...emptyBudget(),
           percentages: ownPercentages
-            ? JSON.parse(ownPercentages.percentages)
+            ? (JSON.parse(ownPercentages.percentages) as GoalPercentages)
             : { ...DEFAULT_PERCENTAGES },
           transactions: rows.map((row) => ({
-            ...JSON.parse(row.payload),
+            ...(JSON.parse(row.payload) as Transaction),
             revision: row.revision,
           })),
           accounts: accountRows.map((row) => ({
-            ...JSON.parse(row.payload),
+            ...(JSON.parse(row.payload) as BankAccount),
             revision: row.revision,
           })),
         },
@@ -383,11 +373,11 @@ export function createBudgetStore(
           "DELETE FROM magic_links WHERE expires <= ?",
           [Date.now()],
         );
-        await execute(transaction, "INSERT INTO magic_links VALUES (?,?,?)", [
-          digest(accessToken),
-          email,
-          Date.now() + 15 * 60_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO magic_links(hash, email, expires) VALUES (?,?,?)",
+          [digest(accessToken), email, Date.now() + 15 * 60_000],
+        );
       });
       try {
         await (options.sendMagicLink ?? sendMagicLink)({
@@ -437,14 +427,16 @@ export function createBudgetStore(
           "DELETE FROM sessions WHERE expires <= ? OR hash = ?",
           [Date.now(), digest(session ?? "")],
         );
-        await execute(transaction, "INSERT INTO sessions VALUES (?,?,?)", [
-          digest(nextSession!),
-          user.id,
-          Date.now() + 30 * 86400_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO sessions(hash, user_id, expires) VALUES (?,?,?)",
+          [digest(nextSession!), user.id, Date.now() + 30 * 86400_000],
+        );
       });
     } else if (data.action === "verify-link") {
       const accessToken = text(data.token, 128);
+      await throttle(`verify:${accessToken}`, 10);
+      await throttle("verify:global", 100);
       nextSession = token();
       await atomic(async (transaction) => {
         const link = await one<{ email: string }>(
@@ -482,11 +474,11 @@ export function createBudgetStore(
           "DELETE FROM sessions WHERE expires <= ? OR hash = ?",
           [Date.now(), digest(session ?? "")],
         );
-        await execute(transaction, "INSERT INTO sessions VALUES (?,?,?)", [
-          digest(nextSession!),
-          user.id,
-          Date.now() + 30 * 86400_000,
-        ]);
+        await execute(
+          transaction,
+          "INSERT INTO sessions(hash, user_id, expires) VALUES (?,?,?)",
+          [digest(nextSession!), user.id, Date.now() + 30 * 86400_000],
+        );
       });
     } else if (data.action === "logout") {
       if (session)
@@ -584,7 +576,7 @@ export function createBudgetStore(
           inviteToken = token();
           await execute(
             transaction,
-            "INSERT INTO invites VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
+            "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
             [digest(inviteToken), home.id, Date.now() + 48 * 3600_000],
           );
         } else if (data.action === "revoke-invite") {
@@ -618,6 +610,22 @@ export function createBudgetStore(
           const given = isTransaction(rawTransaction)
             ? rawTransaction.revision
             : undefined;
+          if (old && !old.deleted && given === undefined) {
+            // A create retried after a lost response carries no revision;
+            // accept it when the stored row already matches the submission.
+            const stored = JSON.parse(old.payload) as Transaction;
+            const same =
+              stored.description === t.description &&
+              stored.amount === t.amount &&
+              stored.date === t.date &&
+              stored.kind === t.kind &&
+              stored.goal === t.goal &&
+              stored.accountId === t.accountId &&
+              stored.memberId === user.id &&
+              stored.tags.length === t.tags.length &&
+              stored.tags.every((tag, index) => tag === t.tags[index]);
+            if (same) return;
+          }
           if (old ? old.deleted || old.revision !== given : given !== undefined)
             throw conflict();
           if (old && occurrences !== 1)
@@ -677,27 +685,30 @@ export function createBudgetStore(
           );
           if (!previous) throw conflict();
           if (!undo && data.following !== undefined) {
-            const source: Transaction = JSON.parse(previous.payload);
+            const source = JSON.parse(previous.payload) as Transaction;
             if (
               !source.recurrenceId ||
               source.recurrenceIndex === undefined ||
               !Array.isArray(data.following)
             )
               throw new RequestError("Recorrência inválida.");
-            const candidates = await execute(
+            const candidates = await all<TransactionRow & { id: string }>(
               transaction,
               "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
               [home.id],
             );
-            const following = candidates.rows.filter((row) => {
-              const item: Transaction = JSON.parse(String(row.payload));
+            const following = candidates.filter((row) => {
+              const item = JSON.parse(row.payload) as Transaction;
               return (
                 item.recurrenceId === source.recurrenceId &&
                 item.recurrenceIndex !== undefined &&
                 item.recurrenceIndex > source.recurrenceIndex!
               );
             });
-            const expected = data.following;
+            const expected = data.following as {
+              id: string;
+              revision: number;
+            }[];
             if (
               expected.length !== following.length ||
               following.some(
@@ -720,7 +731,7 @@ export function createBudgetStore(
                 "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
                 [
                   JSON.stringify({
-                    ...JSON.parse(String(row.payload)),
+                    ...(JSON.parse(row.payload) as Transaction),
                     updatedBy: user.id,
                     updatedAt: new Date().toISOString(),
                   }),
@@ -731,7 +742,7 @@ export function createBudgetStore(
             }
           }
           const payload = JSON.stringify({
-            ...JSON.parse(previous.payload),
+            ...(JSON.parse(previous.payload) as Transaction),
             updatedBy: user.id,
             updatedAt: new Date().toISOString(),
           });
@@ -778,7 +789,12 @@ export function createBudgetStore(
             "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
             [home.id],
           );
-          if (rows.some((row) => JSON.parse(row.payload).accountId === id))
+          if (
+            rows.some(
+              (row) =>
+                (JSON.parse(row.payload) as Transaction).accountId === id,
+            )
+          )
             throw new RequestError(
               "Exclua ou mova as transações desta conta antes de apagá-la.",
             );

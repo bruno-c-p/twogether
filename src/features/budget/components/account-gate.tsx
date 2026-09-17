@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, useSearch } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { formText } from "@/features/budget/services/budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { Brand } from "@/ui/brand";
 import { Button } from "@/ui/button";
@@ -56,6 +57,35 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
       setCooldown(60);
     }
   }
+  async function submitEmail(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await requestAccess(
+      formText(new FormData(event.currentTarget), "email").trim(),
+    );
+  }
+  async function submitName(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await budget.command({
+      action: "profile",
+      name: formText(new FormData(event.currentTarget), "name"),
+    });
+  }
+  async function acceptInvitation() {
+    if (
+      await budget.command({
+        action: "join",
+        token: inviteToken(invitation),
+      })
+    )
+      clearInvitation();
+  }
+  async function submitInvitation(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    await budget.command({
+      action: "join",
+      token: inviteToken(formText(new FormData(event.currentTarget), "invite")),
+    });
+  }
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
@@ -103,7 +133,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 <Button
                   variant="secondary"
                   disabled={budget.busy || cooldown > 0}
-                  onClick={() => requestAccess(sentTo)}
+                  onClick={() => void requestAccess(sentTo)}
                 >
                   {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar link"}
                 </Button>
@@ -112,16 +142,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 </Button>
               </FormStack>
             ) : (
-              <Form
-                onSubmit={async (event) => {
-                  event.preventDefault();
-                  await requestAccess(
-                    String(
-                      new FormData(event.currentTarget).get("email") ?? "",
-                    ).trim(),
-                  );
-                }}
-              >
+              <Form onSubmit={(event) => void submitEmail(event)}>
                 <label>
                   Seu e-mail
                   <input
@@ -147,17 +168,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             )}
           </>
         ) : !budget.user.name ? (
-          <Form
-            onSubmit={async (event) => {
-              event.preventDefault();
-              await budget.command({
-                action: "profile",
-                name: String(
-                  new FormData(event.currentTarget).get("name") ?? "",
-                ),
-              });
-            }}
-          >
+          <Form onSubmit={(event) => void submitName(event)}>
             <label>
               Seu nome
               <input
@@ -182,15 +193,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
                 </Note>
                 <Button
                   disabled={budget.busy}
-                  onClick={async () => {
-                    if (
-                      await budget.command({
-                        action: "join",
-                        token: inviteToken(invitation),
-                      })
-                    )
-                      clearInvitation();
-                  }}
+                  onClick={() => void acceptInvitation()}
                 >
                   {budget.busy ? "Aguarde…" : "Aceitar convite"}
                   <ArrowRight size={18} />
@@ -203,25 +206,13 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
               <>
                 <Button
                   disabled={budget.busy}
-                  onClick={() => budget.command({ action: "create" })}
+                  onClick={() => void budget.command({ action: "create" })}
                 >
                   Começar nosso orçamento
                   <ArrowRight size={18} />
                 </Button>
                 <span className={styles.divider}>já recebeu um convite?</span>
-                <Form
-                  onSubmit={async (event) => {
-                    event.preventDefault();
-                    await budget.command({
-                      action: "join",
-                      token: inviteToken(
-                        String(
-                          new FormData(event.currentTarget).get("invite") ?? "",
-                        ),
-                      ),
-                    });
-                  }}
-                >
+                <Form onSubmit={(event) => void submitInvitation(event)}>
                   <label>
                     Link de convite
                     <input
@@ -239,7 +230,7 @@ export function AccountGate({ budget }: { budget: BudgetController }) {
             <Button
               variant="text"
               disabled={budget.busy}
-              onClick={() => budget.command({ action: "logout" })}
+              onClick={() => void budget.command({ action: "logout" })}
             >
               Sair de {budget.user.email}
             </Button>

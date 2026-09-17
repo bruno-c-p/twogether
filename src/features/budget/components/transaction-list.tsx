@@ -8,13 +8,24 @@ import {
 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
-import type { BankAccount, GoalId, Transaction, Member } from "@/features/budget/types";
+import type {
+  BankAccount,
+  GoalId,
+  Transaction,
+  TransactionKind,
+  Member,
+} from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/ui/button";
 import { ColorDot } from "@/ui/color-dot";
 import { EmptyState } from "@/ui/empty-state";
 import { Panel, SectionHeading } from "@/ui/panel";
 import styles from "@/features/budget/components/transaction-list.module.css";
+
+const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+});
 
 interface Props {
   transactions: Transaction[];
@@ -25,11 +36,11 @@ interface Props {
   query: string;
   goalFilter: GoalId | "all";
   tagFilter: string;
-  kindFilter: string;
+  kindFilter: TransactionKind | "all";
   onQuery: (value: string) => void;
   onGoal: (value: GoalId | "all") => void;
   onTag: (value: string) => void;
-  onKind: (value: string) => void;
+  onKind: (value: TransactionKind | "all") => void;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
   onAdd: () => void;
@@ -37,24 +48,26 @@ interface Props {
   onViewAll: () => void;
 }
 
-export function TransactionList(props: Props) {
-  const {
-    transactions,
-    hidden,
-    query,
-    goalFilter,
-    tagFilter,
-    kindFilter,
-    onQuery,
-    onGoal,
-    onTag,
-    onKind,
-    onEdit,
-    onDelete,
-    onAdd,
-    compact,
-    onViewAll,
-  } = props;
+export function TransactionList({
+  transactions,
+  members,
+  accounts,
+  busy,
+  hidden,
+  query,
+  goalFilter,
+  tagFilter,
+  kindFilter,
+  onQuery,
+  onGoal,
+  onTag,
+  onKind,
+  onEdit,
+  onDelete,
+  onAdd,
+  compact,
+  onViewAll,
+}: Props) {
   const filtered = transactions
     .filter(
       (t) =>
@@ -122,7 +135,10 @@ export function TransactionList(props: Props) {
           <select
             aria-label="Filtrar por tipo"
             value={kindFilter}
-            onChange={(event) => onKind(event.target.value)}
+            onChange={(event) => {
+              const value = event.target.value;
+              onKind(value === "expense" || value === "income" ? value : "all");
+            }}
           >
             <option value="all">Todos os tipos</option>
             <option value="expense">Despesas</option>
@@ -173,16 +189,16 @@ export function TransactionList(props: Props) {
                   <div>
                     <button
                       className={styles.transactionName}
-                      disabled={props.busy}
+                      disabled={busy}
                       onClick={() => onEdit(t)}
                     >
                       {t.description}
                     </button>
                     <div className={styles.transactionPerson}>
-                      {props.members.find((member) => member.id === t.memberId)
+                      {members.find((member) => member.id === t.memberId)
                         ?.name ?? "Pessoa do casal"}
                       {" · "}
-                      {props.accounts.find(
+                      {accounts.find(
                         (account) => account.id === t.accountId,
                       )?.name ?? "Sem conta"}
                     </div>
@@ -216,13 +232,7 @@ export function TransactionList(props: Props) {
                   )}
                 </div>
                 <time className={styles.transactionDate} dateTime={t.date}>
-                  {new Intl.DateTimeFormat("pt-BR", {
-                    day: "2-digit",
-                    month: "short",
-                  })
-                    .format(date)
-                    .replace(" de ", " ")
-                    .replace(".", "")}
+                  {dayFormatter.format(date).replace(" de ", " ").replace(".", "")}
                 </time>
                 <span
                   className={`${styles.transactionValue} ${t.kind === "income" ? styles.positive : styles.negative}`}
@@ -235,7 +245,7 @@ export function TransactionList(props: Props) {
                   <Button
                     variant="icon"
                     className={styles.actionButton}
-                    disabled={props.busy}
+                    disabled={busy}
                     aria-label={`Editar ${t.description}`}
                     onClick={() => onEdit(t)}
                   >
@@ -244,7 +254,7 @@ export function TransactionList(props: Props) {
                   <Button
                     variant="icon"
                     className={`${styles.actionButton} ${styles.deleteButton}`}
-                    disabled={props.busy}
+                    disabled={busy}
                     aria-label={`Excluir ${t.description}`}
                     onClick={() => onDelete(t)}
                   >

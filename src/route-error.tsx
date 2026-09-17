@@ -15,7 +15,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
       </p>
       <Button
         onClick={() => {
-          router.invalidate();
+          void router.invalidate();
           reset();
         }}
       >
