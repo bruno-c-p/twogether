@@ -17,7 +17,6 @@ function BudgetPending() {
 export const Route = createFileRoute("/")({
   component: BudgetRoute,
   validateSearch: validateBudgetSearch,
-  headers: () => ({ "Cache-Control": "private, no-store" }),
   loaderDeps: ({ search }) => ({
     access: search.access,
     convite: search.convite,
