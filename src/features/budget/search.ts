@@ -30,6 +30,12 @@ export function withView(search: BudgetSearch, view: View): BudgetSearch {
   return { ...search, view };
 }
 
+export function accessRedirectSearch(
+  convite?: string,
+): Pick<BudgetSearch, "convite"> {
+  return convite ? { convite } : {};
+}
+
 export function validateBudgetSearch(
   search: Record<string, unknown>,
 ): BudgetSearch {

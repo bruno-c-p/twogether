@@ -15,12 +15,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22.12.0
+          package-manager-cache: false
 
       - name: Set up Bun
         uses: oven-sh/setup-bun@v2
@@ -36,11 +37,20 @@ jobs:
       - name: Lint
         run: bun run lint
 
+      - name: Fitness
+        run: bun run fitness
+
       - name: Test
         run: bun run test
 
+      - name: Check whitespace
+        run: git diff --check
+
       - name: Build
         run: bun run build
+
+      - name: Production Cache-Control
+        run: bun run fitness -- --headers
 
   deploy:
     name: Deploy production
@@ -51,7 +61,7 @@ jobs:
       VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Trigger Vercel production deployment
         run: curl --fail --silent --show-error --request POST "$VERCEL_DEPLOY_HOOK"

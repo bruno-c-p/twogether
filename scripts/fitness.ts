@@ -1,0 +1,194 @@
+import { execFileSync, spawn } from "node:child_process";
+import { existsSync, readFileSync } from "node:fs";
+import { createServer } from "node:net";
+import { setTimeout as sleep } from "node:timers/promises";
+
+const failures: string[] = [];
+const apiBudget = ["/api", "budget"].join("/");
+const cacheControl = "private, no-store";
+const resurrectedCss = [
+  "src/ui.module.css",
+  "src/features/budget/styles/list-row.module.css",
+];
+const bannedCssDeps = ["tailwindcss", "shadcn"];
+const cacheControlFiles = [
+  "src/routes/__root.tsx",
+  "src/routes/index.tsx",
+  "src/features/budget/actions/load-budget.ts",
+] as const;
+
+function fail(message: string) {
+  failures.push(message);
+}
+
+function tracked(args: string[]) {
+  const out = execFileSync("git", ["ls-files", "--", ...args], {
+    encoding: "utf8",
+  });
+  return out.split("\n").filter(Boolean);
+}
+
+function sourceFiles() {
+  return tracked(["*.ts", "*.tsx", "*.js", "*.jsx", "*.mjs", "*.cjs"]).filter(
+    (file) => file !== "scripts/fitness.ts",
+  );
+}
+
+function assertNoGithubMedia() {
+  const files = tracked([".github"]).filter((file) =>
+    /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i.test(file),
+  );
+  if (files.length)
+    fail(`image/video files under .github/:\n${files.join("\n")}`);
+}
+
+function assertNoBudgetCommandBus() {
+  const files = tracked([]);
+  for (const file of files) {
+    if (file.endsWith("api.server.ts")) fail(`tracked ${file}`);
+    if (file === "src/routes/api" || file.startsWith("src/routes/api/"))
+      fail(`tracked API route ${file}`);
+  }
+  for (const file of sourceFiles()) {
+    const text = readFileSync(file, "utf8");
+    if (text.includes(apiBudget)) fail(`${file} mentions ${apiBudget}`);
+    if (text.includes("createAPIFileRoute"))
+      fail(`${file} mentions createAPIFileRoute`);
+  }
+}
+
+function assertCacheControlSource() {
+  for (const file of cacheControlFiles) {
+    const text = readFileSync(file, "utf8");
+    if (!text.includes(cacheControl))
+      fail(`${file} must set Cache-Control: ${cacheControl}`);
+  }
+  const loadBudget = readFileSync(
+    "src/features/budget/actions/load-budget.ts",
+    "utf8",
+  );
+  if (!loadBudget.includes("function setPrivateNoStore()"))
+    fail("load-budget.ts must keep setPrivateNoStore");
+}
+
+function assertCssHouseStyle() {
+  const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
+    dependencies?: Record<string, string>;
+    devDependencies?: Record<string, string>;
+    peerDependencies?: Record<string, string>;
+  };
+  const names = Object.keys({
+    ...pkg.dependencies,
+    ...pkg.devDependencies,
+    ...pkg.peerDependencies,
+  });
+  for (const name of names) {
+    if (bannedCssDeps.includes(name) || name.startsWith("@radix-ui/"))
+      fail(`package.json must not depend on ${name}`);
+  }
+  for (const file of tracked(resurrectedCss)) fail(`tracked resurrected ${file}`);
+}
+
+async function freePort() {
+  return await new Promise<number>((resolve, reject) => {
+    const server = createServer();
+    server.listen(0, "127.0.0.1", () => {
+      const address = server.address();
+      if (!address || typeof address === "string") {
+        server.close();
+        reject(new Error("could not bind an ephemeral port"));
+        return;
+      }
+      const port = address.port;
+      server.close((error) => {
+        if (error) reject(error);
+        else resolve(port);
+      });
+    });
+    server.on("error", reject);
+  });
+}
+
+function serverEntry() {
+  const candidates = [
+    ".output/server/index.mjs",
+    ".output/server/index.js",
+    "dist/server/index.mjs",
+    "dist/server/index.js",
+  ];
+  return candidates.find((file) => existsSync(file));
+}
+
+async function waitForHeader(url: string, timeoutMs: number) {
+  const deadline = Date.now() + timeoutMs;
+  let last = "";
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(url, {
+        method: "HEAD",
+        redirect: "manual",
+        signal: AbortSignal.timeout(2_000),
+      });
+      return response.headers.get("cache-control") ?? "";
+    } catch (error) {
+      last = error instanceof Error ? error.message : String(error);
+      await sleep(200);
+    }
+  }
+  throw new Error(`server at ${url} did not respond: ${last}`);
+}
+
+async function assertBuiltHeaders() {
+  const entry = serverEntry();
+  if (!entry) {
+    fail("build output server entry not found (.output/server or dist/server)");
+    return;
+  }
+  const port = await freePort();
+  const url = `http://127.0.0.1:${port}/`;
+  const child = spawn("bun", [entry], {
+    env: {
+      ...process.env,
+      PORT: String(port),
+      NITRO_PORT: String(port),
+      NITRO_HOST: "127.0.0.1",
+      HOST: "127.0.0.1",
+      NODE_ENV: "production",
+      BUDGET_DATABASE_PATH: ":memory:",
+    },
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+  let output = "";
+  child.stdout?.on("data", (chunk: Buffer) => {
+    output += chunk.toString();
+  });
+  child.stderr?.on("data", (chunk: Buffer) => {
+    output += chunk.toString();
+  });
+  try {
+    const header = await waitForHeader(url, 20_000);
+    if (header !== cacheControl)
+      fail(`GET / Cache-Control is ${JSON.stringify(header)}, expected ${cacheControl}`);
+    else console.log(`HEAD / Cache-Control: ${header}`);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    fail(output ? `${detail}\n${output}` : detail);
+  } finally {
+    child.kill("SIGKILL");
+  }
+}
+
+const afterBuild = process.argv.includes("--headers");
+if (afterBuild) {
+  await assertBuiltHeaders();
+} else {
+  assertNoGithubMedia();
+  assertNoBudgetCommandBus();
+  assertCacheControlSource();
+  assertCssHouseStyle();
+}
+
+if (failures.length) {
+  console.error(failures.join("\n"));
+  process.exit(1);
+}

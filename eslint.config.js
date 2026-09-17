@@ -24,4 +24,20 @@ export default tseslint.config(
       "react-hooks/exhaustive-deps": "warn",
     },
   },
+  {
+    files: ["**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["./*", "../*", "./**", "../**"],
+              message: "Use the @/ alias (src/) instead of relative imports.",
+            },
+          ],
+        },
+      ],
+    },
+  },
 );
