@@ -16,7 +16,10 @@ export function useBudget() {
   const [syncError, setSyncError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+  const refreshing = useRef(false);
   const refresh = useCallback(async () => {
+    if (refreshing.current) return;
+    refreshing.current = true;
     try {
       await router.invalidate();
       setSyncError("");
@@ -26,6 +29,8 @@ export function useBudget() {
           ? error.message
           : "Sem conexão com o servidor. Tentaremos sincronizar novamente.",
       );
+    } finally {
+      refreshing.current = false;
     }
   }, [router]);
   useEffect(() => {

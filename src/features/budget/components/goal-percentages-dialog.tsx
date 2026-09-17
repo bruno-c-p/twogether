@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
@@ -31,17 +31,18 @@ export function GoalPercentagesDialog({
       sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
     0,
   );
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    if (!valid || saving) return;
+    setSaving(true);
+    if (await onSave(values)) onClose();
+    setSaving(false);
+  }
   return (
     <Dialog labelledBy="percentages-title" narrow onClose={onClose}>
       <DialogContent
         as="form"
-        onSubmit={async (event) => {
-          event.preventDefault();
-          if (!valid || saving) return;
-          setSaving(true);
-          if (await onSave(values)) onClose();
-          setSaving(false);
-        }}
+        onSubmit={(event) => void submit(event)}
       >
         <DialogHeader onClose={onClose} closeLabel="Fechar percentuais">
           <h2 id="percentages-title">Divisão da minha renda</h2>

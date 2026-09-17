@@ -9,6 +9,8 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "fitness": "bun scripts/fitness.ts",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files"
   },
   "dependencies": {

@@ -21,6 +21,29 @@ export function CoupleDialog({
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
+  async function createInvite() {
+    const result = await budget.command({ action: "invite" });
+    if (result?.inviteToken) {
+      setLink(`${window.location.origin}/?convite=${result.inviteToken}`);
+      setCopied(false);
+      setCopyError("");
+    }
+  }
+  async function copyInvite() {
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopied(true);
+      setCopyError("");
+    } catch {
+      setCopyError("Selecione e copie o link acima.");
+    }
+  }
+  async function revokeInvite() {
+    if (await budget.command({ action: "revoke-invite" })) {
+      setLink("");
+      setCopyError("Convites anteriores cancelados.");
+    }
+  }
   return (
     <Dialog labelledBy="couple-title" narrow onClose={onClose}>
       <DialogContent>
@@ -53,16 +76,7 @@ export function CoupleDialog({
             </p>
             <Button
               disabled={budget.busy}
-              onClick={async () => {
-                const result = await budget.command({ action: "invite" });
-                if (result?.inviteToken) {
-                  setLink(
-                    `${window.location.origin}/?convite=${result.inviteToken}`,
-                  );
-                  setCopied(false);
-                  setCopyError("");
-                }
-              }}
+              onClick={() => void createInvite()}
             >
               {link ? "Gerar novo convite" : "Gerar convite"}
             </Button>
@@ -78,15 +92,7 @@ export function CoupleDialog({
                 </label>
                 <Button
                   variant="secondary"
-                  onClick={async () => {
-                    try {
-                      await navigator.clipboard.writeText(link);
-                      setCopied(true);
-                      setCopyError("");
-                    } catch {
-                      setCopyError("Selecione e copie o link acima.");
-                    }
-                  }}
+                  onClick={() => void copyInvite()}
                 >
                   <Copy size={16} />
                   {copied ? "Link copiado" : "Copiar convite"}
@@ -100,12 +106,7 @@ export function CoupleDialog({
             <Button
               variant="text"
               disabled={budget.busy}
-              onClick={async () => {
-                if (await budget.command({ action: "revoke-invite" })) {
-                  setLink("");
-                  setCopyError("Convites anteriores cancelados.");
-                }
-              }}
+              onClick={() => void revokeInvite()}
             >
               Cancelar convites pendentes
             </Button>
@@ -121,7 +122,7 @@ export function CoupleDialog({
             variant="text"
             className={styles.logout}
             disabled={budget.busy}
-            onClick={() => budget.command({ action: "logout" })}
+            onClick={() => void budget.command({ action: "logout" })}
           >
             Sair da conta
           </Button>

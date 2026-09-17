@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
-import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/services/budget";
+import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/types";
 import { ColorDot } from "@/ui/color-dot";
@@ -12,6 +12,14 @@ const compactMoney = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+const TAG_PALETTE_SIZE = 8;
+
+function tagColor(name: string) {
+  let hash = 0;
+  for (let index = 0; index < name.length; index++)
+    hash = (hash * 31 + name.charCodeAt(index)) | 0;
+  return `var(--tag-${(Math.abs(hash) % TAG_PALETTE_SIZE) + 1})`;
+}
 
 export function ExpenseCharts({
   transactions,
@@ -33,19 +41,15 @@ export function ExpenseCharts({
     { month: "long", year: "numeric" },
   );
   const display = (amount: number) => (hidden ? "R$ ••••" : money(amount));
-  let offset = 0;
-  const segments = tags.map((tag, index) => {
-    const share = total ? (tag.amount / total) * 100 : 0;
-    const start = offset;
-    offset += share;
-    return {
-      ...tag,
-      share,
-      start,
-      color:
-        tag.name === null ? "var(--muted)" : GOALS[index % GOALS.length].color,
-    };
-  });
+  const segments = donutSegments(tags, (tag) => tag.amount).map((segment) => ({
+    ...segment.item,
+    share: segment.share,
+    start: segment.start,
+    color:
+      segment.item.name === null
+        ? "var(--muted)"
+        : tagColor(segment.item.name),
+  }));
   return (
     <OverviewGrid
       className={styles.expenseCharts}

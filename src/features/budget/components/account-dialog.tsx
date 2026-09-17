@@ -14,7 +14,7 @@ import {
   Fieldset,
   FormError,
 } from "@/ui/field";
-import { formatAmountInput, parseBalance } from "@/features/budget/services/budget";
+import { formatAmountInput, formText, parseBalance } from "@/features/budget/services/budget";
 import type { BankAccount } from "@/features/budget/types";
 
 interface Props {
@@ -46,9 +46,7 @@ export function AccountDialog({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
-    const name = String(
-      new FormData(event.currentTarget).get("name") ?? "",
-    ).trim();
+    const name = formText(new FormData(event.currentTarget), "name").trim();
     const openingBalance = parseBalance(openingValue);
     if (!name) {
       setError("Dê um nome para esta conta.");
@@ -86,7 +84,7 @@ export function AccountDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={submit}>
+        <form onSubmit={(event) => void submit(event)}>
           <Fieldset disabled={saving}>
             <Field>
               Nome da conta

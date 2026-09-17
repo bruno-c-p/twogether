@@ -27,7 +27,13 @@ import {
   summarize,
   planGoals,
 } from "@/features/budget/services/budget";
-import type { BankAccount, GoalId, Transaction, View } from "@/features/budget/types";
+import type {
+  BankAccount,
+  GoalId,
+  Transaction,
+  TransactionKind,
+  View,
+} from "@/features/budget/types";
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { AccountGate } from "@/features/budget/components/account-gate";
@@ -158,7 +164,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     }));
   }
 
-  function setKindFilter(kind: string) {
+  function setKindFilter(kind: TransactionKind | "all") {
     updateSearch((prev) => ({
       ...prev,
       kind: kind === "all" ? undefined : kind,
@@ -263,6 +269,11 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   async function removeAccount(account: BankAccount) {
     if (await budget.removeAccount(account))
       setNotice({ message: "Conta excluída." });
+  }
+
+  async function undoNotice() {
+    if (notice?.undo && (await budget.restore(notice.undo)))
+      setNotice({ message: "Alteração desfeita." });
   }
 
   return (
@@ -432,7 +443,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               hidden={hidden}
               onAdd={() => setAccountDialog({ account: null })}
               onEdit={(account) => setAccountDialog({ account })}
-              onDelete={removeAccount}
+              onDelete={(account) => void removeAccount(account)}
             />
           ) : (
             <>
@@ -628,7 +639,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   }
                   onKind={setKindFilter}
                   onEdit={(transaction) => openTransaction(transaction)}
-                  onDelete={remove}
+                  onDelete={(transaction) => void remove(transaction)}
                   onAdd={() => openTransaction(null)}
                   compact={view === "overview"}
                   onViewAll={() => navigate("transactions")}
@@ -720,10 +731,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           <span>{notice.message}</span>
           {notice.undo && (
             <button
-              onClick={async () => {
-                if (notice.undo && (await budget.restore(notice.undo)))
-                  setNotice({ message: "Alteração desfeita." });
-              }}
+              onClick={() => void undoNotice()}
             >
               Desfazer
             </button>
