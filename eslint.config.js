@@ -64,4 +64,10 @@ export default tseslint.config(
       "@typescript-eslint/require-await": "off",
     },
   },
+  {
+    files: ["e2e/**/*.ts"],
+    rules: {
+      "no-restricted-imports": "off",
+    },
+  },
 );

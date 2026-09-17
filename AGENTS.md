@@ -19,9 +19,9 @@
 - Inspecione erros no console e requisições com falha. Corrija problemas
   introduzidos pela alteração e repita a validação do fluxo corrigido.
 - Execute `bun run typecheck`, `bun run lint`, `bun run fitness`,
-  `bun run test`, `bun run build` e `git diff --check`. Se faltarem
-  dependências, execute `bun install --frozen-lockfile` antes das
-  verificações.
+  `bun run test`, `bun run build`, `bun run e2e:must` e `git diff --check`.
+  Se faltarem dependências, execute `bun install --frozen-lockfile` antes
+  das verificações. Chromium do Playwright: `bunx playwright install chromium`.
 - Testes automatizados, análise de código e build não substituem a validação
   no navegador. Não declare a tarefa concluída apenas com essas verificações.
 - Use dados de teste isolados; preserve dados reais e trabalho não relacionado.

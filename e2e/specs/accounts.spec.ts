@@ -1,0 +1,61 @@
+import { expect, test } from "@playwright/test";
+import {
+  dismissToast,
+  expectNoHorizontalOverflow,
+  expectToast,
+  nav,
+  onboard,
+  withMobile,
+} from "../fixtures/app";
+
+test.describe("accounts", () => {
+  test("M6 cannot launch a transação without a conta", async ({ page }) => {
+    await onboard(page, "Ana");
+    await page.getByRole("button", { name: "Nova transação" }).click();
+    await expectToast(page, "Cadastre uma conta para lançar transações.");
+    expect(new URL(page.url()).searchParams.get("view")).toBe("accounts");
+    await expect(
+      page.getByRole("heading", { name: "Nova transação" }),
+    ).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "Contas" })).toBeVisible();
+  });
+
+  test("M5 empty contas create a Nubank row", async ({ page }) => {
+    await onboard(page, "Ana");
+    await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
+    await expect(page.getByRole("heading", { name: "Contas" })).toBeVisible();
+    await expect(page.getByLabel("Selecionar mês e ano")).toHaveCount(0);
+    await expect(
+      page.getByText(
+        "O saldo de cada conta inclui as transações de todo o casal.",
+      ),
+    ).toBeVisible();
+    await expect(page.getByText("Nenhuma conta cadastrada.")).toBeVisible();
+    await page.getByRole("button", { name: "Adicionar primeira conta" }).click();
+    await expect(page.getByRole("heading", { name: "Nova conta" })).toBeVisible();
+    await page.getByLabel("Nome da conta").fill("Nubank");
+    await page.getByLabel("Saldo inicial").fill("1.250,00");
+    await page.getByRole("button", { name: "Adicionar conta" }).click();
+    await expectToast(page, "Conta adicionada.");
+    await expect(page.getByRole("button", { name: "Nubank" })).toBeVisible();
+    await expect(page.getByText("Nenhuma transação nesta conta")).toBeVisible();
+    await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: /Contas cadastradas/ }),
+    ).toContainText("1");
+    await expect(page.getByRole("heading", { name: "Nova conta" })).toHaveCount(
+      0,
+    );
+
+    await withMobile(page, async () => {
+      await dismissToast(page);
+      const fab = page.getByRole("button", { name: "Nova conta" });
+      await expect(fab).toBeVisible();
+      const box = await fab.boundingBox();
+      expect(box?.width ?? 0).toBeGreaterThan(240);
+      await expect(page.getByRole("button", { name: "Nubank" })).toBeVisible();
+      await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
+      await expectNoHorizontalOverflow(page);
+    });
+  });
+});
