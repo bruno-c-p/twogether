@@ -38,7 +38,7 @@ The access link expires in 15 minutes, works once, and authenticates only whoeve
 - Six fixed goals with editable percentages that add up to 100%: fixed costs 30%, pleasures 10%, comfort 15%, goals 15%, financial freedom 25%, and knowledge 5%. The split applies to every month.
 - Editing, deleting, and undoing per transaction, plus search and filters by goal, type, and tag. Amounts in whole cents.
 - Original authorship and the last person to edit are preserved.
-- Each change is a validated `createServerFn`; the UI reads the loader snapshot and calls `router.invalidate()` after saving. When you return to the tab, focus the window, or reconnect to the internet, the budget is synced with your partner's changes. Concurrent changes to the same entry or to the percentages are rejected with guidance to review the current version; independent additions do not overwrite each other.
+- Each change is a validated `createServerFn`. The workspace seeds TanStack Query from the loader snapshot; saving, deleting, or undoing a transaction updates that cache immediately, then reconciles with the server. Focus, visibility, and reconnect refetch the snapshot so you see your partner's changes. Concurrent edits to the same entry or to the percentages are rejected with guidance to review the current version; independent additions do not overwrite each other. The month lives in the URL (`?month=YYYY-MM`); the first visit without it redirects to the current month.
 
 ## Persistence and deployment
 

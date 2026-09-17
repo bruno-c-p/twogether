@@ -1,13 +1,23 @@
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
+import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
+import { workspaceQueryKey } from "@/features/budget/workspace";
 import { isMutationFailure } from "@/server/mutation-result";
 
 export function useMutation<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
+  optimistic?: (
+    snapshot: WorkspaceSnapshot,
+    ...args: TArgs
+  ) => WorkspaceSnapshot,
 ) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const fnRef = useRef(fn);
   fnRef.current = fn;
+  const optimisticRef = useRef(optimistic);
+  optimisticRef.current = optimistic;
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
@@ -18,15 +28,34 @@ export function useMutation<TArgs extends unknown[], TResult>(
       inFlight.current = true;
       setPending(true);
       setError("");
+      const cached = queryClient.getQueriesData<WorkspaceSnapshot>({
+        queryKey: workspaceQueryKey,
+      })[0];
+      const previous = cached?.[1];
+      const applyOptimistic = optimisticRef.current;
+      if (applyOptimistic && previous && cached) {
+        await queryClient.cancelQueries({ queryKey: cached[0] });
+        queryClient.setQueryData(cached[0], applyOptimistic(previous, ...args));
+      }
       try {
         const result = await fnRef.current(...args);
         if (isMutationFailure(result)) {
+          if (cached && previous) {
+            queryClient.setQueryData(cached[0], previous);
+          }
           setError(result.message);
           return null;
         }
-        await router.invalidate();
+        const refresh = queryClient.invalidateQueries({
+          queryKey: workspaceQueryKey,
+        });
+        if (applyOptimistic) void refresh;
+        else await refresh;
         return result;
       } catch (error) {
+        if (cached && previous && applyOptimistic) {
+          queryClient.setQueryData(cached[0], previous);
+        }
         if (isRedirect(error)) {
           await router.navigate(router.resolveRedirect(error).options);
           return null;
@@ -42,7 +71,7 @@ export function useMutation<TArgs extends unknown[], TResult>(
         setPending(false);
       }
     },
-    [router],
+    [queryClient, router],
   );
 
   return { run, pending, error };

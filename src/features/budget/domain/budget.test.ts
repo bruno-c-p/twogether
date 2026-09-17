@@ -5,6 +5,7 @@ import {
   summarize,
 } from "@/features/budget/domain/calc";
 import {
+  currentMonth,
   formatAmountInput,
   normalizeTag,
   parseAmount,
@@ -166,6 +167,9 @@ describe("mês e tags", () => {
   it("navega corretamente nas viradas de ano", () => {
     expect(shiftMonth("2026-12", 1)).toBe("2027-01");
     expect(shiftMonth("2026-01", -1)).toBe("2025-12");
+  });
+  it("usa o calendário local para o mês atual", () => {
+    expect(currentMonth(new Date(2026, 8, 17))).toBe("2026-09");
   });
   it("normaliza tags para evitar duplicatas por espaços e letras maiúsculas", () => {
     expect(normalizeTag(" #Casa ")).toBe("casa");

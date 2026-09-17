@@ -94,6 +94,12 @@ test.describe("auth", () => {
     expect(
       urls.some((url) => url.includes("_serverFn") || url.includes("serverFn")),
     ).toBe(true);
+    expect(new URL(page.url()).searchParams.get("month")).toMatch(
+      /^\d{4}-(0[1-9]|1[0-2])$/,
+    );
+    await expect(page.getByLabel("Selecionar mês e ano")).toHaveValue(
+      new URL(page.url()).searchParams.get("month") ?? "",
+    );
   });
 
   test("M3 magic-link consume strips access and keeps convite", async ({
