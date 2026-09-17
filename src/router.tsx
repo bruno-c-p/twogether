@@ -1,5 +1,6 @@
 import { createRouter, stringifySearchWith } from "@tanstack/react-router";
 import { routeTree } from "@/routeTree.gen";
+import { RouteError } from "@/route-error";
 
 function parseSearch(searchStr: string): Record<string, string> {
   const query: Record<string, string> = {};
@@ -15,6 +16,7 @@ export function getRouter() {
     parseSearch,
     stringifySearch: stringifySearchWith(String),
     defaultPreload: "intent",
+    defaultErrorComponent: RouteError,
   });
 }
 

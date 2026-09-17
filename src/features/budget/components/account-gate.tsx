@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { useNavigate, useSearch } from "@tanstack/react-router";
+import { getRouteApi } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -24,9 +24,11 @@ export function inviteToken(value: string) {
     return value.trim();
   }
 }
+const workspaceRoute = getRouteApi("/");
+
 export function AccountGate({ budget }: { budget: BudgetController }) {
-  const search = useSearch({ from: "/" });
-  const navigate = useNavigate();
+  const search = workspaceRoute.useSearch();
+  const navigate = workspaceRoute.useNavigate();
   const invitation = search.convite ?? "";
   const clearInvitation = () =>
     void navigate({

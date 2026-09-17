@@ -1,6 +1,6 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useSearch } from "@tanstack/react-router";
+import { getRouteApi, Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -59,6 +59,8 @@ const navigation = [
   { id: "goals", label: "Metas", icon: Target },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
+const workspaceRoute = getRouteApi("/");
+
 export function BudgetApp() {
   const budget = useBudget();
   if (!budget.user?.name || !budget.household)
@@ -70,9 +72,10 @@ export function BudgetApp() {
     />
   );
 }
+
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
-  const search = useSearch({ from: "/" });
-  const routeNavigate = useNavigate();
+  const search = workspaceRoute.useSearch();
+  const routeNavigate = workspaceRoute.useNavigate();
   const memberCount = budget.household?.members.length ?? 0;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const view = search.view ?? "overview";
