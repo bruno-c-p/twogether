@@ -38,6 +38,17 @@ export default tseslint.config(
       },
     },
     rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              group: ["./*", "../*", "./**", "../**"],
+              message: "Use the @/ alias (src/) instead of relative imports.",
+            },
+          ],
+        },
+      ],
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
       "@typescript-eslint/only-throw-error": [

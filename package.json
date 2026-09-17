@@ -8,9 +8,10 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
+    "fitness": "bun scripts/fitness.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run && bun test src/features/budget/services/shared.server.test.ts"
+    "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",

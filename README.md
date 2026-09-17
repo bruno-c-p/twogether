@@ -51,6 +51,7 @@ Para configurar localmente após conectar o recurso no Vercel, rode `vercel env 
 ```sh
 bun run typecheck
 bun run lint
+bun run fitness
 bun run test
 bun run build
 ```

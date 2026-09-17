@@ -11,6 +11,7 @@ import {
   sessionCookie,
 } from "@/features/budget/actions/budget-store.server";
 import { parseAccessPayload, parseBudgetCommand } from "@/features/budget/command";
+import { accessRedirectSearch } from "@/features/budget/search";
 import { RequestError } from "@/features/budget/services/shared.server";
 
 function setPrivateNoStore() {
@@ -61,6 +62,6 @@ export const consumeAccess = createServerFn({ method: "POST" })
     }
     throw redirect({
       to: "/",
-      search: data.convite ? { convite: data.convite } : {},
+      search: accessRedirectSearch(data.convite),
     });
   });

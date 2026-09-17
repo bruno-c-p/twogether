@@ -18,9 +18,10 @@
   e ocultação de valores, conforme o fluxo afetado.
 - Inspecione erros no console e requisições com falha. Corrija problemas
   introduzidos pela alteração e repita a validação do fluxo corrigido.
-- Execute `bun run typecheck`, `bun run lint`, `bun run test`,
-  `bun run build` e `git diff --check`. Se faltarem dependências, execute
-  `bun install --frozen-lockfile` antes das verificações.
+- Execute `bun run typecheck`, `bun run lint`, `bun run fitness`,
+  `bun run test`, `bun run build` e `git diff --check`. Se faltarem
+  dependências, execute `bun install --frozen-lockfile` antes das
+  verificações.
 - Testes automatizados, análise de código e build não substituem a validação
   no navegador. Não declare a tarefa concluída apenas com essas verificações.
 - Use dados de teste isolados; preserve dados reais e trabalho não relacionado.
@@ -43,8 +44,8 @@
 
 ## Importações absolutas
 
-- Importações de código-fonte do repositório devem usar o alias `@/` (raiz do
-  repo), nunca caminhos relativos (`./` ou `../`).
+- Importações de código-fonte do repositório devem usar o alias `@/` (`src/`),
+  nunca caminhos relativos (`./` ou `../`).
 - Não altere URLs públicas em runtime, `url()` em CSS, nem importações de
   pacotes externos.
 - Mantenha os imports no topo do arquivo. Sem imports inline, salvo quando a

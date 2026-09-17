@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Absolute imports
 
-Use the `@/` path alias (repo root) for every source import. Do not use relative `./` or `../` imports.
+Use the `@/` path alias (`src/`) for every source import. Do not use relative `./` or `../` imports.
 
 - Keep imports at the top of the file. No inline imports unless the toolchain requires lazy loading (for example TanStack Start route server handlers).
 - Do not change runtime public URLs, CSS `url()`, or external package imports.
@@ -14,5 +14,5 @@ Use the `@/` path alias (repo root) for every source import. Do not use relative
 
 ```ts
 import { money } from "@/features/budget/services/budget";
-import { RouteError } from "@/src/route-error";
+import { RouteError } from "@/route-error";
 ```
