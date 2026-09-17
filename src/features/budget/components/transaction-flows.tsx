@@ -2,14 +2,14 @@ import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recu
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
-import { CoupleDialog } from "@/features/budget/components/couple-dialog";
+import { CoupleDialog } from "@/features/household/components/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import { localDate } from "@/features/budget/services/budget";
+import { localDate } from "@/features/budget/domain/format";
 import type {
   BankAccount,
   GoalPercentages,
   Transaction,
-} from "@/features/budget/types";
+} from "@/features/budget/domain/types";
 
 export function TransactionFlows({
   budget,

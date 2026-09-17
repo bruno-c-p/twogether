@@ -14,8 +14,8 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import { formatAmountInput, formText, parseBalance } from "@/features/budget/services/budget";
-import type { BankAccount } from "@/features/budget/types";
+import { formatAmountInput, formText, parseBalance } from "@/features/budget/domain/format";
+import type { BankAccount } from "@/features/budget/domain/types";
 
 interface Props {
   account: BankAccount | null;

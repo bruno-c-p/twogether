@@ -1,5 +1,5 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { AccountGate } from "@/features/budget/components/account-gate";
+import { AccountGate } from "@/features/auth/components/account-gate";
 import { consumeAccess } from "@/features/auth/auth.functions";
 import { loadBudget } from "@/features/budget/budget.functions";
 import { validateAccessSearch } from "@/features/budget/search";

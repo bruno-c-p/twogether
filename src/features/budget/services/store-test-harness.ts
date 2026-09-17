@@ -1,10 +1,10 @@
 import { afterEach, beforeEach } from "bun:test";
 import {
   createBudgetStore,
-  RequestError,
   type BudgetStore,
-} from "@/features/budget/services/shared.server";
-import type { BankAccount, Transaction } from "@/features/budget/types";
+} from "@/features/budget/budget.server";
+import { RequestError } from "@/server/request-error";
+import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 
 export type Deliveries = { email: string; token: string; invite?: string }[];
 

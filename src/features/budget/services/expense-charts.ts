@@ -1,4 +1,4 @@
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 
 export function summarizeExpenses(transactions: Transaction[], month: string) {
   const first = new Date(`${month}-01T12:00:00`);

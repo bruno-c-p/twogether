@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 
 const expense = (changes: Partial<Transaction> = {}): Transaction => ({

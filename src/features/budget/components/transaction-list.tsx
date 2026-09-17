@@ -7,14 +7,14 @@ import {
   X,
 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
-import { money } from "@/features/budget/services/budget";
+import { money } from "@/features/budget/domain/format";
 import type {
   BankAccount,
   GoalId,
   Transaction,
   TransactionKind,
   Member,
-} from "@/features/budget/types";
+} from "@/features/budget/domain/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button/button";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";

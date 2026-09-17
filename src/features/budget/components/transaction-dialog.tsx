@@ -20,13 +20,13 @@ import {
   localDate,
   normalizeTag,
   parseAmount,
-} from "@/features/budget/services/budget";
+} from "@/features/budget/domain/format";
 import type {
   BankAccount,
   Transaction,
   TransactionKind,
   Member,
-} from "@/features/budget/types";
+} from "@/features/budget/domain/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button/button";
 import {

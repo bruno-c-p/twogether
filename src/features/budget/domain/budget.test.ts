@@ -1,18 +1,22 @@
 import { describe, expect, it } from "vitest";
 import {
-  normalizeTag,
+  accountBalance,
+  planGoals,
+  summarize,
+} from "@/features/budget/domain/calc";
+import {
   formatAmountInput,
+  normalizeTag,
   parseAmount,
   parseBalance,
-  accountBalance,
   shiftMonth,
-  summarize,
-  planGoals,
+} from "@/features/budget/domain/format";
+import {
   isBankAccount,
   isTransaction,
-} from "@/features/budget/services/budget";
+} from "@/features/budget/domain/validate";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 
 const transactions: Transaction[] = [
   {
@@ -112,9 +116,9 @@ describe("tipo da transação", () => {
   });
   it("exige uma conta bancária", () => {
     expect(isTransaction({ ...transactions[0], accountId: "" })).toBe(false);
-    expect(
-      isTransaction({ ...transactions[0], accountId: undefined }),
-    ).toBe(false);
+    expect(isTransaction({ ...transactions[0], accountId: undefined })).toBe(
+      false,
+    );
   });
 });
 
@@ -124,9 +128,9 @@ describe("conta bancária", () => {
       isBankAccount({ id: "account-1", name: "Nubank", openingBalance: 0 }),
     ).toBe(true);
     expect(isBankAccount({ id: "account-1", name: "Nubank" })).toBe(false);
-    expect(
-      isBankAccount({ id: "", name: "Nubank", openingBalance: 0 }),
-    ).toBe(false);
+    expect(isBankAccount({ id: "", name: "Nubank", openingBalance: 0 })).toBe(
+      false,
+    );
     expect(
       isBankAccount({ id: "account-1", name: "   ", openingBalance: 0 }),
     ).toBe(false);

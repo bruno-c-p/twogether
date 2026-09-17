@@ -1,7 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { Eye, EyeOff, UsersRound } from "lucide-react";
-import type { View } from "@/features/budget/types";
+import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import styles from "@/features/budget/components/budget-app.module.css";

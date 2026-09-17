@@ -19,7 +19,7 @@ import {
   joinHousehold,
 } from "@/features/household/household.functions";
 import { isMutationFailure } from "@/server/mutation-result";
-import { formText } from "@/features/budget/services/budget";
+import { formText } from "@/features/budget/domain/format";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
@@ -30,7 +30,7 @@ import {
   FormStack,
   Note,
 } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/account-gate.module.css";
+import styles from "@/features/auth/components/account-gate.module.css";
 
 const isDevelopment = import.meta.env.DEV;
 const gateRoute = getRouteApi("/entrar");

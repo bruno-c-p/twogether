@@ -9,7 +9,7 @@ import {
   Target,
   Wine,
 } from "lucide-react";
-import type { Goal, GoalId, GoalPercentages, View } from "@/features/budget/types";
+import type { Goal, GoalId, GoalPercentages, View } from "@/features/budget/domain/types";
 
 export const GOALS: Goal[] = [
   {

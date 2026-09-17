@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
-import { isGoalPercentages } from "@/features/budget/services/budget";
-import type { GoalPercentages } from "@/features/budget/types";
+import { isGoalPercentages } from "@/features/budget/domain/validate";
+import type { GoalPercentages } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
