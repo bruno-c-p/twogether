@@ -9,55 +9,48 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as EntrarRouteImport } from './routes/entrar'
 
-const EntrarRoute = EntrarRouteImport.update({
-  id: '/entrar',
-  path: '/entrar',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EntrarRoute = EntrarRouteImport.update({
+  id: '/entrar',
+  path: '/entrar',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
-  '/entrar': typeof EntrarRoute
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
 }
 export interface FileRoutesByTo {
-  '/entrar': typeof EntrarRoute
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/entrar': typeof EntrarRoute
   '/': typeof IndexRoute
+  '/entrar': typeof EntrarRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/entrar' | '/'
+  fullPaths: '/' | '/entrar'
   fileRoutesByTo: FileRoutesByTo
-  to: '/entrar' | '/'
-  id: '__root__' | '/entrar' | '/'
+  to: '/' | '/entrar'
+  id: '__root__' | '/' | '/entrar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  EntrarRoute: typeof EntrarRoute
   IndexRoute: typeof IndexRoute
+  EntrarRoute: typeof EntrarRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/entrar': {
-      id: '/entrar'
-      path: '/entrar'
-      fullPath: '/entrar'
-      preLoaderRoute: typeof EntrarRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +58,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/entrar': {
+      id: '/entrar'
+      path: '/entrar'
+      fullPath: '/entrar'
+      preLoaderRoute: typeof EntrarRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
-  EntrarRoute: EntrarRoute,
   IndexRoute: IndexRoute,
+  EntrarRoute: EntrarRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
