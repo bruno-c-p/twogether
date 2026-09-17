@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   accessRedirectSearch,
   gateRedirectSearch,
+  missingWorkspaceMonth,
   openGoalTransactions,
   openView,
   validateAccessSearch,
   validateBudgetSearch,
+  withDefaultMonth,
   withView,
   type BudgetSearch,
 } from "@/features/budget/search";
@@ -157,5 +159,27 @@ describe("validateBudgetSearch", () => {
       view: "accounts",
       kind: "income",
     });
+  });
+});
+
+describe("withDefaultMonth", () => {
+  it("fills the current month when the workspace URL has none", () => {
+    expect(missingWorkspaceMonth({})).toBe(true);
+    expect(withDefaultMonth({}, "2026-09")).toEqual({ month: "2026-09" });
+    expect(
+      withDefaultMonth({ view: "transactions", member: "ana" }, "2026-09"),
+    ).toEqual({
+      view: "transactions",
+      member: "ana",
+      month: "2026-09",
+    });
+  });
+
+  it("does not default month for magic-link or invite URLs", () => {
+    const access = "a".repeat(64);
+    const convite = "b".repeat(64);
+    expect(missingWorkspaceMonth({ access })).toBe(false);
+    expect(missingWorkspaceMonth({ convite })).toBe(false);
+    expect(missingWorkspaceMonth({ month: "2026-09" })).toBe(false);
   });
 });

@@ -27,6 +27,10 @@ export function localDate(date = new Date()): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 }
 
+export function currentMonth(date = new Date()): string {
+  return localDate(date).slice(0, 7);
+}
+
 export function shiftMonth(month: string, offset: number) {
   const [year, number] = month.split("-").map(Number);
   return localDate(new Date(year, number - 1 + offset, 1)).slice(0, 7);

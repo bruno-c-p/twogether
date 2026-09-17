@@ -4,7 +4,7 @@ import { TransactionDialog } from "@/features/budget/components/transaction-dial
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { CoupleDialog } from "@/features/household/components/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import { localDate } from "@/features/budget/domain/format";
+import { localDate, currentMonth } from "@/features/budget/domain/format";
 import type {
   BankAccount,
   GoalPercentages,
@@ -73,9 +73,7 @@ export function TransactionFlows({
       {dialog && (
         <TransactionDialog
           transaction={dialog.transaction}
-          defaultDate={
-            month === localDate().slice(0, 7) ? localDate() : `${month}-01`
-          }
+          defaultDate={month === currentMonth() ? localDate() : `${month}-01`}
           existingTags={allTags}
           members={budget.household.members}
           accounts={budget.state.accounts}

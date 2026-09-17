@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   deleteAccount,
@@ -14,7 +14,16 @@ import {
 } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
-import { localDate, money, shiftMonth } from "@/features/budget/domain/format";
+import {
+  currentMonth,
+  money,
+  shiftMonth,
+} from "@/features/budget/domain/format";
+import {
+  optimisticDelete,
+  optimisticRestore,
+  optimisticSave,
+} from "@/features/budget/workspace";
 import { planGoals, summarize } from "@/features/budget/domain/calc";
 import type {
   BankAccount,
@@ -46,6 +55,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const saveTx = useMutation(
     (data: { transaction: Transaction; occurrences?: number }) =>
       saveTransaction({ data }),
+    optimisticSave,
   );
   const deleteTx = useMutation(
     (data: {
@@ -53,9 +63,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       revision: number;
       following?: { id: string; revision: number }[];
     }) => deleteTransaction({ data }),
+    optimisticDelete,
   );
-  const restoreTx = useMutation((data: { id: string; revision: number }) =>
-    restoreTransaction({ data }),
+  const restoreTx = useMutation(
+    (data: { id: string; revision: number; transaction: Transaction }) =>
+      restoreTransaction({ data: { id: data.id, revision: data.revision } }),
+    (snapshot, data) => optimisticRestore(snapshot, data.transaction),
   );
   const saveAcc = useMutation((account: BankAccount) =>
     saveAccount({ data: { account } }),
@@ -93,8 +106,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   } = useBudgetSearch();
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
-  const [fallbackMonth, setFallbackMonth] = useState("");
-  const month = searchMonth ?? fallbackMonth;
+  const month = searchMonth ?? currentMonth();
   const [coupleOpen, setCoupleOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
@@ -110,10 +122,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const listError =
     deleteAcc.error || restoreTx.error || (!deleting ? deleteTx.error : "");
-
-  useEffect(() => {
-    setFallbackMonth(localDate().slice(0, 7));
-  }, []);
 
   const members = budget.household.members;
   const monthly = useMemo(
@@ -238,6 +246,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       (await restoreTx.run({
         id: notice.undo.id,
         revision: (notice.undo.revision ?? 0) + 1,
+        transaction: notice.undo,
       }))
     )
       setNotice({ message: "Alteração desfeita." });
@@ -378,10 +387,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               <ChevronRight size={17} />
             </Button>
           </div>
-          {month && month !== localDate().slice(0, 7) && (
+          {month !== currentMonth() && (
             <button
               className={styles.todayButton}
-              onClick={() => setMonth(localDate().slice(0, 7))}
+              onClick={() => setMonth(currentMonth())}
             >
               Voltar para este mês
             </button>
