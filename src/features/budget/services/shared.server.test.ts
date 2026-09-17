@@ -476,6 +476,7 @@ describe("shared budget", () => {
         { action: "verify-link", token: deliveries.at(-1)!.token },
         undefined,
       );
+      const userId = (await disk.snapshot(a.session)).user!.id;
       await disk.command({ action: "profile", name: "Ana" }, a.session);
       await disk.command({ action: "create" }, a.session);
       await disk.command(
@@ -483,7 +484,7 @@ describe("shared budget", () => {
         a.session,
       );
       await disk.command(
-        { action: "save", transaction: transaction(a.snapshot.user!.id) },
+        { action: "save", transaction: transaction(userId) },
         a.session,
       );
       disk.close();
