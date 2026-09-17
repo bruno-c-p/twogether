@@ -1,9 +1,18 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
+  deleteAccount,
+  deleteTransaction,
+  restoreTransaction,
+  saveAccount,
+  savePercentages,
+  saveTransaction,
+} from "@/features/budget/budget.functions";
+import {
   useBudget,
   type BudgetController,
 } from "@/features/budget/hooks/use-budget";
+import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
 import {
   localDate,
@@ -12,7 +21,11 @@ import {
   summarize,
   planGoals,
 } from "@/features/budget/services/budget";
-import type { BankAccount, Transaction } from "@/features/budget/types";
+import type {
+  BankAccount,
+  GoalPercentages,
+  Transaction,
+} from "@/features/budget/types";
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section";
@@ -35,6 +48,37 @@ export function BudgetApp() {
 }
 
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+  const saveTx = useMutation(
+    (data: { transaction: Transaction; occurrences?: number }) =>
+      saveTransaction({ data }),
+  );
+  const deleteTx = useMutation(
+    (data: {
+      id: string;
+      revision: number;
+      following?: { id: string; revision: number }[];
+    }) => deleteTransaction({ data }),
+  );
+  const restoreTx = useMutation((data: { id: string; revision: number }) =>
+    restoreTransaction({ data }),
+  );
+  const saveAcc = useMutation((account: BankAccount) =>
+    saveAccount({ data: { account } }),
+  );
+  const deleteAcc = useMutation((data: { id: string; revision: number }) =>
+    deleteAccount({ data }),
+  );
+  const savePct = useMutation(
+    (data: { percentages: GoalPercentages; revision: number }) =>
+      savePercentages({ data }),
+  );
+  const busy =
+    saveTx.pending ||
+    deleteTx.pending ||
+    restoreTx.pending ||
+    saveAcc.pending ||
+    deleteAcc.pending ||
+    savePct.pending;
   const {
     view,
     month: searchMonth,
@@ -69,6 +113,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     null,
   );
   const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const listError =
+    deleteAcc.error || restoreTx.error || (!deleting ? deleteTx.error : "");
 
   useEffect(() => {
     setFallbackMonth(localDate().slice(0, 7));
@@ -134,7 +180,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         : "Renda, gastos e metas da pessoa selecionada.";
 
   async function save(transaction: Transaction, occurrences = 1) {
-    if (!(await budget.saveTransaction(transaction, occurrences))) return false;
+    if (!(await saveTx.run({ transaction, occurrences }))) return false;
     setMonth(transaction.date.slice(0, 7));
     setNotice({
       message: dialog?.transaction
@@ -151,7 +197,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       setDeleting(transaction);
       return;
     }
-    if (await budget.removeTransaction(transaction))
+    if (
+      await deleteTx.run({
+        id: transaction.id,
+        revision: transaction.revision ?? 0,
+      })
+    )
       setNotice({ message: "Transação excluída.", undo: transaction });
   }
 
@@ -166,8 +217,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     setDialog({ transaction });
   }
 
-  async function saveAccount(account: BankAccount) {
-    if (!(await budget.saveAccount(account))) return false;
+  async function saveAccountRecord(account: BankAccount) {
+    if (!(await saveAcc.run(account))) return false;
     setNotice({
       message: accountDialog?.account
         ? "Conta atualizada."
@@ -177,13 +228,60 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   }
 
   async function removeAccount(account: BankAccount) {
-    if (await budget.removeAccount(account))
+    if (
+      await deleteAcc.run({
+        id: account.id,
+        revision: account.revision ?? 0,
+      })
+    )
       setNotice({ message: "Conta excluída." });
   }
 
   async function undoNotice() {
-    if (notice?.undo && (await budget.restore(notice.undo)))
+    if (
+      notice?.undo &&
+      (await restoreTx.run({
+        id: notice.undo.id,
+        revision: (notice.undo.revision ?? 0) + 1,
+      }))
+    )
       setNotice({ message: "Alteração desfeita." });
+  }
+
+  async function saveGoalPercentages(values: GoalPercentages) {
+    if (editingPercentages === null) return false;
+    if (
+      !(await savePct.run({
+        percentages: values,
+        revision: editingPercentages,
+      }))
+    )
+      return false;
+    setNotice({ message: "Percentuais atualizados." });
+    return true;
+  }
+
+  async function deleteRecurring(includeFollowing: boolean) {
+    if (!deleting) return;
+    if (
+      await deleteTx.run({
+        id: deleting.id,
+        revision: deleting.revision ?? 0,
+        following: includeFollowing
+          ? following.map((item) => ({
+              id: item.id,
+              revision: item.revision ?? 0,
+            }))
+          : undefined,
+      })
+    ) {
+      setNotice(
+        includeFollowing
+          ? { message: `${following.length + 1} transações excluídas.` }
+          : { message: "Transação excluída.", undo: deleting },
+      );
+      setDeleting(null);
+    }
   }
 
   return (
@@ -205,14 +303,20 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             following={following}
             editingPercentages={editingPercentages}
             coupleOpen={coupleOpen}
+            saveError={saveTx.error}
+            accountError={saveAcc.error}
+            deleteError={deleteTx.error}
+            percentagesError={savePct.error}
+            deleteBusy={deleteTx.pending}
             onSave={save}
-            onSaveAccount={saveAccount}
+            onSaveAccount={saveAccountRecord}
+            onSavePercentages={saveGoalPercentages}
+            onDelete={deleteRecurring}
             onCloseDialog={() => setDialog(null)}
             onCloseAccount={() => setAccountDialog(null)}
             onCloseDeleting={() => setDeleting(null)}
             onClosePercentages={() => setEditingPercentages(null)}
             onCloseCouple={() => setCoupleOpen(false)}
-            onNotice={setNotice}
           />
           {notice && (
             <NoticeToast
@@ -231,7 +335,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         </div>
         <Button
           className={styles.addTransaction}
-          disabled={budget.busy}
+          disabled={busy}
           onClick={() =>
             view === "accounts"
               ? setAccountDialog({ account: null })
@@ -317,9 +421,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         </div>
       </div>
       <p className={styles.filterExplanation}>{filterExplanation}</p>
-      {budget.error && (
+      {(budget.syncError || listError) && (
         <div role="alert" className={styles.storageError}>
-          {budget.error}
+          {budget.syncError || listError}
         </div>
       )}
       {view === "accounts" ? (
@@ -327,7 +431,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           accounts={budget.state.accounts}
           transactions={budget.state.transactions}
           memberFilter={memberFilter}
-          busy={budget.busy}
+          busy={busy}
           hidden={hidden}
           onAdd={() => setAccountDialog({ account: null })}
           onEdit={(account) => setAccountDialog({ account })}
@@ -355,7 +459,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               displayMoney={displayMoney}
               memberFilter={memberFilter}
               userId={budget.user.id}
-              busy={budget.busy}
+              busy={busy}
               onEditPercentages={() =>
                 setEditingPercentages(ownMember?.percentagesRevision ?? 0)
               }
@@ -367,7 +471,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               transactions={monthly}
               members={members}
               accounts={budget.state.accounts}
-              busy={budget.busy}
+              busy={busy}
               hidden={hidden}
               query={query}
               goalFilter={goalFilter}

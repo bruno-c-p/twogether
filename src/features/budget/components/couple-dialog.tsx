@@ -3,6 +3,11 @@ import { isRedirect, useRouter } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
 import { logout } from "@/features/auth/auth.functions";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { useMutation } from "@/features/budget/hooks/use-mutation";
+import {
+  createInvite,
+  revokeInvite,
+} from "@/features/household/household.functions";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
@@ -26,12 +31,16 @@ export function CoupleDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const invite = useMutation(() => createInvite());
+  const revoke = useMutation(() => revokeInvite());
   const [link, setLink] = useState("");
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState("");
-  async function createInvite() {
-    const result = await budget.command({ action: "invite" });
-    if (result?.inviteToken) {
+  const busy = invite.pending || revoke.pending;
+  const error = invite.error || revoke.error;
+  async function makeInvite() {
+    const result = await invite.run();
+    if (result?.ok) {
       setLink(`${window.location.origin}/?convite=${result.inviteToken}`);
       setCopied(false);
       setCopyError("");
@@ -46,8 +55,8 @@ export function CoupleDialog({
       setCopyError("Selecione e copie o link acima.");
     }
   }
-  async function revokeInvite() {
-    if (await budget.command({ action: "revoke-invite" })) {
+  async function cancelInvites() {
+    if (await revoke.run()) {
       setLink("");
       setCopyError("Convites anteriores cancelados.");
     }
@@ -94,7 +103,7 @@ export function CoupleDialog({
               Falta seu par. Gere um convite e compartilhe o link com essa
               pessoa.
             </p>
-            <Button disabled={budget.busy} onClick={() => void createInvite()}>
+            <Button disabled={busy} onClick={() => void makeInvite()}>
               {link ? "Gerar novo convite" : "Gerar convite"}
             </Button>
             {link && (
@@ -119,8 +128,8 @@ export function CoupleDialog({
             )}
             <Button
               variant="text"
-              disabled={budget.busy}
-              onClick={() => void revokeInvite()}
+              disabled={busy}
+              onClick={() => void cancelInvites()}
             >
               Cancelar convites pendentes
             </Button>
@@ -129,13 +138,13 @@ export function CoupleDialog({
         ) : (
           <Note>Vocês dois já estão aqui. O espaço está completo.</Note>
         )}
-        {budget.error && <FormError>{budget.error}</FormError>}
+        {error && <FormError>{error}</FormError>}
         <DialogFooter className={styles.footer}>
           <span className={styles.email}>{budget.user.email}</span>
           <Button
             variant="text"
             className={styles.logout}
-            disabled={budget.busy}
+            disabled={busy}
             onClick={() => void signOut()}
           >
             Sair da conta

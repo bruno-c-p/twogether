@@ -67,23 +67,3 @@ export interface WorkspaceSnapshot {
   household: WorkspaceHousehold;
   budget: BudgetState;
 }
-export type BudgetCommand =
-  | { action: "profile"; name: string }
-  | { action: "create" }
-  | { action: "join"; token: string }
-  | { action: "invite" }
-  | { action: "revoke-invite" }
-  | { action: "save"; transaction: Transaction; occurrences?: number }
-  | {
-      action: "delete";
-      id: string;
-      revision: number;
-      following?: { id: string; revision: number }[];
-    }
-  | { action: "undo-delete"; id: string; revision: number }
-  | { action: "save-account"; account: BankAccount }
-  | { action: "delete-account"; id: string; revision: number }
-  | { action: "percentages"; percentages: GoalPercentages; revision: number };
-export interface CommandResult {
-  inviteToken?: string;
-}

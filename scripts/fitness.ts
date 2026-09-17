@@ -50,6 +50,13 @@ function assertNoBudgetCommandBus() {
     if (text.includes(apiBudget)) fail(`${file} mentions ${apiBudget}`);
     if (text.includes("createAPIFileRoute"))
       fail(`${file} mentions createAPIFileRoute`);
+    if (/\bmutateBudget\b/.test(text)) fail(`${file} still has mutateBudget`);
+    if (/\bparseBudgetCommand\b/.test(text))
+      fail(`${file} still has parseBudgetCommand`);
+    if (/\bBudgetCommand\b/.test(text)) fail(`${file} still has BudgetCommand`);
+    if (/\bCommandResult\b/.test(text)) fail(`${file} still has CommandResult`);
+    if (file.endsWith(".functions.ts") && /action:\s*["']/.test(text))
+      fail(`${file} still uses an action discriminator in a server fn`);
   }
 }
 
@@ -82,7 +89,8 @@ function assertCssHouseStyle() {
     if (bannedCssDeps.includes(name) || name.startsWith("@radix-ui/"))
       fail(`package.json must not depend on ${name}`);
   }
-  for (const file of tracked(resurrectedCss)) fail(`tracked resurrected ${file}`);
+  for (const file of tracked(resurrectedCss))
+    fail(`tracked resurrected ${file}`);
 }
 
 async function freePort() {
@@ -164,7 +172,9 @@ async function assertBuiltHeaders() {
   try {
     const header = await waitForHeader(url, 20_000);
     if (header !== cacheControl)
-      fail(`GET / Cache-Control is ${JSON.stringify(header)}, expected ${cacheControl}`);
+      fail(
+        `GET / Cache-Control is ${JSON.stringify(header)}, expected ${cacheControl}`,
+      );
     else console.log(`HEAD / Cache-Control: ${header}`);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);

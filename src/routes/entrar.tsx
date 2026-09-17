@@ -1,7 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountGate } from "@/features/budget/components/account-gate";
 import { consumeAccess } from "@/features/auth/auth.functions";
-import { loadBudget } from "@/features/budget/actions/load-budget";
+import { loadBudget } from "@/features/budget/budget.functions";
 import { validateAccessSearch } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
 

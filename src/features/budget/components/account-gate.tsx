@@ -8,9 +8,17 @@ import {
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
-import { devLogin, logout, requestLink } from "@/features/auth/auth.functions";
-import { mutateBudget } from "@/features/budget/actions/load-budget";
-import type { BudgetCommand, CommandResult } from "@/features/budget/types";
+import {
+  devLogin,
+  logout,
+  requestLink,
+  setName,
+} from "@/features/auth/auth.functions";
+import {
+  createHousehold,
+  joinHousehold,
+} from "@/features/household/household.functions";
+import { isMutationFailure } from "@/server/mutation-result";
 import { formText } from "@/features/budget/services/budget";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import { Brand } from "@/components/ui/brand/brand";
@@ -56,6 +64,10 @@ function useGate() {
       setError("");
       try {
         const result = await fn();
+        if (isMutationFailure(result)) {
+          setError(result.message);
+          return null;
+        }
         await router.invalidate();
         return result;
       } catch (error) {
@@ -76,24 +88,18 @@ function useGate() {
     },
     [router],
   );
-  const command = useCallback(
-    async (data: BudgetCommand): Promise<CommandResult | null> =>
-      run(() => mutateBudget({ data })),
-    [run],
-  );
   return {
     user: snapshot.user,
     error,
     busy,
     search,
     navigate,
-    command,
     run,
   };
 }
 
 export function AccountGate() {
-  const { user, error, busy, search, navigate, command, run } = useGate();
+  const { user, error, busy, search, navigate, run } = useGate();
   const invitation = search.convite ?? "";
   const clearInvitation = () =>
     void navigate({
@@ -135,23 +141,32 @@ export function AccountGate() {
   }
   async function submitName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await command({
-      action: "profile",
-      name: formText(new FormData(event.currentTarget), "name"),
-    });
+    await run(() =>
+      setName({
+        data: {
+          name: formText(new FormData(event.currentTarget), "name"),
+        },
+      }),
+    );
   }
   async function acceptInvitation() {
-    await command({
-      action: "join",
-      token: inviteToken(invitation),
-    });
+    await run(() =>
+      joinHousehold({
+        data: { token: inviteToken(invitation) },
+      }),
+    );
   }
   async function submitInvitation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await command({
-      action: "join",
-      token: inviteToken(formText(new FormData(event.currentTarget), "invite")),
-    });
+    await run(() =>
+      joinHousehold({
+        data: {
+          token: inviteToken(
+            formText(new FormData(event.currentTarget), "invite"),
+          ),
+        },
+      }),
+    );
   }
   return (
     <main className={styles.accountPage}>
@@ -270,7 +285,7 @@ export function AccountGate() {
               <>
                 <Button
                   disabled={busy}
-                  onClick={() => void command({ action: "create" })}
+                  onClick={() => void run(() => createHousehold())}
                 >
                   Começar nosso orçamento
                   <ArrowRight size={18} />
