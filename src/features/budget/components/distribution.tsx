@@ -1,5 +1,5 @@
-import { GOALS } from "@/features/budget/constants";
 import { money, summarize } from "@/features/budget/services/budget";
+import { donutSegments } from "@/features/budget/services/donut";
 import type { Transaction } from "@/features/budget/types";
 import { ColorDot } from "@/ui/color-dot";
 import styles from "@/features/budget/components/distribution.module.css";
@@ -12,7 +12,7 @@ export function Distribution({
   hidden: boolean;
 }) {
   const { goals, expenses } = summarize(transactions);
-  let offset = 0;
+  const segments = donutSegments(goals, (goal) => goal.amount);
   return (
     <div className={styles.distribution}>
       <div className={styles.distributionHeading}>
@@ -39,11 +39,8 @@ export function Distribution({
               strokeWidth="19"
             />
             {!hidden &&
-              goals.map((goal) => {
-                const share = expenses ? (goal.amount / expenses) * 100 : 0;
-                const start = offset;
-                offset += share;
-                return (
+              segments.map(
+                ({ item: goal, share, start }) =>
                   share > 0 && (
                     <circle
                       key={goal.id}
@@ -58,9 +55,8 @@ export function Distribution({
                       strokeDashoffset={-start}
                       transform="rotate(-90 80 80)"
                     />
-                  )
-                );
-              })}
+                  ),
+              )}
           </svg>
           <div className={styles.donutCenter}>
             <span className={styles.donutFlower}>✳</span>
@@ -68,14 +64,14 @@ export function Distribution({
           </div>
         </div>
         <div className={styles.chartLegend}>
-          {GOALS.map((goal) => (
+          {goals.map((goal) => (
             <div key={goal.id}>
               <ColorDot style={{ background: goal.color }} />
               <span>{goal.name}</span>
               <strong>
                 {hidden
                   ? "••"
-                  : `${expenses ? Math.round(((goals.find((g) => g.id === goal.id)?.amount ?? 0) / expenses) * 100) : 0}%`}
+                  : `${expenses ? Math.round((goal.amount / expenses) * 100) : 0}%`}
               </strong>
             </div>
           ))}

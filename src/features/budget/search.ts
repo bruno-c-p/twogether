@@ -1,4 +1,4 @@
-import type { GoalId, View } from "@/features/budget/types";
+import type { GoalId, TransactionKind, View } from "@/features/budget/types";
 
 export function isBudgetToken(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
@@ -21,7 +21,7 @@ export interface BudgetSearch {
   query?: string;
   goal?: GoalId;
   tag?: string;
-  kind?: string;
+  kind?: TransactionKind;
   access?: string;
   convite?: string;
 }
@@ -60,8 +60,7 @@ export function validateBudgetSearch(
       ? search.tag
       : undefined;
   const kind =
-    typeof search.kind === "string" &&
-    (search.kind === "expense" || search.kind === "income")
+    search.kind === "expense" || search.kind === "income"
       ? search.kind
       : undefined;
   const access = isBudgetToken(search.access) ? search.access : undefined;
