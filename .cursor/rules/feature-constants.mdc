@@ -1,0 +1,14 @@
+---
+description: Feature constants belong in src/features/<feature>/constants.ts, not in components
+alwaysApply: true
+---
+
+# Feature constants
+
+Put feature-level constants in `src/features/<feature>/constants.ts`, not in component modules.
+
+- Copy maps, lookup tables, and nav/title maps (`Record<View, …>`, `navigation`, weekday labels, icon maps keyed by domain id)
+- Shared magic strings and default values for that feature
+- Import them with `@/features/<feature>/constants`
+
+Keep in the component: `Intl` formatters, `import.meta.env` flags, CSS module re-exports, and one-off locals that are not feature data.

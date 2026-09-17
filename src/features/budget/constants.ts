@@ -1,4 +1,15 @@
-import type { Goal, GoalPercentages } from "@/features/budget/types";
+import {
+  Armchair,
+  BookOpen,
+  House,
+  Landmark,
+  LayoutGrid,
+  ReceiptText,
+  Sprout,
+  Target,
+  Wine,
+} from "lucide-react";
+import type { Goal, GoalId, GoalPercentages, View } from "@/features/budget/types";
 
 export const GOALS: Goal[] = [
   {
@@ -53,3 +64,41 @@ export const DEFAULT_PERCENTAGES: GoalPercentages = {
   freedom: 25,
   knowledge: 5,
 };
+
+export const WORKSPACE_TITLES: Record<View, { title: string; subtitle: string }> =
+  {
+    overview: {
+      title: "Visão geral",
+      subtitle: "Saldo, entradas, despesas e metas do mês.",
+    },
+    transactions: {
+      title: "Transações",
+      subtitle: "Registre e acompanhe as entradas e despesas do mês.",
+    },
+    accounts: {
+      title: "Contas",
+      subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
+    },
+    goals: {
+      title: "Metas",
+      subtitle: "Divida sua renda por meta e compare gasto e planejado.",
+    },
+  };
+
+export const WORKSPACE_NAVIGATION = [
+  { id: "overview", label: "Visão geral", icon: LayoutGrid },
+  { id: "transactions", label: "Transações", icon: ReceiptText },
+  { id: "accounts", label: "Contas", icon: Landmark },
+  { id: "goals", label: "Metas", icon: Target },
+] as const satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
+
+export const GOAL_ICONS: Record<GoalId, typeof House> = {
+  fixed: House,
+  targets: Target,
+  pleasure: Wine,
+  comfort: Armchair,
+  knowledge: BookOpen,
+  freedom: Sprout,
+};
+
+export const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
