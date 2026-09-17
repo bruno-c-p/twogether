@@ -15,6 +15,7 @@ import {
   sessionCookie,
   sessionCookieOptions,
 } from "@/features/budget/session-cookie";
+import type { MutationResult } from "@/server/mutation-result";
 
 export { sessionCookie, sessionCookieOptions };
 
@@ -48,4 +49,21 @@ export function throwHttpError(error: unknown): never {
   }
   console.error("Budget mutation failed", error);
   throw new Error("Não foi possível concluir. Tente novamente.");
+}
+
+export async function runMutation<T extends object = Record<string, never>>(
+  fn: () => Promise<T | void>,
+): Promise<MutationResult<T>> {
+  try {
+    const value = await fn();
+    return { ok: true, ...(value as T) };
+  } catch (error) {
+    if (
+      error instanceof RequestError &&
+      error.status !== 401 &&
+      error.status < 500
+    )
+      return { ok: false, code: error.code, message: error.message };
+    throwHttpError(error);
+  }
 }

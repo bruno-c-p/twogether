@@ -15,8 +15,8 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   isBankAccount,
   isGoalPercentages,
-  isTransaction,
 } from "@/features/budget/services/budget";
+import type { MutationErrorCode } from "@/server/mutation-result";
 import type {
   BankAccount,
   BudgetState,
@@ -29,6 +29,7 @@ export class RequestError extends Error {
   constructor(
     message: string,
     public status = 400,
+    public code: MutationErrorCode = "invalid",
   ) {
     super(message);
   }
@@ -316,9 +317,8 @@ export function createBudgetStore(
       throw new RequestError("Versão inválida. Atualize a página.");
     return Number(value);
   }
-  function canonical(value: unknown, user: UserRow): Transaction {
+  function canonical(value: Transaction, user: UserRow): Transaction {
     if (
-      !isTransaction(value) ||
       value.id.length > 100 ||
       !value.id ||
       value.description.length > 80 ||
@@ -340,7 +340,7 @@ export function createBudgetStore(
       updatedAt: new Date().toISOString(),
     };
   }
-  function canonicalAccount(value: unknown): BankAccount {
+  function canonicalAccount(value: BankAccount): BankAccount {
     if (
       !isBankAccount(value) ||
       value.id.length > 100 ||
@@ -357,6 +357,7 @@ export function createBudgetStore(
     new RequestError(
       "Esta informação mudou no outro dispositivo. Feche e abra novamente para conferir a versão atual antes de editar.",
       409,
+      "conflict",
     );
   async function requestLink(input: { email: unknown; invite?: unknown }) {
     await ready;
@@ -494,339 +495,391 @@ export function createBudgetStore(
       ]);
     return { session: undefined as string | undefined };
   }
-  async function command(
-    input: unknown,
-    user: UserRow,
-    home: HouseholdRow | null,
-  ) {
+  function requireOpenSeat(user: UserRow) {
+    if (!user.name)
+      throw new RequestError("Conte como você quer aparecer no orçamento.");
+    if (user.household_id)
+      throw new RequestError(
+        "Você já faz parte de um orçamento. Use a conta convidada para entrar em outro.",
+        409,
+        "full",
+      );
+  }
+  async function setName(user: UserRow, name: string) {
     await ready;
-    if (!input || typeof input !== "object" || !("action" in input))
-      throw new RequestError("Requisição inválida.");
-    const data = input as Record<string, unknown>;
-    let inviteToken: string | undefined;
     await atomic(async (transaction) => {
-      if (data.action === "profile") {
-        await execute(transaction, "UPDATE users SET name = ? WHERE id = ?", [
-          text(data.name, 50),
-          user.id,
-        ]);
-        return;
-      }
-      if (data.action === "create" || data.action === "join") {
-        if (!user.name)
-          throw new RequestError("Conte como você quer aparecer no orçamento.");
-        if (user.household_id)
-          throw new RequestError(
-            "Você já faz parte de um orçamento. Use a conta convidada para entrar em outro.",
-            409,
-          );
-        if (data.action === "create") {
-          const id = randomUUID();
-          await execute(
-            transaction,
-            "INSERT INTO households(id,percentages) VALUES (?,?)",
-            [id, JSON.stringify(DEFAULT_PERCENTAGES)],
-          );
-          await execute(
-            transaction,
-            "UPDATE users SET household_id = ? WHERE id = ?",
-            [id, user.id],
-          );
-          await execute(
-            transaction,
-            `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
-               SELECT ?, percentages FROM households WHERE id = ?`,
-            [user.id, id],
-          );
-        } else {
-          const invite = await one<{ household_id: string }>(
-            transaction,
-            "SELECT household_id FROM invites WHERE hash = ? AND expires > ?",
-            [digest(text(data.token, 128)), Date.now()],
-          );
-          if (!invite)
-            throw new RequestError(
-              "Convite inválido ou expirado. Peça um novo link.",
-              410,
-            );
-          const count = await one<{ total: number }>(
-            transaction,
-            "SELECT count(*) AS total FROM users WHERE household_id = ?",
-            [invite.household_id],
-          );
-          if ((count?.total ?? 0) >= 2)
-            throw new RequestError("Este orçamento já tem duas pessoas.", 409);
-          await execute(
-            transaction,
-            "UPDATE users SET household_id = ? WHERE id = ?",
-            [invite.household_id, user.id],
-          );
-          await execute(
-            transaction,
-            `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
-               SELECT ?, percentages FROM households WHERE id = ?`,
-            [user.id, invite.household_id],
-          );
-          await execute(
-            transaction,
-            "DELETE FROM invites WHERE household_id = ?",
-            [invite.household_id],
-          );
-        }
-        return;
-      }
-      if (!home)
-        throw new RequestError("Crie um orçamento ou aceite um convite.");
-      if (data.action === "invite") {
-        const count = await one<{ total: number }>(
-          transaction,
-          "SELECT count(*) AS total FROM users WHERE household_id = ?",
-          [home.id],
+      await execute(transaction, "UPDATE users SET name = ? WHERE id = ?", [
+        text(name, 50),
+        user.id,
+      ]);
+    });
+  }
+  async function createHousehold(user: UserRow) {
+    await ready;
+    await atomic(async (transaction) => {
+      requireOpenSeat(user);
+      const id = randomUUID();
+      await execute(
+        transaction,
+        "INSERT INTO households(id,percentages) VALUES (?,?)",
+        [id, JSON.stringify(DEFAULT_PERCENTAGES)],
+      );
+      await execute(
+        transaction,
+        "UPDATE users SET household_id = ? WHERE id = ?",
+        [id, user.id],
+      );
+      await execute(
+        transaction,
+        `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
+           SELECT ?, percentages FROM households WHERE id = ?`,
+        [user.id, id],
+      );
+    });
+  }
+  async function joinHousehold(user: UserRow, tokenValue: string) {
+    await ready;
+    await atomic(async (transaction) => {
+      requireOpenSeat(user);
+      const invite = await one<{ household_id: string }>(
+        transaction,
+        "SELECT household_id FROM invites WHERE hash = ? AND expires > ?",
+        [digest(text(tokenValue, 128)), Date.now()],
+      );
+      if (!invite)
+        throw new RequestError(
+          "Convite inválido ou expirado. Peça um novo link.",
+          410,
+          "expired",
         );
-        if ((count?.total ?? 0) >= 2)
-          throw new RequestError("Seu orçamento já tem duas pessoas.", 409);
-        inviteToken = token();
-        await execute(
-          transaction,
-          "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
-          [digest(inviteToken), home.id, Date.now() + 48 * 3600_000],
+      const count = await one<{ total: number }>(
+        transaction,
+        "SELECT count(*) AS total FROM users WHERE household_id = ?",
+        [invite.household_id],
+      );
+      if ((count?.total ?? 0) >= 2)
+        throw new RequestError(
+          "Este orçamento já tem duas pessoas.",
+          409,
+          "full",
         );
-      } else if (data.action === "revoke-invite") {
-        await execute(
-          transaction,
-          "DELETE FROM invites WHERE household_id = ?",
-          [home.id],
+      await execute(
+        transaction,
+        "UPDATE users SET household_id = ? WHERE id = ?",
+        [invite.household_id, user.id],
+      );
+      await execute(
+        transaction,
+        `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
+           SELECT ?, percentages FROM households WHERE id = ?`,
+        [user.id, invite.household_id],
+      );
+      await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
+        invite.household_id,
+      ]);
+    });
+  }
+  async function createInvite(_user: UserRow, home: HouseholdRow) {
+    await ready;
+    let inviteToken = "";
+    await atomic(async (transaction) => {
+      const count = await one<{ total: number }>(
+        transaction,
+        "SELECT count(*) AS total FROM users WHERE household_id = ?",
+        [home.id],
+      );
+      if ((count?.total ?? 0) >= 2)
+        throw new RequestError(
+          "Seu orçamento já tem duas pessoas.",
+          409,
+          "full",
         );
-      } else if (data.action === "save") {
-        const occurrences = data.occurrences ?? 1;
-        if (
-          typeof occurrences !== "number" ||
-          !Number.isInteger(occurrences) ||
-          occurrences < 1 ||
-          occurrences > 120
-        )
-          throw new RequestError("Escolha entre 1 e 120 ocorrências.");
-        const rawTransaction = data.transaction;
-        const t = canonical(rawTransaction, user);
-        const account = await one<AccountRow>(
-          transaction,
-          "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
-          [home.id, t.accountId],
-        );
-        if (!account) throw new RequestError("Escolha uma conta bancária.");
-        const old = await one<TransactionRow>(
-          transaction,
-          "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
-          [home.id, t.id],
-        );
-        const given = isTransaction(rawTransaction)
-          ? rawTransaction.revision
-          : undefined;
-        if (old && !old.deleted && given === undefined) {
-          // A create retried after a lost response carries no revision;
-          // accept it when the stored row already matches the submission.
-          const stored = JSON.parse(old.payload) as Transaction;
-          const same =
-            stored.description === t.description &&
-            stored.amount === t.amount &&
-            stored.date === t.date &&
-            stored.kind === t.kind &&
-            stored.goal === t.goal &&
-            stored.accountId === t.accountId &&
-            stored.memberId === user.id &&
-            stored.tags.length === t.tags.length &&
-            stored.tags.every((tag, index) => tag === t.tags[index]);
-          if (same) return;
-        }
-        if (old ? old.deleted || old.revision !== given : given !== undefined)
-          throw conflict();
-        if (old && occurrences !== 1)
-          throw new RequestError("Edite cada ocorrência individualmente.");
-        const previous = old
-          ? (JSON.parse(old.payload) as Transaction)
-          : undefined;
-        const createdBy = previous?.createdBy ?? user.id;
-        const memberId =
-          typeof previous?.memberId === "string"
-            ? previous.memberId
-            : typeof previous?.createdBy === "string"
-              ? previous.createdBy
-              : user.id;
-        t.recurrenceId =
-          previous?.recurrenceId ??
-          (occurrences > 1 ? randomUUID() : undefined);
-        t.recurrenceIndex =
-          previous?.recurrenceIndex ?? (occurrences > 1 ? 0 : undefined);
-        await execute(
-          transaction,
-          "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
-          [t.id, home.id, JSON.stringify({ ...t, memberId, createdBy })],
-        );
-        const [year, month, day] = t.date.split("-").map(Number);
-        for (let index = 1; index < occurrences; index++) {
-          const target = new Date(Date.UTC(year, month - 1 + index, 1));
-          if (target.getUTCFullYear() > 9999)
-            throw new RequestError(
-              "A recorrência ultrapassa a data máxima permitida.",
-            );
-          const lastDay = new Date(
-            Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-          ).getUTCDate();
-          target.setUTCDate(Math.min(day, lastDay));
-          const occurrence = {
-            ...t,
-            id: randomUUID(),
-            recurrenceIndex: index,
-            date: target.toISOString().slice(0, 10),
-            memberId,
-            createdBy,
-          };
-          await execute(
-            transaction,
-            "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
-            [occurrence.id, home.id, JSON.stringify(occurrence)],
-          );
-        }
-      } else if (data.action === "delete" || data.action === "undo-delete") {
-        const undo = data.action === "undo-delete";
-        const id = text(data.id, 100);
-        const previous = await one<TransactionRow>(
-          transaction,
-          "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
-          [home.id, id],
-        );
-        if (!previous) throw conflict();
-        if (!undo && data.following !== undefined) {
-          const source = JSON.parse(previous.payload) as Transaction;
-          if (
-            !source.recurrenceId ||
-            source.recurrenceIndex === undefined ||
-            !Array.isArray(data.following)
-          )
-            throw new RequestError("Recorrência inválida.");
-          const candidates = await all<TransactionRow & { id: string }>(
-            transaction,
-            "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
-            [home.id],
-          );
-          const following = candidates.filter((row) => {
-            const item = JSON.parse(row.payload) as Transaction;
-            return (
-              item.recurrenceId === source.recurrenceId &&
-              item.recurrenceIndex !== undefined &&
-              item.recurrenceIndex > source.recurrenceIndex!
-            );
-          });
-          const expected = data.following as {
-            id: string;
-            revision: number;
-          }[];
-          if (
-            expected.length !== following.length ||
-            following.some(
-              (row) =>
-                !expected.some(
-                  (item) =>
-                    item &&
-                    typeof item === "object" &&
-                    "id" in item &&
-                    "revision" in item &&
-                    item.id === row.id &&
-                    item.revision === row.revision,
-                ),
-            )
-          )
-            throw conflict();
-          for (const row of following) {
-            await execute(
-              transaction,
-              "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
-              [
-                JSON.stringify({
-                  ...(JSON.parse(row.payload) as Transaction),
-                  updatedBy: user.id,
-                  updatedAt: new Date().toISOString(),
-                }),
-                home.id,
-                row.id,
-              ],
-            );
-          }
-        }
-        const payload = JSON.stringify({
-          ...(JSON.parse(previous.payload) as Transaction),
-          updatedBy: user.id,
-          updatedAt: new Date().toISOString(),
-        });
-        const result = await execute(
-          transaction,
-          "UPDATE transactions SET deleted = ?, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = ?",
-          [
-            undo ? 0 : 1,
-            payload,
-            home.id,
-            id,
-            revision(data.revision),
-            undo ? 1 : 0,
-          ],
-        );
-        if (result.rowsAffected !== 1) throw conflict();
-      } else if (data.action === "save-account") {
-        const account = canonicalAccount(data.account);
-        const old = await one<AccountRow>(
-          transaction,
-          "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
-          [home.id, account.id],
-        );
-        const given = isBankAccount(data.account)
-          ? data.account.revision
-          : undefined;
-        if (old ? old.deleted || old.revision !== given : given !== undefined)
-          throw conflict();
-        await execute(
-          transaction,
-          "INSERT INTO accounts(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = accounts.revision + 1",
-          [account.id, home.id, JSON.stringify(account)],
-        );
-      } else if (data.action === "delete-account") {
-        const id = text(data.id, 100);
-        const previous = await one<AccountRow>(
-          transaction,
-          "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
-          [home.id, id],
-        );
-        if (!previous || previous.deleted) throw conflict();
-        const rows = await all<TransactionRow>(
-          transaction,
-          "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
-          [home.id],
-        );
-        if (
-          rows.some(
-            (row) => (JSON.parse(row.payload) as Transaction).accountId === id,
-          )
-        )
-          throw new RequestError(
-            "Exclua ou mova as transações desta conta antes de apagá-la.",
-          );
-        const result = await execute(
-          transaction,
-          "UPDATE accounts SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
-          [home.id, id, revision(data.revision)],
-        );
-        if (result.rowsAffected !== 1) throw conflict();
-      } else if (data.action === "percentages") {
-        if (!isGoalPercentages(data.percentages))
-          throw new RequestError("Os percentuais devem somar 100%.");
-        const result = await execute(
-          transaction,
-          "UPDATE member_percentages SET percentages = ?, revision = revision + 1 WHERE user_id = ? AND revision = ?",
-          [JSON.stringify(data.percentages), user.id, revision(data.revision)],
-        );
-        if (result.rowsAffected !== 1) throw conflict();
-      } else throw new RequestError("Ação inválida.");
+      inviteToken = token();
+      await execute(
+        transaction,
+        "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
+        [digest(inviteToken), home.id, Date.now() + 48 * 3600_000],
+      );
     });
     return { inviteToken };
+  }
+  async function revokeInvite(_user: UserRow, home: HouseholdRow) {
+    await ready;
+    await atomic(async (transaction) => {
+      await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
+        home.id,
+      ]);
+    });
+  }
+  async function saveTransaction(
+    user: UserRow,
+    home: HouseholdRow,
+    input: { transaction: Transaction; occurrences?: number },
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      const occurrences = input.occurrences ?? 1;
+      if (
+        !Number.isInteger(occurrences) ||
+        occurrences < 1 ||
+        occurrences > 120
+      )
+        throw new RequestError("Escolha entre 1 e 120 ocorrências.");
+      const t = canonical(input.transaction, user);
+      const account = await one<AccountRow>(
+        transaction,
+        "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
+        [home.id, t.accountId],
+      );
+      if (!account) throw new RequestError("Escolha uma conta bancária.");
+      const old = await one<TransactionRow>(
+        transaction,
+        "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
+        [home.id, t.id],
+      );
+      const given = input.transaction.revision;
+      if (old && !old.deleted && given === undefined) {
+        // A create retried after a lost response carries no revision;
+        // accept it when the stored row already matches the submission.
+        const stored = JSON.parse(old.payload) as Transaction;
+        const same =
+          stored.description === t.description &&
+          stored.amount === t.amount &&
+          stored.date === t.date &&
+          stored.kind === t.kind &&
+          stored.goal === t.goal &&
+          stored.accountId === t.accountId &&
+          stored.memberId === user.id &&
+          stored.tags.length === t.tags.length &&
+          stored.tags.every((tag, index) => tag === t.tags[index]);
+        if (same) return;
+      }
+      if (old ? old.deleted || old.revision !== given : given !== undefined)
+        throw conflict();
+      if (old && occurrences !== 1)
+        throw new RequestError("Edite cada ocorrência individualmente.");
+      const previous = old
+        ? (JSON.parse(old.payload) as Transaction)
+        : undefined;
+      const createdBy = previous?.createdBy ?? user.id;
+      const memberId =
+        typeof previous?.memberId === "string"
+          ? previous.memberId
+          : typeof previous?.createdBy === "string"
+            ? previous.createdBy
+            : user.id;
+      t.recurrenceId =
+        previous?.recurrenceId ?? (occurrences > 1 ? randomUUID() : undefined);
+      t.recurrenceIndex =
+        previous?.recurrenceIndex ?? (occurrences > 1 ? 0 : undefined);
+      await execute(
+        transaction,
+        "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
+        [t.id, home.id, JSON.stringify({ ...t, memberId, createdBy })],
+      );
+      const [year, month, day] = t.date.split("-").map(Number);
+      for (let index = 1; index < occurrences; index++) {
+        const target = new Date(Date.UTC(year, month - 1 + index, 1));
+        if (target.getUTCFullYear() > 9999)
+          throw new RequestError(
+            "A recorrência ultrapassa a data máxima permitida.",
+          );
+        const lastDay = new Date(
+          Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+        ).getUTCDate();
+        target.setUTCDate(Math.min(day, lastDay));
+        const occurrence = {
+          ...t,
+          id: randomUUID(),
+          recurrenceIndex: index,
+          date: target.toISOString().slice(0, 10),
+          memberId,
+          createdBy,
+        };
+        await execute(
+          transaction,
+          "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
+          [occurrence.id, home.id, JSON.stringify(occurrence)],
+        );
+      }
+    });
+  }
+  async function deleteTransaction(
+    user: UserRow,
+    home: HouseholdRow,
+    input: {
+      id: string;
+      revision: number;
+      following?: { id: string; revision: number }[];
+    },
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      const id = text(input.id, 100);
+      const previous = await one<TransactionRow>(
+        transaction,
+        "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
+        [home.id, id],
+      );
+      if (!previous) throw conflict();
+      if (input.following !== undefined) {
+        const source = JSON.parse(previous.payload) as Transaction;
+        if (!source.recurrenceId || source.recurrenceIndex === undefined)
+          throw new RequestError("Recorrência inválida.");
+        const candidates = await all<TransactionRow & { id: string }>(
+          transaction,
+          "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
+          [home.id],
+        );
+        const following = candidates.filter((row) => {
+          const item = JSON.parse(row.payload) as Transaction;
+          return (
+            item.recurrenceId === source.recurrenceId &&
+            item.recurrenceIndex !== undefined &&
+            item.recurrenceIndex > source.recurrenceIndex!
+          );
+        });
+        const expected = input.following;
+        if (
+          expected.length !== following.length ||
+          following.some(
+            (row) =>
+              !expected.some(
+                (item) => item.id === row.id && item.revision === row.revision,
+              ),
+          )
+        )
+          throw conflict();
+        for (const row of following) {
+          await execute(
+            transaction,
+            "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
+            [
+              JSON.stringify({
+                ...(JSON.parse(row.payload) as Transaction),
+                updatedBy: user.id,
+                updatedAt: new Date().toISOString(),
+              }),
+              home.id,
+              row.id,
+            ],
+          );
+        }
+      }
+      const payload = JSON.stringify({
+        ...(JSON.parse(previous.payload) as Transaction),
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      });
+      const result = await execute(
+        transaction,
+        "UPDATE transactions SET deleted = ?, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = ?",
+        [1, payload, home.id, id, revision(input.revision), 0],
+      );
+      if (result.rowsAffected !== 1) throw conflict();
+    });
+  }
+  async function restoreTransaction(
+    user: UserRow,
+    home: HouseholdRow,
+    input: { id: string; revision: number },
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      const id = text(input.id, 100);
+      const previous = await one<TransactionRow>(
+        transaction,
+        "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
+        [home.id, id],
+      );
+      if (!previous) throw conflict();
+      const payload = JSON.stringify({
+        ...(JSON.parse(previous.payload) as Transaction),
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      });
+      const result = await execute(
+        transaction,
+        "UPDATE transactions SET deleted = ?, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = ?",
+        [0, payload, home.id, id, revision(input.revision), 1],
+      );
+      if (result.rowsAffected !== 1) throw conflict();
+    });
+  }
+  async function saveAccount(
+    _user: UserRow,
+    home: HouseholdRow,
+    accountInput: BankAccount,
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      const account = canonicalAccount(accountInput);
+      const old = await one<AccountRow>(
+        transaction,
+        "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
+        [home.id, account.id],
+      );
+      const given = accountInput.revision;
+      if (old ? old.deleted || old.revision !== given : given !== undefined)
+        throw conflict();
+      await execute(
+        transaction,
+        "INSERT INTO accounts(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = accounts.revision + 1",
+        [account.id, home.id, JSON.stringify(account)],
+      );
+    });
+  }
+  async function deleteAccount(
+    _user: UserRow,
+    home: HouseholdRow,
+    input: { id: string; revision: number },
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      const id = text(input.id, 100);
+      const previous = await one<AccountRow>(
+        transaction,
+        "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
+        [home.id, id],
+      );
+      if (!previous || previous.deleted) throw conflict();
+      const rows = await all<TransactionRow>(
+        transaction,
+        "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
+        [home.id],
+      );
+      if (
+        rows.some(
+          (row) => (JSON.parse(row.payload) as Transaction).accountId === id,
+        )
+      )
+        throw new RequestError(
+          "Exclua ou mova as transações desta conta antes de apagá-la.",
+        );
+      const result = await execute(
+        transaction,
+        "UPDATE accounts SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
+        [home.id, id, revision(input.revision)],
+      );
+      if (result.rowsAffected !== 1) throw conflict();
+    });
+  }
+  async function savePercentages(
+    user: UserRow,
+    _home: HouseholdRow,
+    input: { percentages: GoalPercentages; revision: number },
+  ) {
+    await ready;
+    await atomic(async (transaction) => {
+      if (!isGoalPercentages(input.percentages))
+        throw new RequestError("Os percentuais devem somar 100%.");
+      const result = await execute(
+        transaction,
+        "UPDATE member_percentages SET percentages = ?, revision = revision + 1 WHERE user_id = ? AND revision = ?",
+        [JSON.stringify(input.percentages), user.id, revision(input.revision)],
+      );
+      if (result.rowsAffected !== 1) throw conflict();
+    });
   }
   return {
     snapshot,
@@ -836,7 +889,17 @@ export function createBudgetStore(
     devLogin,
     verifyLink,
     logout,
-    command,
+    setName,
+    createHousehold,
+    joinHousehold,
+    createInvite,
+    revokeInvite,
+    saveTransaction,
+    deleteTransaction,
+    restoreTransaction,
+    saveAccount,
+    deleteAccount,
+    savePercentages,
     close: () => db.close(),
   };
 }

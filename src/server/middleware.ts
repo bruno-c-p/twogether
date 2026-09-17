@@ -5,6 +5,7 @@ import {
   sessionToken,
   throwHttpError,
 } from "@/features/budget/actions/budget-store.server";
+import { RequestError } from "@/features/budget/services/shared.server";
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
@@ -18,8 +19,9 @@ export const householdMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
     try {
-      // ponytail: null until step 6 splits create/join/profile off mutateBudget.
       const household = await getBudgetStore().householdFor(context.user);
+      if (!household)
+        throw new RequestError("Crie um orçamento ou aceite um convite.");
       return next({ context: { household } });
     } catch (error) {
       throwHttpError(error);

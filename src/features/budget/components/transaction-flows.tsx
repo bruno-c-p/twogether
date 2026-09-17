@@ -5,8 +5,11 @@ import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { CoupleDialog } from "@/features/budget/components/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { localDate } from "@/features/budget/services/budget";
-import type { BankAccount, Transaction } from "@/features/budget/types";
-import type { Notice } from "@/features/budget/components/notice";
+import type {
+  BankAccount,
+  GoalPercentages,
+  Transaction,
+} from "@/features/budget/types";
 
 export function TransactionFlows({
   budget,
@@ -18,14 +21,20 @@ export function TransactionFlows({
   following,
   editingPercentages,
   coupleOpen,
+  saveError,
+  accountError,
+  deleteError,
+  percentagesError,
+  deleteBusy,
   onSave,
   onSaveAccount,
+  onSavePercentages,
+  onDelete,
   onCloseDialog,
   onCloseAccount,
   onCloseDeleting,
   onClosePercentages,
   onCloseCouple,
-  onNotice,
 }: {
   budget: BudgetController;
   month: string;
@@ -36,14 +45,20 @@ export function TransactionFlows({
   following: Transaction[];
   editingPercentages: number | null;
   coupleOpen: boolean;
+  saveError: string;
+  accountError: string;
+  deleteError: string;
+  percentagesError: string;
+  deleteBusy: boolean;
   onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
   onSaveAccount: (account: BankAccount) => Promise<boolean>;
+  onSavePercentages: (values: GoalPercentages) => Promise<boolean>;
+  onDelete: (includeFollowing: boolean) => Promise<void>;
   onCloseDialog: () => void;
   onCloseAccount: () => void;
   onCloseDeleting: () => void;
   onClosePercentages: () => void;
   onCloseCouple: () => void;
-  onNotice: (notice: Notice) => void;
 }) {
   return (
     <>
@@ -51,13 +66,8 @@ export function TransactionFlows({
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
           onClose={onClosePercentages}
-          error={budget.error}
-          onSave={async (values) => {
-            if (!(await budget.savePercentages(values, editingPercentages)))
-              return false;
-            onNotice({ message: "Percentuais atualizados." });
-            return true;
-          }}
+          error={percentagesError}
+          onSave={onSavePercentages}
         />
       )}
       {dialog && (
@@ -70,7 +80,7 @@ export function TransactionFlows({
           members={budget.household.members}
           accounts={budget.state.accounts}
           currentUserId={budget.user.id}
-          serverError={budget.error}
+          serverError={saveError}
           onSave={onSave}
           onClose={onCloseDialog}
         />
@@ -78,7 +88,7 @@ export function TransactionFlows({
       {accountDialog && (
         <AccountDialog
           account={accountDialog.account}
-          serverError={budget.error}
+          serverError={accountError}
           onSave={onSaveAccount}
           onClose={onCloseAccount}
         />
@@ -87,24 +97,10 @@ export function TransactionFlows({
         <DeleteRecurrenceDialog
           transaction={deleting}
           count={following.length + 1}
-          busy={budget.busy}
-          error={budget.error}
+          busy={deleteBusy}
+          error={deleteError}
           onClose={onCloseDeleting}
-          onDelete={async (includeFollowing) => {
-            if (
-              await budget.removeTransaction(
-                deleting,
-                includeFollowing ? following : undefined,
-              )
-            ) {
-              onNotice(
-                includeFollowing
-                  ? { message: `${following.length + 1} transações excluídas.` }
-                  : { message: "Transação excluída.", undo: deleting },
-              );
-              onCloseDeleting();
-            }
-          }}
+          onDelete={onDelete}
         />
       )}
       {coupleOpen && <CoupleDialog budget={budget} onClose={onCloseCouple} />}
