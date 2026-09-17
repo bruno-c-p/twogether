@@ -1128,6 +1128,10 @@
 }
 
 @media (max-width: 360px) {
+  .topbar {
+    padding: 0 16px;
+  }
+
   .mobile-navigation a span {
     font-size: 9px;
   }
