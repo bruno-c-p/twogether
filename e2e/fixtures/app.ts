@@ -9,13 +9,25 @@ export function uniqueEmail(label: string) {
   return `e2e.${worker}.${Date.now()}.${label}@example.test`;
 }
 
+export async function waitForHydrated(page: Page) {
+  await page.waitForFunction(() =>
+    Object.keys(document.body).some((key) => key.startsWith("__react")),
+  );
+}
+
+export async function reloadApp(page: Page) {
+  await page.reload();
+  await waitForHydrated(page);
+}
+
 export async function waitForGate(page: Page) {
   await expect(page.getByRole("heading", { name: /A vida a dois/ })).toBeVisible();
   await expect(page.getByText("Carregando orçamento…")).toHaveCount(0);
+  await waitForHydrated(page);
 }
 
 export async function loginDev(page: Page, email: string) {
-  await page.goto("/");
+  if (!/^https?:/.test(page.url())) await page.goto("/");
   await waitForGate(page);
   await page.getByLabel("Seu e-mail").fill(email);
   await page.getByRole("button", { name: "Entrar localmente" }).click();
@@ -93,4 +105,10 @@ export async function sessionCookie(page: Page) {
 export function nav(page: Page, kind: "desktop" | "mobile") {
   const label = kind === "desktop" ? "Navegação principal" : "Navegação mobile";
   return page.getByRole("navigation", { name: label });
+}
+
+export function person(page: Page, name: string) {
+  return page
+    .getByLabel("Filtrar por pessoa")
+    .getByRole("button", { name, exact: true });
 }

@@ -17,13 +17,13 @@ test.describe("accounts", () => {
     await expect(
       page.getByRole("heading", { name: "Nova transação" }),
     ).toHaveCount(0);
-    await expect(page.getByRole("heading", { name: "Contas" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Contas", exact: true })).toBeVisible();
   });
 
   test("M5 empty contas create a Nubank row", async ({ page }) => {
     await onboard(page, "Ana");
     await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
-    await expect(page.getByRole("heading", { name: "Contas" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Contas", exact: true })).toBeVisible();
     await expect(page.getByLabel("Selecionar mês e ano")).toHaveCount(0);
     await expect(
       page.getByText(
@@ -37,7 +37,7 @@ test.describe("accounts", () => {
     await page.getByLabel("Saldo inicial").fill("1.250,00");
     await page.getByRole("button", { name: "Adicionar conta" }).click();
     await expectToast(page, "Conta adicionada.");
-    await expect(page.getByRole("button", { name: "Nubank" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Nubank", exact: true })).toBeVisible();
     await expect(page.getByText("Nenhuma transação nesta conta")).toBeVisible();
     await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
     await expect(
@@ -53,7 +53,7 @@ test.describe("accounts", () => {
       await expect(fab).toBeVisible();
       const box = await fab.boundingBox();
       expect(box?.width ?? 0).toBeGreaterThan(240);
-      await expect(page.getByRole("button", { name: "Nubank" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Nubank", exact: true })).toBeVisible();
       await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });

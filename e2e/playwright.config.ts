@@ -1,19 +1,8 @@
 import { defineConfig } from "@playwright/test";
-import { rmSync } from "node:fs";
 
 const databasePath =
   process.env.BUDGET_DATABASE_PATH ?? "/tmp/twogether-e2e.sqlite";
 const baseURL = "http://127.0.0.1:3000";
-
-if (process.env.CI) {
-  for (const file of [
-    databasePath,
-    `${databasePath}-wal`,
-    `${databasePath}-shm`,
-  ]) {
-    rmSync(file, { force: true });
-  }
-}
 
 const env = { ...process.env };
 delete env.TURSO_DATABASE_URL;
@@ -46,7 +35,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "bun run dev",
+    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun run dev`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

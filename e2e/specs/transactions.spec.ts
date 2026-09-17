@@ -52,8 +52,8 @@ test.describe("transactions", () => {
 
     await expect(page.getByText("Nosso saldo do mês")).toBeVisible();
     await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();
-    await expect(page.getByRole("button", { name: "Salário" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Mercado" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Salário", exact: true })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Mercado", exact: true })).toBeVisible();
     await expect(page.getByText("Ana · Nubank").first()).toBeVisible();
     await expect(page.getByText("Custo fixo").first()).toBeVisible();
     await expect(page.getByRole("button", { name: "#casa" })).toBeVisible();
@@ -68,7 +68,8 @@ test.describe("transactions", () => {
 
       await page.getByRole("button", { name: "Nova transação" }).click();
       await expect(page.getByRole("dialog", { name: "Nova transação" })).toBeVisible();
-      await page.locator("dialog").click({ position: { x: 4, y: 4 } });
+      const box = await page.locator("dialog").boundingBox();
+      await page.mouse.click(Math.max(2, (box?.x ?? 16) - 8), (box?.y ?? 80) + 24);
       await expect(page.getByRole("dialog", { name: "Nova transação" })).toHaveCount(
         0,
       );

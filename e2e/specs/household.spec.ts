@@ -6,6 +6,8 @@ import {
   setName,
   uniqueEmail,
   withMobile,
+  person,
+  reloadApp,
 } from "../fixtures/app";
 
 test.describe("household", () => {
@@ -46,15 +48,15 @@ test.describe("household", () => {
     await expect(
       biaPage.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
-    await expect(biaPage.getByRole("button", { name: "Nós" })).toBeVisible();
-    await expect(biaPage.getByRole("button", { name: "Eu" })).toBeVisible();
-    await expect(biaPage.getByRole("button", { name: "Ana" })).toBeVisible();
+    await expect(person(biaPage, "Nós")).toBeVisible();
+    await expect(person(biaPage, "Eu")).toBeVisible();
+    await expect(person(biaPage, "Ana")).toBeVisible();
 
-    await page.reload();
+    await reloadApp(page);
     await expect(
       page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bia" })).toBeVisible();
+    await expect(person(page, "Bia")).toBeVisible();
     await openCouple(page);
     await expect(
       page.getByText("Vocês dois já estão aqui. O espaço está completo."),

@@ -5,6 +5,8 @@ import {
   nav,
   onboard,
   setMonth,
+  waitForGate,
+  reloadApp,
   withMobile,
 } from "../fixtures/app";
 
@@ -43,8 +45,8 @@ test.describe("chrome", () => {
     await page.getByRole("button", { name: "Ocultar valores" }).click();
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
     await expect(page.getByText("••").first()).toBeVisible();
-    await expect(page.getByText("Valores ocultos")).toBeVisible();
-    await expect(page.getByRole("img", { name: /ocultas?/ })).toBeVisible();
+    await expect(page.getByText("Valores ocultos").first()).toBeVisible();
+    await expect(page.getByRole("img", { name: /oculta/ }).first()).toBeVisible();
     const barWidth = await page
       .getByRole("button", { name: /Custo fixo:/ })
       .evaluate((card) => {
@@ -70,6 +72,7 @@ test.describe("chrome", () => {
 
   test("M10 theme persists on the gate and workspace", async ({ page }) => {
     await page.goto("/");
+    await waitForGate(page);
     await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme-preference",
@@ -85,12 +88,12 @@ test.describe("chrome", () => {
     expect(await page.evaluate(() => localStorage.getItem("twogether.theme.v1"))).toBe(
       "dark",
     );
-    await page.reload();
+    await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
     await page.getByRole("button", { name: "Tema claro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    await page.reload();
+    await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     expect(await page.evaluate(() => localStorage.getItem("twogether.theme.v1"))).toBe(
       "light",

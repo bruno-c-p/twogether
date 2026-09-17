@@ -35,9 +35,7 @@ test.describe("auth", () => {
       page.getByText("Modo desenvolvimento: o acesso local não envia e-mail."),
     ).toBeVisible();
     await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
-    await expect(
-      page.getByRole("contentinfo").getByText("twogether."),
-    ).toBeVisible();
+    await expect(page.locator("footer").getByText("twogether.")).toBeVisible();
     await expect(page.getByText("Orçamento a dois, com leveza.")).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);
 
@@ -68,11 +66,11 @@ test.describe("auth", () => {
       page.getByText("Saldo, entradas, despesas e metas do mês."),
     ).toBeVisible();
     await expect(page.locator("header").getByText("Visão geral")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Nós" })).toHaveAttribute(
+    await expect(page.getByRole("button", { name: "Nós", exact: true })).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    await expect(page.getByRole("button", { name: "Eu" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Eu", exact: true })).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeVisible();
