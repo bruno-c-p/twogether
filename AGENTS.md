@@ -1,55 +1,55 @@
-# Regras de trabalho
+# Working rules
 
-## Validação obrigatória para qualquer alteração
+## Mandatory validation for any change
 
-- Toda alteração, independentemente de tamanho ou tipo (código, UI, estilos,
-  textos, configuração, dependências ou documentação), exige validação do app
-  em execução antes de encerrar a tarefa. Não omita essa etapa por considerar
-  a mudança simples ou de baixo impacto.
-- Inicie o app com Bun e use um navegador real para executar o fluxo afetado
-  de ponta a ponta. Para alterações sem efeito direto na interface, faça ao
-  menos um teste básico de carregamento e navegação do app e valide também
-  o comportamento específico da alteração.
-- Confira o resultado visual e a responsividade em desktop, tablet e celular,
-  incluindo telas estreitas de 320px. Verifique cortes, sobreposições e rolagem
-  horizontal indevida. Inspecione os temas claro e escuro quando houver UI.
-- Exercite os controles e estados relevantes: filtros, troca de mês/pessoa,
-  formulários, estados vazios, dados preenchidos, persistência após recarregar
-  e ocultação de valores, conforme o fluxo afetado.
-- Inspecione erros no console e requisições com falha. Corrija problemas
-  introduzidos pela alteração e repita a validação do fluxo corrigido.
-- Execute `bun run typecheck`, `bun run lint`, `bun run fitness`,
-  `bun run test`, `bun run build`, `bun run e2e:must` e `git diff --check`.
-  Se faltarem dependências, execute `bun install --frozen-lockfile` antes
-  das verificações. Chromium do Playwright: `bunx playwright install chromium`.
-- Testes automatizados, análise de código e build não substituem a validação
-  no navegador. Não declare a tarefa concluída apenas com essas verificações.
-- Use dados de teste isolados; preserve dados reais e trabalho não relacionado.
-  Não publique nem faça deploy sem autorização.
-- Se acesso, autenticação ou ferramentas impedirem alguma validação, informe
-  o bloqueio concreto e o que falta verificar. Não apresente a alteração como
-  totalmente validada; solicite somente a informação ou ação necessária para
-  concluir a verificação.
-- Na resposta final, registre sucintamente o que foi testado no app, os
-  resultados das verificações automatizadas e quaisquer limitações reais.
+- Every change, regardless of size or type (code, UI, styles, copy,
+  configuration, dependencies, or documentation), requires validating the app
+  running before finishing the task. Do not skip this step by considering the
+  change simple or low-impact.
+- Start the app with Bun and use a real browser to run the affected flow
+  end to end. For changes with no direct UI effect, do at least a basic
+  load-and-navigate test of the app and also validate the specific behavior
+  of the change.
+- Check the visual result and responsiveness on desktop, tablet, and phone,
+  including 320px-wide screens. Verify clipping, overlaps, and unintended
+  horizontal scrolling. Inspect light and dark themes when there is UI.
+- Exercise the relevant controls and states: filters, month/person switching,
+  forms, empty states, filled data, persistence after reloading, and value
+  hiding, as the affected flow requires.
+- Inspect console errors and failed requests. Fix problems introduced by the
+  change and repeat the validation of the fixed flow.
+- Run `bun run typecheck`, `bun run lint`, `bun run fitness`,
+  `bun run test`, `bun run build`, `bun run e2e:must`, and `git diff --check`.
+  If dependencies are missing, run `bun install --frozen-lockfile` before
+  the checks. Playwright Chromium: `bunx playwright install chromium`.
+- Automated tests, code analysis, and build do not replace in-browser
+  validation. Do not declare the task complete based only on those checks.
+- Use isolated test data; preserve real data and unrelated work.
+  Do not publish or deploy without authorization.
+- If access, authentication, or tools prevent some validation, report the
+  concrete blocker and what is left to verify. Do not present the change as
+  fully validated; ask only for the information or action needed to finish
+  the verification.
+- In the final response, briefly record what was tested in the app, the
+  results of the automated checks, and any real limitations.
 
-## Sem mídia em `.github/`
+## No media under `.github/`
 
-- Não anexe, faça commit nem deixe screenshots ou vídeos sob `.github/`
-  (sem `.github/assets`, sem dumps de imagens de PR nessa árvore).
-- Validação visual continua no corpo do PR: imagens hospedadas/do agente e
-  embeds markdown que não são arquivos em `.github/`.
-- Não use o git do repositório como substituto para guardar essa mídia em
-  outro caminho.
+- Do not attach, commit, or leave screenshots or videos under `.github/`
+  (no `.github/assets`, no PR image dumps in that tree).
+- Visual validation stays in the PR body: hosted/agent images and markdown
+  embeds that are not files under `.github/`.
+- Do not use the repository's git as a substitute for storing that media
+  elsewhere.
 
-## Importações absolutas
+## Absolute imports
 
-- Importações de código-fonte do repositório devem usar o alias `@/` (`src/`),
-  nunca caminhos relativos (`./` ou `../`).
-- Não altere URLs públicas em runtime, `url()` em CSS, nem importações de
-  pacotes externos.
-- Mantenha os imports no topo do arquivo. Sem imports inline, salvo quando a
-  toolchain exigir carregamento preguiçoso.
-- Exceção: arquivos gerados que a toolchain reescreve com imports relativos
-  (ex.: `src/routeTree.gen.ts` do TanStack Router). Não os edite para forçar o
-  alias.
+- Source-code imports in the repository must use the `@/` alias (`src/`),
+  never relative paths (`./` or `../`).
+- Do not change public URLs at runtime, `url()` in CSS, or imports of
+  external packages.
+- Keep imports at the top of the file. No inline imports unless the
+  toolchain requires lazy loading.
+- Exception: generated files that the toolchain rewrites with relative
+  imports (e.g., TanStack Router's `src/routeTree.gen.ts`). Do not edit them
+  to force the alias.
