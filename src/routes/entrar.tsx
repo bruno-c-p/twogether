@@ -14,7 +14,6 @@ function GatePending() {
 export const Route = createFileRoute("/entrar")({
   component: AccountGate,
   validateSearch: validateAccessSearch,
-  headers: () => ({ "Cache-Control": "private, no-store" }),
   beforeLoad: async ({ search }) => {
     if (!search.access) return;
     await consumeAccess({
