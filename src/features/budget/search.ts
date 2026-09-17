@@ -1,4 +1,9 @@
-import type { GoalId, TransactionKind, View } from "@/features/budget/domain/types";
+import { currentMonth } from "@/features/budget/domain/format";
+import type {
+  GoalId,
+  TransactionKind,
+  View,
+} from "@/features/budget/domain/types";
 
 export function isBudgetToken(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
@@ -71,6 +76,17 @@ export function gateRedirectSearch(search: AccessSearch): AccessSearch {
     ...(search.access ? { access: search.access } : {}),
     ...(search.convite ? { convite: search.convite } : {}),
   };
+}
+
+export function missingWorkspaceMonth(search: BudgetSearch): boolean {
+  return !search.month && !search.access && !search.convite;
+}
+
+export function withDefaultMonth(
+  search: BudgetSearch,
+  month = currentMonth(),
+): BudgetSearch {
+  return { ...search, month };
 }
 
 export function validateAccessSearch(
