@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   accessRedirectSearch,
+  gateRedirectSearch,
   openGoalTransactions,
   openView,
+  validateAccessSearch,
   validateBudgetSearch,
   withView,
   type BudgetSearch,
@@ -69,14 +71,56 @@ describe("accessRedirectSearch", () => {
   });
 });
 
+describe("gateRedirectSearch", () => {
+  const access = "a".repeat(64);
+  const convite = "b".repeat(64);
+
+  it("forwards access and convite to /entrar", () => {
+    expect(gateRedirectSearch({ access, convite })).toEqual({
+      access,
+      convite,
+    });
+  });
+
+  it("omits missing tokens", () => {
+    expect(gateRedirectSearch({ access })).toEqual({ access });
+    expect(gateRedirectSearch({ convite })).toEqual({ convite });
+    expect(gateRedirectSearch({})).toEqual({});
+  });
+});
+
+describe("validateAccessSearch", () => {
+  const access = "a".repeat(64);
+  const convite = "b".repeat(64);
+
+  it("keeps 64-hex tokens and drops junk and workspace filters", () => {
+    expect(validateAccessSearch({ access, convite, view: "accounts" })).toEqual(
+      {
+        access,
+        convite,
+      },
+    );
+    expect(validateAccessSearch({ access: "nope", convite: "invite" })).toEqual(
+      {
+        access: undefined,
+        convite: undefined,
+      },
+    );
+  });
+});
+
 describe("validateBudgetSearch", () => {
   const access = "a".repeat(64);
   const convite = "b".repeat(64);
 
   it("keeps a 64-hex access token for the loader and drops junk", () => {
     expect(validateBudgetSearch({ access })).toMatchObject({ access });
-    expect(validateBudgetSearch({ access: "not-a-token" }).access).toBeUndefined();
-    expect(validateBudgetSearch({ access: access.slice(0, 63) }).access).toBeUndefined();
+    expect(
+      validateBudgetSearch({ access: "not-a-token" }).access,
+    ).toBeUndefined();
+    expect(
+      validateBudgetSearch({ access: access.slice(0, 63) }).access,
+    ).toBeUndefined();
   });
 
   it("keeps a 64-hex invite token and drops junk", () => {

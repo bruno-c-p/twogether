@@ -6,7 +6,10 @@ import {
   getBudgetStore,
   sessionCookie,
 } from "@/features/budget/actions/budget-store.server";
-import { parseAccessPayload, parseBudgetCommand } from "@/features/budget/command";
+import {
+  parseAccessPayload,
+  parseBudgetCommand,
+} from "@/features/budget/command";
 import { accessRedirectSearch } from "@/features/budget/search";
 import { RequestError } from "@/features/budget/services/shared.server";
 
@@ -50,7 +53,7 @@ export const consumeAccess = createServerFn({ method: "POST" })
         console.error("Magic link failed", error);
     }
     throw redirect({
-      to: "/",
+      to: "/entrar",
       search: accessRedirectSearch(data.convite),
     });
   });

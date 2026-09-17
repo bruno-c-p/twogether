@@ -1,16 +1,26 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
+import { loadBudget } from "@/features/budget/actions/load-budget";
 import {
-  consumeAccess,
-  loadBudget,
-} from "@/features/budget/actions/load-budget";
-import { validateBudgetSearch } from "@/features/budget/search";
+  gateRedirectSearch,
+  validateBudgetSearch,
+} from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
+import type {
+  SharedSnapshot,
+  WorkspaceSnapshot,
+} from "@/features/budget/types";
 
 function BudgetPending() {
-  return (
-    <LoadingState>Carregando orçamento…</LoadingState>
-  );
+  return <LoadingState>Carregando orçamento…</LoadingState>;
+}
+
+function workspaceSnapshot(snapshot: SharedSnapshot): WorkspaceSnapshot {
+  const { user, household, budget } = snapshot;
+  if (!user?.name || !household) {
+    throw redirect({ to: "/entrar" });
+  }
+  return { user, household, budget };
 }
 
 export const Route = createFileRoute("/")({
@@ -20,16 +30,14 @@ export const Route = createFileRoute("/")({
     access: search.access,
     convite: search.convite,
   }),
-  loader: async ({ deps }) => {
-    if (deps.access) {
-      await consumeAccess({
-        data: {
-          token: deps.access,
-          ...(deps.convite ? { convite: deps.convite } : {}),
-        },
+  loader: async ({ deps }): Promise<WorkspaceSnapshot> => {
+    if (deps.access || deps.convite) {
+      throw redirect({
+        to: "/entrar",
+        search: gateRedirectSearch(deps),
       });
     }
-    return loadBudget();
+    return workspaceSnapshot(await loadBudget());
   },
   pendingComponent: BudgetPending,
   pendingMs: 300,
