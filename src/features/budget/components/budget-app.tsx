@@ -48,9 +48,9 @@ import styles from "@/features/budget/components/budget-app.module.css";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { AccountList } from "@/features/budget/components/account-list";
 import { withView } from "@/features/budget/search";
-import { Brand } from "@/ui/brand";
-import { Button } from "@/ui/button";
-import { OverviewGrid, SectionHeading } from "@/ui/panel";
+import { Brand } from "@/components/ui/brand/brand";
+import { Button } from "@/components/ui/button/button";
+import { OverviewGrid, SectionHeading } from "@/components/ui/panel/panel";
 
 const navigation = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },

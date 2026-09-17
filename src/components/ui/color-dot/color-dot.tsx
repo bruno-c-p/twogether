@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef } from "react";
-import styles from "@/ui/color-dot.module.css";
+import styles from "@/components/ui/color-dot/color-dot.module.css";
 
 export function ColorDot({
   className,

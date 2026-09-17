@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import styles from "@/ui/brand.module.css";
+import styles from "@/components/ui/brand/brand.module.css";
 
 export function Brand({
   className,

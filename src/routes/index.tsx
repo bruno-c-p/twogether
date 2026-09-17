@@ -6,7 +6,7 @@ import {
 } from "@/features/budget/actions/load-budget";
 import { validateBudgetSearch } from "@/features/budget/search";
 import { RouteError } from "@/route-error";
-import { LoadingState } from "@/ui/empty-state";
+import { LoadingState } from "@/components/ui/empty-state/empty-state";
 
 function BudgetPending() {
   return (

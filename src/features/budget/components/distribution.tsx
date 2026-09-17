@@ -1,7 +1,7 @@
 import { money, summarize } from "@/features/budget/services/budget";
 import { donutSegments } from "@/features/budget/services/donut";
 import type { Transaction } from "@/features/budget/types";
-import { ColorDot } from "@/ui/color-dot";
+import { ColorDot } from "@/components/ui/color-dot/color-dot";
 import styles from "@/features/budget/components/distribution.module.css";
 
 export function Distribution({

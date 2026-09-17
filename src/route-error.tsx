@@ -1,6 +1,6 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link, useRouter } from "@tanstack/react-router";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button/button";
 import styles from "@/route-error.module.css";
 
 export function RouteError({ error, reset }: ErrorComponentProps) {

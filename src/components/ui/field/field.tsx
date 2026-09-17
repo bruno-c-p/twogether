@@ -3,7 +3,7 @@ import type {
   LabelHTMLAttributes,
   ReactNode,
 } from "react";
-import styles from "@/ui/field.module.css";
+import styles from "@/components/ui/field/field.module.css";
 
 export function Field({
   className,

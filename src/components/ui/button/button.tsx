@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from "react";
-import styles from "@/ui/button.module.css";
+import styles from "@/components/ui/button/button.module.css";
 
 type Variant = "primary" | "secondary" | "text" | "icon" | "tag";
 

@@ -28,13 +28,13 @@ import type {
   Member,
 } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/ui/dialog";
+} from "@/components/ui/dialog/dialog";
 import {
   AmountField,
   Field,
@@ -43,7 +43,7 @@ import {
   Fieldset,
   FormError,
   Optional,
-} from "@/ui/field";
+} from "@/components/ui/field/field";
 import styles from "@/features/budget/components/transaction-dialog.module.css";
 
 interface Props {

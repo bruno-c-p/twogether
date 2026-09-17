@@ -16,10 +16,10 @@ import type {
   Member,
 } from "@/features/budget/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import { Button } from "@/ui/button";
-import { ColorDot } from "@/ui/color-dot";
-import { EmptyState } from "@/ui/empty-state";
-import { Panel, SectionHeading } from "@/ui/panel";
+import { Button } from "@/components/ui/button/button";
+import { ColorDot } from "@/components/ui/color-dot/color-dot";
+import { EmptyState } from "@/components/ui/empty-state/empty-state";
+import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/transaction-list.module.css";
 
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {

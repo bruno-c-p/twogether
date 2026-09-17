@@ -3,8 +3,8 @@ import { money } from "@/features/budget/services/budget";
 import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/types";
-import { ColorDot } from "@/ui/color-dot";
-import { OverviewGrid } from "@/ui/panel";
+import { ColorDot } from "@/components/ui/color-dot/color-dot";
+import { OverviewGrid } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/expense-charts.module.css";
 
 const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];

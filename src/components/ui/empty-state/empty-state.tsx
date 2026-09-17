@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import styles from "@/ui/empty-state.module.css";
+import styles from "@/components/ui/empty-state/empty-state.module.css";
 
 export function EmptyState({
   icon,

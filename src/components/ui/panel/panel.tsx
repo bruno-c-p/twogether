@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import styles from "@/ui/panel.module.css";
+import styles from "@/components/ui/panel/panel.module.css";
 
 export function Panel({
   className,

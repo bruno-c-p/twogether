@@ -2,14 +2,14 @@ import { useState, type FormEvent } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/services/budget";
 import type { GoalPercentages } from "@/features/budget/types";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/ui/dialog";
-import { FormError } from "@/ui/field";
+} from "@/components/ui/dialog/dialog";
+import { FormError } from "@/components/ui/field/field";
 import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({

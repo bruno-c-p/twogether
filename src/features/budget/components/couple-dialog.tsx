@@ -1,14 +1,14 @@
 import { useState } from "react";
 import { Copy } from "lucide-react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import { Button } from "@/ui/button";
+import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
   DialogContent,
   DialogFooter,
   DialogHeader,
-} from "@/ui/dialog";
-import { FieldHint, FormError, FormStack, Note } from "@/ui/field";
+} from "@/components/ui/dialog/dialog";
+import { FieldHint, FormError, FormStack, Note } from "@/components/ui/field/field";
 import styles from "@/features/budget/components/couple-dialog.module.css";
 
 export function CoupleDialog({
