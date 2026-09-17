@@ -18,7 +18,7 @@ import type {
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button/button";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";
-import { EmptyState } from "@/components/ui/empty-state/empty-state";
+import { EmptyState } from "@/features/budget/components/empty-state";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/transaction-list.module.css";
 

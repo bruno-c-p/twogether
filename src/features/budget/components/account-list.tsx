@@ -2,7 +2,7 @@ import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
 import { accountBalance, money } from "@/features/budget/services/budget";
 import type { BankAccount, Transaction } from "@/features/budget/types";
 import { Button } from "@/components/ui/button/button";
-import { EmptyState } from "@/components/ui/empty-state/empty-state";
+import { EmptyState } from "@/features/budget/components/empty-state";
 import {
   ListRow,
   ListRowActions,
@@ -12,7 +12,7 @@ import {
   ListRowValue,
   listRowAction,
   listRowDelete,
-} from "@/components/ui/list-row/list-row";
+} from "@/features/budget/components/list-row";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 
 interface Props {
