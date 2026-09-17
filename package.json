@@ -11,7 +11,9 @@
     "fitness": "bun scripts/fitness.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files"
+    "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "e2e:must": "playwright test --config e2e/playwright.config.ts e2e/specs/auth.spec.ts e2e/specs/household.spec.ts e2e/specs/accounts.spec.ts e2e/specs/transactions.spec.ts e2e/specs/overview-goals.spec.ts e2e/specs/chrome.spec.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
@@ -24,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.63.0",
     "@types/bun": "^1.4.2",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",

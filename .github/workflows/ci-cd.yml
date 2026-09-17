@@ -52,6 +52,29 @@ jobs:
       - name: Production Cache-Control
         run: bun run fitness -- --headers
 
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('bun.lock') }}
+
+      - name: Install Playwright Chromium
+        run: bunx playwright install --with-deps chromium
+
+      - name: Happy-path e2e
+        run: bun run e2e:must
+        env:
+          BUDGET_DATABASE_PATH: /tmp/twogether-e2e.sqlite
+          CI: true
+
+      - name: Upload Playwright traces
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: test-results/
+          if-no-files-found: ignore
+
   deploy:
     name: Deploy production
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'

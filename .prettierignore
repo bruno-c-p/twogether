@@ -8,3 +8,5 @@ data
 .commandcode
 bun.lock
 src/routeTree.gen.ts
+playwright-report
+test-results
