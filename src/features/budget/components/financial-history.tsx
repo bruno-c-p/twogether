@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { money } from "@/features/budget/services/budget";
+import { money } from "@/features/budget/domain/format";
 import { summarizeHistory } from "@/features/budget/services/financial-history";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import charts from "@/features/budget/components/expense-charts.module.css";
 import styles from "@/features/budget/components/financial-history.module.css";
 

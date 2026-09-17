@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Check, X } from "lucide-react";
 import styles from "@/features/budget/components/budget-app.module.css";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 
 export type Notice = {
   message: string;

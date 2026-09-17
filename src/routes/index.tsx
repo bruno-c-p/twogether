@@ -9,7 +9,7 @@ import { LoadingState } from "@/features/budget/components/empty-state";
 import type {
   SharedSnapshot,
   WorkspaceSnapshot,
-} from "@/features/budget/types";
+} from "@/features/budget/domain/types";
 
 function BudgetPending() {
   return <LoadingState>Carregando orçamento…</LoadingState>;

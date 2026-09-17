@@ -1,4 +1,4 @@
-import type { GoalId } from "@/features/budget/types";
+import type { GoalId } from "@/features/budget/domain/types";
 import { GOAL_ICONS } from "@/features/budget/constants";
 
 export function GoalIcon({ goal, size = 20 }: { goal: GoalId; size?: number }) {

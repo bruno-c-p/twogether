@@ -14,18 +14,13 @@ import {
 } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
-import {
-  localDate,
-  money,
-  shiftMonth,
-  summarize,
-  planGoals,
-} from "@/features/budget/services/budget";
+import { localDate, money, shiftMonth } from "@/features/budget/domain/format";
+import { planGoals, summarize } from "@/features/budget/domain/calc";
 import type {
   BankAccount,
   GoalPercentages,
   Transaction,
-} from "@/features/budget/types";
+} from "@/features/budget/domain/types";
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section";

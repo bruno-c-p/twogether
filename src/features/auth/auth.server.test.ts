@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { createBudgetStore } from "@/features/budget/services/shared.server";
-import { sessionCookieOptions } from "@/features/budget/session-cookie";
+import { createBudgetStore } from "@/features/budget/budget.server";
+import { sessionCookieOptions } from "@/features/auth/session-cookie";
 import { setupMemoryStore } from "@/features/budget/services/store-test-harness";
 
 const ctx = setupMemoryStore();
@@ -168,8 +168,7 @@ describe("auth store", () => {
 });
 
 test("Resend transport sends HTML and text with the configured origin and never accepts a failed send", async () => {
-  const { sendMagicLink } =
-    await import("@/features/budget/services/email.server");
+  const { sendMagicLink } = await import("@/features/auth/email.server");
   const old = {
     key: process.env.RESEND_API_KEY,
     from: process.env.RESEND_FROM,

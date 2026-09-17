@@ -4,8 +4,8 @@ import styles from "@/features/budget/components/budget-app.module.css";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button/button";
 import { SectionHeading } from "@/components/ui/panel/panel";
-import { planGoals, summarize } from "@/features/budget/services/budget";
-import type { GoalId, View } from "@/features/budget/types";
+import { planGoals, summarize } from "@/features/budget/domain/calc";
+import type { GoalId, View } from "@/features/budget/domain/types";
 
 export function GoalsSection({
   view,

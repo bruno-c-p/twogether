@@ -4,8 +4,8 @@ import { ExpenseCharts } from "@/features/budget/components/expense-charts";
 import { FinancialHistory } from "@/features/budget/components/financial-history";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { OverviewGrid } from "@/components/ui/panel/panel";
-import type { Transaction } from "@/features/budget/types";
-import { summarize } from "@/features/budget/services/budget";
+import type { Transaction } from "@/features/budget/domain/types";
+import { summarize } from "@/features/budget/domain/calc";
 
 export function Overview({
   monthly,

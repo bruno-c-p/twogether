@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
-import { money } from "@/features/budget/services/budget";
+import { money } from "@/features/budget/domain/format";
 import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import { WEEKDAYS } from "@/features/budget/constants";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";
 import { OverviewGrid } from "@/components/ui/panel/panel";

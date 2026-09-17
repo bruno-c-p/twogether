@@ -3,9 +3,9 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createBudgetStore } from "@/features/budget/services/shared.server";
+import { createBudgetStore } from "@/features/budget/budget.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
-import type { Transaction } from "@/features/budget/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import {
   account,
   couple,
