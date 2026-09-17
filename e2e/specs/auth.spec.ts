@@ -9,6 +9,7 @@ import {
   setName,
   uniqueEmail,
   waitForGate,
+  waitForHydrated,
   withMobile,
   expectNoHorizontalOverflow,
 } from "../fixtures/app";
@@ -99,6 +100,7 @@ test.describe("auth", () => {
     const email = uniqueEmail("bia");
     const token = await seedMagicLink(email);
     await page.goto(`/?access=${token}&convite=${convite}`);
+    await waitForHydrated(page);
     await expect(
       page.getByRole("heading", { name: "Como chamamos você?" }),
     ).toBeVisible();
