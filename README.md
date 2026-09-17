@@ -9,7 +9,7 @@ Requer Bun 1.3.14+ e Node.js 22.12+ para as ferramentas de build. O servidor rod
 ```sh
 bun install
 cp .env.example .env.local
-# Preencha as variáveis abaixo em .env.local
+# Fill in the variables below in .env.local
 bun run dev
 ```
 
