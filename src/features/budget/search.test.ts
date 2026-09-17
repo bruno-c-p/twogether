@@ -1,33 +1,56 @@
 import { describe, expect, it } from "vitest";
 import {
   accessRedirectSearch,
+  openGoalTransactions,
+  openView,
   validateBudgetSearch,
   withView,
+  type BudgetSearch,
 } from "@/features/budget/search";
+
+const filtered: BudgetSearch = {
+  view: "overview",
+  month: "2026-09",
+  member: "alice",
+  query: "aluguel",
+  goal: "fixed",
+  tag: "casa",
+  kind: "expense",
+  access: "a".repeat(64),
+  convite: "b".repeat(64),
+};
 
 describe("withView", () => {
   it("changes only the tab and keeps month, person, and filters", () => {
-    expect(
-      withView(
-        {
-          view: "overview",
-          month: "2026-09",
-          member: "alice",
-          query: "aluguel",
-          goal: "fixed",
-          tag: "casa",
-          kind: "expense",
-        },
-        "transactions",
-      ),
-    ).toEqual({
+    expect(withView(filtered, "transactions")).toEqual({
+      ...filtered,
       view: "transactions",
-      month: "2026-09",
-      member: "alice",
-      query: "aluguel",
-      goal: "fixed",
-      tag: "casa",
-      kind: "expense",
+    });
+  });
+});
+
+describe("openView", () => {
+  it("switches tab and drops query, goal, tag, and kind", () => {
+    expect(openView(filtered, "accounts")).toEqual({
+      ...filtered,
+      view: "accounts",
+      query: undefined,
+      goal: undefined,
+      tag: undefined,
+      kind: undefined,
+    });
+  });
+});
+
+describe("openGoalTransactions", () => {
+  it("opens transações for that goal and drops the other list filters", () => {
+    expect(openGoalTransactions(filtered, "freedom")).toEqual({
+      ...filtered,
+      view: "transactions",
+      goal: "freedom",
+      query: undefined,
+      tag: undefined,
+      kind: undefined,
     });
   });
 });
