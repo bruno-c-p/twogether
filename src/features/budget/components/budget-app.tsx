@@ -13,7 +13,8 @@ import {
   summarize,
   planGoals,
 } from "@/features/budget/services/budget";
-import type { BankAccount, Transaction, View } from "@/features/budget/types";
+import type { BankAccount, Transaction } from "@/features/budget/types";
+import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountGate } from "@/features/budget/components/account-gate";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section";
@@ -24,25 +25,6 @@ import { TransactionList } from "@/features/budget/components/transaction-list";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { Button } from "@/components/ui/button/button";
-
-const titles: Record<View, { title: string; subtitle: string }> = {
-  overview: {
-    title: "Visão geral",
-    subtitle: "Saldo, entradas, despesas e metas do mês.",
-  },
-  transactions: {
-    title: "Transações",
-    subtitle: "Registre e acompanhe as entradas e despesas do mês.",
-  },
-  accounts: {
-    title: "Contas",
-    subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
-  },
-  goals: {
-    title: "Metas",
-    subtitle: "Divida sua renda por meta e compare gasto e planejado.",
-  },
-};
 
 export function BudgetApp() {
   const budget = useBudget();
@@ -246,8 +228,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     >
       <div className={styles.pageHeading}>
         <div>
-          <h1>{titles[view].title}</h1>
-          <p>{titles[view].subtitle}</p>
+          <h1>{WORKSPACE_TITLES[view].title}</h1>
+          <p>{WORKSPACE_TITLES[view].subtitle}</p>
         </div>
         <Button
           className={styles.addTransaction}

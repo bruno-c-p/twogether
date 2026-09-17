@@ -3,11 +3,11 @@ import { money } from "@/features/budget/services/budget";
 import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/types";
+import { WEEKDAYS } from "@/features/budget/constants";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";
 import { OverviewGrid } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/expense-charts.module.css";
 
-const weekdays = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 const compactMoney = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
@@ -69,7 +69,7 @@ export function ExpenseCharts({
           </span>
         </div>
         <div className={styles.expenseCalendar}>
-          {weekdays.map((day) => (
+          {WEEKDAYS.map((day) => (
             <span className={styles.expenseWeekday} key={day}>
               {day}
             </span>

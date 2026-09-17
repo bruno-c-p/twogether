@@ -1,28 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
-import {
-  Eye,
-  EyeOff,
-  Landmark,
-  LayoutGrid,
-  ReceiptText,
-  Target,
-  UsersRound,
-} from "lucide-react";
+import { Eye, EyeOff, UsersRound } from "lucide-react";
 import type { View } from "@/features/budget/types";
+import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { AppFooter } from "@/features/budget/components/app-footer";
 import styles from "@/features/budget/components/budget-app.module.css";
 import { withView } from "@/features/budget/search";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
 import type { ReactNode } from "react";
-
-const navigation = [
-  { id: "overview", label: "Visão geral", icon: LayoutGrid },
-  { id: "transactions", label: "Transações", icon: ReceiptText },
-  { id: "accounts", label: "Contas", icon: Landmark },
-  { id: "goals", label: "Metas", icon: Target },
-] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
 export function WorkspaceShell({
   view,
@@ -50,7 +36,7 @@ export function WorkspaceShell({
           aria-label="twogether — início"
         />
         <nav className={styles.desktopNavigation} aria-label="Navegação principal">
-          {navigation.map((item) => (
+          {WORKSPACE_NAVIGATION.map((item) => (
             <Link
               key={item.id}
               to="/"
@@ -71,7 +57,7 @@ export function WorkspaceShell({
         <header className={styles.topbar}>
           <div className={styles.breadcrumb}>
             <strong>
-              {navigation.find((item) => item.id === view)?.label}
+              {WORKSPACE_NAVIGATION.find((item) => item.id === view)?.label}
             </strong>
           </div>
           <Brand className={styles.mobileBrand} mark markClassName={styles.mobileMark}>
@@ -104,7 +90,7 @@ export function WorkspaceShell({
         <AppFooter className={styles.shellFooter} />
       </div>
       <nav className={styles.mobileNavigation} aria-label="Navegação mobile">
-        {navigation.map((item) => (
+        {WORKSPACE_NAVIGATION.map((item) => (
           <Link
             key={item.id}
             to="/"
