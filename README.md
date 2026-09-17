@@ -1,10 +1,10 @@
 # twogether
 
-Orçamento compartilhado para **duas pessoas**, com TanStack Start, React, TypeScript e Bun.
+Shared budget for **two people**, built with TanStack Start, React, TypeScript, and Bun.
 
-## Executar
+## Running
 
-Requer Bun 1.3.14+ e Node.js 22.12+ para as ferramentas de build. O servidor roda com Bun e seu SQLite nativo.
+Requires Bun 1.3.14+ and Node.js 22.12+ for the build tools. The server runs on Bun with its native SQLite.
 
 ```sh
 bun install
@@ -13,40 +13,40 @@ cp .env.example .env.local
 bun run dev
 ```
 
-- `RESEND_API_KEY`: chave do Resend, somente no servidor.
-- `RESEND_FROM`: remetente de um domínio verificado no Resend, como `Twogether <acesso@seu-dominio.com>`.
-- `APP_ORIGIN`: origem da aplicação, sem caminho. Local: `http://localhost:3000`. Para testar em outro dispositivo, use um endereço acessível a ambos e abra o app por esse mesmo endereço. Produção exige HTTPS.
-- `TURSO_DATABASE_URL` e `TURSO_AUTH_TOKEN`: credenciais injetadas pela integração Turso do Vercel. Quando presentes, o servidor usa o banco compartilhado remoto.
-- `BUDGET_DATABASE_PATH`: fallback local quando Turso não está configurado, padrão `./data/twogether.sqlite`.
+- `RESEND_API_KEY`: Resend key, server-side only.
+- `RESEND_FROM`: sender from a domain verified in Resend, such as `Twogether <access@your-domain.com>`.
+- `APP_ORIGIN`: application origin, without a path. Local: `http://localhost:3000`. To test on another device, use an address reachable by both and open the app through that same address. Production requires HTTPS.
+- `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`: credentials injected by the Vercel Turso integration. When present, the server uses the shared remote database.
+- `BUDGET_DATABASE_PATH`: local fallback when Turso is not configured, defaults to `./data/twogether.sqlite`.
 
-Reinicie o servidor após alterar o ambiente. Em `bun run dev`, o acesso local usa o e-mail informado para encontrar ou criar a conta diretamente no SQLite e não envia mensagens pelo Resend; esse atalho só existe com `NODE_ENV=development`. Fora do desenvolvimento, sem a configuração do Resend, o aplicativo não envia links de acesso.
+Restart the server after changing the environment. In `bun run dev`, local access uses the email you provide to find or create the account directly in SQLite and does not send messages through Resend; this shortcut only exists with `NODE_ENV=development`. Outside development, without Resend configured, the app does not send access links.
 
-## Acesso e casal
+## Access and couple
 
-1. Em desenvolvimento, informe o e-mail para entrar diretamente; se ainda não existir, a conta é criada e segue para o onboarding. Nos demais ambientes, receba um link mágico pelo Resend. Não existe senha nem distinção entre cadastro e login.
-2. No desenvolvimento, a conta nova segue diretamente para o nome; nos demais ambientes, abra o link mágico — o servidor consome o token, grava o cookie de sessão e redireciona para `/` sem deixar `?access=` na URL. Na primeira visita, informe seu nome.
-3. Comece o orçamento ou aceite um convite. Convites podem acompanhar o e-mail de acesso.
-4. Em **Nosso espaço**, gere e copie um convite para seu par. O link aceita uma única pessoa, expira em 48 horas e pode ser cancelado. Gerar outro invalida o anterior.
+1. In development, provide your email to sign in directly; if it does not exist yet, the account is created and proceeds to onboarding. In other environments, receive a magic link through Resend. There is no password and no distinction between sign-up and sign-in.
+2. In development, the new account goes straight to the name step; in other environments, open the magic link — the server consumes the token, writes the session cookie, and redirects to `/` without leaving `?access=` in the URL. On the first visit, provide your name.
+3. Start the budget or accept an invite. Invites may accompany the access email.
+4. Under **Our space**, generate and copy an invite for your partner. The link accepts a single person, expires in 48 hours, and can be canceled. Generating another invalidates the previous one.
 
-O link de acesso expira em 15 minutos, funciona uma vez e autentica somente quem tem acesso ao e-mail. Sessões duram 30 dias. Sair revoga a sessão atual. Ambos veem e editam todos os dados do casal; cada conta pertence a apenas um orçamento e o banco limita cada orçamento a duas pessoas.
+The access link expires in 15 minutes, works once, and authenticates only whoever has access to the email. Sessions last 30 days. Signing out revokes the current session. Both see and edit all couple data; each account belongs to only one budget and the database limits each budget to two people.
 
-## Orçamento
+## Budget
 
-- Transações com descrição, valor, data, conta, meta e tags; cada nova transação é associada automaticamente à pessoa logada e mantém essa atribuição quando editada.
-- Contas bancárias compartilhadas, com saldo inicial e saldo atual (inicial + receitas − despesas); criar ou editar uma transação exige escolher uma conta.
-- Visão **Nós** e filtros individuais. O valor planejado de cada meta sempre usa a renda total do casal, mesmo com um filtro individual ativo.
-- Seis metas fixas com percentuais editáveis que somam 100%: custo fixo 30%, prazeres 10%, conforto 15%, metas 15%, liberdade financeira 25% e conhecimento 5%. A divisão vale para todos os meses.
-- Edição, exclusão e desfazer por transação, busca e filtros por meta, tipo e tag. Valores em centavos inteiros.
-- Autoria original e última pessoa que editou preservadas.
-- Cada alteração é uma `createServerFn` validada; a UI lê o snapshot do loader e chama `router.invalidate()` após gravar. Ao voltar à aba, focar a janela ou reconectar à internet, o orçamento é sincronizado com as alterações do seu par. Alterações concorrentes no mesmo lançamento ou nos percentuais são rejeitadas com orientação para revisar a versão atual; inclusões independentes não se sobrescrevem.
+- Transactions with description, amount, date, account, goal, and tags; each new transaction is automatically associated with the signed-in person and keeps that attribution when edited.
+- Shared bank accounts, with an initial balance and current balance (initial + income − expenses); creating or editing a transaction requires choosing an account.
+- **Us** view and individual filters. Each goal's planned amount always uses the couple's total income, even with an individual filter active.
+- Six fixed goals with editable percentages that add up to 100%: fixed costs 30%, pleasures 10%, comfort 15%, goals 15%, financial freedom 25%, and knowledge 5%. The split applies to every month.
+- Editing, deleting, and undoing per transaction, plus search and filters by goal, type, and tag. Amounts in whole cents.
+- Original authorship and the last person to edit are preserved.
+- Each change is a validated `createServerFn`; the UI reads the loader snapshot and calls `router.invalidate()` after saving. When you return to the tab, focus the window, or reconnect to the internet, the budget is synced with your partner's changes. Concurrent changes to the same entry or to the percentages are rejected with guidance to review the current version; independent additions do not overwrite each other.
 
-## Persistência e publicação
+## Persistence and deployment
 
-Turso Cloud fornece o SQLite compartilhado de produção por HTTP; o cliente libSQL inicializa o schema e usa transações no servidor. Sem as variáveis Turso, o desenvolvimento local usa SQLite em `data/` (ignorado pelo Git). Sessões e tokens são armazenados por hash. Cookies HttpOnly/`SameSite=Lax` e Secure sob HTTPS. Leituras e escritas do app passam por server functions com `.validator()`; o documento SSR e os payloads autenticados usam `Cache-Control: private, no-store`. Env e credenciais não integram o bundle cliente.
+Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Sessions and tokens are stored by hash. HttpOnly/`SameSite=Lax` cookies and Secure under HTTPS. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Env and credentials are not part of the client bundle.
 
-Para configurar localmente após conectar o recurso no Vercel, rode `vercel env pull .env.local --yes`. A publicação usa Nitro para gerar o handler TanStack Start compatível com Vercel. E-mails são transacionais; o app não dispara convites para terceiros automaticamente.
+To configure locally after connecting the resource in Vercel, run `vercel env pull .env.local --yes`. Deployment uses Nitro to generate the TanStack Start handler compatible with Vercel. Emails are transactional; the app does not automatically send invites to third parties.
 
-## Verificação
+## Verification
 
 ```sh
 bun run typecheck
@@ -56,6 +56,6 @@ bun run test
 bun run build
 ```
 
-Vitest cobre cálculos/validação; Bun testa SQLite, isolamento, limite de membros, convites, acesso por link, expiração, edição concorrente e cookies de sessão. E-mail é substituído por um transporte de teste nos testes, sem enviar mensagens reais.
+Vitest covers calculations/validation; Bun tests SQLite, isolation, member limit, invites, link access, expiration, concurrent editing, and session cookies. Email is replaced by a test transport in tests, without sending real messages.
 
-Referências: [funções de servidor do TanStack Start](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [API de envio do Resend](https://resend.com/docs/api-reference/emails/send-email).
+References: [TanStack Start server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [Resend send API](https://resend.com/docs/api-reference/emails/send-email).
