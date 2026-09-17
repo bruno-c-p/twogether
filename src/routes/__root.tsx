@@ -10,7 +10,6 @@ import { themeScript } from "@/features/theme";
 
 export const Route = createRootRoute({
   errorComponent: RouteError,
-  headers: () => ({ "Cache-Control": "private, no-store" }),
   head: () => ({
     meta: [
       { charSet: "utf-8" },

@@ -11,11 +11,7 @@ const resurrectedCss = [
   "src/features/budget/styles/list-row.module.css",
 ];
 const bannedCssDeps = ["tailwindcss", "shadcn"];
-const cacheControlFiles = [
-  "src/routes/__root.tsx",
-  "src/routes/index.tsx",
-  "src/features/budget/actions/load-budget.ts",
-] as const;
+const cacheControlFiles = ["src/start.ts"] as const;
 
 function fail(message: string) {
   failures.push(message);
@@ -59,16 +55,16 @@ function assertNoBudgetCommandBus() {
 
 function assertCacheControlSource() {
   for (const file of cacheControlFiles) {
+    if (!existsSync(file)) {
+      fail(`${file} is required for CSRF and Cache-Control middleware`);
+      continue;
+    }
     const text = readFileSync(file, "utf8");
+    if (!text.includes("createCsrfMiddleware"))
+      fail(`${file} must keep createCsrfMiddleware`);
     if (!text.includes(cacheControl))
       fail(`${file} must set Cache-Control: ${cacheControl}`);
   }
-  const loadBudget = readFileSync(
-    "src/features/budget/actions/load-budget.ts",
-    "utf8",
-  );
-  if (!loadBudget.includes("function setPrivateNoStore()"))
-    fail("load-budget.ts must keep setPrivateNoStore");
 }
 
 function assertCssHouseStyle() {

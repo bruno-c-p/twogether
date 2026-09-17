@@ -1,10 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 import { createServerFn } from "@tanstack/react-start";
-import {
-  getCookie,
-  setResponseHeader,
-  setResponseStatus,
-} from "@tanstack/react-start/server";
+import { getCookie, setResponseStatus } from "@tanstack/react-start/server";
 import {
   applySessionCookie,
   getBudgetStore,
@@ -14,23 +10,17 @@ import { parseAccessPayload, parseBudgetCommand } from "@/features/budget/comman
 import { accessRedirectSearch } from "@/features/budget/search";
 import { RequestError } from "@/features/budget/services/shared.server";
 
-function setPrivateNoStore() {
-  setResponseHeader("Cache-Control", "private, no-store");
-}
-
 function sessionToken() {
   return getCookie(sessionCookie) ?? "";
 }
 
 export const loadBudget = createServerFn({ method: "GET" }).handler(() => {
-  setPrivateNoStore();
   return getBudgetStore().snapshot(sessionToken());
 });
 
 export const mutateBudget = createServerFn({ method: "POST" })
   .validator(parseBudgetCommand)
   .handler(async ({ data }) => {
-    setPrivateNoStore();
     const previous = sessionToken();
     try {
       const result = await getBudgetStore().command(data, previous);
@@ -49,7 +39,6 @@ export const mutateBudget = createServerFn({ method: "POST" })
 export const consumeAccess = createServerFn({ method: "POST" })
   .validator(parseAccessPayload)
   .handler(async ({ data }) => {
-    setPrivateNoStore();
     try {
       const result = await getBudgetStore().command(
         { action: "verify-link", token: data.token },
