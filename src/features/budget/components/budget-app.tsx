@@ -1,6 +1,6 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
 import { useEffect, useState } from "react";
-import { getRouteApi, Link } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import {
   ArrowDownLeft,
@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import { useBudget, type BudgetController } from "@/features/budget/hooks/use-budget";
+import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
 import {
   localDate,
   money,
@@ -29,9 +30,7 @@ import {
 } from "@/features/budget/services/budget";
 import type {
   BankAccount,
-  GoalId,
   Transaction,
-  TransactionKind,
   View,
 } from "@/features/budget/types";
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
@@ -59,8 +58,6 @@ const navigation = [
   { id: "goals", label: "Metas", icon: Target },
 ] satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
-const workspaceRoute = getRouteApi("/");
-
 export function BudgetApp() {
   const budget = useBudget();
   if (!budget.user?.name || !budget.household)
@@ -74,18 +71,27 @@ export function BudgetApp() {
 }
 
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
-  const search = workspaceRoute.useSearch();
-  const routeNavigate = workspaceRoute.useNavigate();
+  const {
+    view,
+    month: searchMonth,
+    memberFilter,
+    query,
+    goalFilter,
+    tagFilter,
+    kindFilter,
+    setMonth,
+    setMemberFilter,
+    setQuery,
+    setGoalFilter,
+    setKindFilter,
+    setTag,
+    setView,
+    filterGoal,
+  } = useBudgetSearch();
   const memberCount = budget.household?.members.length ?? 0;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
-  const view = search.view ?? "overview";
-  const memberFilter = search.member ?? "all";
-  const query = search.query ?? "";
-  const goalFilter = search.goal ?? "all";
-  const tagFilter = search.tag ?? "";
-  const kindFilter = search.kind ?? "all";
   const [fallbackMonth, setFallbackMonth] = useState("");
-  const month = search.month ?? fallbackMonth;
+  const month = searchMonth ?? fallbackMonth;
   const [coupleOpen, setCoupleOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
@@ -137,66 +143,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       : memberFilter === "all"
         ? "O planejado soma as metas individuais de cada pessoa."
         : "Renda, gastos e metas da pessoa selecionada.";
-
-  function updateSearch(
-    next: (prev: typeof search) => typeof search,
-    replace = false,
-  ) {
-    void routeNavigate({ to: "/", search: next, replace });
-  }
-
-  function setMonth(value: string) {
-    updateSearch((prev) => ({ ...prev, month: value }));
-  }
-
-  function setMemberFilter(member: string) {
-    updateSearch((prev) => ({
-      ...prev,
-      member: member === "all" ? undefined : member,
-    }));
-  }
-
-  function setQuery(value: string) {
-    updateSearch((prev) => ({ ...prev, query: value || undefined }), true);
-  }
-
-  function setGoalFilter(goal: GoalId | "all") {
-    updateSearch((prev) => ({
-      ...prev,
-      goal: goal === "all" ? undefined : goal,
-    }));
-  }
-
-  function setKindFilter(kind: TransactionKind | "all") {
-    updateSearch((prev) => ({
-      ...prev,
-      kind: kind === "all" ? undefined : kind,
-    }));
-  }
-
-  function navigate(next: View) {
-    updateSearch((prev) => ({
-      ...prev,
-      view: next,
-      query: undefined,
-      goal: undefined,
-      tag: undefined,
-      kind: undefined,
-    }));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  function filterGoal(id: GoalId) {
-    updateSearch((prev) => ({
-      ...prev,
-      view: "transactions",
-      goal: id,
-      query: undefined,
-      tag: undefined,
-      kind: undefined,
-    }));
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
 
   async function save(transaction: Transaction, occurrences = 1) {
     if (!(await budget.saveTransaction(transaction, occurrences))) return false;
@@ -255,7 +201,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       setNotice({
         message: "Cadastre uma conta para lançar transações.",
       });
-      navigate("accounts");
+      setView("accounts");
       return;
     }
     setDialog({ transaction });
@@ -633,19 +579,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
                   kindFilter={kindFilter}
                   onQuery={setQuery}
                   onGoal={setGoalFilter}
-                  onTag={(tag) =>
-                    updateSearch((prev) => ({
-                      ...prev,
-                      view: "transactions",
-                      tag: tag || undefined,
-                    }))
-                  }
+                  onTag={setTag}
                   onKind={setKindFilter}
                   onEdit={(transaction) => openTransaction(transaction)}
                   onDelete={(transaction) => void remove(transaction)}
                   onAdd={() => openTransaction(null)}
                   compact={view === "overview"}
-                  onViewAll={() => navigate("transactions")}
+                  onViewAll={() => setView("transactions")}
                 />
               )}
             </>

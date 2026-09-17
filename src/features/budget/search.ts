@@ -14,7 +14,7 @@ const goals: GoalId[] = [
 ];
 const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
 
-export interface BudgetSearch {
+export interface BudgetFilters {
   view?: View;
   month?: string;
   member?: string;
@@ -22,17 +22,47 @@ export interface BudgetSearch {
   goal?: GoalId;
   tag?: string;
   kind?: TransactionKind;
+}
+
+export interface AccessSearch {
   access?: string;
   convite?: string;
 }
+
+export type BudgetSearch = BudgetFilters & AccessSearch;
 
 export function withView(search: BudgetSearch, view: View): BudgetSearch {
   return { ...search, view };
 }
 
+export function openView(search: BudgetSearch, view: View): BudgetSearch {
+  return {
+    ...search,
+    view,
+    query: undefined,
+    goal: undefined,
+    tag: undefined,
+    kind: undefined,
+  };
+}
+
+export function openGoalTransactions(
+  search: BudgetSearch,
+  goal: GoalId,
+): BudgetSearch {
+  return {
+    ...search,
+    view: "transactions",
+    goal,
+    query: undefined,
+    tag: undefined,
+    kind: undefined,
+  };
+}
+
 export function accessRedirectSearch(
   convite?: string,
-): Pick<BudgetSearch, "convite"> {
+): Pick<AccessSearch, "convite"> {
   return convite ? { convite } : {};
 }
 
