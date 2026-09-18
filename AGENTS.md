@@ -19,7 +19,7 @@
 - Inspect console errors and failed requests. Fix problems introduced by the
   change and repeat the validation of the fixed flow.
 - Run `bun run typecheck`, `bun run lint`, `bun run fitness`,
-  `bun run test`, `bun run build`, `bun run e2e:must`, and `git diff --check`.
+  `bun run test`, `bun run build`, `bun run e2e`, and `git diff --check`.
   If dependencies are missing, run `bun install --frozen-lockfile` before
   the checks. Playwright Chromium: `bunx playwright install chromium`.
 - Automated tests, code analysis, and build do not replace in-browser
