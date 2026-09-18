@@ -16,7 +16,6 @@
 
 .primary:hover {
   background: var(--brand-hover);
-  box-shadow: 0 3px 10px var(--brand-shadow);
 }
 
 .secondary {

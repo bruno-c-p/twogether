@@ -3,7 +3,6 @@
   border: 1px solid var(--border);
   border-radius: 16px;
   color: var(--text);
-  box-shadow: 0 30px 100px #102e3630;
   max-height: calc(100dvh - 40px);
   width: 540px;
   max-width: calc(100vw - 28px);

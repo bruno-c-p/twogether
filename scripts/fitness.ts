@@ -91,6 +91,13 @@ function assertCssHouseStyle() {
   }
   for (const file of tracked(resurrectedCss))
     fail(`tracked resurrected ${file}`);
+  const gradient =
+    /(?:repeating-)?(?:linear|radial|conic)-gradient\s*\(|--page-glow\b/;
+  for (const file of tracked(["*.css", "*.svg", "*.tsx", "*.ts", "*.html"])) {
+    if (file === "scripts/fitness.ts") continue;
+    if (gradient.test(readFileSync(file, "utf8")))
+      fail(`${file} still uses a CSS gradient or --page-glow`);
+  }
 }
 
 async function freePort() {
