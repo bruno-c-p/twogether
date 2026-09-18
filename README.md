@@ -24,7 +24,7 @@ Restart the server after changing the environment. In `bun run dev`, local acces
 ## Access and couple
 
 1. In development, provide your email to sign in directly; if it does not exist yet, the account is created and proceeds to onboarding. In other environments, receive a magic link through Resend. There is no password and no distinction between sign-up and sign-in.
-2. In development, the new account goes straight to the name step; in other environments, open the magic link — the server consumes the token, writes the session cookie, and redirects to `/` without leaving `?access=` in the URL. On the first visit, provide your name.
+2. Sign-in and onboarding live on `/entrar`. Visiting `/` without a session, a name, or a household redirects there. In development, the new account goes straight to the name step; in other environments, open the magic link — the server consumes the token, writes the session cookie, and lands on `/entrar` without leaving `?access=` in the URL. On the first visit, provide your name. With a name and a household, `/entrar` continues to `/`.
 3. Start the budget or accept an invite. Invites may accompany the access email.
 4. Under **Our space**, generate and copy an invite for your partner. The link accepts a single person, expires in 48 hours, and can be canceled. Generating another invalidates the previous one.
 
