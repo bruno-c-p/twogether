@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { parseJoinHousehold } from "@/features/household/household.functions";
+import { parseJoinHousehold } from "@/features/household/actions/join-household";
 
-describe("household validators", () => {
-  test("parseJoinHousehold requires a token", () => {
+describe("parseJoinHousehold", () => {
+  test("requires a token", () => {
     expect(parseJoinHousehold({ token: "invite-token" })).toEqual({
       token: "invite-token",
     });

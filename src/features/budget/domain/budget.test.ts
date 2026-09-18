@@ -7,6 +7,7 @@ import {
 import {
   currentMonth,
   formatAmountInput,
+  newId,
   normalizeTag,
   parseAmount,
   parseBalance,
@@ -174,6 +175,30 @@ describe("mês e tags", () => {
   it("normaliza tags para evitar duplicatas por espaços e letras maiúsculas", () => {
     expect(normalizeTag(" #Casa ")).toBe("casa");
     expect(normalizeTag("A   DOIS")).toBe("a dois");
+  });
+});
+
+describe("newId", () => {
+  const uuid =
+    /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
+
+  it("returns a unique UUID", () => {
+    const first = newId();
+    const second = newId();
+    expect(first).toMatch(uuid);
+    expect(second).toMatch(uuid);
+    expect(first).not.toBe(second);
+  });
+
+  it("works when crypto.randomUUID is missing", () => {
+    const original = crypto.randomUUID;
+    // @ts-expect-error — HTTP origins do not expose randomUUID
+    crypto.randomUUID = undefined;
+    try {
+      expect(newId()).toMatch(uuid);
+    } finally {
+      crypto.randomUUID = original;
+    }
   });
 });
 

@@ -18,6 +18,7 @@ import {
   formatAmountInput,
   formText,
   localDate,
+  newId,
   normalizeTag,
   parseAmount,
 } from "@/features/budget/domain/format";
@@ -144,25 +145,28 @@ export function TransactionDialog({
         : tags;
     setSaving(true);
     setError("");
-    if (
-      await onSave(
-        {
-          id: transaction?.id ?? crypto.randomUUID(),
-          amount,
-          description,
-          date,
-          kind,
-          goal: kind === "income" ? null : goal,
-          tags: completeTags,
-          accountId,
-          memberId,
-          revision: transaction?.revision,
-        },
-        recurring && !transaction ? occurrences : 1,
+    try {
+      if (
+        await onSave(
+          {
+            id: transaction?.id ?? newId(),
+            amount,
+            description,
+            date,
+            kind,
+            goal: kind === "income" ? null : goal,
+            tags: completeTags,
+            accountId,
+            memberId,
+            revision: transaction?.revision,
+          },
+          recurring && !transaction ? occurrences : 1,
+        )
       )
-    )
-      onClose();
-    setSaving(false);
+        onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (

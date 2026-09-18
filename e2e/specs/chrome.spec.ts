@@ -124,4 +124,22 @@ test.describe("chrome", () => {
       await expect(page.getByRole("button", { name: "Tema sistema" })).toBeEnabled();
     });
   });
+
+  test("desktop header does not repeat the brand", async ({ page }) => {
+    await onboard(page, "Ana");
+    const headerBrand = page
+      .locator("header")
+      .getByRole("link", { name: "twogether." });
+    await expect(headerBrand).toBeHidden();
+    await expect(
+      page.getByRole("link", { name: "twogether — início" }),
+    ).toBeVisible();
+
+    await withMobile(page, async () => {
+      await expect(headerBrand).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "twogether — início" }),
+      ).toBeHidden();
+    });
+  });
 });

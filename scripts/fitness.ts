@@ -55,7 +55,13 @@ function assertNoBudgetCommandBus() {
       fail(`${file} still has parseBudgetCommand`);
     if (/\bBudgetCommand\b/.test(text)) fail(`${file} still has BudgetCommand`);
     if (/\bCommandResult\b/.test(text)) fail(`${file} still has CommandResult`);
-    if (file.endsWith(".functions.ts") && /action:\s*["']/.test(text))
+    if (
+      (file.endsWith(".functions.ts") ||
+        (file.includes("/actions/") &&
+          file.endsWith(".ts") &&
+          !file.endsWith(".test.ts"))) &&
+      /action:\s*["']/.test(text)
+    )
       fail(`${file} still uses an action discriminator in a server fn`);
   }
 }

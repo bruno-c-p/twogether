@@ -13,11 +13,11 @@ import {
   logout,
   requestLink,
   setName,
-} from "@/features/auth/auth.functions";
+} from "@/features/auth/actions";
 import {
   createHousehold,
   joinHousehold,
-} from "@/features/household/household.functions";
+} from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
 import { formText } from "@/features/budget/domain/format";
 import { AppFooter } from "@/features/budget/components/app-footer";

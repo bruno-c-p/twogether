@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
-import { loadBudget } from "@/features/budget/budget.functions";
+import { loadBudget } from "@/features/budget/actions";
 import {
   gateRedirectSearch,
   missingWorkspaceMonth,

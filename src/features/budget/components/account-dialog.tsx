@@ -14,7 +14,12 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import { formatAmountInput, formText, parseBalance } from "@/features/budget/domain/format";
+import {
+  formatAmountInput,
+  formText,
+  newId,
+  parseBalance,
+} from "@/features/budget/domain/format";
 import type { BankAccount } from "@/features/budget/domain/types";
 
 interface Props {
@@ -58,24 +63,23 @@ export function AccountDialog({
     }
     setSaving(true);
     setError("");
-    if (
-      await onSave({
-        id: account?.id ?? crypto.randomUUID(),
-        name,
-        openingBalance,
-        revision: account?.revision,
-      })
-    )
-      onClose();
-    setSaving(false);
+    try {
+      if (
+        await onSave({
+          id: account?.id ?? newId(),
+          name,
+          openingBalance,
+          revision: account?.revision,
+        })
+      )
+        onClose();
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
-    <Dialog
-      labelledBy="account-dialog-title"
-      onClose={onClose}
-      closeOnBackdrop
-    >
+    <Dialog labelledBy="account-dialog-title" onClose={onClose} closeOnBackdrop>
       <DialogContent>
         <DialogHeader onClose={onClose}>
           <div>

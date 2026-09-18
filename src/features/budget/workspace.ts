@@ -1,5 +1,5 @@
 import { redirect } from "@tanstack/react-router";
-import { loadBudget } from "@/features/budget/budget.functions";
+import { loadBudget } from "@/features/budget/actions";
 import type {
   SharedSnapshot,
   Transaction,

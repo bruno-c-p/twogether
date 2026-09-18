@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import { Copy } from "lucide-react";
-import { logout } from "@/features/auth/auth.functions";
+import { logout } from "@/features/auth/actions";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import {
   createInvite,
   revokeInvite,
-} from "@/features/household/household.functions";
+} from "@/features/household/actions";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
