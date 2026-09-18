@@ -325,7 +325,6 @@
 .goal-card:hover {
   border-color: var(--goal-color);
   transform: translateY(-3px);
-  box-shadow: 0 6px 15px #213d3110;
 }
 
 .goal-card.over-budget,
@@ -439,7 +438,6 @@
   background: var(--toast);
   color: var(--on-toast);
   border: 1px solid var(--accent);
-  box-shadow: 0 6px 30px #143b3420;
   border-radius: 10px;
   padding: 15px 18px;
   display: flex;

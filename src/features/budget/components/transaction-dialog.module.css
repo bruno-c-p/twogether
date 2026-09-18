@@ -25,7 +25,6 @@
 .kind-toggle button.active {
   background: var(--surface);
   color: var(--text);
-  box-shadow: 0 1px 4px #1d412513;
 }
 
 .dialog label,
