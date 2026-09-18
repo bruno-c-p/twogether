@@ -61,8 +61,8 @@ jobs:
       - name: Install Playwright Chromium
         run: bunx playwright install --with-deps chromium
 
-      - name: Happy-path e2e
-        run: bun run e2e:must
+      - name: E2E
+        run: bun run e2e
         env:
           BUDGET_DATABASE_PATH: /tmp/twogether-e2e.sqlite
           CI: true

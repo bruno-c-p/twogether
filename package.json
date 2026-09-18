@@ -12,8 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
-    "e2e": "playwright test --config e2e/playwright.config.ts",
-    "e2e:must": "playwright test --config e2e/playwright.config.ts e2e/specs/auth.spec.ts e2e/specs/household.spec.ts e2e/specs/accounts.spec.ts e2e/specs/transactions.spec.ts e2e/specs/overview-goals.spec.ts e2e/specs/chrome.spec.ts"
+    "e2e": "playwright test --config e2e/playwright.config.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.18.0",
