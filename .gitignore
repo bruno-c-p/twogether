@@ -13,3 +13,5 @@ data/
 .env
 .vercel
 .env*
+
+.cursor/
