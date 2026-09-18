@@ -76,5 +76,4 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
   );
 }
 
-// Runs before the first paint; only validated preference values reach the DOM.
 export const themeScript = `(()=>{let t="system";try{const s=localStorage.getItem("${THEME_STORAGE_KEY}");if(s==="light"||s==="dark")t=s}catch{}const d=document.documentElement;d.dataset.themePreference=t;d.dataset.theme=t==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t})()`;

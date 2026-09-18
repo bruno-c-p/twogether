@@ -42,7 +42,6 @@ export async function loginDev(page: Page, email: string) {
 }
 
 export async function setName(page: Page, name: string) {
-  // consumeAccess redirects to SSR HTML; Continuar is a native GET until hydrate.
   await waitForHydrated(page);
   const field = page.getByLabel("Seu nome");
   if (await field.isVisible()) {
