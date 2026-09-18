@@ -12,7 +12,6 @@
   --surface: #fff;
   --surface-soft: #edf2e9;
   --page: #f8f9f6;
-  --page-glow: #e7edde;
   --text: #293c33;
   --text-muted: #7b837b;
   --accent: #83aa68;
@@ -59,7 +58,6 @@
 :root[data-theme="dark"] {
   color-scheme: dark;
   --page: #111a17;
-  --page-glow: transparent;
   --surface: #1a2621;
   --surface-soft: #24332b;
   --text: #e5ebe2;

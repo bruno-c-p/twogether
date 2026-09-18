@@ -1,11 +1,12 @@
 .account-page {
   min-height: 100svh;
+  width: 100%;
+  max-width: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 38px 20px;
-  background:
-    radial-gradient(ellipse at top left, var(--page-glow), transparent 60%), var(--page);
+  background: var(--page);
 }
 
 .pageBrand {
