@@ -1,4 +1,5 @@
 import js from "@eslint/js";
+import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
 import reactHooks from "eslint-plugin-react-hooks";
 import globals from "globals";
@@ -8,7 +9,7 @@ const typeChecked = tseslint.configs.recommendedTypeChecked.map((config) => ({
   files: ["**/*.{ts,tsx}"],
 }));
 
-export default tseslint.config(
+export default defineConfig(
   {
     ignores: [
       "dist/**",
