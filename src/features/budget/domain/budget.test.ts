@@ -7,6 +7,7 @@ import {
 import {
   currentMonth,
   formatAmountInput,
+  money,
   newId,
   normalizeTag,
   parseAmount,
@@ -15,6 +16,7 @@ import {
 } from "@/features/budget/domain/format";
 import {
   isBankAccount,
+  isGoalPercentages,
   isTransaction,
 } from "@/features/budget/domain/validate";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
@@ -82,6 +84,53 @@ describe("valores em reais", () => {
     "1000000000",
   ])("rejeita valor inválido %s", (value) => {
     expect(parseAmount(value)).toBeNull();
+  });
+
+  it("formata centavos como moeda brasileira", () => {
+    expect(money(495410)).toBe("R$\u00a04.954,10");
+    expect(money(1)).toBe("R$\u00a00,01");
+    expect(money(0)).toBe("R$\u00a00,00");
+    expect(money(-10000)).toBe("-R$\u00a0100,00");
+  });
+});
+
+describe("divisão da renda", () => {
+  it("aceita o padrão 30+10+15+15+25+5 e misturas com dois decimais que somam 100,00", () => {
+    expect(DEFAULT_PERCENTAGES).toEqual({
+      fixed: 30,
+      pleasure: 10,
+      comfort: 15,
+      targets: 15,
+      freedom: 25,
+      knowledge: 5,
+    });
+    expect(isGoalPercentages(DEFAULT_PERCENTAGES)).toBe(true);
+    expect(
+      isGoalPercentages({
+        fixed: 33.33,
+        pleasure: 33.33,
+        comfort: 33.34,
+        targets: 0,
+        freedom: 0,
+        knowledge: 0,
+      }),
+    ).toBe(true);
+  });
+
+  it("rejeita totais diferentes de 100,00 e um destino a 90% com o restante padrão", () => {
+    expect(
+      isGoalPercentages({
+        fixed: 99.99,
+        pleasure: 0,
+        comfort: 0,
+        targets: 0,
+        freedom: 0,
+        knowledge: 0,
+      }),
+    ).toBe(false);
+    expect(isGoalPercentages({ ...DEFAULT_PERCENTAGES, fixed: 90 })).toBe(
+      false,
+    );
   });
 });
 

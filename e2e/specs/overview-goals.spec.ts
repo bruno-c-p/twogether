@@ -23,11 +23,7 @@ async function addAccount(page: Page, name = "Nubank") {
   await expectToast(page, "Conta adicionada.");
 }
 
-async function addExpense(
-  page: Page,
-  description: string,
-  date: string,
-) {
+async function addExpense(page: Page, description: string, date: string) {
   await page.getByRole("button", { name: "Nova transação" }).click();
   const dialog = page.getByRole("dialog", { name: "Nova transação" });
   await dialog.getByRole("button", { name: "Despesa" }).click();
@@ -51,7 +47,9 @@ async function onboardCouple(page: Page, browser: Browser) {
   await loginDev(biaPage, uniqueEmail("bia"));
   await setName(biaPage, "Bia");
   await biaPage.getByRole("button", { name: "Aceitar convite" }).click();
-  await expect(biaPage.getByRole("heading", { name: "Visão geral" })).toBeVisible();
+  await expect(
+    biaPage.getByRole("heading", { name: "Visão geral" }),
+  ).toBeVisible();
   await reloadApp(page);
   await expect(
     page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
@@ -66,7 +64,9 @@ test.describe("overview and goals", () => {
   }) => {
     const { bia, biaPage } = await onboardCouple(page, browser);
     await addAccount(page);
-    await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Visão geral" })
+      .click();
     await setMonth(page, "2026-09");
     await addExpense(page, "Ana mercado", "2026-09-10");
 
@@ -79,8 +79,12 @@ test.describe("overview and goals", () => {
     await expect(
       page.getByText("O planejado soma as metas individuais de cada pessoa."),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ana mercado", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bia café", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Ana mercado", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Bia café", exact: true }),
+    ).toBeVisible();
 
     await person(page, "Eu").click();
     const eu = new URL(page.url());
@@ -90,12 +94,20 @@ test.describe("overview and goals", () => {
     await expect(
       page.getByText("Renda, gastos e metas da pessoa selecionada."),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ana mercado", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bia café", exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Ana mercado", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Bia café", exact: true }),
+    ).toHaveCount(0);
 
     await person(page, "Bia").click();
-    await expect(page.getByRole("button", { name: "Bia café", exact: true })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Ana mercado", exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Bia café", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Ana mercado", exact: true }),
+    ).toHaveCount(0);
 
     await page.getByRole("button", { name: "Próximo mês" }).click();
     expect(new URL(page.url()).searchParams.get("month")).toBe("2026-10");
@@ -118,7 +130,9 @@ test.describe("overview and goals", () => {
     ).toBeVisible();
 
     const memberId = new URL(page.url()).searchParams.get("member");
-    await nav(page, "desktop").getByRole("link", { name: "Transações" }).click();
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Transações" })
+      .click();
     const kept = new URL(page.url()).searchParams;
     expect(kept.get("view")).toBe("transactions");
     expect(kept.get("month")).toBe("2026-10");
@@ -131,7 +145,9 @@ test.describe("overview and goals", () => {
     expect(restored.get("member")).toBe(memberId);
 
     await setMonth(page, "2026-09");
-    await expect(page.getByRole("button", { name: "Bia café", exact: true })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Bia café", exact: true }),
+    ).toBeVisible();
     await page.getByRole("button", { name: "Ocultar valores" }).click();
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
     await reloadApp(page);
@@ -149,7 +165,9 @@ test.describe("overview and goals", () => {
   test("M11 four views, desktop and mobile nav", async ({ page, browser }) => {
     const { bia } = await onboardCouple(page, browser);
     await addAccount(page);
-    await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Visão geral" })
+      .click();
     await setMonth(page, "2026-09");
     await addExpense(page, "Farmácia", "2026-09-02");
 
@@ -171,12 +189,18 @@ test.describe("overview and goals", () => {
       }
     }
 
-    await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
-    await expect(page.getByRole("region", { name: "Resumo mensal" })).toBeVisible();
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Visão geral" })
+      .click();
+    await expect(
+      page.getByRole("region", { name: "Resumo mensal" }),
+    ).toBeVisible();
     await expect(
       page.getByRole("region", { name: "Gráficos de despesas do mês" }),
     ).toBeVisible();
-    await expect(page.getByRole("heading", { name: "Histórico financeiro" })).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Histórico financeiro" }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: /Ver todas/ })).toBeVisible();
 
     await nav(page, "desktop").getByRole("link", { name: "Metas" }).click();
@@ -185,7 +209,9 @@ test.describe("overview and goals", () => {
     ).toBeVisible();
     await expect(page.getByText("Lazer e experiências.")).toBeVisible();
     await expect(page.getByText("Conforto e bem-estar.")).toBeVisible();
-    await expect(page.getByText("Objetivos de curto e longo prazo.")).toBeVisible();
+    await expect(
+      page.getByText("Objetivos de curto e longo prazo."),
+    ).toBeVisible();
     await expect(page.getByText("Cursos e desenvolvimento.")).toBeVisible();
     await expect(page.getByText("Reserva e investimentos.")).toBeVisible();
     await person(page, "Nós").click();
@@ -208,19 +234,72 @@ test.describe("overview and goals", () => {
       await expect(nav(page, "desktop")).toBeHidden();
       await expect(nav(page, "mobile")).toBeVisible();
       for (const item of views) {
-        await nav(page, "mobile").getByRole("link", { name: item.name }).click();
+        await nav(page, "mobile")
+          .getByRole("link", { name: item.name })
+          .click();
         await expect(page.locator("#main-content h1")).toHaveText(item.heading);
         await expect(
           nav(page, "mobile").getByRole("link", { name: item.name }),
         ).toHaveAttribute("aria-current", "page");
       }
-      const padding = await page.locator("#main-content").evaluate((el) =>
-        getComputedStyle(el).paddingBottom,
-      );
+      const padding = await page
+        .locator("#main-content")
+        .evaluate((el) => getComputedStyle(el).paddingBottom);
       expect(Number.parseFloat(padding)).toBeGreaterThanOrEqual(68);
       await expectNoHorizontalOverflow(page);
     });
 
     await bia.close();
+  });
+
+  test("saving my percentages updates planned amounts to the cent", async ({
+    page,
+  }) => {
+    await onboard(page, "Ana");
+    await addAccount(page);
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Visão geral" })
+      .click();
+    await setMonth(page, "2026-09");
+
+    await page.getByRole("button", { name: "Nova transação" }).click();
+    const income = page.getByRole("dialog", { name: "Nova transação" });
+    await income.getByRole("button", { name: "Receita" }).click();
+    await income.getByLabel("Valor").fill("5000,00");
+    await income.getByLabel("Descrição").fill("Salário");
+    await income.getByLabel("Data").fill("2026-09-01");
+    await income.getByRole("button", { name: "Adicionar transação" }).click();
+    await expectToast(page, "Transação adicionada.");
+
+    await nav(page, "desktop").getByRole("link", { name: "Metas" }).click();
+    await expect(
+      page.getByRole("button", {
+        name: /Custo fixo: R\$\s*0,00 de R\$\s*1\.500,00 planejados/,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: /Metas: R\$\s*0,00 de R\$\s*750,00 planejados/,
+      }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Editar meus percentuais" }).click();
+    const dialog = page.getByRole("dialog", { name: "Divisão da minha renda" });
+    await dialog.getByLabel("Custo fixo").fill("20");
+    await dialog.getByLabel("Metas").fill("25");
+    await expect(dialog.getByRole("status")).toContainText("100%");
+    await dialog.getByRole("button", { name: "Salvar percentuais" }).click();
+    await expectToast(page, "Percentuais atualizados.");
+
+    await expect(
+      page.getByRole("button", {
+        name: /Custo fixo: R\$\s*0,00 de R\$\s*1\.000,00 planejados/,
+      }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", {
+        name: /Metas: R\$\s*0,00 de R\$\s*1\.250,00 planejados/,
+      }),
+    ).toBeVisible();
   });
 });

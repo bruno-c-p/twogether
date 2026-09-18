@@ -6,5 +6,17 @@ describe("parseRestoreTransaction", () => {
     expect(
       parseRestoreTransaction({ id: "transaction-1", revision: 2 }),
     ).toEqual({ id: "transaction-1", revision: 2 });
+    expect(() => parseRestoreTransaction({ revision: 2 })).toThrow(
+      "Requisição inválida.",
+    );
+    expect(() => parseRestoreTransaction({ id: "transaction-1" })).toThrow(
+      "Requisição inválida.",
+    );
+    expect(() => parseRestoreTransaction({ id: "   ", revision: 2 })).toThrow(
+      "Requisição inválida.",
+    );
+    expect(() =>
+      parseRestoreTransaction({ id: "transaction-1", revision: -1 }),
+    ).toThrow("Requisição inválida.");
   });
 });

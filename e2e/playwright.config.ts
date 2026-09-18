@@ -1,8 +1,12 @@
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "@playwright/test";
 
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const databasePath =
   process.env.BUDGET_DATABASE_PATH ?? "/tmp/twogether-e2e.sqlite";
-const baseURL = "http://127.0.0.1:3000";
+const port = process.env.E2E_PORT ?? "3000";
+const baseURL = `http://127.0.0.1:${port}`;
 
 const env = { ...process.env };
 delete env.TURSO_DATABASE_URL;
@@ -35,7 +39,8 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun run dev`,
+    cwd: root,
+    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun --bun vite --host 127.0.0.1 --port ${port}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,

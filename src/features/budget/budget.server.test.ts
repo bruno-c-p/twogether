@@ -108,9 +108,12 @@ describe("budget store", () => {
       id: "transaction-1",
       revision: 2,
     });
-    expect((await store.snapshot(b.session)).budget.transactions).toHaveLength(
-      2,
+    const restored = (await store.snapshot(b.session)).budget.transactions;
+    expect(restored).toHaveLength(2);
+    expect(restored.find((row) => row.id === "transaction-1")?.amount).toBe(
+      10000,
     );
+    expect(restored.find((row) => row.id === "second")?.amount).toBe(10000);
     await expect(
       store.restoreTransaction(ana.user, ana.household, {
         id: "transaction-1",
@@ -216,9 +219,11 @@ describe("budget store", () => {
       });
       disk.close();
       disk = createBudgetStore(file);
-      expect((await disk.snapshot(a.session)).budget.transactions).toHaveLength(
-        1,
-      );
+      const reopened = (await disk.snapshot(a.session)).budget.transactions;
+      expect(reopened).toHaveLength(1);
+      expect(reopened[0]?.id).toBe("transaction-1");
+      expect(reopened[0]?.amount).toBe(10000);
+      expect(reopened[0]?.description).toBe("Mercado");
     } finally {
       disk.close();
       rmSync(dir, { recursive: true });

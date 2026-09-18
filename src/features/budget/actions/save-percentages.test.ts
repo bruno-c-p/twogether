@@ -3,13 +3,16 @@ import { parseSavePercentages } from "@/features/budget/actions/save-percentages
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 
 describe("parseSavePercentages", () => {
-  test("reuses isGoalPercentages", () => {
+  test("keeps the full percentages object and rejects a total other than 100", () => {
     expect(
       parseSavePercentages({
         percentages: DEFAULT_PERCENTAGES,
         revision: 0,
       }),
-    ).toMatchObject({ revision: 0 });
+    ).toEqual({
+      percentages: DEFAULT_PERCENTAGES,
+      revision: 0,
+    });
     expect(() =>
       parseSavePercentages({
         percentages: { ...DEFAULT_PERCENTAGES, fixed: 90 },
