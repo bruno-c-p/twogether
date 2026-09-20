@@ -1,4 +1,4 @@
-import styles from "@/features/budget/components/app-footer.module.css";
+import styles from "@/features/budget/components/app-footer/app-footer.module.css";
 
 export function AppFooter({ className }: { className?: string } = {}) {
   return (

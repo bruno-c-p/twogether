@@ -3,7 +3,7 @@ import { accountBalance } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button/button";
-import { EmptyState } from "@/features/budget/components/empty-state";
+import { EmptyState } from "@/features/budget/components/empty-state/empty-state";
 import {
   ListRow,
   ListRowActions,
@@ -13,7 +13,7 @@ import {
   ListRowValue,
   listRowAction,
   listRowDelete,
-} from "@/features/budget/components/list-row";
+} from "@/features/budget/components/list-row/list-row";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 
 interface Props {

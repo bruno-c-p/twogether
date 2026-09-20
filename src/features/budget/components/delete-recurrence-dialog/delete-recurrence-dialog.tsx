@@ -9,7 +9,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
 import { Fieldset, FormError } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/delete-recurrence-dialog.module.css";
+import styles from "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog.module.css";
 
 interface Props {
   transaction: Transaction;

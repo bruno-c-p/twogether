@@ -32,13 +32,13 @@ import type {
 } from "@/features/budget/domain/types";
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
-import { GoalsSection } from "@/features/budget/components/goals-section";
-import { NoticeToast, useNotice } from "@/features/budget/components/notice";
-import { Overview } from "@/features/budget/components/overview";
+import { GoalsSection } from "@/features/budget/components/goals-section/goals-section";
+import { NoticeToast, useNotice } from "@/features/budget/components/notice/notice";
+import { Overview } from "@/features/budget/components/overview/overview";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
-import { TransactionList } from "@/features/budget/components/transaction-list";
-import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
-import styles from "@/features/budget/components/budget-app.module.css";
+import { TransactionList } from "@/features/budget/components/transaction-list/transaction-list";
+import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
+import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 import { Button } from "@/components/ui/button/button";
 
 export function BudgetApp() {

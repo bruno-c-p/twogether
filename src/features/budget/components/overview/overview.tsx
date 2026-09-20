@@ -1,8 +1,8 @@
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { Distribution } from "@/features/budget/components/distribution";
-import { ExpenseCharts } from "@/features/budget/components/expense-charts";
-import { FinancialHistory } from "@/features/budget/components/financial-history";
-import styles from "@/features/budget/components/budget-app.module.css";
+import { Distribution } from "@/features/budget/components/distribution/distribution";
+import { ExpenseCharts } from "@/features/budget/components/expense-charts/expense-charts";
+import { FinancialHistory } from "@/features/budget/components/financial-history/financial-history";
+import styles from "@/features/budget/components/overview/overview.module.css";
 import { OverviewGrid } from "@/components/ui/panel/panel";
 import type { Transaction } from "@/features/budget/domain/types";
 import { summarize } from "@/features/budget/domain/calc";

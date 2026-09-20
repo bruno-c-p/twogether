@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { money } from "@/features/budget/domain/format";
 import { summarizeHistory } from "@/features/budget/services/financial-history";
 import type { Transaction } from "@/features/budget/domain/types";
-import charts from "@/features/budget/components/expense-charts.module.css";
-import styles from "@/features/budget/components/financial-history.module.css";
+import charts from "@/features/budget/components/expense-charts/expense-charts.module.css";
+import styles from "@/features/budget/components/financial-history/financial-history.module.css";
 
 const compact = new Intl.NumberFormat("pt-BR", { notation: "compact", maximumFractionDigits: 1 });
 

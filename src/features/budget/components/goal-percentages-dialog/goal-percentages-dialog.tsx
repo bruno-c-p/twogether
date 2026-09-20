@@ -10,7 +10,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
 import { FormError } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/goal-percentages-dialog.module.css";
+import styles from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
   percentages,

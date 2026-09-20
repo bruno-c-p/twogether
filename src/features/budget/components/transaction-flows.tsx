@@ -1,8 +1,8 @@
-import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog";
-import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog";
-import { TransactionDialog } from "@/features/budget/components/transaction-dialog";
+import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";
+import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
+import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
-import { CoupleDialog } from "@/features/household/components/couple-dialog";
+import { CoupleDialog } from "@/features/household/components/couple-dialog/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
 import type {

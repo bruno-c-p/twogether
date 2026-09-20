@@ -6,7 +6,7 @@ import type { Transaction } from "@/features/budget/domain/types";
 import { WEEKDAYS } from "@/features/budget/constants";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";
 import { OverviewGrid } from "@/components/ui/panel/panel";
-import styles from "@/features/budget/components/expense-charts.module.css";
+import styles from "@/features/budget/components/expense-charts/expense-charts.module.css";
 
 const compactMoney = new Intl.NumberFormat("pt-BR", {
   notation: "compact",

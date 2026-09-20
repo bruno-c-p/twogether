@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, stringifySearchWith } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { routeTree } from "@/routeTree.gen";
-import { RouteError } from "@/route-error";
+import { RouteError } from "@/components/route-error/route-error";
 
 function parseSearch(searchStr: string): Record<string, string> {
   const query: Record<string, string> = {};

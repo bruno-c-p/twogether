@@ -240,7 +240,7 @@ describe("newId", () => {
   });
 
   it("works when crypto.randomUUID is missing", () => {
-    const original = crypto.randomUUID;
+    const original = crypto.randomUUID.bind(crypto);
     // @ts-expect-error — HTTP origins do not expose randomUUID
     crypto.randomUUID = undefined;
     try {

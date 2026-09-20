@@ -38,6 +38,23 @@ function assertNoGithubMedia() {
     fail(`image/video files under .github/:\n${files.join("\n")}`);
 }
 
+function assertComponentModuleLayout() {
+  for (const file of tracked(["src"])) {
+    if (!file.endsWith(".module.css")) continue;
+    const parts = file.split("/");
+    const base = parts.at(-1) ?? "";
+    const stem = base.replace(/\.module\.css$/, "");
+    const folder = parts.at(-2) ?? "";
+    if (folder !== stem) {
+      fail(`${file} must live in a folder named ${stem}`);
+      continue;
+    }
+    const sibling = [...parts.slice(0, -1), `${stem}.tsx`].join("/");
+    if (!existsSync(sibling))
+      fail(`${file} has no sibling ${stem}.tsx in ${folder}/`);
+  }
+}
+
 function assertNoBudgetCommandBus() {
   const files = tracked([]);
   for (const file of files) {
@@ -205,6 +222,7 @@ if (afterBuild) {
   assertNoBudgetCommandBus();
   assertCacheControlSource();
   assertCssHouseStyle();
+  assertComponentModuleLayout();
 }
 
 if (failures.length) {

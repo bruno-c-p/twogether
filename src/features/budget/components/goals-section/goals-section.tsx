@@ -1,6 +1,6 @@
 import { ArrowUpRight, TriangleAlert } from "lucide-react";
 import type { CSSProperties } from "react";
-import styles from "@/features/budget/components/budget-app.module.css";
+import styles from "@/features/budget/components/goals-section/goals-section.module.css";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button/button";
 import { SectionHeading } from "@/components/ui/panel/panel";

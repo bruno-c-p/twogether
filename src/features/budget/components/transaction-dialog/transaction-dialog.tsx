@@ -45,7 +45,7 @@ import {
   FormError,
   Optional,
 } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/transaction-dialog.module.css";
+import styles from "@/features/budget/components/transaction-dialog/transaction-dialog.module.css";
 
 interface Props {
   transaction: Transaction | null;

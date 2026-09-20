@@ -42,6 +42,16 @@
 - Do not use the repository's git as a substitute for storing that media
   elsewhere.
 
+## Component folders
+
+- A component that owns a CSS module lives in its own folder:
+  `<component>/<component>.tsx` next to `<component>.module.css`, mirroring
+  `src/components/ui/button/`.
+- Components without a CSS module stay flat, e.g. inside
+  `features/<name>/components/`.
+- `bun run fitness` fails when a `*.module.css` is not inside a folder named
+  after it or when the sibling component file is missing.
+
 ## Absolute imports
 
 - Source-code imports in the repository must use the `@/` alias (`src/`),

@@ -3,7 +3,7 @@ import { money } from "@/features/budget/domain/format";
 import { donutSegments } from "@/features/budget/services/donut";
 import type { Transaction } from "@/features/budget/domain/types";
 import { ColorDot } from "@/components/ui/color-dot/color-dot";
-import styles from "@/features/budget/components/distribution.module.css";
+import styles from "@/features/budget/components/distribution/distribution.module.css";
 
 export function Distribution({
   transactions,

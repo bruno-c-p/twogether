@@ -4,7 +4,7 @@ import {
   THEME_OPTIONS,
   THEME_STORAGE_KEY,
 } from "@/features/theme/constants";
-import styles from "@/features/theme/components/theme-toggle.module.css";
+import styles from "@/features/theme/components/theme-toggle/theme-toggle.module.css";
 
 type Theme = "system" | "light" | "dark";
 

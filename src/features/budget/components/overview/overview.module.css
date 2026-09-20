@@ -1,0 +1,226 @@
+.balance-card {
+  background: var(--balance);
+  color: var(--on-balance);
+  border: 1px solid var(--balance-border);
+  border-radius: 12px;
+  padding: 23px 27px;
+  position: relative;
+  overflow: hidden;
+  min-height: 236px;
+}
+
+.balance-card.negative {
+  border: 1px solid var(--danger-on-brand);
+}
+
+.balance-card.negative .balance-amount {
+  color: var(--danger-on-brand);
+}
+
+.balance-card.negative .balance-caption {
+  color: var(--danger-on-brand);
+}
+
+.balance-card.negative .balance-dot {
+  background: var(--danger-on-brand);
+}
+
+.balance-card.negative .balance-bottom > div:nth-child(2) strong {
+  color: var(--danger-on-brand);
+}
+
+.balance-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--on-balance-muted);
+  font-size: 12px;
+}
+
+.balance-amount {
+  font-family: "Manrope", sans-serif;
+  letter-spacing: -1.7px;
+  font-size: 39px;
+  line-height: 1.4;
+  font-weight: 550;
+  margin-top: 1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.balance-caption {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  color: var(--on-balance-muted);
+  margin-top: 4px;
+}
+
+.balance-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.balance-divider {
+  height: 1px;
+  background: color-mix(in srgb, var(--on-balance) 12%, transparent);
+  margin: 23px 0 18px;
+}
+
+.balance-bottom {
+  display: flex;
+  gap: 51px;
+  position: relative;
+}
+
+.balance-bottom > div > span {
+  font-size: 11px;
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: var(--on-balance-muted);
+}
+
+.money-icon {
+  width: 18px;
+  height: 18px;
+  background: color-mix(in srgb, var(--on-balance) 6%, transparent);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.balance-bottom strong {
+  font-family: "Manrope", sans-serif;
+  font-weight: 500;
+  display: block;
+  margin-top: 7px;
+  font-size: 18px;
+  letter-spacing: -0.2px;
+}
+
+.balance-decoration {
+  display: flex;
+  gap: 5px;
+  align-items: flex-end;
+  margin-left: auto;
+  position: absolute;
+  right: 0;
+  bottom: -30px;
+  transform: rotate(-22deg);
+  opacity: 0.35;
+}
+
+.balance-decoration i {
+  display: block;
+  width: 12px;
+  height: 65px;
+  background: var(--accent);
+  border-radius: 10px;
+}
+
+.balance-decoration i:nth-child(2) {
+  height: 87px;
+}
+
+.balance-decoration i:nth-child(3) {
+  height: 110px;
+}
+
+.balance-decoration i:nth-child(4) {
+  height: 130px;
+}
+
+.balance-decoration i:nth-child(5) {
+  height: 150px;
+}
+
+@media (min-width: 1450px) {
+.balance-card {
+    padding: 28px 32px;
+}
+.balance-amount {
+    font-size: 46px;
+}
+.balance-divider {
+    margin-top: 25px;
+}
+.balance-bottom strong {
+    font-size: 21px;
+}
+}
+
+@media (max-width: 1190px) {
+.balance-card {
+    padding: 21px 23px;
+}
+.balance-amount {
+    font-size: 35px;
+}
+.balance-bottom {
+    gap: 25px;
+}
+}
+
+@media (max-width: 1000px) {
+.balance-decoration {
+    opacity: 0.2;
+}
+}
+
+@media (max-width: 800px) {
+.balance-card {
+    padding: 20px;
+      min-height: 230px;
+}
+.balance-amount {
+    font-size: 31px;
+}
+.balance-caption {
+    font-size: 9px;
+}
+.balance-bottom {
+    gap: 20px;
+}
+.balance-bottom strong {
+    font-size: 15px;
+}
+}
+
+@media (max-width: 620px) {
+.balance-card {
+    padding: 23px 24px;
+      min-height: 233px;
+      border-radius: 11px;
+}
+.balance-top {
+    font-size: 12px;
+}
+.balance-amount {
+    font-size: 39px;
+      margin-top: 2px;
+}
+.balance-caption {
+    font-size: 10px;
+}
+.balance-divider {
+    margin: 22px 0 18px;
+}
+.balance-bottom {
+    gap: 43px;
+}
+.balance-bottom strong {
+    font-size: 19px;
+}
+.balance-decoration {
+    opacity: 0.35;
+}
+}
+
+@media (max-width: 360px) {
+.balance-bottom strong {
+    font-size: 15px;
+}
+}

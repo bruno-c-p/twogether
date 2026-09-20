@@ -1,9 +1,9 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
-import { AccountGate } from "@/features/auth/components/account-gate";
+import { AccountGate } from "@/features/auth/components/account-gate/account-gate";
 import { consumeAccess } from "@/features/auth/actions";
 import { loadBudget } from "@/features/budget/actions";
 import { validateAccessSearch } from "@/features/budget/search";
-import { LoadingState } from "@/features/budget/components/empty-state";
+import { LoadingState } from "@/features/budget/components/empty-state/empty-state";
 
 function GatePending() {
   return <LoadingState>Carregando…</LoadingState>;

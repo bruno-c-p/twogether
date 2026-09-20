@@ -21,7 +21,7 @@ import {
   FormStack,
   Note,
 } from "@/components/ui/field/field";
-import styles from "@/features/household/components/couple-dialog.module.css";
+import styles from "@/features/household/components/couple-dialog/couple-dialog.module.css";
 
 export function CoupleDialog({
   budget,
