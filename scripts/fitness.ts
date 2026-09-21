@@ -189,6 +189,15 @@ async function assertBuiltHeaders() {
       HOST: "127.0.0.1",
       NODE_ENV: "production",
       BUDGET_DATABASE_PATH: ":memory:",
+      // Clerk middleware boots on every request, so a keyless environment
+      // would answer 500 before this header exists. Placeholders only keep the
+      // middleware alive for the header check; real keys win when configured.
+      CLERK_SECRET_KEY:
+        process.env.CLERK_SECRET_KEY ??
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV",
+      CLERK_PUBLISHABLE_KEY:
+        process.env.CLERK_PUBLISHABLE_KEY ??
+        "pk_test_ZmFrZS1jbGVyay5leGFtcGxlLmNvbSQ=",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
