@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef } from "react";
-import styles from "@/components/ui/color-dot/color-dot.module.css";
+import { cx } from "@/lib/cx";
 
 export function ColorDot({
   className,
@@ -7,7 +7,10 @@ export function ColorDot({
 }: ComponentPropsWithoutRef<"span">) {
   return (
     <span
-      className={className ? `${styles.dot} ${className}` : styles.dot}
+      className={cx(
+        "w-[6px] h-[6px] rounded-full inline-block shrink-0",
+        className,
+      )}
       {...props}
     />
   );

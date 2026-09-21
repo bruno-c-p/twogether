@@ -7,8 +7,8 @@ import type {
   Transaction,
 } from "@/features/budget/domain/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
-import { Button } from "@/components/ui/button/button";
-import { ColorDot } from "@/components/ui/color-dot/color-dot";
+import { Button } from "@/components/ui/button";
+import { ColorDot } from "@/components/ui/color-dot";
 import styles from "@/features/budget/components/transaction-row/transaction-row.module.css";
 
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {

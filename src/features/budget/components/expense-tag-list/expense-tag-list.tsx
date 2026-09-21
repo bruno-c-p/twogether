@@ -1,4 +1,4 @@
-import { ColorDot } from "@/components/ui/color-dot/color-dot";
+import { ColorDot } from "@/components/ui/color-dot";
 import styles from "@/features/budget/components/expense-tag-list/expense-tag-list.module.css";
 
 export interface ExpenseTagSegment {

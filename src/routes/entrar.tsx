@@ -2,7 +2,7 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountGate } from "@/features/auth/components/account-gate/account-gate";
 import { loadBudget } from "@/features/budget/actions";
 import { validateInviteSearch } from "@/features/budget/search";
-import { LoadingState } from "@/features/budget/components/empty-state/empty-state";
+import { LoadingState } from "@/features/budget/components/empty-state";
 
 function GatePending() {
   return <LoadingState>Carregando…</LoadingState>;

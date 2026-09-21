@@ -7,6 +7,7 @@ import {
   Scripts,
 } from "@tanstack/react-router";
 import stylesheet from "@/styles.css?url";
+import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
 

@@ -8,8 +8,8 @@ import type {
   Member,
 } from "@/features/budget/domain/types";
 import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
-import { Button } from "@/components/ui/button/button";
-import { EmptyState } from "@/features/budget/components/empty-state/empty-state";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/features/budget/components/empty-state";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/transaction-list/transaction-list.module.css";
 
@@ -177,6 +177,7 @@ export function TransactionList({
             activeFilters ? (
               <Button
                 variant="secondary"
+                className="mt-[8px]"
                 onClick={() => {
                   onQuery("");
                   onGoal("all");
@@ -187,7 +188,9 @@ export function TransactionList({
                 Limpar filtros
               </Button>
             ) : (
-              <Button onClick={onAdd}>Adicionar primeira transação</Button>
+              <Button className="mt-[8px]" onClick={onAdd}>
+                Adicionar primeira transação
+              </Button>
             )
           }
         >

@@ -3,7 +3,7 @@ import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { goalPercentagesSchema } from "@/features/budget/domain/schemas";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { GoalPercentageList } from "@/features/budget/components/goal-percentage-list/goal-percentage-list";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,

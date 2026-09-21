@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/ui/panel/panel";
 import { GoalList } from "@/features/budget/components/goal-list/goal-list";
 import { planGoals, summarize } from "@/features/budget/domain/calc";

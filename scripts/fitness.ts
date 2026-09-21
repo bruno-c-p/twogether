@@ -112,6 +112,7 @@ function assertCssHouseStyle() {
     if (bannedCssDeps.includes(name) || name.startsWith("@radix-ui/"))
       fail(`package.json must not depend on ${name}`);
   }
+  if (!names.includes("unocss")) fail("package.json must depend on unocss");
   for (const file of tracked(resurrectedCss))
     fail(`tracked resurrected ${file}`);
   const gradient =
@@ -121,6 +122,19 @@ function assertCssHouseStyle() {
     if (gradient.test(readFileSync(file, "utf8")))
       fail(`${file} still uses a CSS gradient or --page-glow`);
   }
+}
+
+function assertUnoWiring() {
+  if (!existsSync("uno.config.ts")) {
+    fail("uno.config.ts is required for the styling system");
+    return;
+  }
+  const config = readFileSync("uno.config.ts", "utf8");
+  if (/\bfontFamily\s*:/.test(config))
+    fail("uno.config.ts must set theme.font; preset-wind4 ignores fontFamily");
+  const root = readFileSync("src/routes/__root.tsx", "utf8");
+  if (!root.includes("virtual:uno.css"))
+    fail("src/routes/__root.tsx must import virtual:uno.css");
 }
 
 async function freePort() {
@@ -231,6 +245,7 @@ if (afterBuild) {
   assertNoBudgetCommandBus();
   assertCacheControlSource();
   assertCssHouseStyle();
+  assertUnoWiring();
   assertComponentModuleLayout();
 }
 

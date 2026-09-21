@@ -2,8 +2,8 @@ import { Landmark, Plus } from "lucide-react";
 import { accountBalance } from "@/features/budget/domain/calc";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { AccountRow } from "@/features/budget/components/account-row";
-import { Button } from "@/components/ui/button/button";
-import { EmptyState } from "@/features/budget/components/empty-state/empty-state";
+import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/features/budget/components/empty-state";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 
 interface Props {
@@ -66,7 +66,7 @@ export function AccountList({
           icon={<Landmark size={25} strokeWidth={1.5} />}
           title="Nenhuma conta cadastrada."
           action={
-            <Button onClick={onAdd}>
+            <Button className="mt-[8px]" onClick={onAdd}>
               <Plus size={18} /> Adicionar primeira conta
             </Button>
           }
