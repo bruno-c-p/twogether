@@ -1,27 +1,7 @@
-.percentage-fields {
-  display: grid;
-  gap: 12px;
-}
-
 .intro {
   color: var(--text);
   line-height: 1.6;
   margin-bottom: 20px;
-}
-
-.percentage-fields label {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.percentage-fields input {
-  width: 90px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px;
-  font: inherit;
 }
 
 .percentage-total {
@@ -34,8 +14,4 @@
 .percentage-total.invalid {
   background: var(--danger-soft);
   color: var(--danger);
-}
-
-.percentage-fields input {
-  background: var(--surface);
 }

@@ -1,0 +1,350 @@
+.row {
+  transition: background 0.15s;
+}
+
+.goal-dot {
+  width: 4px;
+  height: 4px;
+}
+
+.transaction-description {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.transaction-description > div {
+  min-width: 0;
+}
+
+.transaction-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.income-icon {
+  background: var(--surface-soft);
+  color: var(--text);
+}
+
+.transaction-name {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  font-size: 11px;
+  color: var(--text);
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: block;
+}
+
+.transaction-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.row-tags {
+  display: flex;
+  gap: 6px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+.row-tags button,
+.row-tags span {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.row-tags button:hover {
+  color: var(--green);
+}
+
+.goal-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9px;
+  padding: 5px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.income-label {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.transaction-date {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+
+.transaction-value {
+  font-size: 11px;
+  font-weight: 500;
+  text-align: right;
+  color: var(--text);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.transaction-value.positive {
+  color: var(--text);
+}
+
+.transaction-value.negative {
+  color: var(--danger);
+}
+
+.row-actions {
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:hover .row-actions,
+.row:focus-within .row-actions {
+  opacity: 1;
+}
+
+.row-actions .actionButton {
+  width: 25px;
+  height: 30px;
+  color: var(--text-muted);
+}
+
+.row-actions .delete-button:hover {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
+
+.transaction-name,
+.transaction-value {
+  font-size: 12px;
+}
+
+.row-tags button,
+.row-tags span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.transaction-date {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.goal-badge {
+  font-size: 10px;
+}
+
+.transaction-person {
+  color: var(--text);
+  font-size: 11px;
+  margin: 4px 0;
+}
+
+@media (min-width: 1450px) {
+  .transaction-name,
+  .transaction-value {
+    font-size: 13px;
+  }
+
+  .row-tags button,
+  .row-tags span {
+    font-size: 11px;
+  }
+
+  .goal-badge {
+    font-size: 11px;
+  }
+
+  .transaction-date {
+    font-size: 12px;
+  }
+
+  .transaction-name,
+  .transaction-value {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 1190px) {
+  .row-actions {
+    flex-direction: column;
+    opacity: 1;
+  }
+
+  .row-actions .actionButton {
+    height: 24px;
+  }
+
+  .transaction-name {
+    font-size: 10px;
+  }
+
+  .transaction-description {
+    gap: 8px;
+  }
+
+  .goal-badge {
+    font-size: 8px;
+  }
+}
+
+@media (max-width: 800px) {
+  .transaction-date {
+    display: none;
+  }
+
+  .transaction-value {
+    font-size: 10px;
+  }
+
+  .transaction-description {
+    gap: 7px;
+  }
+
+  .transaction-icon {
+    width: 29px;
+    height: 29px;
+  }
+
+  .transaction-icon svg {
+    width: 17px;
+  }
+
+  .transaction-name {
+    font-size: 10px;
+  }
+
+  .transaction-goal .goal-badge {
+    font-size: 9px;
+  }
+
+  .transaction-name,
+  .transaction-value {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 620px) {
+  .transaction-description {
+    gap: 9px;
+    grid-row: 1 / 3;
+    align-self: center;
+  }
+
+  .transaction-description > div {
+    padding-bottom: 19px;
+  }
+
+  .transaction-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .transaction-name {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .row-tags {
+    gap: 5px;
+    max-width: 180px;
+  }
+
+  .row-tags button,
+  .row-tags span {
+    font-size: 9px;
+  }
+
+  .transaction-value {
+    grid-column: 2;
+    grid-row: 1 / 3;
+    font-size: 11px;
+  }
+
+  .transaction-goal {
+    position: absolute;
+    left: 53px;
+    bottom: 10px;
+  }
+
+  .goal-badge {
+    font-size: 8px;
+    padding: 3px 5px;
+  }
+
+  .income-label {
+    font-size: 9px;
+  }
+
+  .row-actions {
+    grid-column: 3;
+    grid-row: 1 / 3;
+  }
+
+  .row-actions .actionButton {
+    width: 24px;
+    height: 27px;
+  }
+
+  .row-actions .actionButton svg {
+    width: 13px;
+  }
+
+  .transaction-description > div {
+    padding-bottom: 5px;
+  }
+
+  .transaction-goal {
+    bottom: 9px;
+  }
+
+  .transaction-date {
+    display: block;
+    position: absolute;
+    bottom: 12px;
+    right: 45px;
+    font-size: 10px;
+  }
+
+  .transaction-name {
+    font-size: 12px;
+  }
+
+  .row-tags button,
+  .row-tags span {
+    font-size: 10px;
+  }
+
+  .transaction-value {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 1190px) and (min-width: 801px) {
+  .transaction-name,
+  .transaction-value {
+    font-size: 11px;
+  }
+
+  .goal-badge {
+    font-size: 9px;
+  }
+}

@@ -131,45 +131,6 @@
   font-size: 12px;
 }
 
-.expense-tag-list {
-  padding: 0;
-  margin: 0;
-  list-style: none;
-  display: grid;
-  gap: 14px;
-}
-
-.expense-tag-list li {
-  display: grid;
-  grid-template-columns: 8px minmax(60px, 1fr) minmax(30px, 1fr) auto 42px;
-  gap: 9px;
-  align-items: center;
-  font-size: 12px;
-}
-
-.expense-tag-name {
-  overflow-wrap: anywhere;
-}
-
-.expense-tag-list li > span:last-child {
-  text-align: right;
-  color: var(--muted);
-  font-size: 11px;
-}
-
-.expense-tag-track {
-  height: 6px;
-  border-radius: 8px;
-  overflow: hidden;
-  background: var(--page);
-}
-
-.expense-tag-track i {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-}
-
 .expense-chart-empty {
   color: var(--muted);
   text-align: center;
@@ -201,14 +162,5 @@
   
   .expense-day strong {
     font-size: 9px;
-  }
-  
-  .expense-tag-list li {
-    grid-template-columns: 8px minmax(0, 1fr) auto 38px;
-      gap: 7px;
-  }
-  
-  .expense-tag-track {
-    display: none;
   }
 }

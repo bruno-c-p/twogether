@@ -1,49 +1,7 @@
-.couple-members {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin: 22px 0;
-}
-
 .intro {
   color: var(--text);
   line-height: 1.6;
   margin-bottom: 20px;
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: var(--surface-soft);
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.couple-member {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: var(--surface-soft);
-  border-radius: 12px;
-}
-
-.couple-member strong {
-  font-size: 14px;
-  overflow-wrap: anywhere;
-  min-width: 0;
-}
-
-.couple-member > span:last-child {
-  color: var(--text-muted);
-  margin-left: auto;
-  font-size: 12px;
-  flex-shrink: 0;
 }
 
 .footer {

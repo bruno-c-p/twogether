@@ -2,18 +2,9 @@ import {
   useEffect,
   useRef,
   useState,
-  type CSSProperties,
   type FormEvent,
 } from "react";
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Check,
-  Plus,
-  Repeat2,
-  X,
-} from "lucide-react";
-import { GOALS } from "@/features/budget/constants";
+import { ArrowDownLeft, ArrowUpRight, Check, Repeat2 } from "lucide-react";
 import {
   formatAmountInput,
   formText,
@@ -28,7 +19,8 @@ import type {
   TransactionKind,
   Member,
 } from "@/features/budget/domain/types";
-import { GoalIcon } from "@/features/budget/components/goal-icon";
+import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker";
+import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
@@ -43,7 +35,6 @@ import {
   FieldRow,
   Fieldset,
   FormError,
-  Optional,
 } from "@/components/ui/field/field";
 import styles from "@/features/budget/components/transaction-dialog/transaction-dialog.module.css";
 
@@ -319,94 +310,16 @@ export function TransactionDialog({
               </section>
             )}
             {kind === "expense" && (
-              <fieldset className={styles.goalField}>
-                <legend>Para qual meta?</legend>
-                <div className={styles.goalOptions}>
-                  {GOALS.map((item) => (
-                    <button
-                      key={item.id}
-                      type="button"
-                      className={`${styles.goalOption} ${goal === item.id ? styles.selected : ""}`}
-                      style={
-                        {
-                          "--goal-color": item.color,
-                          "--goal-bg": item.background,
-                        } as CSSProperties
-                      }
-                      aria-pressed={goal === item.id}
-                      onClick={() => setGoal(item.id)}
-                    >
-                      <GoalIcon goal={item.id} size={19} />
-                      <span>{item.name}</span>
-                      {goal === item.id && <Check size={14} />}
-                    </button>
-                  ))}
-                </div>
-              </fieldset>
+              <GoalPicker value={goal} onChange={setGoal} />
             )}
-            <label htmlFor="tag-input">
-              Tags <Optional>opcional · até 8</Optional>
-            </label>
-            <div className={styles.tagInputWrapper}>
-              <span>#</span>
-              <input
-                id="tag-input"
-                placeholder="Digite uma tag e pressione Enter"
-                value={tagInput}
-                maxLength={24}
-                disabled={tags.length >= 8}
-                onChange={(event) => setTagInput(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === ",") {
-                    event.preventDefault();
-                    addTag(tagInput);
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="icon"
-                aria-label="Adicionar tag"
-                disabled={!tagInput.trim() || tags.length >= 8}
-                onClick={() => addTag(tagInput)}
-              >
-                <Plus size={18} />
-              </Button>
-            </div>
-            {!!tags.length && (
-              <div className={styles.selectedTags}>
-                {tags.map((tag) => (
-                  <Button
-                    key={tag}
-                    type="button"
-                    variant="tag"
-                    aria-label={`Remover tag ${tag}`}
-                    onClick={() => setTags(tags.filter((t) => t !== tag))}
-                  >
-                    #{tag}
-                    <X size={12} />
-                  </Button>
-                ))}
-              </div>
-            )}
-            {existingTags.some((tag) => !tags.includes(tag)) &&
-              tags.length < 8 && (
-                <div className={styles.tagSuggestions}>
-                  <span>Sugestões</span>
-                  {existingTags
-                    .filter((tag) => !tags.includes(tag))
-                    .slice(0, 5)
-                    .map((tag) => (
-                      <button
-                        type="button"
-                        key={tag}
-                        onClick={() => addTag(tag)}
-                      >
-                        #{tag}
-                      </button>
-                    ))}
-                </div>
-              )}
+            <TagPicker
+              tags={tags}
+              input={tagInput}
+              existingTags={existingTags}
+              onInput={setTagInput}
+              onAdd={addTag}
+              onRemove={(tag) => setTags(tags.filter((t) => t !== tag))}
+            />
             {error && <FormError id="form-error">{error}</FormError>}
             {serverError && <FormError>{serverError}</FormError>}
             {transaction?.updatedBy && (

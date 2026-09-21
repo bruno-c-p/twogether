@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { isGoalPercentages } from "@/features/budget/domain/validate";
 import type { GoalPercentages } from "@/features/budget/domain/types";
+import { GoalPercentageList } from "@/features/budget/components/goal-percentage-list/goal-percentage-list";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
@@ -52,33 +53,11 @@ export function GoalPercentagesDialog({
           ser 100% e vale para todos os meses. Cada pessoa define seus próprios
           percentuais.
         </p>
-        <div className={styles.percentageFields}>
-          {GOALS.map((goal) => (
-            <label key={goal.id} htmlFor={`percentage-${goal.id}`}>
-              <span>{goal.name}</span>
-              <span>
-                <input
-                  id={`percentage-${goal.id}`}
-                  type="number"
-                  inputMode="decimal"
-                  min="0"
-                  max="100"
-                  step="0.01"
-                  disabled={saving}
-                  required
-                  value={Number.isNaN(values[goal.id]) ? "" : values[goal.id]}
-                  onChange={(event) =>
-                    setValues({
-                      ...values,
-                      [goal.id]: event.target.valueAsNumber,
-                    })
-                  }
-                />{" "}
-                %
-              </span>
-            </label>
-          ))}
-        </div>
+        <GoalPercentageList
+          values={values}
+          disabled={saving}
+          onChange={(goal, value) => setValues({ ...values, [goal]: value })}
+        />
         <p
           className={`${styles.percentageTotal} ${valid ? "" : styles.invalid}`}
           role="status"

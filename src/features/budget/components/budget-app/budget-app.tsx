@@ -33,6 +33,7 @@ import type {
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section/goals-section";
+import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { NoticeToast, useNotice } from "@/features/budget/components/notice/notice";
 import { Overview } from "@/features/budget/components/overview/overview";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
@@ -398,31 +399,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         </div>
       )}
       <div className={styles.coupleToolbar}>
-        <div className={styles.personFilter} aria-label="Filtrar por pessoa">
-          <button
-            aria-pressed={memberFilter === "all"}
-            className={memberFilter === "all" ? styles.active : ""}
-            onClick={() => setMemberFilter("all")}
-          >
-            Nós
-          </button>
-          {[...members]
-            .sort(
-              (a, b) =>
-                Number(b.id === budget.user.id) -
-                Number(a.id === budget.user.id),
-            )
-            .map((member) => (
-              <button
-                key={member.id}
-                aria-pressed={memberFilter === member.id}
-                className={memberFilter === member.id ? styles.active : ""}
-                onClick={() => setMemberFilter(member.id)}
-              >
-                {member.id === budget.user.id ? "Eu" : member.name}
-              </button>
-            ))}
-        </div>
+        <MemberFilter
+          members={members}
+          userId={budget.user.id}
+          value={memberFilter}
+          onChange={setMemberFilter}
+        />
       </div>
       <p className={styles.filterExplanation}>{filterExplanation}</p>
       {(budget.syncError || listError) && (

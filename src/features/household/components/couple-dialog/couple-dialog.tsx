@@ -8,6 +8,7 @@ import {
   createInvite,
   revokeInvite,
 } from "@/features/household/actions";
+import { MemberList } from "@/features/household/components/member-list/member-list";
 import { Button } from "@/components/ui/button/button";
 import {
   Dialog,
@@ -86,17 +87,10 @@ export function CoupleDialog({
           Tudo aqui é dos dois. Ambos podem ver e editar contas, transações,
           tags e percentuais.
         </p>
-        <div className={styles.coupleMembers}>
-          {budget.household.members.map((member) => (
-            <div className={styles.coupleMember} key={member.id}>
-              <span className={styles.avatar}>
-                {member.name.slice(0, 1).toUpperCase()}
-              </span>
-              <strong>{member.name}</strong>
-              <span>{member.id === budget.user.id ? "Você" : "Seu par"}</span>
-            </div>
-          ))}
-        </div>
+        <MemberList
+          members={budget.household.members}
+          currentUserId={budget.user.id}
+        />
         {budget.household.members.length === 1 ? (
           <FormStack>
             <p>

@@ -1,11 +1,10 @@
-import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
 import { Eye, EyeOff, UsersRound } from "lucide-react";
 import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
+import { WorkspaceNavigation } from "@/features/budget/components/workspace-navigation/workspace-navigation";
 import styles from "@/features/budget/components/workspace-shell/workspace-shell.module.css";
-import { withView } from "@/features/budget/search";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
 import type { ReactNode } from "react";
@@ -35,23 +34,7 @@ export function WorkspaceShell({
           mark
           aria-label="twogether — início"
         />
-        <nav className={styles.desktopNavigation} aria-label="Navegação principal">
-          {WORKSPACE_NAVIGATION.map((item) => (
-            <Link
-              key={item.id}
-              to="/"
-              search={(prev) => withView(prev, item.id)}
-              className={`${styles.navItem} ${view === item.id ? styles.active : ""}`}
-              aria-label={item.label}
-              aria-current={view === item.id ? "page" : undefined}
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-            >
-              <item.icon size={19} strokeWidth={1.7} />
-              <span>{item.label}</span>
-              {view === item.id && <span className={styles.navActiveDot} />}
-            </Link>
-          ))}
-        </nav>
+        <WorkspaceNavigation view={view} variant="desktop" />
       </aside>
       <div className={styles.mainShell}>
         <header className={styles.topbar}>
@@ -89,21 +72,7 @@ export function WorkspaceShell({
         <main id="main-content">{children}</main>
         <AppFooter className={styles.shellFooter} />
       </div>
-      <nav className={styles.mobileNavigation} aria-label="Navegação mobile">
-        {WORKSPACE_NAVIGATION.map((item) => (
-          <Link
-            key={item.id}
-            to="/"
-            search={(prev) => withView(prev, item.id)}
-            className={view === item.id ? styles.active : ""}
-            aria-current={view === item.id ? "page" : undefined}
-            onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          >
-            <item.icon size={21} strokeWidth={1.7} />
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
+      <WorkspaceNavigation view={view} variant="mobile" />
       {overlays}
     </div>
   );

@@ -1,13 +1,5 @@
-import {
-  ArrowDownLeft,
-  ArrowUpRight,
-  Pencil,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
+import { ArrowUpRight, Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
-import { money } from "@/features/budget/domain/format";
 import type {
   BankAccount,
   GoalId,
@@ -15,17 +7,11 @@ import type {
   TransactionKind,
   Member,
 } from "@/features/budget/domain/types";
-import { GoalIcon } from "@/features/budget/components/goal-icon";
+import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
 import { Button } from "@/components/ui/button/button";
-import { ColorDot } from "@/components/ui/color-dot/color-dot";
 import { EmptyState } from "@/features/budget/components/empty-state/empty-state";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/transaction-list/transaction-list.module.css";
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
 
 interface Props {
   transactions: Transaction[];
@@ -164,106 +150,20 @@ export function TransactionList({
             <span>VALOR</span>
             <span className={styles.srOnly}>Ações</span>
           </div>
-          {shown.map((t) => {
-            const goal = GOALS.find((g) => g.id === t.goal);
-            const date = new Date(`${t.date}T12:00:00`);
-            return (
-              <div className={styles.transactionRow} key={t.id}>
-                <div className={styles.transactionDescription}>
-                  <span
-                    className={`${styles.transactionIcon} ${t.kind === "income" ? styles.incomeIcon : ""}`}
-                    style={
-                      goal
-                        ? { background: goal.background, color: goal.color }
-                        : undefined
-                    }
-                  >
-                    {t.kind === "income" ? (
-                      <ArrowDownLeft size={20} />
-                    ) : goal ? (
-                      <GoalIcon goal={goal.id} />
-                    ) : (
-                      <ArrowUpRight size={20} />
-                    )}
-                  </span>
-                  <div>
-                    <button
-                      className={styles.transactionName}
-                      disabled={busy}
-                      onClick={() => onEdit(t)}
-                    >
-                      {t.description}
-                    </button>
-                    <div className={styles.transactionPerson}>
-                      {members.find((member) => member.id === t.memberId)
-                        ?.name ?? "Pessoa do casal"}
-                      {" · "}
-                      {accounts.find(
-                        (account) => account.id === t.accountId,
-                      )?.name ?? "Sem conta"}
-                    </div>
-                    <div className={styles.rowTags}>
-                      {t.tags.length ? (
-                        t.tags.map((tag) => (
-                          <button key={tag} onClick={() => onTag(tag)}>
-                            #{tag}
-                          </button>
-                        ))
-                      ) : (
-                        <span>Sem tags</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className={styles.transactionGoal}>
-                  {goal ? (
-                    <span
-                      className={styles.goalBadge}
-                      style={{ background: goal.background, color: goal.color }}
-                    >
-                      <ColorDot
-                        className={styles.goalDot}
-                        style={{ background: goal.color }}
-                      />
-                      {goal.name}
-                    </span>
-                  ) : (
-                    <span className={styles.incomeLabel}>Receita</span>
-                  )}
-                </div>
-                <time className={styles.transactionDate} dateTime={t.date}>
-                  {dayFormatter.format(date).replace(" de ", " ").replace(".", "")}
-                </time>
-                <span
-                  className={`${styles.transactionValue} ${t.kind === "income" ? styles.positive : styles.negative}`}
-                >
-                  {hidden
-                    ? "R$ ••••"
-                    : `${t.kind === "income" ? "+" : "−"} ${money(t.amount)}`}
-                </span>
-                <div className={styles.rowActions}>
-                  <Button
-                    variant="icon"
-                    className={styles.actionButton}
-                    disabled={busy}
-                    aria-label={`Editar ${t.description}`}
-                    onClick={() => onEdit(t)}
-                  >
-                    <Pencil size={15} />
-                  </Button>
-                  <Button
-                    variant="icon"
-                    className={`${styles.actionButton} ${styles.deleteButton}`}
-                    disabled={busy}
-                    aria-label={`Excluir ${t.description}`}
-                    onClick={() => onDelete(t)}
-                  >
-                    <Trash2 size={15} />
-                  </Button>
-                </div>
-              </div>
-            );
-          })}
+          {shown.map((t) => (
+            <TransactionRow
+              key={t.id}
+              transaction={t}
+              members={members}
+              accounts={accounts}
+              busy={busy}
+              hidden={hidden}
+              className={styles.transactionRow}
+              onEdit={onEdit}
+              onDelete={onDelete}
+              onTag={onTag}
+            />
+          ))}
         </div>
       ) : (
         <EmptyState

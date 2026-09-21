@@ -4,7 +4,7 @@ import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
 import type { Transaction } from "@/features/budget/domain/types";
 import { WEEKDAYS } from "@/features/budget/constants";
-import { ColorDot } from "@/components/ui/color-dot/color-dot";
+import { ExpenseTagList } from "@/features/budget/components/expense-tag-list/expense-tag-list";
 import { OverviewGrid } from "@/components/ui/panel/panel";
 import styles from "@/features/budget/components/expense-charts/expense-charts.module.css";
 
@@ -159,30 +159,11 @@ export function ExpenseCharts({
           </div>
         </div>
         {segments.length ? (
-          <ul className={styles.expenseTagList}>
-            {segments.map((tag) => (
-              <li key={JSON.stringify(tag.name)}>
-                <ColorDot style={{ background: tag.color }} />
-                <span className={styles.expenseTagName}>
-                  {tag.name ?? "Sem tags"}
-                </span>
-                <span className={styles.expenseTagTrack} aria-hidden="true">
-                  <i
-                    style={{
-                      width: hidden ? "0%" : `${tag.share}%`,
-                      background: tag.color,
-                    }}
-                  />
-                </span>
-                <strong>{display(tag.amount)}</strong>
-                <span>
-                  {hidden
-                    ? "••"
-                    : `${tag.share.toLocaleString("pt-BR", { maximumFractionDigits: 1 })}%`}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <ExpenseTagList
+            segments={segments}
+            hidden={hidden}
+            display={display}
+          />
         ) : (
           <p className={styles.expenseChartEmpty}>
             Adicione uma despesa para ver a distribuição por tag.

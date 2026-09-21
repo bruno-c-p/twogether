@@ -1,19 +1,9 @@
-import { Landmark, Pencil, Plus, Trash2 } from "lucide-react";
+import { Landmark, Plus } from "lucide-react";
 import { accountBalance } from "@/features/budget/domain/calc";
-import { money } from "@/features/budget/domain/format";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
+import { AccountRow } from "@/features/budget/components/account-row";
 import { Button } from "@/components/ui/button/button";
 import { EmptyState } from "@/features/budget/components/empty-state/empty-state";
-import {
-  ListRow,
-  ListRowActions,
-  ListRowIcon,
-  ListRowMeta,
-  ListRowName,
-  ListRowValue,
-  listRowAction,
-  listRowDelete,
-} from "@/features/budget/components/list-row/list-row";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 
 interface Props {
@@ -56,60 +46,20 @@ export function AccountList({
       />
       {sorted.length ? (
         <div>
-          {sorted.map((account) => {
-            const used = transactions.some(
-              (transaction) => transaction.accountId === account.id,
-            );
-            const balance = accountBalance(account, visibleTransactions);
-            return (
-              <ListRow key={account.id}>
-                <ListRowIcon>
-                  <Landmark size={18} />
-                </ListRowIcon>
-                <div>
-                  <ListRowName
-                    disabled={busy}
-                    onClick={() => onEdit(account)}
-                  >
-                    {account.name}
-                  </ListRowName>
-                  <ListRowMeta>
-                    {used
-                      ? "Em uso nas transações"
-                      : "Nenhuma transação nesta conta"}
-                  </ListRowMeta>
-                </div>
-                <ListRowValue tone={balance < 0 ? "negative" : "positive"}>
-                  {hidden ? "R$ ••••" : money(balance)}
-                </ListRowValue>
-                <ListRowActions>
-                  <Button
-                    variant="icon"
-                    className={listRowAction}
-                    disabled={busy}
-                    aria-label={`Editar ${account.name}`}
-                    onClick={() => onEdit(account)}
-                  >
-                    <Pencil size={15} />
-                  </Button>
-                  <Button
-                    variant="icon"
-                    className={`${listRowAction} ${listRowDelete}`}
-                    disabled={busy || used}
-                    title={
-                      used
-                        ? "Exclua ou mova as transações desta conta antes de apagá-la."
-                        : "Excluir conta"
-                    }
-                    aria-label={`Excluir ${account.name}`}
-                    onClick={() => onDelete(account)}
-                  >
-                    <Trash2 size={15} />
-                  </Button>
-                </ListRowActions>
-              </ListRow>
-            );
-          })}
+          {sorted.map((account) => (
+            <AccountRow
+              key={account.id}
+              account={account}
+              used={transactions.some(
+                (transaction) => transaction.accountId === account.id,
+              )}
+              balance={accountBalance(account, visibleTransactions)}
+              busy={busy}
+              hidden={hidden}
+              onEdit={onEdit}
+              onDelete={onDelete}
+            />
+          ))}
         </div>
       ) : (
         <EmptyState

@@ -1,0 +1,283 @@
+.goals-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.goal-card {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  text-align: left;
+  padding: 16px 16px 15px;
+  border-radius: 9px;
+  min-width: 0;
+  position: relative;
+}
+
+.goal-card:hover {
+  border-color: var(--goal-color);
+  transform: translateY(-3px);
+}
+
+.goal-card.over-budget,
+.goal-card.over-budget:hover {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger-soft);
+}
+
+.goal-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.goal-icon {
+  width: 33px;
+  height: 33px;
+  display: grid;
+  place-items: center;
+  color: var(--goal-color);
+  background: var(--goal-bg);
+  border-radius: 9px;
+}
+
+.goal-number {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-family: "Manrope", sans-serif;
+}
+
+.goal-card h3 {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: -0.15px;
+  white-space: nowrap;
+  margin-bottom: 9px;
+}
+
+.goal-card > strong {
+  font-family: "Manrope", sans-serif;
+  font-weight: 600;
+  font-size: 19px;
+  letter-spacing: -0.6px;
+  display: block;
+  font-variant-numeric: tabular-nums;
+}
+
+.goal-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--text-muted);
+  margin: 12px 0;
+  font-size: 9px;
+}
+
+.goal-card-foot svg {
+  color: var(--text-muted);
+}
+
+.goal-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  color: var(--danger);
+  font-size: 10px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.goal-status span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.goal-bar {
+  height: 3px;
+  background: var(--goal-bg);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.goal-card.over-budget .goal-bar {
+  background: var(--danger-soft);
+}
+
+.goal-card.over-budget .goal-bar > span {
+  background: var(--danger);
+}
+
+.goal-bar > span {
+  height: 100%;
+  background: var(--goal-color);
+  display: block;
+  border-radius: 3px;
+  transition: width 0.4s;
+}
+
+.expanded-goals {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.expanded-goals .goal-card {
+  padding: 24px;
+}
+
+.expanded-goals .goal-card h3 {
+  font-size: 16px;
+}
+
+.expanded-goals .goal-card > strong {
+  font-size: 28px;
+}
+
+.expanded-goals .goal-icon {
+  width: 43px;
+  height: 43px;
+}
+
+.goal-description {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 18px;
+  line-height: 1.6;
+}
+
+.goal-card h3 {
+  font-size: 12px;
+}
+
+.goal-budget {
+  font-size: 12px;
+  color: var(--text);
+  margin: 8px 0 0;
+}
+
+@media (min-width: 1450px) {
+  .goal-card h3 {
+    font-size: 13px;
+  }
+
+  .goal-card > strong {
+    font-size: 23px;
+  }
+
+  .goal-card {
+    padding: 20px;
+  }
+
+  .goal-card-foot {
+    font-size: 11px;
+  }
+
+  .goal-icon {
+    width: 39px;
+    height: 39px;
+  }
+}
+
+@media (max-width: 1190px) {
+  .goal-card {
+    padding: 13px 11px;
+  }
+
+  .goal-card h3 {
+    font-size: 10px;
+  }
+
+  .goal-card > strong {
+    font-size: 17px;
+  }
+
+  .goals-grid {
+    gap: 9px;
+  }
+}
+
+@media (max-width: 1000px) {
+  .expanded-goals {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 800px) {
+  .goals-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .goal-card {
+    padding: 16px;
+  }
+
+  .goal-card h3 {
+    font-size: 12px;
+  }
+
+  .goal-card > strong {
+    font-size: 20px;
+  }
+
+  .goal-card-foot {
+    font-size: 10px;
+  }
+}
+
+@media (max-width: 620px) {
+  .goals-grid {
+    grid-template-columns: 1fr;
+    gap: 11px;
+  }
+
+  .goal-card {
+    padding: 17px;
+  }
+
+  .goal-card h3 {
+    font-size: 12px;
+  }
+
+  .goal-card > strong {
+    font-size: 21px;
+  }
+
+  .goal-card-top {
+    margin-bottom: 13px;
+  }
+
+  .goal-card-foot {
+    font-size: 10px;
+  }
+
+  .expanded-goals .goal-card {
+    padding: 16px;
+  }
+
+  .expanded-goals .goal-card h3 {
+    font-size: 12px;
+    white-space: normal;
+    min-height: 32px;
+    line-height: 1.6;
+  }
+
+  .expanded-goals .goal-card > strong {
+    font-size: 21px;
+  }
+
+  .goal-description {
+    font-size: 11px;
+  }
+
+  .goal-card h3 {
+    white-space: normal;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 1190px) and (min-width: 801px) {
+  .goal-card h3 {
+    font-size: 11px;
+  }
+}
