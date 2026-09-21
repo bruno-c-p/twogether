@@ -1,8 +1,29 @@
 import { redirect } from "@tanstack/react-router";
+import { auth } from "@clerk/tanstack-react-start/server";
 import { createMiddleware } from "@tanstack/react-start";
+import { getRequestIP } from "@tanstack/react-start/server";
 import { currentUser } from "@/features/auth/current-user.server";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import { consumeRateLimit } from "@/server/rate-limit.server";
 import { RequestError, throwHttpError } from "@/server/request-error";
+
+export const rateLimitMiddleware = createMiddleware({
+  type: "function",
+}).server(async ({ next, method }) => {
+  if (method === "GET") return next();
+  const { userId } = await auth();
+  const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
+  const verdict = consumeRateLimit(key);
+  if (!verdict.ok)
+    throwHttpError(
+      new RequestError(
+        "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.",
+        429,
+        "limited",
+      ),
+    );
+  return next();
+});
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {

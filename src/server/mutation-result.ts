@@ -1,4 +1,5 @@
-export type MutationErrorCode = "conflict" | "invalid" | "full" | "expired";
+export type MutationErrorCode =
+  "conflict" | "invalid" | "full" | "expired" | "limited";
 
 export type MutationFailure = {
   ok: false;

@@ -15,13 +15,18 @@ export class RequestError extends Error {
   }
 }
 
+function errorForLogs(error: unknown) {
+  if (!(error instanceof Error)) return typeof error;
+  return process.env.NODE_ENV === "production" ? error.name : error;
+}
+
 export function throwHttpError(error: unknown): never {
   if (isRedirect(error)) throw error;
   if (error instanceof RequestError) {
     setResponseStatus(error.status);
     throw new Error(error.message);
   }
-  console.error("Budget mutation failed", error);
+  console.error("Budget mutation failed", errorForLogs(error));
   throw new Error("Não foi possível concluir. Tente novamente.");
 }
 
