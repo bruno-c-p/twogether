@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
-import { isGoalPercentages } from "@/features/budget/domain/validate";
+import { goalPercentagesSchema } from "@/features/budget/domain/schemas";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { GoalPercentageList } from "@/features/budget/components/goal-percentage-list/goal-percentage-list";
 import { Button } from "@/components/ui/button/button";
@@ -26,7 +26,9 @@ export function GoalPercentagesDialog({
 }) {
   const [values, setValues] = useState(percentages);
   const [saving, setSaving] = useState(false);
-  const valid = isGoalPercentages(values);
+  const parsed = goalPercentagesSchema.safeParse(values);
+  const valid = parsed.success;
+  const invalidMessage = parsed.success ? "" : parsed.error.issues[0].message;
   const total = GOALS.reduce(
     (sum, goal) =>
       sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
@@ -63,7 +65,7 @@ export function GoalPercentagesDialog({
           role="status"
         >
           Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%
-          {!valid && " · Ajuste os percentuais para somar 100%."}
+          {!valid && ` · ${invalidMessage}`}
         </p>
         {error && <FormError>{error}</FormError>}
         <DialogFooter>

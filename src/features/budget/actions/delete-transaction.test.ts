@@ -18,7 +18,7 @@ describe("parseDeleteTransaction", () => {
       following: [{ id: "next", revision: 2 }],
     });
     expect(() => parseDeleteTransaction({ id: "transaction-1" })).toThrow(
-      "Requisição inválida.",
+      "Versão inválida. Atualize a página.",
     );
   });
 });

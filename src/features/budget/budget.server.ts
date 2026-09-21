@@ -1,4 +1,3 @@
-import { resolve } from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   devLogin,
@@ -12,9 +11,12 @@ import {
 import type { MagicLinkSender } from "@/features/auth/email.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
-  isBankAccount,
-  isGoalPercentages,
-} from "@/features/budget/domain/validate";
+  bankAccountSchema,
+  firstIssueMessage,
+  goalPercentagesSchema,
+  occurrencesSchema,
+  transactionSchema,
+} from "@/features/budget/domain/schemas";
 import type {
   BankAccount,
   BudgetState,
@@ -44,6 +46,35 @@ import {
   type UserRow,
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
+import { databaseUrl } from "@/server/env";
+
+const STORED_MESSAGE = "Não foi possível ler os dados salvos.";
+
+function storedJson(payload: string): unknown {
+  try {
+    return JSON.parse(payload);
+  } catch {
+    return undefined;
+  }
+}
+
+function storedTransaction(payload: string): Transaction {
+  const result = transactionSchema.safeParse(storedJson(payload));
+  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+  return result.data;
+}
+
+function storedAccount(payload: string): BankAccount {
+  const result = bankAccountSchema.safeParse(storedJson(payload));
+  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+  return result.data;
+}
+
+function storedPercentages(payload: string): GoalPercentages {
+  const result = goalPercentagesSchema.safeParse(storedJson(payload));
+  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+  return result.data;
+}
 
 const emptyBudget = (): BudgetState => ({
   transactions: [],
@@ -59,36 +90,33 @@ const conflict = () =>
   );
 
 function canonical(value: Transaction, user: UserRow): Transaction {
-  if (
-    value.id.length > 100 ||
-    !value.id ||
-    value.description.length > 80 ||
-    value.tags.length > 8 ||
-    value.date < "1900-01-01" ||
-    value.accountId.length > 100
-  )
-    throw new RequestError("Confira os dados da transação.");
+  const result = transactionSchema.safeParse(value);
+  if (!result.success)
+    throw new RequestError(firstIssueMessage(result.error));
+  const parsed = result.data;
   return {
-    id: value.id,
-    description: value.description.trim(),
-    amount: value.amount,
-    date: value.date,
-    kind: value.kind,
-    goal: value.goal,
-    tags: [...new Set(value.tags)],
-    accountId: value.accountId,
+    id: parsed.id,
+    description: parsed.description,
+    amount: parsed.amount,
+    date: parsed.date,
+    kind: parsed.kind,
+    goal: parsed.goal,
+    tags: [...new Set(parsed.tags)],
+    accountId: parsed.accountId,
     updatedBy: user.id,
     updatedAt: new Date().toISOString(),
   };
 }
 
 function canonicalAccount(value: BankAccount): BankAccount {
-  if (!isBankAccount(value) || value.id.length > 100 || value.name.length > 50)
-    throw new RequestError("Confira os dados da conta.");
+  const result = bankAccountSchema.safeParse(value);
+  if (!result.success)
+    throw new RequestError(firstIssueMessage(result.error));
+  const parsed = result.data;
   return {
-    id: value.id,
-    name: value.name.trim(),
-    openingBalance: value.openingBalance,
+    id: parsed.id,
+    name: parsed.name,
+    openingBalance: parsed.openingBalance,
   };
 }
 
@@ -137,21 +165,21 @@ export async function snapshot(
         members: members.map((member) => ({
           id: member.id,
           name: member.name,
-          percentages: JSON.parse(member.percentages) as GoalPercentages,
+          percentages: storedPercentages(member.percentages),
           percentagesRevision: member.revision,
         })),
       },
       budget: {
         ...emptyBudget(),
         percentages: ownPercentages
-          ? (JSON.parse(ownPercentages.percentages) as GoalPercentages)
+          ? storedPercentages(ownPercentages.percentages)
           : { ...DEFAULT_PERCENTAGES },
         transactions: rows.map((row) => ({
-          ...(JSON.parse(row.payload) as Transaction),
+          ...storedTransaction(row.payload),
           revision: row.revision,
         })),
         accounts: accountRows.map((row) => ({
-          ...(JSON.parse(row.payload) as BankAccount),
+          ...storedAccount(row.payload),
           revision: row.revision,
         })),
       },
@@ -168,8 +196,9 @@ export async function saveTransaction(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const occurrences = input.occurrences ?? 1;
-    if (!Number.isInteger(occurrences) || occurrences < 1 || occurrences > 120)
-      throw new RequestError("Escolha entre 1 e 120 ocorrências.");
+    const parsedOccurrences = occurrencesSchema.safeParse(occurrences);
+    if (!parsedOccurrences.success)
+      throw new RequestError(firstIssueMessage(parsedOccurrences.error));
     const t = canonical(input.transaction, user);
     const account = await one<AccountRow>(
       transaction,
@@ -186,7 +215,7 @@ export async function saveTransaction(
     if (old && !old.deleted && given === undefined) {
       // A create retried after a lost response carries no revision;
       // accept it when the stored row already matches the submission.
-      const stored = JSON.parse(old.payload) as Transaction;
+      const stored = storedTransaction(old.payload);
       const same =
         stored.description === t.description &&
         stored.amount === t.amount &&
@@ -203,7 +232,7 @@ export async function saveTransaction(
       throw conflict();
     if (old && occurrences !== 1)
       throw new RequestError("Edite cada ocorrência individualmente.");
-    const previous = old ? (JSON.parse(old.payload) as Transaction) : undefined;
+    const previous = old ? storedTransaction(old.payload) : undefined;
     const createdBy = previous?.createdBy ?? user.id;
     const memberId =
       typeof previous?.memberId === "string"
@@ -268,7 +297,7 @@ export async function deleteTransaction(
     );
     if (!previous) throw conflict();
     if (input.following !== undefined) {
-      const source = JSON.parse(previous.payload) as Transaction;
+      const source = storedTransaction(previous.payload);
       if (!source.recurrenceId || source.recurrenceIndex === undefined)
         throw new RequestError("Recorrência inválida.");
       const candidates = await all<TransactionRow & { id: string }>(
@@ -277,7 +306,7 @@ export async function deleteTransaction(
         [homeRow.id],
       );
       const following = candidates.filter((row) => {
-        const item = JSON.parse(row.payload) as Transaction;
+        const item = storedTransaction(row.payload);
         return (
           item.recurrenceId === source.recurrenceId &&
           item.recurrenceIndex !== undefined &&
@@ -301,7 +330,7 @@ export async function deleteTransaction(
           "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
           [
             JSON.stringify({
-              ...(JSON.parse(row.payload) as Transaction),
+              ...storedTransaction(row.payload),
               updatedBy: user.id,
               updatedAt: new Date().toISOString(),
             }),
@@ -312,7 +341,7 @@ export async function deleteTransaction(
       }
     }
     const payload = JSON.stringify({
-      ...(JSON.parse(previous.payload) as Transaction),
+      ...storedTransaction(previous.payload),
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     });
@@ -341,7 +370,7 @@ export async function restoreTransaction(
     );
     if (!previous) throw conflict();
     const payload = JSON.stringify({
-      ...(JSON.parse(previous.payload) as Transaction),
+      ...storedTransaction(previous.payload),
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     });
@@ -400,9 +429,7 @@ export async function deleteAccount(
       [homeRow.id],
     );
     if (
-      rows.some(
-        (row) => (JSON.parse(row.payload) as Transaction).accountId === id,
-      )
+      rows.some((row) => storedTransaction(row.payload).accountId === id)
     )
       throw new RequestError(
         "Exclua ou mova as transações desta conta antes de apagá-la.",
@@ -424,12 +451,13 @@ export async function savePercentages(
 ) {
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
-    if (!isGoalPercentages(input.percentages))
-      throw new RequestError("Os percentuais devem somar 100%.");
+    const parsed = goalPercentagesSchema.safeParse(input.percentages);
+    if (!parsed.success)
+      throw new RequestError(firstIssueMessage(parsed.error));
     const result = await execute(
       transaction,
       "UPDATE member_percentages SET percentages = ?, revision = revision + 1 WHERE user_id = ? AND revision = ?",
-      [JSON.stringify(input.percentages), user.id, revision(input.revision)],
+      [JSON.stringify(parsed.data), user.id, revision(input.revision)],
     );
     if (result.rowsAffected !== 1) throw conflict();
   });
@@ -502,9 +530,5 @@ export type BudgetStore = ReturnType<typeof createBudgetStore>;
 let store: BudgetStore | undefined;
 
 export function getBudgetStore(): BudgetStore {
-  return (store ??= createBudgetStore(
-    process.env.TURSO_DATABASE_URL ||
-      process.env.BUDGET_DATABASE_PATH ||
-      resolve("data/twogether.sqlite"),
-  ));
+  return (store ??= createBudgetStore(databaseUrl()));
 }

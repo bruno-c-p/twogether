@@ -1,42 +1,26 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import {
+  followingSchema,
+  idSchema,
+  revisionSchema,
+} from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import {
-  invalid,
-  revision,
-  text,
-} from "@/features/budget/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
 
-function parseFollowing(
-  value: unknown,
-): { id: string; revision: number }[] | undefined {
-  if (value === undefined) return undefined;
-  if (
-    !Array.isArray(value) ||
-    value.some(
-      (item) =>
-        !item ||
-        typeof item !== "object" ||
-        typeof (item as { id?: unknown }).id !== "string" ||
-        !Number.isSafeInteger((item as { revision?: unknown }).revision),
-    )
-  )
-    invalid();
-  return value as { id: string; revision: number }[];
-}
+const deleteTransactionSchema = inputSchema({
+  id: idSchema,
+  revision: revisionSchema,
+  following: followingSchema.optional(),
+});
 
 export function parseDeleteTransaction(input: unknown): {
   id: string;
   revision: number;
   following?: { id: string; revision: number }[];
 } {
-  if (!input || typeof input !== "object") invalid();
-  const data = input as Record<string, unknown>;
-  const following = parseFollowing(data.following);
-  return following
-    ? { id: text(data.id), revision: revision(data.revision), following }
-    : { id: text(data.id), revision: revision(data.revision) };
+  return parseInput(deleteTransactionSchema, input);
 }
 
 export const deleteTransaction = createServerFn({ method: "POST" })

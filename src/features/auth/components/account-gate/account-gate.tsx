@@ -20,10 +20,17 @@ import {
 } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
 import { formText } from "@/features/budget/domain/format";
+import {
+  emailFormSchema,
+  fieldErrors as toFieldErrors,
+  inviteFormSchema,
+  nameFormSchema,
+} from "@/features/budget/domain/schemas";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
 import {
+  FieldError,
   FieldHint,
   Form,
   FormError,
@@ -109,6 +116,7 @@ export function AccountGate() {
     });
   const [sentTo, setSentTo] = useState("");
   const [cooldown, setCooldown] = useState(0);
+  const [errors, setErrors] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!cooldown) return;
     const timer = window.setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -135,19 +143,27 @@ export function AccountGate() {
   }
   async function submitEmail(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await requestAccess(
-      formText(new FormData(event.currentTarget), "email").trim(),
-    );
+    const parsed = emailFormSchema.safeParse({
+      email: formText(new FormData(event.currentTarget), "email"),
+    });
+    if (!parsed.success) {
+      setErrors(toFieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
+    await requestAccess(parsed.data.email);
   }
   async function submitName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await run(() =>
-      setName({
-        data: {
-          name: formText(new FormData(event.currentTarget), "name"),
-        },
-      }),
-    );
+    const parsed = nameFormSchema.safeParse({
+      name: formText(new FormData(event.currentTarget), "name"),
+    });
+    if (!parsed.success) {
+      setErrors(toFieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
+    await run(() => setName({ data: { name: parsed.data.name } }));
   }
   async function acceptInvitation() {
     await run(() =>
@@ -158,15 +174,15 @@ export function AccountGate() {
   }
   async function submitInvitation(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    await run(() =>
-      joinHousehold({
-        data: {
-          token: inviteToken(
-            formText(new FormData(event.currentTarget), "invite"),
-          ),
-        },
-      }),
-    );
+    const parsed = inviteFormSchema.safeParse({
+      invite: inviteToken(formText(new FormData(event.currentTarget), "invite")),
+    });
+    if (!parsed.success) {
+      setErrors(toFieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
+    await run(() => joinHousehold({ data: { token: parsed.data.invite } }));
   }
   return (
     <main className={styles.accountPage}>
@@ -234,7 +250,10 @@ export function AccountGate() {
                     maxLength={254}
                     placeholder="voce@exemplo.com"
                     required
+                    aria-describedby={errors.email ? "email-error" : undefined}
+                    aria-invalid={errors.email ? true : undefined}
                   />
+                  <FieldError id="email-error">{errors.email}</FieldError>
                 </label>
                 <Button disabled={busy}>
                   {busy
@@ -259,7 +278,10 @@ export function AccountGate() {
                 maxLength={50}
                 placeholder="Como você quer aparecer?"
                 required
+                aria-describedby={errors.name ? "name-error" : undefined}
+                aria-invalid={errors.name ? true : undefined}
               />
+              <FieldError id="name-error">{errors.name}</FieldError>
             </label>
             <Button disabled={busy}>
               Continuar
@@ -298,7 +320,12 @@ export function AccountGate() {
                       name="invite"
                       placeholder="Cole o link do seu par"
                       required
+                      aria-describedby={
+                        errors.invite ? "invite-error" : undefined
+                      }
+                      aria-invalid={errors.invite ? true : undefined}
                     />
+                    <FieldError id="invite-error">{errors.invite}</FieldError>
                   </label>
                   <Button variant="secondary" disabled={busy}>
                     Aceitar convite

@@ -13,7 +13,7 @@ const transaction = {
 };
 
 describe("parseSaveTransaction", () => {
-  test("reuses isTransaction and occurrence bounds", () => {
+  test("validates the transaction schema and occurrence bounds", () => {
     expect(parseSaveTransaction({ transaction })).toEqual({ transaction });
     expect(parseSaveTransaction({ transaction, occurrences: 12 })).toEqual({
       transaction,
@@ -21,13 +21,13 @@ describe("parseSaveTransaction", () => {
     });
     expect(() =>
       parseSaveTransaction({ transaction: { ...transaction, amount: 0 } }),
-    ).toThrow("Requisição inválida.");
+    ).toThrow("Digite um valor válido, como 45,90.");
     expect(() => parseSaveTransaction({ transaction, occurrences: 0 })).toThrow(
-      "Requisição inválida.",
+      "Escolha entre 1 e 120 ocorrências.",
     );
     expect(() =>
       parseSaveTransaction({ transaction, occurrences: "12" }),
-    ).toThrow("Requisição inválida.");
+    ).toThrow("Escolha entre 1 e 120 ocorrências.");
     expect(parseSaveTransaction({ action: "save", transaction })).toEqual({
       transaction,
     });

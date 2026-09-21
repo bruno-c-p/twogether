@@ -10,16 +10,16 @@ import {
 import {
   AmountField,
   Field,
+  FieldError,
   FieldHint,
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
+import { formatAmountInput, formText, newId } from "@/features/budget/domain/format";
 import {
-  formatAmountInput,
-  formText,
-  newId,
-  parseBalance,
-} from "@/features/budget/domain/format";
+  accountFormSchema,
+  fieldErrors,
+} from "@/features/budget/domain/schemas";
 import type { BankAccount } from "@/features/budget/domain/types";
 
 interface Props {
@@ -37,7 +37,7 @@ export function AccountDialog({
 }: Props) {
   const amountInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
   const [openingValue, setOpeningValue] = useState(
     account ? formatAmountInput(String(account.openingBalance)) : "",
   );
@@ -51,24 +51,22 @@ export function AccountDialog({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
-    const name = formText(new FormData(event.currentTarget), "name").trim();
-    const openingBalance = parseBalance(openingValue);
-    if (!name) {
-      setError("Dê um nome para esta conta.");
+    const parsed = accountFormSchema.safeParse({
+      name: formText(new FormData(event.currentTarget), "name"),
+      openingBalance: openingValue,
+    });
+    if (!parsed.success) {
+      setErrors(fieldErrors(parsed.error));
       return;
     }
-    if (openingBalance === null) {
-      setError("Digite um saldo inicial válido, como 0,00 ou 1.250,00.");
-      return;
-    }
+    setErrors({});
     setSaving(true);
-    setError("");
     try {
       if (
         await onSave({
           id: account?.id ?? newId(),
-          name,
-          openingBalance,
+          name: parsed.data.name,
+          openingBalance: parsed.data.openingBalance,
           revision: account?.revision,
         })
       )
@@ -99,7 +97,10 @@ export function AccountDialog({
                 maxLength={50}
                 defaultValue={account?.name}
                 required
+                aria-describedby={errors.name ? "account-name-error" : undefined}
+                aria-invalid={errors.name ? true : undefined}
               />
+              <FieldError id="account-name-error">{errors.name}</FieldError>
             </Field>
             <AmountField label="Saldo inicial" htmlFor="opening-balance">
               <input
@@ -115,14 +116,19 @@ export function AccountDialog({
                 onChange={(event) =>
                   setOpeningValue(formatAmountInput(event.currentTarget.value))
                 }
-                aria-describedby={error ? "form-error" : undefined}
+                aria-describedby={
+                  errors.openingBalance ? "opening-balance-error" : undefined
+                }
+                aria-invalid={errors.openingBalance ? true : undefined}
               />
             </AmountField>
+            <FieldError id="opening-balance-error">
+              {errors.openingBalance}
+            </FieldError>
             <FieldHint>
               O saldo da conta soma este valor com as receitas e subtrai as
               despesas.
             </FieldHint>
-            {error && <FormError id="form-error">{error}</FormError>}
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>
               <Button type="button" variant="text" onClick={onClose}>

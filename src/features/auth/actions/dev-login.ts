@@ -4,12 +4,14 @@ import {
   sessionToken,
 } from "@/features/auth/session.server";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import { emailSchema } from "@/features/budget/domain/schemas";
 import { throwHttpError } from "@/server/request-error";
-import { invalid, text } from "@/features/auth/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const devLoginSchema = inputSchema({ email: emailSchema });
 
 export function parseDevLogin(input: unknown): { email: string } {
-  if (!input || typeof input !== "object") invalid();
-  return { email: text((input as Record<string, unknown>).email) };
+  return parseInput(devLoginSchema, input);
 }
 
 export const devLogin = createServerFn({ method: "POST" })

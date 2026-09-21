@@ -1,19 +1,22 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import {
+  emailSchema,
+  inviteTokenSchema,
+} from "@/features/budget/domain/schemas";
 import { throwHttpError } from "@/server/request-error";
-import { isBudgetToken } from "@/features/budget/search";
-import { invalid, text } from "@/features/auth/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const requestLinkSchema = inputSchema({
+  email: emailSchema,
+  invite: inviteTokenSchema.optional(),
+});
 
 export function parseRequestLink(input: unknown): {
   email: string;
   invite?: string;
 } {
-  if (!input || typeof input !== "object") invalid();
-  const data = input as Record<string, unknown>;
-  const email = text(data.email);
-  if (data.invite === undefined) return { email };
-  if (!isBudgetToken(data.invite)) invalid();
-  return { email, invite: data.invite };
+  return parseInput(requestLinkSchema, input);
 }
 
 export const requestLink = createServerFn({ method: "POST" })

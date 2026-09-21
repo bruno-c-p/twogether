@@ -11,7 +11,7 @@ describe("parseAccessPayload", () => {
       convite: "b".repeat(64),
     });
     expect(() => parseAccessPayload({ token: "short" })).toThrow(
-      "Requisição inválida.",
+      "Link inválido. Peça um novo link.",
     );
   });
 });

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { z } from "zod";
 import {
   THEME_CHANGE_EVENT,
   THEME_OPTIONS,
@@ -6,11 +7,16 @@ import {
 } from "@/features/theme/constants";
 import styles from "@/features/theme/components/theme-toggle/theme-toggle.module.css";
 
-type Theme = "system" | "light" | "dark";
+const themePreferenceSchema = z
+  .enum(["system", "light", "dark"], { error: "Tema inválido." })
+  .catch("system");
+
+type Theme = z.infer<typeof themePreferenceSchema>;
 
 function preference(): Theme {
-  const value = document.documentElement.dataset.themePreference;
-  return value === "light" || value === "dark" ? value : "system";
+  return themePreferenceSchema.parse(
+    document.documentElement.dataset.themePreference,
+  );
 }
 
 function subscribe(notify: () => void) {
@@ -24,9 +30,7 @@ function subscribe(notify: () => void) {
   const storage = (event: StorageEvent) => {
     if (event.key !== THEME_STORAGE_KEY && event.key !== null) return;
     document.documentElement.dataset.themePreference =
-      event.newValue === "light" || event.newValue === "dark"
-        ? event.newValue
-        : "system";
+      themePreferenceSchema.parse(event.newValue);
     sync();
   };
   sync();

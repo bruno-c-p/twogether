@@ -12,6 +12,8 @@ import {
   type UserRow,
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
+import { nodeEnv } from "@/server/env";
+import { budgetTokenSchema, inviteTokenSchema } from "@/features/budget/domain/schemas";
 import {
   sendMagicLink,
   type MagicLinkSender,
@@ -21,7 +23,7 @@ export async function userFromSession(
   database: DatabaseExecutor,
   session: string | undefined,
 ): Promise<UserRow | null> {
-  if (!session || !/^[a-f0-9]{64}$/.test(session)) return null;
+  if (!session || !budgetTokenSchema.safeParse(session).success) return null;
   return one<UserRow>(
     database,
     `SELECT users.* FROM users JOIN sessions ON sessions.user_id = users.id WHERE sessions.hash = ? AND sessions.expires > ?`,
@@ -119,10 +121,13 @@ export async function requestLink(
   const email = emailAddress(input.email);
   await throttle(ctx, `magic:${email}`, 5);
   await throttle(ctx, "magic:global", 100);
-  const invite =
-    input.invite === undefined ? undefined : text(input.invite, 128);
-  if (invite && !/^[a-f0-9]{64}$/.test(invite))
-    throw new RequestError("Convite inválido. Peça um novo link.");
+  let invite: string | undefined;
+  if (input.invite !== undefined) {
+    const parsed = inviteTokenSchema.safeParse(input.invite);
+    if (!parsed.success)
+      throw new RequestError("Convite inválido. Peça um novo link.");
+    invite = parsed.data;
+  }
   const accessToken = token();
   await ctx.atomic(async (transaction) => {
     await execute(transaction, "DELETE FROM magic_links WHERE expires <= ?", [
@@ -162,7 +167,7 @@ export async function devLogin(
   session: string | undefined,
 ) {
   await ctx.ready;
-  if (process.env.NODE_ENV !== "development")
+  if (nodeEnv() !== "development")
     throw new RequestError("Atalho de desenvolvimento indisponível.", 404);
   const email = emailAddress(input.email);
   return openSession(ctx, session, (transaction) =>

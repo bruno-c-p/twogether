@@ -1,23 +1,46 @@
+import { z } from "zod";
 import { currentMonth } from "@/features/budget/domain/format";
+import {
+  budgetTokenSchema,
+  goalIdSchema,
+  monthSchema,
+} from "@/features/budget/domain/schemas";
 import type {
   GoalId,
   TransactionKind,
   View,
 } from "@/features/budget/domain/types";
 
-export function isBudgetToken(value: unknown): value is string {
-  return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
-}
-const views: View[] = ["overview", "transactions", "accounts", "goals"];
-const goals: GoalId[] = [
-  "fixed",
-  "pleasure",
-  "comfort",
-  "targets",
-  "knowledge",
-  "freedom",
-];
-const monthPattern = /^\d{4}-(0[1-9]|1[0-2])$/;
+const drop = <Schema extends z.ZodType>(schema: Schema) =>
+  schema.optional().catch(undefined);
+
+const viewSchema = z.enum(["overview", "transactions", "accounts", "goals"], {
+  error: "Visão inválida.",
+});
+const memberSchema = z.string({ error: "Pessoa inválida." }).min(1).max(64);
+const querySchema = z
+  .string({ error: "Busca inválida." })
+  .refine((value) => value.trim().length > 0)
+  .transform((value) => value.slice(0, 200));
+const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
+const kindSchema = z.enum(["expense", "income"], {
+  error: "Tipo inválido.",
+});
+
+const budgetFiltersSchema = z.object({
+  view: drop(viewSchema),
+  month: drop(monthSchema),
+  member: drop(memberSchema),
+  query: drop(querySchema),
+  goal: drop(goalIdSchema),
+  tag: drop(tagSchema),
+  kind: drop(kindSchema),
+});
+
+const accessSearchSchema = z.object({
+  access: drop(budgetTokenSchema),
+  convite: drop(budgetTokenSchema),
+});
 
 export interface BudgetFilters {
   view?: View;
@@ -92,45 +115,13 @@ export function withDefaultMonth(
 export function validateAccessSearch(
   search: Record<string, unknown>,
 ): AccessSearch {
-  const access = isBudgetToken(search.access) ? search.access : undefined;
-  const convite = isBudgetToken(search.convite) ? search.convite : undefined;
-  return { access, convite };
+  return accessSearchSchema.parse(search);
 }
 
 export function validateBudgetFilters(
   search: Record<string, unknown>,
 ): BudgetFilters {
-  const view =
-    typeof search.view === "string" && views.includes(search.view as View)
-      ? (search.view as View)
-      : undefined;
-  const month =
-    typeof search.month === "string" && monthPattern.test(search.month)
-      ? search.month
-      : undefined;
-  const member =
-    typeof search.member === "string" &&
-    search.member &&
-    search.member.length <= 64
-      ? search.member
-      : undefined;
-  const query =
-    typeof search.query === "string" && search.query.trim()
-      ? search.query.slice(0, 200)
-      : undefined;
-  const goal =
-    typeof search.goal === "string" && goals.includes(search.goal as GoalId)
-      ? (search.goal as GoalId)
-      : undefined;
-  const tag =
-    typeof search.tag === "string" && search.tag && search.tag.length <= 100
-      ? search.tag
-      : undefined;
-  const kind =
-    search.kind === "expense" || search.kind === "income"
-      ? search.kind
-      : undefined;
-  return { view, month, member, query, goal, tag, kind };
+  return budgetFiltersSchema.parse(search);
 }
 
 export function validateBudgetSearch(

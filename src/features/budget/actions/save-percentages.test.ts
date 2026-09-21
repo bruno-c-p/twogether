@@ -18,6 +18,6 @@ describe("parseSavePercentages", () => {
         percentages: { ...DEFAULT_PERCENTAGES, fixed: 90 },
         revision: 0,
       }),
-    ).toThrow("Requisição inválida.");
+    ).toThrow("Os percentuais devem somar 100%.");
   });
 });

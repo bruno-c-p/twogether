@@ -100,6 +100,25 @@ export function FormError({
   );
 }
 
+export function FieldError({
+  className,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<"span">) {
+  if (!children) return null;
+  return (
+    <span
+      role="alert"
+      className={
+        className ? `${styles.fieldError} ${className}` : styles.fieldError
+      }
+      {...props}
+    >
+      {children}
+    </span>
+  );
+}
+
 export function FieldHint({
   className,
   ...props

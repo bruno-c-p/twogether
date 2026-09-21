@@ -1,27 +1,24 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
-import { isTransaction } from "@/features/budget/domain/validate";
+import {
+  occurrencesSchema,
+  transactionSchema,
+} from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import type { Transaction } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
-import { invalid } from "@/features/budget/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const saveTransactionSchema = inputSchema({
+  transaction: transactionSchema,
+  occurrences: occurrencesSchema.optional(),
+});
 
 export function parseSaveTransaction(input: unknown): {
   transaction: Transaction;
   occurrences?: number;
 } {
-  if (!input || typeof input !== "object") invalid();
-  const data = input as Record<string, unknown>;
-  if (!isTransaction(data.transaction)) invalid();
-  if (data.occurrences === undefined) return { transaction: data.transaction };
-  if (
-    typeof data.occurrences !== "number" ||
-    !Number.isInteger(data.occurrences) ||
-    data.occurrences < 1 ||
-    data.occurrences > 120
-  )
-    invalid();
-  return { transaction: data.transaction, occurrences: data.occurrences };
+  return parseInput(saveTransactionSchema, input);
 }
 
 export const saveTransaction = createServerFn({ method: "POST" })

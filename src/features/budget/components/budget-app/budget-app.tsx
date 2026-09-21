@@ -19,6 +19,7 @@ import {
   money,
   shiftMonth,
 } from "@/features/budget/domain/format";
+import { monthSchema } from "@/features/budget/domain/schemas";
 import {
   optimisticDelete,
   optimisticRestore,
@@ -370,12 +371,8 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               value={month}
               required
               onChange={(event) => {
-                if (
-                  event.currentTarget.validity.valid &&
-                  event.currentTarget.value
-                ) {
-                  setMonth(event.currentTarget.value);
-                }
+                const next = event.currentTarget.value;
+                if (monthSchema.safeParse(next).success) setMonth(next);
               }}
             />
             <Button

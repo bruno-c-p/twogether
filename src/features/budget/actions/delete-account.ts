@@ -1,16 +1,23 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import {
+  idSchema,
+  revisionSchema,
+} from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import { invalid, revision, text } from "@/features/budget/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const deleteAccountSchema = inputSchema({
+  id: idSchema,
+  revision: revisionSchema,
+});
 
 export function parseDeleteAccount(input: unknown): {
   id: string;
   revision: number;
 } {
-  if (!input || typeof input !== "object") invalid();
-  const data = input as Record<string, unknown>;
-  return { id: text(data.id), revision: revision(data.revision) };
+  return parseInput(deleteAccountSchema, input);
 }
 
 export const deleteAccount = createServerFn({ method: "POST" })

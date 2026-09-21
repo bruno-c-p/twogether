@@ -7,16 +7,16 @@ describe("parseRestoreTransaction", () => {
       parseRestoreTransaction({ id: "transaction-1", revision: 2 }),
     ).toEqual({ id: "transaction-1", revision: 2 });
     expect(() => parseRestoreTransaction({ revision: 2 })).toThrow(
-      "Requisição inválida.",
+      "Informe um identificador válido.",
     );
     expect(() => parseRestoreTransaction({ id: "transaction-1" })).toThrow(
-      "Requisição inválida.",
+      "Versão inválida. Atualize a página.",
     );
     expect(() => parseRestoreTransaction({ id: "   ", revision: 2 })).toThrow(
-      "Requisição inválida.",
+      "Informe um identificador válido.",
     );
     expect(() =>
       parseRestoreTransaction({ id: "transaction-1", revision: -1 }),
-    ).toThrow("Requisição inválida.");
+    ).toThrow("Versão inválida. Atualize a página.");
   });
 });

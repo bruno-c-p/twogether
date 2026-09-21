@@ -8,7 +8,7 @@ describe("parseDeleteAccount", () => {
       revision: 0,
     });
     expect(() => parseDeleteAccount({ id: "account-1" })).toThrow(
-      "Requisição inválida.",
+      "Versão inválida. Atualize a página.",
     );
   });
 });

@@ -8,11 +8,13 @@ import { ArrowDownLeft, ArrowUpRight, Check, Repeat2 } from "lucide-react";
 import {
   formatAmountInput,
   formText,
-  localDate,
   newId,
   normalizeTag,
-  parseAmount,
 } from "@/features/budget/domain/format";
+import {
+  fieldErrors,
+  transactionFormSchema,
+} from "@/features/budget/domain/schemas";
 import type {
   BankAccount,
   Transaction,
@@ -31,6 +33,7 @@ import {
 import {
   AmountField,
   Field,
+  FieldError,
   FieldHint,
   FieldRow,
   Fieldset,
@@ -75,7 +78,7 @@ export function TransactionDialog({
   const [occurrences, setOccurrences] = useState(12);
   const [saving, setSaving] = useState(false);
   const memberId = transaction?.memberId ?? currentUserId;
-  const [error, setError] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     amountInput.current?.focus();
@@ -97,61 +100,42 @@ export function TransactionDialog({
     event.preventDefault();
     if (saving) return;
     const form = new FormData(event.currentTarget);
-    const amount = parseAmount(formText(form, "amount"));
-    const description = formText(form, "description").trim();
-    const date = formText(form, "date");
-    if (!amount) {
-      setError("Digite um valor válido, como 45,90.");
-      return;
-    }
-    if (!description) {
-      setError("Dê um nome para esta transação.");
-      return;
-    }
-    if (kind === "expense" && !goal) {
-      setError("Escolha uma das seis metas para esta despesa.");
-      return;
-    }
-    const accountId = formText(form, "accountId");
-    if (!accounts.some((item) => item.id === accountId)) {
-      setError(
-        accounts.length
-          ? "Escolha uma conta bancária."
-          : "Cadastre uma conta na aba Contas antes de lançar transações.",
-      );
-      return;
-    }
-    if (
-      !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-      Number.isNaN(new Date(`${date}T12:00:00`).getTime()) ||
-      localDate(new Date(`${date}T12:00:00`)) !== date
-    ) {
-      setError("Escolha uma data válida.");
-      return;
-    }
     const pendingTag = normalizeTag(tagInput);
     const completeTags =
       pendingTag && !tags.includes(pendingTag)
         ? [...tags, pendingTag].slice(0, 8)
         : tags;
+    const parsed = transactionFormSchema(accounts).safeParse({
+      amount: formText(form, "amount"),
+      description: formText(form, "description"),
+      date: formText(form, "date"),
+      accountId: formText(form, "accountId"),
+      goal,
+      kind,
+      occurrences: recurring && !transaction ? occurrences : 1,
+    });
+    if (!parsed.success) {
+      setErrors(fieldErrors(parsed.error));
+      return;
+    }
+    setErrors({});
     setSaving(true);
-    setError("");
     try {
       if (
         await onSave(
           {
             id: transaction?.id ?? newId(),
-            amount,
-            description,
-            date,
-            kind,
-            goal: kind === "income" ? null : goal,
+            amount: parsed.data.amount,
+            description: parsed.data.description,
+            date: parsed.data.date,
+            kind: parsed.data.kind,
+            goal: parsed.data.kind === "income" ? null : parsed.data.goal,
             tags: completeTags,
-            accountId,
+            accountId: parsed.data.accountId,
             memberId,
             revision: transaction?.revision,
           },
-          recurring && !transaction ? occurrences : 1,
+          parsed.data.occurrences,
         )
       )
         onClose();
@@ -213,9 +197,11 @@ export function TransactionDialog({
                 onChange={(event) =>
                   setAmountValue(formatAmountInput(event.currentTarget.value))
                 }
-                aria-describedby={error ? "form-error" : undefined}
+                aria-describedby={errors.amount ? "amount-error" : undefined}
+                aria-invalid={errors.amount ? true : undefined}
               />
             </AmountField>
+            <FieldError id="amount-error">{errors.amount}</FieldError>
             <FieldRow>
               <label>
                 Descrição
@@ -225,7 +211,14 @@ export function TransactionDialog({
                   maxLength={80}
                   defaultValue={transaction?.description}
                   required
+                  aria-describedby={
+                    errors.description ? "description-error" : undefined
+                  }
+                  aria-invalid={errors.description ? true : undefined}
                 />
+                <FieldError id="description-error">
+                  {errors.description}
+                </FieldError>
               </label>
               <label>
                 Data
@@ -236,7 +229,10 @@ export function TransactionDialog({
                   min="1900-01-01"
                   max="9999-12-31"
                   required
+                  aria-describedby={errors.date ? "date-error" : undefined}
+                  aria-invalid={errors.date ? true : undefined}
                 />
+                <FieldError id="date-error">{errors.date}</FieldError>
               </label>
             </FieldRow>
             <Field>
@@ -248,6 +244,8 @@ export function TransactionDialog({
                   (accounts.length === 1 ? accounts[0].id : "")
                 }
                 required
+                aria-describedby={errors.accountId ? "account-error" : undefined}
+                aria-invalid={errors.accountId ? true : undefined}
               >
                 {accounts.length !== 1 && (
                   <option value="">Selecione uma conta</option>
@@ -258,6 +256,7 @@ export function TransactionDialog({
                   </option>
                 ))}
               </select>
+              <FieldError id="account-error">{errors.accountId}</FieldError>
             </Field>
             {!transaction && (
               <section
@@ -296,10 +295,18 @@ export function TransactionDialog({
                           onChange={(event) =>
                             setOccurrences(event.target.valueAsNumber)
                           }
-                          aria-describedby="recurrence-hint"
+                          aria-describedby={
+                            errors.occurrences
+                              ? "recurrence-hint occurrences-error"
+                              : "recurrence-hint"
+                          }
+                          aria-invalid={errors.occurrences ? true : undefined}
                         />
                         <span>meses</span>
                       </div>
+                      <FieldError id="occurrences-error">
+                        {errors.occurrences}
+                      </FieldError>
                     </div>
                     <p id="recurrence-hint">
                       Inclui o mês da primeira transação. Em meses mais curtos,
@@ -310,7 +317,10 @@ export function TransactionDialog({
               </section>
             )}
             {kind === "expense" && (
-              <GoalPicker value={goal} onChange={setGoal} />
+              <>
+                <GoalPicker value={goal} onChange={setGoal} />
+                <FieldError id="goal-error">{errors.goal}</FieldError>
+              </>
             )}
             <TagPicker
               tags={tags}
@@ -320,7 +330,6 @@ export function TransactionDialog({
               onAdd={addTag}
               onRemove={(tag) => setTags(tags.filter((t) => t !== tag))}
             />
-            {error && <FormError id="form-error">{error}</FormError>}
             {serverError && <FormError>{serverError}</FormError>}
             {transaction?.updatedBy && (
               <FieldHint>

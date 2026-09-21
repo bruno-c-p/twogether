@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { emailConfig } from "@/server/env";
 export interface MagicLinkMessage {
   email: string;
   token: string;
@@ -25,25 +26,8 @@ export const sendMagicLink: MagicLinkSender = async ({
   token,
   invite,
 }) => {
-  const apiKey = process.env.RESEND_API_KEY;
-  const from = process.env.RESEND_FROM;
-  const appOrigin = process.env.APP_ORIGIN;
-  if (!apiKey || !from || !appOrigin)
-    throw new Error(
-      "O envio de e-mail ainda não está configurado no servidor.",
-    );
-  const origin = new URL(appOrigin);
-  if (
-    origin.pathname !== "/" ||
-    origin.search ||
-    origin.hash ||
-    !["https:", "http:"].includes(origin.protocol)
-  )
-    throw new Error(
-      "APP_ORIGIN deve conter apenas a origem pública da aplicação.",
-    );
-  if (process.env.NODE_ENV === "production" && origin.protocol !== "https:")
-    throw new Error("APP_ORIGIN precisa usar HTTPS em produção.");
+  const { RESEND_API_KEY: apiKey, RESEND_FROM: from, APP_ORIGIN } = emailConfig();
+  const origin = new URL(APP_ORIGIN);
   const search = new URLSearchParams({
     access: token,
     ...(invite ? { convite: invite } : {}),

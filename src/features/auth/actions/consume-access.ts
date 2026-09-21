@@ -5,21 +5,24 @@ import {
   sessionToken,
 } from "@/features/auth/session.server";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import {
+  accessTokenSchema,
+  inviteTokenSchema,
+} from "@/features/budget/domain/schemas";
 import { RequestError } from "@/server/request-error";
-import { accessRedirectSearch, isBudgetToken } from "@/features/budget/search";
-import { invalid } from "@/features/auth/actions/parse";
+import { accessRedirectSearch } from "@/features/budget/search";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const accessPayloadSchema = inputSchema({
+  token: accessTokenSchema,
+  convite: inviteTokenSchema.optional(),
+});
 
 export function parseAccessPayload(input: unknown): {
   token: string;
   convite?: string;
 } {
-  if (!input || typeof input !== "object") invalid();
-  const data = input as Record<string, unknown>;
-  if (!isBudgetToken(data.token)) invalid();
-  if (data.convite !== undefined && !isBudgetToken(data.convite)) invalid();
-  return data.convite
-    ? { token: data.token, convite: data.convite }
-    : { token: data.token };
+  return parseInput(accessPayloadSchema, input);
 }
 
 export const consumeAccess = createServerFn({ method: "POST" })

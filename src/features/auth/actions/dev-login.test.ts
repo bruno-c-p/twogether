@@ -6,6 +6,6 @@ describe("parseDevLogin", () => {
     expect(parseDevLogin({ email: "ana@example.test" })).toEqual({
       email: "ana@example.test",
     });
-    expect(() => parseDevLogin({})).toThrow("Requisição inválida.");
+    expect(() => parseDevLogin({})).toThrow("Informe um e-mail válido.");
   });
 });

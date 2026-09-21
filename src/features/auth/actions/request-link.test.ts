@@ -22,6 +22,6 @@ describe("parseRequestLink", () => {
         email: "ana@example.test",
         invite: "not-a-token",
       }),
-    ).toThrow("Requisição inválida.");
+    ).toThrow("Convite inválido. Peça um novo link.");
   });
 });

@@ -7,6 +7,11 @@ import {
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
+import {
+  emailSchema,
+  revisionSchema,
+  textSchema,
+} from "@/features/budget/domain/schemas";
 import { RequestError } from "@/server/request-error";
 
 export type { DatabaseTransaction };
@@ -162,20 +167,21 @@ export function createStoreContext(filename: string) {
 export type StoreContext = ReturnType<typeof createStoreContext>;
 
 export function text(value: unknown, max: number) {
-  if (typeof value !== "string" || !value.trim() || value.length > max)
+  const result = textSchema(max).safeParse(value);
+  if (!result.success)
     throw new RequestError("Confira os campos informados.");
-  return value.trim();
+  return result.data;
 }
 
 export function emailAddress(value: unknown) {
-  const email = text(value, 254).toLowerCase();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    throw new RequestError("Informe um e-mail válido.");
-  return email;
+  const result = emailSchema.safeParse(value);
+  if (!result.success) throw new RequestError("Informe um e-mail válido.");
+  return result.data;
 }
 
 export function revision(value: unknown) {
-  if (!Number.isSafeInteger(value) || Number(value) < 0)
+  const result = revisionSchema.safeParse(value);
+  if (!result.success)
     throw new RequestError("Versão inválida. Atualize a página.");
-  return Number(value);
+  return result.data;
 }

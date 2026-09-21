@@ -1,12 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import { inviteTokenSchema } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { authMiddleware } from "@/server/middleware";
-import { invalid, text } from "@/features/household/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const joinHouseholdSchema = inputSchema({ token: inviteTokenSchema });
 
 export function parseJoinHousehold(input: unknown): { token: string } {
-  if (!input || typeof input !== "object") invalid();
-  return { token: text((input as Record<string, unknown>).token) };
+  return parseInput(joinHouseholdSchema, input);
 }
 
 export const joinHousehold = createServerFn({ method: "POST" })

@@ -1,12 +1,14 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
+import { nameSchema } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { authMiddleware } from "@/server/middleware";
-import { invalid, text } from "@/features/auth/actions/parse";
+import { inputSchema, parseInput } from "@/server/action-input";
+
+const setNameSchema = inputSchema({ name: nameSchema });
 
 export function parseSetName(input: unknown): { name: string } {
-  if (!input || typeof input !== "object") invalid();
-  return { name: text((input as Record<string, unknown>).name) };
+  return parseInput(setNameSchema, input);
 }
 
 export const setName = createServerFn({ method: "POST" })

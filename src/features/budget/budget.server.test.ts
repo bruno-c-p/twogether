@@ -464,7 +464,7 @@ describe("bank accounts", () => {
         ...account("bad"),
         openingBalance: -1,
       }),
-    ).rejects.toThrow("conta");
+    ).rejects.toThrow("saldo inicial válido");
   });
 
   test("requires an existing account on every transaction save", async () => {
