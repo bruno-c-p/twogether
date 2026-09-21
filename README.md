@@ -22,12 +22,12 @@ Restart the server after changing the environment.
 
 ## Access and couple
 
-1. Sign in on `/entrar` with your e-mail and the six-digit code Clerk sends. There is no password and no distinction between sign-up and sign-in.
+1. Sign in on `/entrar` with your e-mail and the six-digit code Clerk sends. There is no password and no distinction between sign-up and sign-in: the embedded `<SignIn />` runs Clerk's sign-in-or-up flow, so an unknown e-mail verifies first and the account is created after the code is confirmed.
 2. Sign-in and onboarding live on `/entrar`. Visiting `/` without a session, a name, or a household redirects there. On the first visit, provide your name. With a name and a household, `/entrar` continues to `/`.
 3. Start the budget or accept an invite. Invites may arrive as a link with `?convite=`, which survives the sign-in on the same page.
 4. Under **Our space**, generate and copy an invite for your partner. The link accepts a single person, expires in 48 hours, and can be canceled. Generating another invalidates the previous one.
 
-Clerk owns credentials, sessions, and e-mail delivery. Signing out ends the Clerk session. Both see and edit all couple data; each account belongs to only one budget and the database limits each budget to two people.
+Clerk owns credentials, sessions, and e-mail delivery; the instance enables e-mail code only (password and social sign-in are disabled) with strict user enumeration protection, which is what powers the single sign-in-or-up flow. Signing out ends the Clerk session. Both see and edit all couple data; each account belongs to only one budget and the database limits each budget to two people.
 
 ## Budget
 

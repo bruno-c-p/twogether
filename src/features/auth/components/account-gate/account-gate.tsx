@@ -148,6 +148,7 @@ export function AccountGate() {
             ) : (
               <SignIn
                 routing="hash"
+                withSignUp
                 forceRedirectUrl={
                   invitation ? `/entrar?convite=${invitation}` : "/entrar"
                 }

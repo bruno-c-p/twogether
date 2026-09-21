@@ -14,6 +14,12 @@ export async function ensureUser(
 ): Promise<UserRow> {
   await ctx.ready;
   const id = text(clerkUserId, 64);
+  const existing = await one<UserRow>(
+    ctx.db,
+    "SELECT * FROM users WHERE id = ?",
+    [id],
+  );
+  if (existing) return existing;
   await ctx.atomic(async (transaction) => {
     await execute(
       transaction,
