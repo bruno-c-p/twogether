@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { redirect } from "@tanstack/react-router";
 import type {
   Transaction,
   WorkspaceSnapshot,
@@ -8,6 +9,7 @@ import {
   optimisticDelete,
   optimisticRestore,
   optimisticSave,
+  retryAfterAuthRedirect,
 } from "@/features/budget/workspace";
 
 const mercado: Transaction = {
@@ -105,5 +107,52 @@ describe("optimisticRestore", () => {
     expect(optimisticRestore(empty, mercado).budget.transactions).toEqual([
       { ...mercado, revision: 3 },
     ]);
+  });
+});
+
+describe("retryAfterAuthRedirect", () => {
+  it("retries once when the server sends the person back to the gate", async () => {
+    let calls = 0;
+    const result = await retryAfterAuthRedirect(async () => {
+      calls += 1;
+      if (calls === 1) throw redirect({ to: "/entrar" });
+      return "saved";
+    }, 0);
+    expect(result).toBe("saved");
+    expect(calls).toBe(2);
+  });
+
+  it("keeps the redirect when the second attempt fails the same way", async () => {
+    let calls = 0;
+    const call = async () => {
+      calls += 1;
+      throw redirect({ to: "/entrar" });
+    };
+    await expect(retryAfterAuthRedirect(call, 0)).rejects.toBeInstanceOf(
+      Response,
+    );
+    expect(calls).toBe(2);
+  });
+
+  it("does not retry other redirects or failures", async () => {
+    let gateCalls = 0;
+    const gate = async () => {
+      gateCalls += 1;
+      throw redirect({ to: "/", search: {} });
+    };
+    await expect(retryAfterAuthRedirect(gate, 0)).rejects.toBeInstanceOf(
+      Response,
+    );
+    expect(gateCalls).toBe(1);
+
+    let errorCalls = 0;
+    const offline = async () => {
+      errorCalls += 1;
+      throw new Error("Sem conexão");
+    };
+    await expect(retryAfterAuthRedirect(offline, 0)).rejects.toThrow(
+      "Sem conexão",
+    );
+    expect(errorCalls).toBe(1);
   });
 });

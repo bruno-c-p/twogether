@@ -3,6 +3,7 @@ import { AccountGate } from "@/features/auth/components/account-gate/account-gat
 import { loadBudget } from "@/features/budget/actions";
 import { validateInviteSearch } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
+import { retryAfterAuthRedirect } from "@/features/budget/workspace";
 
 function GatePending() {
   return <LoadingState>Carregando…</LoadingState>;
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/entrar")({
   component: AccountGate,
   validateSearch: validateInviteSearch,
   loader: async () => {
-    const snapshot = await loadBudget();
+    const snapshot = await retryAfterAuthRedirect(() => loadBudget());
     if (snapshot.user?.name && snapshot.household) {
       throw redirect({ to: "/", search: {} });
     }

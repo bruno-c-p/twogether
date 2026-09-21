@@ -1,4 +1,4 @@
-import { redirect } from "@tanstack/react-router";
+import { isRedirect, redirect } from "@tanstack/react-router";
 import { loadBudget } from "@/features/budget/actions";
 import type {
   SharedSnapshot,
@@ -23,7 +23,26 @@ export function asWorkspaceSnapshot(
 }
 
 export async function fetchWorkspace(): Promise<WorkspaceSnapshot> {
-  return asWorkspaceSnapshot(await loadBudget());
+  return asWorkspaceSnapshot(await retryAfterAuthRedirect(() => loadBudget()));
+}
+
+const AUTH_RETRY_DELAY_MS = 300;
+
+function isGateRedirect(error: unknown) {
+  return isRedirect(error) && error.options.to === "/entrar";
+}
+
+export async function retryAfterAuthRedirect<T>(
+  call: () => Promise<T>,
+  delayMs = AUTH_RETRY_DELAY_MS,
+): Promise<T> {
+  try {
+    return await call();
+  } catch (error) {
+    if (!isGateRedirect(error)) throw error;
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return call();
+  }
 }
 
 export function optimisticSave(
