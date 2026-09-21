@@ -8,7 +8,10 @@ import {
   withDefaultMonth,
 } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
-import { asWorkspaceSnapshot } from "@/features/budget/workspace";
+import {
+  asWorkspaceSnapshot,
+  retryAfterAuthRedirect,
+} from "@/features/budget/workspace";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 
 function BudgetPending() {
@@ -36,7 +39,9 @@ export const Route = createFileRoute("/")({
         search: gateRedirectSearch(deps),
       });
     }
-    return asWorkspaceSnapshot(await loadBudget());
+    return asWorkspaceSnapshot(
+      await retryAfterAuthRedirect(() => loadBudget()),
+    );
   },
   pendingComponent: BudgetPending,
   pendingMs: 300,
