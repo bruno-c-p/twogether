@@ -193,10 +193,10 @@ async function assertBuiltHeaders() {
       // would answer 500 before this header exists. Placeholders only keep the
       // middleware alive for the header check; real keys win when configured.
       CLERK_SECRET_KEY:
-        process.env.CLERK_SECRET_KEY ??
+        process.env.CLERK_SECRET_KEY ||
         "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUV",
       CLERK_PUBLISHABLE_KEY:
-        process.env.CLERK_PUBLISHABLE_KEY ??
+        process.env.CLERK_PUBLISHABLE_KEY ||
         "pk_test_ZmFrZS1jbGVyay5leGFtcGxlLmNvbSQ=",
     },
     stdio: ["ignore", "pipe", "pipe"],
