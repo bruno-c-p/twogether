@@ -3,6 +3,7 @@ import { createRouter, stringifySearchWith } from "@tanstack/react-router";
 import type { ReactNode } from "react";
 import { routeTree } from "@/routeTree.gen";
 import { RouteError } from "@/components/route-error/route-error";
+import { reportError } from "@/lib/errors";
 
 function parseSearch(searchStr: string): Record<string, string> {
   const query: Record<string, string> = {};
@@ -29,6 +30,11 @@ export function getRouter() {
     stringifySearch: stringifySearchWith(String),
     defaultPreload: "intent",
     defaultErrorComponent: RouteError,
+    defaultOnCatch: (error, errorInfo) => {
+      reportError(error, {
+        componentStack: errorInfo.componentStack ?? undefined,
+      });
+    },
     Wrap: ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
     ),

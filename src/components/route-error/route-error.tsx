@@ -5,14 +5,14 @@ import styles from "@/components/route-error/route-error.module.css";
 
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
+  const description =
+    import.meta.env.DEV && error instanceof Error
+      ? error.message
+      : "Não foi possível carregar esta parte do orçamento.";
   return (
     <div className={styles.routeError} role="alert">
       <h1>Algo deu errado.</h1>
-      <p>
-        {error instanceof Error
-          ? error.message
-          : "Não foi possível carregar esta parte do orçamento."}
-      </p>
+      <p>{description}</p>
       <Button
         onClick={() => {
           void router.invalidate();
