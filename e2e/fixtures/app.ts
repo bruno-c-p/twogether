@@ -21,8 +21,10 @@ export function uniqueEmail(label: string) {
 }
 
 export async function waitForHydrated(page: Page) {
-  await page.waitForFunction(() =>
-    Object.keys(document.body).some((key) => key.startsWith("__react")),
+  await page.waitForFunction(
+    () =>
+      document.body !== null &&
+      Object.keys(document.body).some((key) => key.startsWith("__react")),
   );
 }
 
