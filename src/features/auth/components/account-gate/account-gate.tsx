@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import {
   SignIn,
@@ -9,14 +10,12 @@ import {
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
 import { setName } from "@/features/auth/actions";
-import {
-  createHousehold,
-  joinHousehold,
-} from "@/features/household/actions";
+import { createHousehold, joinHousehold } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
 import { inviteToken } from "@/features/auth/invite-token";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
+import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
 import { LoadingState } from "@/features/budget/components/empty-state";
 import { Brand } from "@/components/ui/brand";
@@ -30,6 +29,12 @@ import {
 import styles from "@/features/auth/components/account-gate/account-gate.module.css";
 
 const gateRoute = getRouteApi("/entrar");
+
+// The TanStack wrapper forwards every prop to Clerk's SignIn, but its published
+// types omit the loading fallback, so widen the signature here.
+const GateSignIn = SignIn as (
+  props: ComponentProps<typeof SignIn> & { fallback?: ReactNode },
+) => ReactNode;
 
 function useGate() {
   const router = useRouter();
@@ -146,9 +151,10 @@ export function AccountGate() {
             {isSignedIn ? (
               <LoadingState>Carregando…</LoadingState>
             ) : (
-              <SignIn
+              <GateSignIn
                 routing="hash"
                 withSignUp
+                fallback={<SignInSkeleton />}
                 forceRedirectUrl={
                   invitation ? `/entrar?convite=${invitation}` : "/entrar"
                 }
@@ -193,11 +199,7 @@ export function AccountGate() {
                 <InviteForm busy={busy} onJoin={joinWithInvite} />
               </>
             )}
-            <Button
-              variant="text"
-              disabled={busy}
-              onClick={() => void leave()}
-            >
+            <Button variant="text" disabled={busy} onClick={() => void leave()}>
               Sair de {email || "sua conta"}
             </Button>
           </FormStack>
