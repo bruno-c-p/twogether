@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClerkClient } from "@clerk/backend";
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
@@ -12,8 +12,13 @@ export function randomToken() {
 }
 
 export function uniqueEmail(label: string) {
-  const worker = test.info().workerIndex;
-  return `e2e.${worker}.${Date.now()}.${label}+clerk_test@example.com`;
+  const info = test.info();
+  const worker = info.workerIndex;
+  const key = createHash("sha1")
+    .update(`${info.file}:${info.title}`)
+    .digest("hex")
+    .slice(0, 12);
+  return `e2e.${worker}.${key}.${label}+clerk_test@example.com`;
 }
 
 export async function waitForHydrated(page: Page) {

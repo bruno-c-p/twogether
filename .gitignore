@@ -16,3 +16,6 @@ data/
 
 .cursor/
 .clerk/
+
+# clerk deploy DNS zone artifacts
+*.zone
