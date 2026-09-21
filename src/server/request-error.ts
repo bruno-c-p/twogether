@@ -1,5 +1,6 @@
 import { isRedirect } from "@tanstack/react-router";
 import { setResponseStatus } from "@tanstack/react-start/server";
+import { reportError } from "@/lib/errors";
 import type {
   MutationErrorCode,
   MutationResult,
@@ -26,7 +27,7 @@ export function throwHttpError(error: unknown): never {
     setResponseStatus(error.status);
     throw new Error(error.message);
   }
-  console.error("Budget mutation failed", errorForLogs(error));
+  reportError(errorForLogs(error), { context: "Budget mutation failed" });
   throw new Error("Não foi possível concluir. Tente novamente.");
 }
 
