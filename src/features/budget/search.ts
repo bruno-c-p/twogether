@@ -37,8 +37,7 @@ const budgetFiltersSchema = z.object({
   kind: drop(kindSchema),
 });
 
-const accessSearchSchema = z.object({
-  access: drop(budgetTokenSchema),
+const inviteSearchSchema = z.object({
   convite: drop(budgetTokenSchema),
 });
 
@@ -52,12 +51,11 @@ export interface BudgetFilters {
   kind?: TransactionKind;
 }
 
-export interface AccessSearch {
-  access?: string;
+export interface InviteSearch {
   convite?: string;
 }
 
-export type BudgetSearch = BudgetFilters & AccessSearch;
+export type BudgetSearch = BudgetFilters & InviteSearch;
 
 export function withView(search: BudgetSearch, view: View): BudgetSearch {
   return { ...search, view };
@@ -88,21 +86,12 @@ export function openGoalTransactions(
   };
 }
 
-export function accessRedirectSearch(
-  convite?: string,
-): Pick<AccessSearch, "convite"> {
-  return convite ? { convite } : {};
-}
-
-export function gateRedirectSearch(search: AccessSearch): AccessSearch {
-  return {
-    ...(search.access ? { access: search.access } : {}),
-    ...(search.convite ? { convite: search.convite } : {}),
-  };
+export function gateRedirectSearch(search: InviteSearch): InviteSearch {
+  return search.convite ? { convite: search.convite } : {};
 }
 
 export function missingWorkspaceMonth(search: BudgetSearch): boolean {
-  return !search.month && !search.access && !search.convite;
+  return !search.month && !search.convite;
 }
 
 export function withDefaultMonth(
@@ -112,10 +101,10 @@ export function withDefaultMonth(
   return { ...search, month };
 }
 
-export function validateAccessSearch(
+export function validateInviteSearch(
   search: Record<string, unknown>,
-): AccessSearch {
-  return accessSearchSchema.parse(search);
+): InviteSearch {
+  return inviteSearchSchema.parse(search);
 }
 
 export function validateBudgetFilters(
@@ -129,6 +118,6 @@ export function validateBudgetSearch(
 ): BudgetSearch {
   return {
     ...validateBudgetFilters(search),
-    ...validateAccessSearch(search),
+    ...validateInviteSearch(search),
   };
 }

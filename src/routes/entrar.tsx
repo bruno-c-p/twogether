@@ -1,8 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { AccountGate } from "@/features/auth/components/account-gate/account-gate";
-import { consumeAccess } from "@/features/auth/actions";
 import { loadBudget } from "@/features/budget/actions";
-import { validateAccessSearch } from "@/features/budget/search";
+import { validateInviteSearch } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state/empty-state";
 
 function GatePending() {
@@ -11,16 +10,7 @@ function GatePending() {
 
 export const Route = createFileRoute("/entrar")({
   component: AccountGate,
-  validateSearch: validateAccessSearch,
-  beforeLoad: async ({ search }) => {
-    if (!search.access) return;
-    await consumeAccess({
-      data: {
-        token: search.access,
-        ...(search.convite ? { convite: search.convite } : {}),
-      },
-    });
-  },
+  validateSearch: validateInviteSearch,
   loader: async () => {
     const snapshot = await loadBudget();
     if (snapshot.user?.name && snapshot.household) {

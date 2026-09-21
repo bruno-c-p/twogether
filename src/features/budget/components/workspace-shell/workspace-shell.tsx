@@ -1,4 +1,5 @@
 import { ThemeToggle } from "@/features/theme";
+import { UserButton } from "@clerk/tanstack-react-start";
 import { Eye, EyeOff, UsersRound } from "lucide-react";
 import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
@@ -67,6 +68,7 @@ export function WorkspaceShell({
               <span className={styles.spaceButtonLabel}>Nosso espaço</span>
               <span className={styles.spaceMemberCount}>{memberLabel}</span>
             </button>
+            <UserButton />
           </div>
         </header>
         <main id="main-content">{children}</main>

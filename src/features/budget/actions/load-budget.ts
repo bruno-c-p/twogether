@@ -1,7 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { sessionToken } from "@/features/auth/session.server";
+import { currentUser } from "@/features/auth/current-user.server";
 import { getBudgetStore } from "@/features/budget/budget.server";
 
-export const loadBudget = createServerFn({ method: "GET" }).handler(() => {
-  return getBudgetStore().snapshot(sessionToken());
-});
+export const loadBudget = createServerFn({ method: "GET" }).handler(
+  async () => {
+    return getBudgetStore().snapshot(await currentUser());
+  },
+);

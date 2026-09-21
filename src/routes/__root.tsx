@@ -1,3 +1,5 @@
+import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { ptBR } from "@clerk/localizations";
 import {
   createRootRoute,
   HeadContent,
@@ -48,8 +50,27 @@ export const Route = createRootRoute({
         <HeadContent />
       </head>
       <body>
-        <Outlet />
-        <Scripts />
+        <ClerkProvider
+          afterSignOutUrl="/entrar"
+          localization={ptBR}
+          appearance={{
+            variables: {
+              colorPrimary: "var(--green)",
+              colorForeground: "var(--text)",
+              colorMutedForeground: "var(--text-muted)",
+              colorBackground: "var(--surface)",
+              colorInput: "var(--surface)",
+              colorInputForeground: "var(--text)",
+              colorDanger: "var(--danger)",
+              borderRadius: "10px",
+              fontFamily: '"DM Sans", sans-serif',
+              fontSize: "14px",
+            },
+          }}
+        >
+          <Outlet />
+          <Scripts />
+        </ClerkProvider>
       </body>
     </html>
   ),

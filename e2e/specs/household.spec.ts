@@ -1,8 +1,8 @@
 import { expect, test } from "@playwright/test";
 import {
-  loginDev,
   onboard,
   openCouple,
+  signInClerk,
   setName,
   uniqueEmail,
   withMobile,
@@ -33,7 +33,7 @@ test.describe("household", () => {
     const bia = await browser.newContext();
     const biaPage = await bia.newPage();
     await biaPage.goto(inviteUrl);
-    await loginDev(biaPage, uniqueEmail("bia"));
+    await signInClerk(biaPage, uniqueEmail("bia"));
     await setName(biaPage, "Bia");
     await expect(
       biaPage.getByText(

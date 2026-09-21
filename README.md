@@ -9,26 +9,25 @@ Requires Bun 1.3.14+ and Node.js 22.12+ for the build tools. The server runs on 
 ```sh
 bun install
 cp .env.example .env.local
-# Fill in the variables below in .env.local
+# Fill in the Clerk keys in .env.local (or run `npx clerk@latest init`)
 bun run dev
 ```
 
-- `RESEND_API_KEY`: Resend key, server-side only.
-- `RESEND_FROM`: sender from a domain verified in Resend, such as `Twogether <access@your-domain.com>`.
-- `APP_ORIGIN`: application origin, without a path. Local: `http://localhost:3000`. To test on another device, use an address reachable by both and open the app through that same address. Production requires HTTPS.
+- `VITE_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`: Clerk application keys. Development keys can be written by `npx clerk@latest init`; claim the application with `npx clerk@latest auth login` before production.
+- `CLERK_SIGN_IN_URL` and `CLERK_SIGN_UP_URL`: optional, keep Clerk redirects on `/entrar`.
 - `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`: credentials injected by the Vercel Turso integration. When present, the server uses the shared remote database.
 - `BUDGET_DATABASE_PATH`: local fallback when Turso is not configured, defaults to `./data/twogether.sqlite`.
 
-Restart the server after changing the environment. In `bun run dev`, local access uses the email you provide to find or create the account directly in SQLite and does not send messages through Resend; this shortcut only exists with `NODE_ENV=development`. Outside development, without Resend configured, the app does not send access links.
+Restart the server after changing the environment.
 
 ## Access and couple
 
-1. In development, provide your email to sign in directly; if it does not exist yet, the account is created and proceeds to onboarding. In other environments, receive a magic link through Resend. There is no password and no distinction between sign-up and sign-in.
-2. Sign-in and onboarding live on `/entrar`. Visiting `/` without a session, a name, or a household redirects there. In development, the new account goes straight to the name step; in other environments, open the magic link — the server consumes the token, writes the session cookie, and lands on `/entrar` without leaving `?access=` in the URL. On the first visit, provide your name. With a name and a household, `/entrar` continues to `/`.
-3. Start the budget or accept an invite. Invites may accompany the access email.
+1. Sign in on `/entrar` with your e-mail and the six-digit code Clerk sends. There is no password and no distinction between sign-up and sign-in: the embedded `<SignIn />` runs Clerk's sign-in-or-up flow, so an unknown e-mail verifies first and the account is created after the code is confirmed.
+2. Sign-in and onboarding live on `/entrar`. Visiting `/` without a session, a name, or a household redirects there. On the first visit, provide your name. With a name and a household, `/entrar` continues to `/`.
+3. Start the budget or accept an invite. Invites may arrive as a link with `?convite=`, which survives the sign-in on the same page.
 4. Under **Our space**, generate and copy an invite for your partner. The link accepts a single person, expires in 48 hours, and can be canceled. Generating another invalidates the previous one.
 
-The access link expires in 15 minutes, works once, and authenticates only whoever has access to the email. Sessions last 30 days. Signing out revokes the current session. Both see and edit all couple data; each account belongs to only one budget and the database limits each budget to two people.
+Clerk owns credentials, sessions, and e-mail delivery; the instance enables e-mail code only (password and social sign-in are disabled) with strict user enumeration protection, which is what powers the single sign-in-or-up flow. Signing out ends the Clerk session. Both see and edit all couple data; each account belongs to only one budget and the database limits each budget to two people.
 
 ## Budget
 
@@ -42,9 +41,9 @@ The access link expires in 15 minutes, works once, and authenticates only whoeve
 
 ## Persistence and deployment
 
-Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Sessions and tokens are stored by hash. HttpOnly/`SameSite=Lax` cookies and Secure under HTTPS. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Env and credentials are not part of the client bundle.
+Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Clerk stores identities and sessions; the local database stores each profile name, household membership, percentages, and invite hashes. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Secrets are not part of the client bundle.
 
-To configure locally after connecting the resource in Vercel, run `vercel env pull .env.local --yes`. Deployment uses Nitro to generate the TanStack Start handler compatible with Vercel. Emails are transactional; the app does not automatically send invites to third parties.
+To configure locally after connecting the resource in Vercel, run `vercel env pull .env.local --yes`. Deployment uses Nitro to generate the TanStack Start handler compatible with Vercel. E-mails are transactional and sent by Clerk; the app does not automatically send invites to third parties.
 
 ## Verification
 
@@ -54,8 +53,9 @@ bun run lint
 bun run fitness
 bun run test
 bun run build
+bun run e2e
 ```
 
-Vitest covers calculations/validation; Bun tests SQLite, isolation, member limit, invites, link access, expiration, concurrent editing, and session cookies. Email is replaced by a test transport in tests, without sending real messages.
+Vitest covers calculations/validation; Bun tests SQLite, user provisioning, isolation, member limit, invites, expiration, and concurrent editing. Playwright runs the real flows against a Clerk development instance using `@clerk/testing` and e2e test e-mails; because development instances cap at 100 users, each test derives one stable account from its spec file and title so re-runs reuse them. CI runs the same checks; the E2E step needs the `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` repository secrets and is skipped with a warning when they are absent.
 
-References: [TanStack Start server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [Resend send API](https://resend.com/docs/api-reference/emails/send-email).
+References: [TanStack Start server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [Clerk TanStack Start SDK](https://clerk.com/docs/tanstack-react-start/getting-started/quickstart), [Clerk testing with Playwright](https://clerk.com/docs/guides/development/testing/playwright/overview).

@@ -2,18 +2,18 @@ import { expect, test } from "@playwright/test";
 import {
   commandBus,
   createHousehold,
-  loginDev,
   onboard,
   openCouple,
+  randomToken,
   sessionCookie,
   setName,
+  signInClerk,
   uniqueEmail,
   waitForGate,
   waitForHydrated,
   withMobile,
   expectNoHorizontalOverflow,
 } from "../fixtures/app";
-import { randomToken, seedMagicLink } from "../fixtures/sqlite";
 
 test.describe("auth", () => {
   test("M1 cold load shows the gate and private cache headers", async ({
@@ -29,20 +29,14 @@ test.describe("auth", () => {
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
     await expect(page).toHaveTitle("twogether — Orçamento a dois");
     await expect(page.getByText("DUAS PESSOAS. UM ORÇAMENTO.")).toBeVisible();
-    await expect(page.getByLabel("Seu e-mail")).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Entrar localmente" }),
-    ).toBeVisible();
-    await expect(
-      page.getByText("Modo desenvolvimento: o acesso local não envia e-mail."),
-    ).toBeVisible();
+    await expect(page.locator('input[name="identifier"]')).toBeVisible();
     await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
     await expect(page.locator("footer").getByText("twogether.")).toBeVisible();
     await expect(page.getByText("Orçamento a dois, com leveza.")).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);
 
     await withMobile(page, async () => {
-      await expect(page.getByLabel("Seu e-mail")).toBeEnabled();
+      await expect(page.locator('input[name="identifier"]')).toBeEnabled();
       await expect(
         page.getByRole("group", { name: "Aparência" }),
       ).toBeVisible();
@@ -53,13 +47,13 @@ test.describe("auth", () => {
     });
   });
 
-  test("M2 dev-login names the person and creates a household", async ({
+  test("M2 clerk sign-in names the person and creates a household", async ({
     page,
   }) => {
     const urls: string[] = [];
     page.on("request", (request) => urls.push(request.url()));
     const email = uniqueEmail("ana");
-    await loginDev(page, email);
+    await signInClerk(page, email);
     await expect(
       page.getByRole("heading", { name: "Como chamamos você?" }),
     ).toBeVisible();
@@ -82,9 +76,12 @@ test.describe("auth", () => {
       page.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeVisible();
     expect(new URL(page.url()).searchParams.has("access")).toBe(false);
+    const cookies = await page.context().cookies();
+    expect(cookies.some((cookie) => cookie.name === "twogether_session")).toBe(
+      false,
+    );
     const cookie = await sessionCookie(page);
     expect(cookie?.value).toBeTruthy();
-    expect(cookie?.httpOnly).toBe(true);
     await expect(
       page.getByText("Nenhuma entrada registrada neste mês."),
     ).toBeVisible();
@@ -102,7 +99,7 @@ test.describe("auth", () => {
     );
   });
 
-  test("M3 magic-link consume strips access and keeps convite", async ({
+  test("M3 invite survives clerk sign-in and stays on the gate", async ({
     page,
   }) => {
     const convite = randomToken();
@@ -113,19 +110,11 @@ test.describe("auth", () => {
     await expect(page.getByText("Seu par convidou você")).toBeVisible();
 
     const email = uniqueEmail("bia");
-    const token = await seedMagicLink(email);
-    await page.goto(`/?access=${token}&convite=${convite}`);
-    await waitForHydrated(page);
-    await expect(
-      page.getByRole("heading", { name: "Como chamamos você?" }),
-    ).toBeVisible();
+    await signInClerk(page, email);
     const after = new URL(page.url());
     expect(after.pathname).toBe("/entrar");
     expect(after.searchParams.has("access")).toBe(false);
     expect(after.searchParams.get("convite")).toBe(convite);
-    const cookie = await sessionCookie(page);
-    expect(cookie?.value).toBeTruthy();
-    expect(cookie?.httpOnly).toBe(true);
     await setName(page, "Bia");
     await expect(
       page.getByText("Ao aceitar, vocês dois poderão ver"),
@@ -134,37 +123,41 @@ test.describe("auth", () => {
       page.getByRole("button", { name: "Aceitar convite" }),
     ).toBeVisible();
     expect(new URL(page.url()).searchParams.get("convite")).toBe(convite);
-
-    const expired = await seedMagicLink(
-      uniqueEmail("expired"),
-      Date.now() - 60_000,
-    );
-    const guest = await page.context().browser()?.newContext();
-    if (!guest) throw new Error("browser missing");
-    const expiredPage = await guest.newPage();
-    await expiredPage.goto(`/?access=${expired}`);
-    await waitForGate(expiredPage);
-    expect(new URL(expiredPage.url()).searchParams.has("access")).toBe(false);
-    const expiredCookie = await sessionCookie(expiredPage);
-    expect(expiredCookie?.value ?? "").toBeFalsy();
-    await guest.close();
   });
 
   test("M12 logout clears the session from the workspace and the gate", async ({
     page,
   }) => {
     const email = uniqueEmail("logout");
-    await loginDev(page, email);
+    await signInClerk(page, email);
     await setName(page, "Ana");
-    await page.getByRole("button", { name: `Sair de ${email}` }).click();
+    await page.getByRole("button", { name: /^Sair de / }).click();
     await waitForGate(page);
     expect((await sessionCookie(page))?.value ?? "").toBeFalsy();
 
-    await onboard(page, "Ana", email);
+    await signInClerk(page, email);
+    await expect(
+      page.getByRole("heading", { name: "Vamos começar, Ana?" }),
+    ).toBeVisible();
+    await createHousehold(page);
     await openCouple(page);
     await expect(page.getByText(email)).toBeVisible();
     await page.getByRole("button", { name: "Sair da conta" }).click();
     await waitForGate(page);
     expect((await sessionCookie(page))?.value ?? "").toBeFalsy();
   });
+});
+
+test("M1b gate keeps the signed-in person after a hydrated reload", async ({
+  page,
+}) => {
+  const email = await onboard(page, "Ana");
+  await waitForHydrated(page);
+  await page.reload();
+  await waitForHydrated(page);
+  await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /Abrir nosso espaço/ }),
+  ).toBeVisible();
+  expect(email).toContain("+clerk_test@example.com");
 });

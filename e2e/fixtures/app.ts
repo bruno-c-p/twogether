@@ -1,12 +1,24 @@
+import { createHash, randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
+import { createClerkClient } from "@clerk/backend";
+import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 
 export const desktop = { width: 1280, height: 800 };
 export const mobile = { width: 320, height: 720 };
 export const commandBus = ["/api", "budget"].join("/");
 
+export function randomToken() {
+  return randomBytes(32).toString("hex");
+}
+
 export function uniqueEmail(label: string) {
-  const worker = test.info().workerIndex;
-  return `e2e.${worker}.${Date.now()}.${label}@example.test`;
+  const info = test.info();
+  const worker = info.workerIndex;
+  const key = createHash("sha1")
+    .update(`${info.file}:${info.title}`)
+    .digest("hex")
+    .slice(0, 12);
+  return `e2e.${worker}.${key}.${label}+clerk_test@example.com`;
 }
 
 export async function waitForHydrated(page: Page) {
@@ -29,16 +41,40 @@ export async function waitForGate(page: Page) {
   await waitForHydrated(page);
 }
 
-export async function loginDev(page: Page, email: string) {
-  if (!/^https?:/.test(page.url())) await page.goto("/entrar");
+async function ensureClerkUser(email: string) {
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
+  const client = createClerkClient({ secretKey });
+  const existing = await client.users.getUserList({ emailAddress: [email] });
+  if (existing.data.length > 0) return existing.data[0];
+  return client.users.createUser({
+    emailAddress: [email],
+    skipPasswordRequirement: true,
+  });
+}
+
+export async function signInClerk(page: Page, email: string) {
+  await setupClerkTestingToken({ page });
+  if (!new URL(page.url()).pathname.startsWith("/entrar"))
+    await page.goto("/entrar");
   await waitForGate(page);
-  await page.getByLabel("Seu e-mail").fill(email);
-  await page.getByRole("button", { name: "Entrar localmente" }).click();
+  const user = await ensureClerkUser(email);
+  const secretKey = process.env.CLERK_SECRET_KEY;
+  if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
+  const client = createClerkClient({ secretKey });
+  const signInToken = await client.signInTokens.createSignInToken({
+    userId: user.id,
+    expiresInSeconds: 600,
+  });
+  await clerk.signIn({
+    page,
+    signInParams: { strategy: "ticket", ticket: signInToken.token },
+  });
   await expect(
     page.getByRole("heading", {
       name: /Como chamamos você\?|Vamos começar,/,
     }),
-  ).toBeVisible();
+  ).toBeVisible({ timeout: 20000 });
 }
 
 export async function setName(page: Page, name: string) {
@@ -65,7 +101,7 @@ export async function onboard(
   name: string,
   email = uniqueEmail(name),
 ) {
-  await loginDev(page, email);
+  await signInClerk(page, email);
   await setName(page, name);
   await createHousehold(page);
   return email;
@@ -113,7 +149,7 @@ export async function setMonth(page: Page, month: string) {
 
 export async function sessionCookie(page: Page) {
   const cookies = await page.context().cookies();
-  return cookies.find((cookie) => cookie.name === "twogether_session");
+  return cookies.find((cookie) => cookie.name === "__session");
 }
 
 export function nav(page: Page, kind: "desktop" | "mobile") {

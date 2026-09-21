@@ -1,4 +1,3 @@
-import { Database } from "bun:sqlite";
 import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -21,21 +20,21 @@ const ctx = setupMemoryStore();
 
 describe("budget store", () => {
   test("new transactions use the logged-in member and edits preserve attribution", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
     const t = transaction(b.snapshot.user!.id);
-    const ana = await withHousehold(store, a.session);
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: { ...t, createdBy: "forged", updatedBy: "forged" },
     });
-    const received = (await store.snapshot(b.session)).budget.transactions[0];
+    const received = (await store.snapshot(b.user)).budget.transactions[0];
     expect(received.memberId).toBe(a.snapshot.user!.id);
     expect(received.createdBy).toBe(a.snapshot.user!.id);
-    const bia = await withHousehold(store, b.session);
+    const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...received, amount: 15000 },
     });
-    const edited = (await store.snapshot(a.session)).budget.transactions[0];
+    const edited = (await store.snapshot(a.user)).budget.transactions[0];
     expect(edited.memberId).toBe(a.snapshot.user!.id);
     expect(edited.amount).toBe(15000);
     expect(edited.updatedBy).toBe(b.snapshot.user!.id);
@@ -43,14 +42,14 @@ describe("budget store", () => {
   });
 
   test("stale edits fail and unrelated concurrent additions survive", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
-    const ana = await withHousehold(store, a.session);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: transaction(a.snapshot.user!.id),
     });
-    const old = (await store.snapshot(a.session)).budget.transactions[0];
-    const bia = await withHousehold(store, b.session);
+    const old = (await store.snapshot(a.user)).budget.transactions[0];
+    const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...old, amount: 20000 },
     });
@@ -62,24 +61,24 @@ describe("budget store", () => {
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...transaction(b.snapshot.user!.id), id: "second" },
     });
-    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
       2,
     );
     expect(
-      (await store.snapshot(a.session)).budget.transactions.find(
+      (await store.snapshot(a.user)).budget.transactions.find(
         (row) => row.id === old.id,
       )?.amount,
     ).toBe(20000);
   });
 
   test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
-    const { store, deliveries } = ctx;
-    const { a } = await householdReady(store, deliveries);
+    const { store } = ctx;
+    const { a } = await householdReady(store);
     const t = transaction(a.snapshot.user!.id);
-    const ana = await withHousehold(store, a.session);
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, { transaction: t });
     await store.saveTransaction(ana.user, ana.household, { transaction: t });
-    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
       1,
     );
     await expect(
@@ -90,10 +89,10 @@ describe("budget store", () => {
   });
 
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
-    const ana = await withHousehold(store, a.session);
-    const bia = await withHousehold(store, b.session);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: transaction(a.snapshot.user!.id),
     });
@@ -108,7 +107,7 @@ describe("budget store", () => {
       id: "transaction-1",
       revision: 2,
     });
-    const restored = (await store.snapshot(b.session)).budget.transactions;
+    const restored = (await store.snapshot(b.user)).budget.transactions;
     expect(restored).toHaveLength(2);
     expect(restored.find((row) => row.id === "transaction-1")?.amount).toBe(
       10000,
@@ -122,56 +121,59 @@ describe("budget store", () => {
     ).rejects.toThrow("mudou");
   });
 
-  test("couples are isolated and transaction attribution comes from the session", async () => {
-    const { store, deliveries } = ctx;
-    const { a } = await householdReady(store, deliveries);
-    const c = await signup(store, deliveries, "Cris");
-    await store.createHousehold(await requireUser(store, c.session));
-    const ana = await withHousehold(store, a.session);
+  test("couples are isolated and transaction attribution comes from the member", async () => {
+    const { store } = ctx;
+    const { a } = await householdReady(store);
+    const c = await signup(store, "Cris");
+    await store.createHousehold(await requireUser(store, c.user));
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: transaction(c.snapshot.user!.id),
     });
     expect(
-      (await store.snapshot(a.session)).budget.transactions[0]?.memberId,
+      (await store.snapshot(a.user)).budget.transactions[0]?.memberId,
     ).toBe(a.snapshot.user!.id);
-    expect((await store.snapshot(c.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(c.user)).budget.transactions).toHaveLength(
       0,
     );
-    const cris = await withHousehold(store, c.session);
+    const cris = await withHousehold(store, c.user);
     await expect(
       store.deleteTransaction(cris.user, cris.household, {
         id: "transaction-1",
         revision: 1,
       }),
     ).rejects.toThrow("mudou");
-    expect(await store.sessionUser(undefined)).toBeNull();
+    expect(await store.snapshot(null)).toMatchObject({
+      user: null,
+      household: null,
+    });
   });
 
   test("individual percentages validate totals and reject same-person concurrent overwrite", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
     const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
-    const ana = await withHousehold(store, a.session);
-    const bia = await withHousehold(store, b.session);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
     await store.savePercentages(ana.user, ana.household, {
       percentages,
       revision: 0,
     });
-    expect((await store.snapshot(a.session)).budget.percentages).toEqual(
+    expect((await store.snapshot(a.user)).budget.percentages).toEqual(
       percentages,
     );
-    expect((await store.snapshot(b.session)).budget.percentages).toEqual(
+    expect((await store.snapshot(b.user)).budget.percentages).toEqual(
       DEFAULT_PERCENTAGES,
     );
     await store.savePercentages(bia.user, bia.household, {
       percentages: DEFAULT_PERCENTAGES,
       revision: 0,
     });
-    expect((await store.snapshot(a.session)).budget.percentages).toEqual(
+    expect((await store.snapshot(a.user)).budget.percentages).toEqual(
       percentages,
     );
     expect(
-      (await store.snapshot(b.session)).household?.members.find(
+      (await store.snapshot(b.user)).household?.members.find(
         (member) => member.id === a.snapshot.user!.id,
       )?.percentages,
     ).toEqual(percentages);
@@ -189,28 +191,18 @@ describe("budget store", () => {
     ).rejects.toThrow("100%");
   });
 
-  test("data and sessions survive reopening the database", async () => {
+  test("data survives reopening the database", async () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-test-"));
     const file = join(dir, "test.sqlite");
-    const deliveries: { email: string; token: string; invite?: string }[] = [];
-    let disk = createBudgetStore(file, {
-      sendMagicLink: async (message) => {
-        deliveries.push(message);
-      },
-    });
+    let disk = createBudgetStore(file);
     try {
-      await disk.requestLink({ email: "disk@example.test" });
-      const a = await disk.verifyLink(
-        { token: deliveries.at(-1)!.token },
-        undefined,
-      );
-      const user = (await disk.sessionUser(a.session))!;
+      const user = await disk.ensureUser("user_disk");
       await disk.setName(user, "Ana");
-      await disk.createHousehold((await disk.sessionUser(a.session))!);
+      await disk.createHousehold(await disk.ensureUser("user_disk"));
       const actor = {
-        user: (await disk.sessionUser(a.session))!,
+        user: await disk.ensureUser("user_disk"),
         household: (await disk.householdFor(
-          (await disk.sessionUser(a.session))!,
+          await disk.ensureUser("user_disk"),
         ))!,
       };
       await disk.saveAccount(actor.user, actor.household, account());
@@ -219,7 +211,8 @@ describe("budget store", () => {
       });
       disk.close();
       disk = createBudgetStore(file);
-      const reopened = (await disk.snapshot(a.session)).budget.transactions;
+      const reopened = (await disk.snapshot(await disk.ensureUser("user_disk")))
+        .budget.transactions;
       expect(reopened).toHaveLength(1);
       expect(reopened[0]?.id).toBe("transaction-1");
       expect(reopened[0]?.amount).toBe(10000);
@@ -231,83 +224,20 @@ describe("budget store", () => {
   });
 });
 
-test("legacy household percentages migrate to both people once without changing transactions", async () => {
-  const dir = mkdtempSync(join(tmpdir(), "twogether-migration-"));
-  const file = join(dir, "test.sqlite");
-  const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
-  const legacy = new Database(file);
-  legacy.exec(`CREATE TABLE households (id TEXT PRIMARY KEY, percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0);
-    CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, household_id TEXT REFERENCES households(id));
-    CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id,id));`);
-  legacy
-    .query("INSERT INTO households VALUES ('home', ?, 4)")
-    .run(JSON.stringify(percentages));
-  legacy.exec(
-    "INSERT INTO users VALUES ('a','Ana','a@test.com','home'), ('b','Bia','b@test.com','home')",
-  );
-  const payload = JSON.stringify(transaction("a"));
-  legacy
-    .query("INSERT INTO transactions VALUES ('transaction-1','home',?,2,0)")
-    .run(payload);
-  legacy.close();
-  try {
-    const migrated = createBudgetStore(file);
-    await migrated.snapshot(undefined);
-    migrated.close();
-    const inspect = new Database(file);
-    expect(
-      inspect
-        .query(
-          "SELECT percentages, revision FROM member_percentages ORDER BY user_id",
-        )
-        .all(),
-    ).toEqual([
-      { percentages: JSON.stringify(percentages), revision: 0 },
-      { percentages: JSON.stringify(percentages), revision: 0 },
-    ]);
-    expect(
-      inspect.query("SELECT payload, revision FROM transactions").get(),
-    ).toEqual({ payload, revision: 2 });
-    inspect
-      .query(
-        "UPDATE member_percentages SET percentages = ?, revision = 1 WHERE user_id = 'a'",
-      )
-      .run(JSON.stringify(DEFAULT_PERCENTAGES));
-    inspect.close();
-    const reopened = createBudgetStore(file);
-    await reopened.snapshot(undefined);
-    reopened.close();
-    const verify = new Database(file);
-    expect(
-      verify
-        .query(
-          "SELECT percentages, revision FROM member_percentages WHERE user_id = 'a'",
-        )
-        .get(),
-    ).toEqual({
-      percentages: JSON.stringify(DEFAULT_PERCENTAGES),
-      revision: 1,
-    });
-    verify.close();
-  } finally {
-    rmSync(dir, { recursive: true, force: true });
-  }
-});
-
 describe("monthly recurring transactions", () => {
   test("clamps month ends, persists for both members and edits only one occurrence", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
     const original = {
       ...transaction(a.snapshot.user!.id),
       date: "2028-01-31",
     };
-    const ana = await withHousehold(store, a.session);
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: original,
       occurrences: 3,
     });
-    const rows = (await store.snapshot(a.session)).budget.transactions.sort(
+    const rows = (await store.snapshot(a.user)).budget.transactions.sort(
       (left, right) => left.date.localeCompare(right.date),
     );
     expect(rows.map((row) => row.date)).toEqual([
@@ -316,15 +246,15 @@ describe("monthly recurring transactions", () => {
       "2028-03-31",
     ]);
     expect(new Set(rows.map((row) => row.id)).size).toBe(3);
-    expect((await store.snapshot(b.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(b.user)).budget.transactions).toHaveLength(
       3,
     );
-    const bia = await withHousehold(store, b.session);
+    const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...rows[1], amount: 20000 },
     });
     expect(
-      (await store.snapshot(a.session)).budget.transactions.filter(
+      (await store.snapshot(a.user)).budget.transactions.filter(
         (row) => row.amount === 20000,
       ),
     ).toHaveLength(1);
@@ -332,7 +262,7 @@ describe("monthly recurring transactions", () => {
       transaction: original,
       occurrences: 3,
     });
-    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
       3,
     );
     await expect(
@@ -341,16 +271,16 @@ describe("monthly recurring transactions", () => {
         occurrences: 3,
       }),
     ).rejects.toThrow("individualmente");
-    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
       3,
     );
   });
 
   test("rejects invalid counts and rolls back dates beyond supported range", async () => {
-    const { store, deliveries } = ctx;
-    const { a } = await householdReady(store, deliveries);
+    const { store } = ctx;
+    const { a } = await householdReady(store);
     const original = transaction(a.snapshot.user!.id);
-    const ana = await withHousehold(store, a.session);
+    const ana = await withHousehold(store, a.user);
     for (const occurrences of [0, -1, 1.5, 121]) {
       await expect(
         store.saveTransaction(ana.user, ana.household, {
@@ -365,18 +295,18 @@ describe("monthly recurring transactions", () => {
         occurrences: 2,
       }),
     ).rejects.toThrow();
-    expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
       0,
     );
   });
 });
 
 test("deletes only the selected series from its original occurrence onward and rejects stale batches", async () => {
-  const { store, deliveries } = ctx;
-  const { a, b } = await householdReady(store, deliveries);
+  const { store } = ctx;
+  const { a, b } = await householdReady(store);
   const original = transaction(a.snapshot.user!.id);
-  const ana = await withHousehold(store, a.session);
-  const bia = await withHousehold(store, b.session);
+  const ana = await withHousehold(store, a.user);
+  const bia = await withHousehold(store, b.user);
   await store.saveTransaction(ana.user, ana.household, {
     transaction: original,
     occurrences: 4,
@@ -385,7 +315,7 @@ test("deletes only the selected series from its original occurrence onward and r
     transaction: { ...original, id: "other" },
     occurrences: 4,
   });
-  const snapshot = await store.snapshot(a.session);
+  const snapshot = await store.snapshot(a.user);
   const series = snapshot.budget.transactions
     .filter(
       (item) =>
@@ -407,8 +337,8 @@ test("deletes only the selected series from its original occurrence onward and r
       })),
     });
   await expect(remove(series.slice(2))).rejects.toThrow();
-  expect((await store.snapshot(a.session)).budget.transactions).toHaveLength(8);
-  const current = (await store.snapshot(a.session)).budget.transactions;
+  expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(8);
+  const current = (await store.snapshot(a.user)).budget.transactions;
   await remove(
     current.filter(
       (item) =>
@@ -416,7 +346,7 @@ test("deletes only the selected series from its original occurrence onward and r
         item.recurrenceIndex! > 1,
     ),
   );
-  const remaining = (await store.snapshot(b.session)).budget.transactions;
+  const remaining = (await store.snapshot(b.user)).budget.transactions;
   expect(remaining).toHaveLength(5);
   expect(
     remaining
@@ -427,35 +357,35 @@ test("deletes only the selected series from its original occurrence onward and r
 
 describe("bank accounts", () => {
   test("creates, edits and shares accounts with both members", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await couple(store, deliveries);
-    const ana = await withHousehold(store, a.session);
+    const { store } = ctx;
+    const { a, b } = await couple(store);
+    const ana = await withHousehold(store, a.user);
     await store.saveAccount(ana.user, ana.household, account());
-    expect((await store.snapshot(a.session)).budget.accounts).toEqual([
+    expect((await store.snapshot(a.user)).budget.accounts).toEqual([
       { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
     ]);
-    expect((await store.snapshot(b.session)).budget.accounts).toHaveLength(1);
-    const current = (await store.snapshot(a.session)).budget.accounts[0];
-    const bia = await withHousehold(store, b.session);
+    expect((await store.snapshot(b.user)).budget.accounts).toHaveLength(1);
+    const current = (await store.snapshot(a.user)).budget.accounts[0];
+    const bia = await withHousehold(store, b.user);
     await store.saveAccount(bia.user, bia.household, {
       ...current,
       name: "Itaú",
     });
-    expect((await store.snapshot(a.session)).budget.accounts[0]?.name).toBe(
+    expect((await store.snapshot(a.user)).budget.accounts[0]?.name).toBe(
       "Itaú",
     );
   });
 
   test("stores an opening balance on the account", async () => {
-    const { store, deliveries } = ctx;
-    const { a } = await couple(store, deliveries);
-    const ana = await withHousehold(store, a.session);
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const ana = await withHousehold(store, a.user);
     await store.saveAccount(ana.user, ana.household, {
       ...account("balance"),
       openingBalance: 250000,
     });
     expect(
-      (await store.snapshot(a.session)).budget.accounts.find(
+      (await store.snapshot(a.user)).budget.accounts.find(
         (item) => item.id === "balance",
       )?.openingBalance,
     ).toBe(250000);
@@ -468,11 +398,11 @@ describe("bank accounts", () => {
   });
 
   test("requires an existing account on every transaction save", async () => {
-    const { store, deliveries } = ctx;
-    const a = await signup(store, deliveries, "Ana");
-    await store.createHousehold(await requireUser(store, a.session));
-    const ana = await withHousehold(store, a.session);
-    const userId = (await store.snapshot(a.session)).user!.id;
+    const { store } = ctx;
+    const a = await signup(store, "Ana");
+    await store.createHousehold(await requireUser(store, a.user));
+    const ana = await withHousehold(store, a.user);
+    const userId = (await store.snapshot(a.user)).user!.id;
     await expect(
       store.saveTransaction(ana.user, ana.household, {
         transaction: transaction(userId),
@@ -488,14 +418,14 @@ describe("bank accounts", () => {
       transaction: transaction(userId),
     });
     expect(
-      (await store.snapshot(a.session)).budget.transactions[0]?.accountId,
+      (await store.snapshot(a.user)).budget.transactions[0]?.accountId,
     ).toBe("account-1");
   });
 
   test("rejects deleting an account still used by a transaction", async () => {
-    const { store, deliveries } = ctx;
-    const { a } = await householdReady(store, deliveries);
-    const ana = await withHousehold(store, a.session);
+    const { store } = ctx;
+    const { a } = await householdReady(store);
+    const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: transaction(a.snapshot.user!.id),
     });
@@ -505,7 +435,7 @@ describe("bank accounts", () => {
         revision: 1,
       }),
     ).rejects.toThrow("transações desta conta");
-    expect((await store.snapshot(a.session)).budget.accounts).toHaveLength(1);
+    expect((await store.snapshot(a.user)).budget.accounts).toHaveLength(1);
     await store.deleteTransaction(ana.user, ana.household, {
       id: "transaction-1",
       revision: 1,
@@ -514,34 +444,34 @@ describe("bank accounts", () => {
       id: "account-1",
       revision: 1,
     });
-    expect((await store.snapshot(a.session)).budget.accounts).toHaveLength(0);
+    expect((await store.snapshot(a.user)).budget.accounts).toHaveLength(0);
   });
 
   test("stale account edits fail and households stay isolated", async () => {
-    const { store, deliveries } = ctx;
-    const { a, b } = await householdReady(store, deliveries);
-    const old = (await store.snapshot(a.session)).budget.accounts[0];
-    const bia = await withHousehold(store, b.session);
+    const { store } = ctx;
+    const { a, b } = await householdReady(store);
+    const old = (await store.snapshot(a.user)).budget.accounts[0];
+    const bia = await withHousehold(store, b.user);
     await store.saveAccount(bia.user, bia.household, {
       ...old,
       name: "Caixa",
     });
-    const ana = await withHousehold(store, a.session);
+    const ana = await withHousehold(store, a.user);
     await expect(
       store.saveAccount(ana.user, ana.household, {
         ...old,
         name: "Bradesco",
       }),
     ).rejects.toThrow("mudou");
-    const c = await signup(store, deliveries, "Cris");
-    await store.createHousehold(await requireUser(store, c.session));
-    const cris = await withHousehold(store, c.session);
+    const c = await signup(store, "Cris");
+    await store.createHousehold(await requireUser(store, c.user));
+    const cris = await withHousehold(store, c.user);
     await expect(
       store.deleteAccount(cris.user, cris.household, {
         id: "account-1",
         revision: 2,
       }),
     ).rejects.toThrow("mudou");
-    expect((await store.snapshot(c.session)).budget.accounts).toHaveLength(0);
+    expect((await store.snapshot(c.user)).budget.accounts).toHaveLength(0);
   });
 });

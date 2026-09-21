@@ -85,6 +85,28 @@
   background: var(--surface-soft);
 }
 
+.clerkRoot {
+  width: 100%;
+}
+
+.clerkCardBox {
+  width: 100%;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.clerkCard {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+.clerkHeader {
+  display: none;
+}
+
 @media (max-width: 620px) {
   .account-page {
     padding: 24px 16px;

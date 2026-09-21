@@ -19,7 +19,6 @@ export const Route = createFileRoute("/")({
   component: BudgetRoute,
   validateSearch: validateBudgetSearch,
   loaderDeps: ({ search }) => ({
-    access: search.access,
     convite: search.convite,
   }),
   beforeLoad: ({ search }) => {
@@ -31,7 +30,7 @@ export const Route = createFileRoute("/")({
     }
   },
   loader: async ({ deps }): Promise<WorkspaceSnapshot> => {
-    if (deps.access || deps.convite) {
+    if (deps.convite) {
       throw redirect({
         to: "/entrar",
         search: gateRedirectSearch(deps),
