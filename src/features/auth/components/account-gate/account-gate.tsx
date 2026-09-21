@@ -3,7 +3,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type FormEvent,
 } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme";
@@ -19,20 +18,15 @@ import {
   joinHousehold,
 } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
-import { formText } from "@/features/budget/domain/format";
-import {
-  emailFormSchema,
-  fieldErrors as toFieldErrors,
-  inviteFormSchema,
-  nameFormSchema,
-} from "@/features/budget/domain/schemas";
+import { inviteToken } from "@/features/auth/invite-token";
+import { EmailForm } from "@/features/auth/components/email-form";
+import { InviteForm } from "@/features/auth/components/invite-form";
+import { NameForm } from "@/features/auth/components/name-form";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
 import {
-  FieldError,
   FieldHint,
-  Form,
   FormError,
   FormStack,
   Note,
@@ -41,19 +35,6 @@ import styles from "@/features/auth/components/account-gate/account-gate.module.
 
 const isDevelopment = import.meta.env.DEV;
 const gateRoute = getRouteApi("/entrar");
-
-export function inviteToken(value: string) {
-  try {
-    const url = new URL(value);
-    return (
-      url.searchParams.get("convite") ??
-      new URLSearchParams(url.hash.slice(1)).get("convite") ??
-      value.trim()
-    );
-  } catch {
-    return value.trim();
-  }
-}
 
 function useGate() {
   const router = useRouter();
@@ -116,7 +97,6 @@ export function AccountGate() {
     });
   const [sentTo, setSentTo] = useState("");
   const [cooldown, setCooldown] = useState(0);
-  const [errors, setErrors] = useState<Record<string, string>>({});
   useEffect(() => {
     if (!cooldown) return;
     const timer = window.setTimeout(() => setCooldown(cooldown - 1), 1000);
@@ -141,30 +121,6 @@ export function AccountGate() {
       setCooldown(60);
     }
   }
-  async function submitEmail(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = emailFormSchema.safeParse({
-      email: formText(new FormData(event.currentTarget), "email"),
-    });
-    if (!parsed.success) {
-      setErrors(toFieldErrors(parsed.error));
-      return;
-    }
-    setErrors({});
-    await requestAccess(parsed.data.email);
-  }
-  async function submitName(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = nameFormSchema.safeParse({
-      name: formText(new FormData(event.currentTarget), "name"),
-    });
-    if (!parsed.success) {
-      setErrors(toFieldErrors(parsed.error));
-      return;
-    }
-    setErrors({});
-    await run(() => setName({ data: { name: parsed.data.name } }));
-  }
   async function acceptInvitation() {
     await run(() =>
       joinHousehold({
@@ -172,17 +128,11 @@ export function AccountGate() {
       }),
     );
   }
-  async function submitInvitation(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const parsed = inviteFormSchema.safeParse({
-      invite: inviteToken(formText(new FormData(event.currentTarget), "invite")),
-    });
-    if (!parsed.success) {
-      setErrors(toFieldErrors(parsed.error));
-      return;
-    }
-    setErrors({});
-    await run(() => joinHousehold({ data: { token: parsed.data.invite } }));
+  async function submitName(name: string) {
+    await run(() => setName({ data: { name } }));
+  }
+  async function joinWithInvite(invite: string) {
+    await run(() => joinHousehold({ data: { token: invite } }));
   }
   return (
     <main className={styles.accountPage}>
@@ -240,54 +190,11 @@ export function AccountGate() {
                 </Button>
               </FormStack>
             ) : (
-              <Form onSubmit={(event) => void submitEmail(event)}>
-                <label>
-                  Seu e-mail
-                  <input
-                    name="email"
-                    type="email"
-                    autoComplete="email"
-                    maxLength={254}
-                    placeholder="voce@exemplo.com"
-                    required
-                    aria-describedby={errors.email ? "email-error" : undefined}
-                    aria-invalid={errors.email ? true : undefined}
-                  />
-                  <FieldError id="email-error">{errors.email}</FieldError>
-                </label>
-                <Button disabled={busy}>
-                  {busy
-                    ? isDevelopment
-                      ? "Entrando…"
-                      : "Enviando…"
-                    : isDevelopment
-                      ? "Entrar localmente"
-                      : "Receber meu link"}
-                  <ArrowRight size={18} />
-                </Button>
-              </Form>
+              <EmailForm busy={busy} onRequest={requestAccess} />
             )}
           </>
         ) : !user.name ? (
-          <Form onSubmit={(event) => void submitName(event)}>
-            <label>
-              Seu nome
-              <input
-                name="name"
-                autoComplete="given-name"
-                maxLength={50}
-                placeholder="Como você quer aparecer?"
-                required
-                aria-describedby={errors.name ? "name-error" : undefined}
-                aria-invalid={errors.name ? true : undefined}
-              />
-              <FieldError id="name-error">{errors.name}</FieldError>
-            </label>
-            <Button disabled={busy}>
-              Continuar
-              <ArrowRight size={18} />
-            </Button>
-          </Form>
+          <NameForm busy={busy} onSubmit={submitName} />
         ) : (
           <FormStack>
             {invitation ? (
@@ -313,24 +220,7 @@ export function AccountGate() {
                   <ArrowRight size={18} />
                 </Button>
                 <span className={styles.divider}>já recebeu um convite?</span>
-                <Form onSubmit={(event) => void submitInvitation(event)}>
-                  <label>
-                    Link de convite
-                    <input
-                      name="invite"
-                      placeholder="Cole o link do seu par"
-                      required
-                      aria-describedby={
-                        errors.invite ? "invite-error" : undefined
-                      }
-                      aria-invalid={errors.invite ? true : undefined}
-                    />
-                    <FieldError id="invite-error">{errors.invite}</FieldError>
-                  </label>
-                  <Button variant="secondary" disabled={busy}>
-                    Aceitar convite
-                  </Button>
-                </Form>
+                <InviteForm busy={busy} onJoin={joinWithInvite} />
               </>
             )}
             <Button

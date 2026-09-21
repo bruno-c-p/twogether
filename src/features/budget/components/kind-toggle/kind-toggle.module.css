@@ -1,0 +1,28 @@
+.kind-toggle {
+  display: flex;
+  padding: 4px;
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  gap: 5px;
+  margin-bottom: 24px;
+}
+
+.kind-toggle button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 1;
+  border: 0;
+  background: none;
+  color: var(--text-muted);
+  padding: 10px;
+  border-radius: 5px;
+  font-size: 13px;
+}
+
+.kind-toggle button.active {
+  background: var(--surface);
+  color: var(--text);
+}

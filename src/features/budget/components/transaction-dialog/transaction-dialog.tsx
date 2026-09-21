@@ -4,7 +4,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
-import { ArrowDownLeft, ArrowUpRight, Check, Repeat2 } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   formatAmountInput,
   formText,
@@ -22,6 +22,8 @@ import type {
   Member,
 } from "@/features/budget/domain/types";
 import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker";
+import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
+import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
 import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -161,27 +163,13 @@ export function TransactionDialog({
         </DialogHeader>
         <form onSubmit={(event) => void submit(event)}>
           <Fieldset disabled={saving}>
-            <div className={styles.kindToggle} aria-label="Tipo da transação">
-              <button
-                type="button"
-                className={kind === "expense" ? styles.active : ""}
-                aria-pressed={kind === "expense"}
-                onClick={() => setKind("expense")}
-              >
-                <ArrowUpRight size={17} /> Despesa
-              </button>
-              <button
-                type="button"
-                className={kind === "income" ? styles.active : ""}
-                aria-pressed={kind === "income"}
-                onClick={() => {
-                  setKind("income");
-                  setGoal(null);
-                }}
-              >
-                <ArrowDownLeft size={17} /> Receita
-              </button>
-            </div>
+            <KindToggle
+              kind={kind}
+              onChange={(next) => {
+                setKind(next);
+                if (next === "income") setGoal(null);
+              }}
+            />
             <AmountField label="Valor" htmlFor="amount">
               <input
                 id="amount"
@@ -259,62 +247,13 @@ export function TransactionDialog({
               <FieldError id="account-error">{errors.accountId}</FieldError>
             </Field>
             {!transaction && (
-              <section
-                className={styles.recurrencePanel}
-                aria-label="Recorrência"
-              >
-                <div className={styles.recurrenceHeading}>
-                  <span className={styles.recurrenceIcon}>
-                    <Repeat2 size={18} />
-                  </span>
-                  <div className={styles.recurrenceCopy}>
-                    <label htmlFor="recurring">Repetir mensalmente</label>
-                    <p>Para contas e entradas que se repetem.</p>
-                  </div>
-                  <input
-                    id="recurring"
-                    className={styles.recurrenceSwitch}
-                    type="checkbox"
-                    role="switch"
-                    checked={recurring}
-                    onChange={(event) => setRecurring(event.target.checked)}
-                  />
-                </div>
-                {recurring && (
-                  <div className={styles.recurrenceDetails}>
-                    <div className={styles.recurrenceCount}>
-                      <label htmlFor="occurrences">Por quantos meses?</label>
-                      <div className={styles.recurrenceNumber}>
-                        <input
-                          id="occurrences"
-                          type="number"
-                          min={2}
-                          max={120}
-                          required
-                          value={Number.isNaN(occurrences) ? "" : occurrences}
-                          onChange={(event) =>
-                            setOccurrences(event.target.valueAsNumber)
-                          }
-                          aria-describedby={
-                            errors.occurrences
-                              ? "recurrence-hint occurrences-error"
-                              : "recurrence-hint"
-                          }
-                          aria-invalid={errors.occurrences ? true : undefined}
-                        />
-                        <span>meses</span>
-                      </div>
-                      <FieldError id="occurrences-error">
-                        {errors.occurrences}
-                      </FieldError>
-                    </div>
-                    <p id="recurrence-hint">
-                      Inclui o mês da primeira transação. Em meses mais curtos,
-                      usamos o último dia.
-                    </p>
-                  </div>
-                )}
-              </section>
+              <RecurrencePanel
+                recurring={recurring}
+                occurrences={occurrences}
+                error={errors.occurrences}
+                onRecurringChange={setRecurring}
+                onOccurrencesChange={setOccurrences}
+              />
             )}
             {kind === "expense" && (
               <>
