@@ -22,6 +22,13 @@
   `bun run test`, `bun run build`, `bun run e2e`, and `git diff --check`.
   If dependencies are missing, run `bun install --frozen-lockfile` before
   the checks. Playwright Chromium: `bunx playwright install chromium`.
+- `e2e` runs on its own port (3400) against a throwaway SQLite file and
+  never reuses a running dev server, so a `bun run dev` on 3000 is safe.
+  Do not point it back at 3000 or at `data/twogether.sqlite`.
+- Clerk test accounts are reused across runs. Keep `uniqueEmail` seeded by
+  stable values (test title/project), never by file paths, timestamps, or
+  worker indexes: every new email burns a user slot and the dev instance
+  stops sign-ups at its user quota.
 - Automated tests, code analysis, and build do not replace in-browser
   validation. Do not declare the task complete based only on those checks.
 - Use isolated test data; preserve real data and unrelated work.

@@ -13,12 +13,11 @@ export function randomToken() {
 
 export function uniqueEmail(label: string) {
   const info = test.info();
-  const worker = info.workerIndex;
   const key = createHash("sha1")
-    .update(`${info.file}:${info.title}`)
+    .update(`${info.project.name}:${info.title}`)
     .digest("hex")
     .slice(0, 12);
-  return `e2e.${worker}.${key}.${label}+clerk_test@example.com`;
+  return `e2e.${key}.${label}+clerk_test@example.com`;
 }
 
 export async function waitForHydrated(page: Page) {
