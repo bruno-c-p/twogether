@@ -74,7 +74,7 @@ jobs:
 
       - name: E2E skipped
         if: env.CLERK_SECRET_KEY == ''
-        run: echo "::warning::E2E skipped: set the CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY repository secrets to run it."
+        run: 'echo "::warning::E2E skipped: set the CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY repository secrets to run it."'
 
       - name: Upload Playwright traces
         if: failure()
