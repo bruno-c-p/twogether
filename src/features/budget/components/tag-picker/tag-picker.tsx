@@ -1,5 +1,5 @@
 import { Plus, X } from "lucide-react";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { Optional } from "@/components/ui/field/field";
 import styles from "@/features/budget/components/tag-picker/tag-picker.module.css";
 

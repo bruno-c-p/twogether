@@ -5,7 +5,7 @@ import {
   inviteFormSchema,
 } from "@/features/budget/domain/schemas";
 import { inviteToken } from "@/features/auth/invite-token";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { FieldError, Form } from "@/components/ui/field/field";
 
 export function InviteForm({

@@ -35,13 +35,13 @@ import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section/goals-section";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
-import { NoticeToast, useNotice } from "@/features/budget/components/notice/notice";
+import { NoticeToast, useNotice } from "@/features/budget/components/notice";
 import { Overview } from "@/features/budget/components/overview/overview";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { TransactionList } from "@/features/budget/components/transaction-list/transaction-list";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 
 export function BudgetApp() {
   const budget = useBudget();

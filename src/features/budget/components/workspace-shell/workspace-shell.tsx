@@ -6,8 +6,8 @@ import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
 import { WorkspaceNavigation } from "@/features/budget/components/workspace-navigation/workspace-navigation";
 import styles from "@/features/budget/components/workspace-shell/workspace-shell.module.css";
-import { Brand } from "@/components/ui/brand/brand";
-import { Button } from "@/components/ui/button/button";
+import { Brand } from "@/components/ui/brand";
+import { Button } from "@/components/ui/button";
 import type { ReactNode } from "react";
 
 export function WorkspaceShell({

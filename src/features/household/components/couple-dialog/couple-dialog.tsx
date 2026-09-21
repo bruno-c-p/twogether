@@ -9,7 +9,7 @@ import {
   revokeInvite,
 } from "@/features/household/actions";
 import { MemberList } from "@/features/household/components/member-list/member-list";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,

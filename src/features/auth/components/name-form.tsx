@@ -5,7 +5,7 @@ import {
   fieldErrors,
   nameFormSchema,
 } from "@/features/budget/domain/schemas";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import { FieldError, Form } from "@/components/ui/field/field";
 
 export function NameForm({

@@ -51,6 +51,36 @@
   `features/<name>/components/`.
 - `bun run fitness` fails when a `*.module.css` is not inside a folder named
   after it or when the sibling component file is missing.
+- New components default to UnoCSS utilities and stay flat. Keep a CSS module
+  only when utilities cannot express the rule (e.g. `::backdrop`,
+  `:focus-within` on a nested input, sibling selectors across component
+  boundaries); in that case move the component back into its own folder.
+
+## Styling with UnoCSS
+
+- Style with utilities; tokens come from `uno.config.ts`, which maps
+  `src/styles.css` custom properties into `theme.colors`. Use token utilities
+  (`bg-surface`, `text-text-muted`, `border-border`) instead of raw colors.
+- Dark mode: tokens flip through `[data-theme="dark"]`, so most rules need no
+  `dark:` variant. The `dark:` variant is bound to that same attribute when a
+  non-token override is unavoidable.
+- Use the project breakpoints (`bp1450`, `bp1190`, `bp1000`, `bp800`,
+  `bp620`, `bp360`). They are min-width by default; prefix with `max-` for
+  max-width (`max-bp620:p-[13px]`, emitted as `max-width: 619.9px`).
+- Never emit conflicting utilities on one element (two `left-[...]`, two
+  `text-[...]` without a variant). Cascade order decides the winner, not the
+  order in `className`. Pick one branch conditionally, as
+  `src/components/ui/brand.tsx` does for its mark bars.
+- Utilities live next to the markup, grouped in readable `cx(...)` lines or a
+  variant map like `src/components/ui/button.tsx`. Repeated cross-component
+  patterns belong in `shortcuts` in `uno.config.ts`.
+- Font families go under `theme.font` in `uno.config.ts` (`font-heading`,
+  `font-sans`); preset-wind4 ignores `theme.fontFamily`.
+- `src/routes/__root.tsx` imports `virtual:uno.css`; keep that import, and
+  keep `unocss` in devDependencies. Tailwind and shadcn stay banned by
+  `bun run fitness`.
+- `src/styles.css` keeps tokens, resets, and global element rules only. Do
+  not add per-component rules there.
 
 ## Absolute imports
 

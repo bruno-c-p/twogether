@@ -18,9 +18,9 @@ import { inviteToken } from "@/features/auth/invite-token";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
-import { LoadingState } from "@/features/budget/components/empty-state/empty-state";
-import { Brand } from "@/components/ui/brand/brand";
-import { Button } from "@/components/ui/button/button";
+import { LoadingState } from "@/features/budget/components/empty-state";
+import { Brand } from "@/components/ui/brand";
+import { Button } from "@/components/ui/button";
 import {
   FieldHint,
   FormError,

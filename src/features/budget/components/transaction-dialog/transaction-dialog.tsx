@@ -25,7 +25,7 @@ import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
 import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,

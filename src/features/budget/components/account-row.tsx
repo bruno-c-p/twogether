@@ -1,7 +1,7 @@
 import { Landmark, Pencil, Trash2 } from "lucide-react";
 import { money } from "@/features/budget/domain/format";
 import type { BankAccount } from "@/features/budget/domain/types";
-import { Button } from "@/components/ui/button/button";
+import { Button } from "@/components/ui/button";
 import {
   ListRow,
   ListRowActions,
