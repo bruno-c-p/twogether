@@ -17,6 +17,8 @@ jobs:
       CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
       CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
       VITE_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_PUBLISHABLE_KEY }}
+      VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: ${{ vars.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN }}
+      VITE_PUBLIC_POSTHOG_HOST: ${{ vars.VITE_PUBLIC_POSTHOG_HOST }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v5

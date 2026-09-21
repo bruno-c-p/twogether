@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { usePostHog } from "posthog-js/react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   deleteAccount,
@@ -54,6 +55,7 @@ export function BudgetApp() {
 }
 
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+  const posthog = usePostHog();
   const saveTx = useMutation(
     (data: { transaction: Transaction; occurrences?: number }) =>
       saveTransaction({ data }),
@@ -185,10 +187,17 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         : "Renda, gastos e metas da pessoa selecionada.";
 
   async function save(transaction: Transaction, occurrences = 1) {
+    const isUpdate = Boolean(dialog?.transaction);
     if (!(await saveTx.run({ transaction, occurrences }))) return false;
+    posthog.capture(isUpdate ? "transaction_updated" : "transaction_created", {
+      transaction_kind: transaction.kind,
+      has_goal: Boolean(transaction.goal),
+      is_recurring: occurrences > 1,
+      occurrence_count: occurrences,
+    });
     setMonth(transaction.date.slice(0, 7));
     setNotice({
-      message: dialog?.transaction
+      message: isUpdate
         ? "Transação atualizada."
         : occurrences > 1
           ? `${occurrences} transações mensais adicionadas.`
@@ -207,8 +216,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         id: transaction.id,
         revision: transaction.revision ?? 0,
       })
-    )
+    ) {
+      posthog.capture("transaction_deleted", { delete_scope: "single" });
       setNotice({ message: "Transação excluída.", undo: transaction });
+    }
   }
 
   function openTransaction(transaction: Transaction | null) {
@@ -223,11 +234,11 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   }
 
   async function saveAccountRecord(account: BankAccount) {
+    const isUpdate = Boolean(accountDialog?.account);
     if (!(await saveAcc.run(account))) return false;
+    posthog.capture(isUpdate ? "account_updated" : "account_created");
     setNotice({
-      message: accountDialog?.account
-        ? "Conta atualizada."
-        : "Conta adicionada.",
+      message: isUpdate ? "Conta atualizada." : "Conta adicionada.",
     });
     return true;
   }
@@ -238,8 +249,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         id: account.id,
         revision: account.revision ?? 0,
       })
-    )
+    ) {
+      posthog.capture("account_deleted");
       setNotice({ message: "Conta excluída." });
+    }
   }
 
   async function undoNotice() {
@@ -263,6 +276,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       }))
     )
       return false;
+    posthog.capture("goal_percentages_saved");
     setNotice({ message: "Percentuais atualizados." });
     return true;
   }
@@ -281,6 +295,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           : undefined,
       })
     ) {
+      posthog.capture("transaction_deleted", {
+        delete_scope: includeFollowing ? "following" : "single",
+        deleted_count: includeFollowing ? following.length + 1 : 1,
+      });
       setNotice(
         includeFollowing
           ? { message: `${following.length + 1} transações excluídas.` }
