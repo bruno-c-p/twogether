@@ -4,28 +4,15 @@ import { parseAmount, parseBalance } from "@/features/budget/domain/format";
 import type { BankAccount, GoalId } from "@/features/budget/domain/types";
 
 const HEX64 = /^[0-9a-f]{64}$/;
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MONEY_MAX = 99999999999;
 
 export const budgetTokenSchema = z
   .string({ error: "Token inválido." })
   .regex(HEX64, { error: "Token inválido." });
 
-export const accessTokenSchema = z
-  .string({ error: "Link inválido. Peça um novo link." })
-  .regex(HEX64, { error: "Link inválido. Peça um novo link." });
-
 export const inviteTokenSchema = z
   .string({ error: "Convite inválido. Peça um novo link." })
   .regex(HEX64, { error: "Convite inválido. Peça um novo link." });
-
-export const emailSchema = z
-  .string({ error: "Informe um e-mail válido." })
-  .trim()
-  .toLowerCase()
-  .min(1, { error: "Informe um e-mail válido." })
-  .max(254, { error: "Informe um e-mail válido." })
-  .regex(EMAIL, { error: "Informe um e-mail válido." });
 
 export const nameSchema = z
   .string({ error: "Conte como você quer aparecer no orçamento." })
@@ -256,8 +243,6 @@ export const accountFormSchema = z.object({
     .max(50, { error: "O nome da conta deve ter no máximo 50 caracteres." }),
   openingBalance: balanceInputSchema,
 });
-
-export const emailFormSchema = z.object({ email: emailSchema });
 
 export const nameFormSchema = z.object({ name: nameSchema });
 

@@ -1,3 +1,4 @@
+import { clerkMiddleware } from "@clerk/tanstack-react-start/server";
 import {
   createCsrfMiddleware,
   createMiddleware,
@@ -15,5 +16,5 @@ const privateNoStoreMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  requestMiddleware: [csrfMiddleware, privateNoStoreMiddleware],
+  requestMiddleware: [clerkMiddleware(), csrfMiddleware, privateNoStoreMiddleware],
 }));

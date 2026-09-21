@@ -8,7 +8,6 @@ import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
 import {
-  emailSchema,
   revisionSchema,
   textSchema,
 } from "@/features/budget/domain/schemas";
@@ -24,8 +23,9 @@ export const token = () => randomBytes(32).toString("hex");
 export interface UserRow {
   id: string;
   name: string;
-  email: string;
   household_id: string | null;
+  percentages: string;
+  revision: number;
 }
 export interface HouseholdRow {
   id: string;
@@ -45,18 +45,14 @@ export interface AccountRow {
 }
 
 const schema = [
-  `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
-  `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, household_id TEXT REFERENCES households(id))`,
+  `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0)`,
+  `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', household_id TEXT REFERENCES households(id), percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
   `CREATE TRIGGER IF NOT EXISTS two_members BEFORE UPDATE OF household_id ON users
     WHEN NEW.household_id IS NOT NULL AND (SELECT count(*) FROM users WHERE household_id = NEW.household_id AND id != NEW.id) >= 2
     BEGIN SELECT RAISE(ABORT, 'household_full'); END`,
-  `CREATE TABLE IF NOT EXISTS sessions (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS invites (hash TEXT PRIMARY KEY, household_id TEXT NOT NULL UNIQUE REFERENCES households(id), expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS transactions (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
   `CREATE TABLE IF NOT EXISTS accounts (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
-  `CREATE TABLE IF NOT EXISTS magic_links (hash TEXT PRIMARY KEY, email TEXT NOT NULL, expires INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS attempts (key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires INTEGER NOT NULL)`,
-  `CREATE TABLE IF NOT EXISTS member_percentages (user_id TEXT PRIMARY KEY REFERENCES users(id), percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
 ] as const;
 
 export async function execute(
@@ -86,22 +82,6 @@ export async function one<T extends object>(
 async function initializeDatabase(database: Client, local: boolean) {
   if (local) await execute(database, "PRAGMA foreign_keys = ON");
   await database.batch([...schema], "write");
-  const columns = await all<{ name: string }>(
-    database,
-    "PRAGMA table_info(users)",
-  );
-  if (columns.some((column) => column.name === "password")) {
-    await database.batch(
-      ["ALTER TABLE users DROP COLUMN password", "DELETE FROM sessions"],
-      "write",
-    );
-  }
-  await execute(
-    database,
-    `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
-     SELECT users.id, households.percentages FROM users
-     JOIN households ON households.id = users.household_id`,
-  );
 }
 
 export function createStoreContext(filename: string) {
@@ -170,12 +150,6 @@ export function text(value: unknown, max: number) {
   const result = textSchema(max).safeParse(value);
   if (!result.success)
     throw new RequestError("Confira os campos informados.");
-  return result.data;
-}
-
-export function emailAddress(value: unknown) {
-  const result = emailSchema.safeParse(value);
-  if (!result.success) throw new RequestError("Informe um e-mail válido.");
   return result.data;
 }
 

@@ -2,7 +2,7 @@ import { expect, test, type Browser, type Page } from "@playwright/test";
 import {
   expectNoHorizontalOverflow,
   expectToast,
-  loginDev,
+  signInClerk,
   nav,
   onboard,
   openCouple,
@@ -44,7 +44,7 @@ async function onboardCouple(page: Page, browser: Browser) {
   const bia = await browser.newContext();
   const biaPage = await bia.newPage();
   await biaPage.goto(inviteUrl);
-  await loginDev(biaPage, uniqueEmail("bia"));
+  await signInClerk(biaPage, uniqueEmail("bia"));
   await setName(biaPage, "Bia");
   await biaPage.getByRole("button", { name: "Aceitar convite" }).click();
   await expect(

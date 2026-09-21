@@ -1,28 +1,24 @@
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
-import { ThemeToggle } from "@/features/theme";
-import { ArrowRight, HeartHandshake, Mail } from "lucide-react";
 import {
-  devLogin,
-  logout,
-  requestLink,
-  setName,
-} from "@/features/auth/actions";
+  SignIn,
+  useAuth,
+  useClerk,
+  useUser,
+} from "@clerk/tanstack-react-start";
+import { ThemeToggle } from "@/features/theme";
+import { ArrowRight, HeartHandshake } from "lucide-react";
+import { setName } from "@/features/auth/actions";
 import {
   createHousehold,
   joinHousehold,
 } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
 import { inviteToken } from "@/features/auth/invite-token";
-import { EmailForm } from "@/features/auth/components/email-form";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
+import { LoadingState } from "@/features/budget/components/empty-state/empty-state";
 import { Brand } from "@/components/ui/brand/brand";
 import { Button } from "@/components/ui/button/button";
 import {
@@ -33,7 +29,6 @@ import {
 } from "@/components/ui/field/field";
 import styles from "@/features/auth/components/account-gate/account-gate.module.css";
 
-const isDevelopment = import.meta.env.DEV;
 const gateRoute = getRouteApi("/entrar");
 
 function useGate() {
@@ -88,39 +83,21 @@ function useGate() {
 
 export function AccountGate() {
   const { user, error, busy, search, navigate, run } = useGate();
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
+  const { user: clerkUser } = useUser();
+  const { signOut } = useClerk();
   const invitation = search.convite ?? "";
+  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
+  useEffect(() => {
+    if (isSignedIn) void router.invalidate();
+  }, [isSignedIn, router]);
   const clearInvitation = () =>
     void navigate({
       to: "/entrar",
       search: (prev) => ({ ...prev, convite: undefined }),
       replace: true,
     });
-  const [sentTo, setSentTo] = useState("");
-  const [cooldown, setCooldown] = useState(0);
-  useEffect(() => {
-    if (!cooldown) return;
-    const timer = window.setTimeout(() => setCooldown(cooldown - 1), 1000);
-    return () => window.clearTimeout(timer);
-  }, [cooldown]);
-  async function requestAccess(email: string) {
-    if (isDevelopment) {
-      await run(() => devLogin({ data: { email } }));
-      return;
-    }
-    if (
-      (await run(() =>
-        requestLink({
-          data: {
-            email,
-            ...(invitation ? { invite: inviteToken(invitation) } : {}),
-          },
-        }),
-      )) !== null
-    ) {
-      setSentTo(email);
-      setCooldown(60);
-    }
-  }
   async function acceptInvitation() {
     await run(() =>
       joinHousehold({
@@ -134,63 +111,55 @@ export function AccountGate() {
   async function joinWithInvite(invite: string) {
     await run(() => joinHousehold({ data: { token: invite } }));
   }
+  async function leave() {
+    await signOut({ redirectUrl: "/entrar" });
+    await router.invalidate();
+  }
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
       <Brand className={styles.pageBrand}>twogether.</Brand>
       <section className={styles.accountCard}>
         <div className={styles.accountSymbol}>
-          {sentTo ? (
-            <Mail size={30} strokeWidth={1.5} />
-          ) : (
-            <HeartHandshake size={30} strokeWidth={1.5} />
-          )}
+          <HeartHandshake size={30} strokeWidth={1.5} />
         </div>
         <p className={styles.cardEyebrow}>DUAS PESSOAS. UM ORÇAMENTO.</p>
         <h1>
-          {sentTo && !user
-            ? "Confira seu e-mail."
-            : user
-              ? user.name
-                ? `Vamos começar, ${user.name}?`
-                : "Como chamamos você?"
-              : "A vida a dois.\nAs contas também."}
+          {user
+            ? user.name
+              ? `Vamos começar, ${user.name}?`
+              : "Como chamamos você?"
+            : "A vida a dois.\nAs contas também."}
         </h1>
         <p className={styles.accountIntro}>
           {user
             ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
-            : sentTo
-              ? `Enviamos seu link para ${sentTo}. Abra o e-mail para continuar.`
-              : isDevelopment
-                ? "Modo desenvolvimento: informe um e-mail para entrar ou criar uma conta."
-                : "Seu e-mail é a única chave. A gente envia um link, você abre e pronto."}
+            : "Seu e-mail é a única chave. Sem senha: enviamos um código de acesso."}
         </p>
         {!user ? (
           <>
             {invitation && (
               <Note>
-                Seu par convidou você. Confirme seu e-mail para compartilhar o
-                orçamento.
+                Seu par convidou você. Entre para compartilhar o orçamento.
               </Note>
             )}
-            {sentTo ? (
-              <FormStack>
-                <Note>
-                  O link vale por 15 minutos. Se não encontrar, confira o spam.
-                </Note>
-                <Button
-                  variant="secondary"
-                  disabled={busy || cooldown > 0}
-                  onClick={() => void requestAccess(sentTo)}
-                >
-                  {cooldown > 0 ? `Reenviar em ${cooldown}s` : "Reenviar link"}
-                </Button>
-                <Button variant="text" onClick={() => setSentTo("")}>
-                  Usar outro e-mail
-                </Button>
-              </FormStack>
+            {isSignedIn ? (
+              <LoadingState>Carregando…</LoadingState>
             ) : (
-              <EmailForm busy={busy} onRequest={requestAccess} />
+              <SignIn
+                routing="hash"
+                forceRedirectUrl={
+                  invitation ? `/entrar?convite=${invitation}` : "/entrar"
+                }
+                appearance={{
+                  elements: {
+                    rootBox: styles.clerkRoot,
+                    cardBox: styles.clerkCardBox,
+                    card: styles.clerkCard,
+                    header: styles.clerkHeader,
+                  },
+                }}
+              />
             )}
           </>
         ) : !user.name ? (
@@ -226,18 +195,14 @@ export function AccountGate() {
             <Button
               variant="text"
               disabled={busy}
-              onClick={() => void run(() => logout())}
+              onClick={() => void leave()}
             >
-              Sair de {user.email}
+              Sair de {email || "sua conta"}
             </Button>
           </FormStack>
         )}
         {error && <FormError>{error}</FormError>}
-        <FieldHint>
-          {isDevelopment
-            ? "Modo desenvolvimento: o acesso local não envia e-mail."
-            : "Sem senha. Um espaço exclusivo para vocês dois."}
-        </FieldHint>
+        <FieldHint>Sem senha. Um espaço exclusivo para vocês dois.</FieldHint>
       </section>
       <AppFooter className={styles.pageFooter} />
     </main>

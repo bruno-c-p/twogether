@@ -25,7 +25,7 @@ const mercado: Transaction = {
 };
 
 const snapshot: WorkspaceSnapshot = {
-  user: { id: "ana", name: "Ana", email: "ana@example.test" },
+  user: { id: "ana", name: "Ana" },
   household: {
     id: "home",
     members: [

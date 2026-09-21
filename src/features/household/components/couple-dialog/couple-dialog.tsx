@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { isRedirect, useRouter } from "@tanstack/react-router";
+import { useRouter } from "@tanstack/react-router";
+import { useClerk, useUser } from "@clerk/tanstack-react-start";
 import { Copy } from "lucide-react";
-import { logout } from "@/features/auth/actions";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import {
@@ -32,6 +32,8 @@ export function CoupleDialog({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const { signOut } = useClerk();
+  const { user } = useUser();
   const invite = useMutation(() => createInvite());
   const revoke = useMutation(() => revokeInvite());
   const [link, setLink] = useState("");
@@ -62,20 +64,9 @@ export function CoupleDialog({
       setCopyError("Convites anteriores cancelados.");
     }
   }
-  async function signOut() {
-    try {
-      await logout();
-    } catch (error) {
-      if (isRedirect(error)) {
-        await router.navigate(router.resolveRedirect(error).options);
-        return;
-      }
-      setCopyError(
-        error instanceof Error && !(error instanceof TypeError)
-          ? error.message
-          : "Sem conexão. Confira o orçamento antes de tentar novamente.",
-      );
-    }
+  async function leave() {
+    await signOut({ redirectUrl: "/entrar" });
+    await router.invalidate();
   }
   return (
     <Dialog labelledBy="couple-title" narrow onClose={onClose}>
@@ -134,12 +125,14 @@ export function CoupleDialog({
         )}
         {error && <FormError>{error}</FormError>}
         <DialogFooter className={styles.footer}>
-          <span className={styles.email}>{budget.user.email}</span>
+          <span className={styles.email}>
+            {user?.primaryEmailAddress?.emailAddress ?? ""}
+          </span>
           <Button
             variant="text"
             className={styles.logout}
             disabled={busy}
-            onClick={() => void signOut()}
+            onClick={() => void leave()}
           >
             Sair da conta
           </Button>

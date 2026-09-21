@@ -52,7 +52,7 @@ export interface MemberBudget extends Member {
   percentages: GoalPercentages;
   percentagesRevision: number;
 }
-export type WorkspaceUser = Member & { email: string };
+export type WorkspaceUser = Member;
 export interface WorkspaceHousehold {
   id: string;
   members: MemberBudget[];

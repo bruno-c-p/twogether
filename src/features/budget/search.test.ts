@@ -1,12 +1,11 @@
 import { describe, expect, it } from "vitest";
 import {
-  accessRedirectSearch,
   gateRedirectSearch,
   missingWorkspaceMonth,
   openGoalTransactions,
   openView,
-  validateAccessSearch,
   validateBudgetSearch,
+  validateInviteSearch,
   withDefaultMonth,
   withView,
   type BudgetSearch,
@@ -20,7 +19,6 @@ const filtered: BudgetSearch = {
   goal: "fixed",
   tag: "casa",
   kind: "expense",
-  access: "a".repeat(64),
   convite: "b".repeat(64),
 };
 
@@ -59,71 +57,33 @@ describe("openGoalTransactions", () => {
   });
 });
 
-describe("accessRedirectSearch", () => {
-  const convite = "c".repeat(64);
-
-  it("keeps the invite and never puts the access token in the URL", () => {
-    expect(accessRedirectSearch(convite)).toEqual({ convite });
-    expect(accessRedirectSearch(convite)).not.toHaveProperty("access");
-  });
-
-  it("returns an empty search when there is no invite", () => {
-    expect(accessRedirectSearch()).toEqual({});
-    expect(accessRedirectSearch()).not.toHaveProperty("access");
-  });
-});
-
 describe("gateRedirectSearch", () => {
-  const access = "a".repeat(64);
   const convite = "b".repeat(64);
 
-  it("forwards access and convite to /entrar", () => {
-    expect(gateRedirectSearch({ access, convite })).toEqual({
-      access,
-      convite,
-    });
+  it("forwards the invite to /entrar", () => {
+    expect(gateRedirectSearch({ convite })).toEqual({ convite });
   });
 
-  it("omits missing tokens", () => {
-    expect(gateRedirectSearch({ access })).toEqual({ access });
-    expect(gateRedirectSearch({ convite })).toEqual({ convite });
+  it("omits a missing invite", () => {
     expect(gateRedirectSearch({})).toEqual({});
   });
 });
 
-describe("validateAccessSearch", () => {
-  const access = "a".repeat(64);
+describe("validateInviteSearch", () => {
   const convite = "b".repeat(64);
 
-  it("keeps 64-hex tokens and drops junk and workspace filters", () => {
-    expect(validateAccessSearch({ access, convite, view: "accounts" })).toEqual(
-      {
-        access,
-        convite,
-      },
-    );
-    expect(validateAccessSearch({ access: "nope", convite: "invite" })).toEqual(
-      {
-        access: undefined,
-        convite: undefined,
-      },
-    );
+  it("keeps a 64-hex invite and drops junk and workspace filters", () => {
+    expect(validateInviteSearch({ convite, view: "accounts" })).toEqual({
+      convite,
+    });
+    expect(validateInviteSearch({ convite: "invite" })).toEqual({
+      convite: undefined,
+    });
   });
 });
 
 describe("validateBudgetSearch", () => {
-  const access = "a".repeat(64);
   const convite = "b".repeat(64);
-
-  it("keeps a 64-hex access token for the loader and drops junk", () => {
-    expect(validateBudgetSearch({ access })).toMatchObject({ access });
-    expect(
-      validateBudgetSearch({ access: "not-a-token" }).access,
-    ).toBeUndefined();
-    expect(
-      validateBudgetSearch({ access: access.slice(0, 63) }).access,
-    ).toBeUndefined();
-  });
 
   it("keeps a 64-hex invite token and drops junk", () => {
     expect(validateBudgetSearch({ convite })).toMatchObject({ convite });
@@ -145,7 +105,6 @@ describe("validateBudgetSearch", () => {
       goal: undefined,
       tag: undefined,
       kind: undefined,
-      access: undefined,
       convite: undefined,
     });
     expect(
@@ -175,10 +134,8 @@ describe("withDefaultMonth", () => {
     });
   });
 
-  it("does not default month for magic-link or invite URLs", () => {
-    const access = "a".repeat(64);
+  it("does not default month for invite URLs", () => {
     const convite = "b".repeat(64);
-    expect(missingWorkspaceMonth({ access })).toBe(false);
     expect(missingWorkspaceMonth({ convite })).toBe(false);
     expect(missingWorkspaceMonth({ month: "2026-09" })).toBe(false);
   });

@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   digest,
   execute,
@@ -52,21 +51,11 @@ export async function createHousehold(ctx: StoreContext, user: UserRow) {
   await ctx.atomic(async (transaction) => {
     requireOpenSeat(user);
     const id = randomUUID();
-    await execute(
-      transaction,
-      "INSERT INTO households(id,percentages) VALUES (?,?)",
-      [id, JSON.stringify(DEFAULT_PERCENTAGES)],
-    );
+    await execute(transaction, "INSERT INTO households(id) VALUES (?)", [id]);
     await execute(
       transaction,
       "UPDATE users SET household_id = ? WHERE id = ?",
       [id, user.id],
-    );
-    await execute(
-      transaction,
-      `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
-           SELECT ?, percentages FROM households WHERE id = ?`,
-      [user.id, id],
     );
   });
 }
@@ -105,12 +94,6 @@ export async function joinHousehold(
       transaction,
       "UPDATE users SET household_id = ? WHERE id = ?",
       [invite.household_id, user.id],
-    );
-    await execute(
-      transaction,
-      `INSERT OR IGNORE INTO member_percentages(user_id, percentages)
-           SELECT ?, percentages FROM households WHERE id = ?`,
-      [user.id, invite.household_id],
     );
     await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
       invite.household_id,

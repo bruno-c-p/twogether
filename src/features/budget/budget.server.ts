@@ -1,14 +1,5 @@
 import { randomUUID } from "node:crypto";
-import {
-  devLogin,
-  logout,
-  requestLink,
-  sessionUser,
-  setName,
-  userFromSession,
-  verifyLink,
-} from "@/features/auth/auth.server";
-import type { MagicLinkSender } from "@/features/auth/email.server";
+import { ensureUser, setName } from "@/features/auth/auth.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   bankAccountSchema,
@@ -122,15 +113,20 @@ function canonicalAccount(value: BankAccount): BankAccount {
 
 export async function snapshot(
   ctx: StoreContext,
-  session: string | undefined,
+  user: UserRow | null,
 ): Promise<SharedSnapshot> {
+  if (!user) return { user: null, household: null, budget: emptyBudget() };
   return ctx.readOnly(async (transaction) => {
-    const user = await userFromSession(transaction, session);
-    if (!user) return { user: null, household: null, budget: emptyBudget() };
-    const identity = { id: user.id, name: user.name, email: user.email };
-    if (!user.household_id)
+    const fresh = await one<UserRow>(
+      transaction,
+      "SELECT * FROM users WHERE id = ?",
+      [user.id],
+    );
+    if (!fresh) return { user: null, household: null, budget: emptyBudget() };
+    const identity = { id: fresh.id, name: fresh.name };
+    if (!fresh.household_id)
       return { user: identity, household: null, budget: emptyBudget() };
-    const owned = await household(transaction, user);
+    const owned = await household(transaction, fresh);
     const rows = await all<TransactionRow>(
       transaction,
       "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
@@ -148,15 +144,9 @@ export async function snapshot(
       revision: number;
     }>(
       transaction,
-      `SELECT users.id, users.name, member_percentages.percentages, member_percentages.revision
-         FROM users JOIN member_percentages ON member_percentages.user_id = users.id
-         WHERE users.household_id = ? ORDER BY users.rowid`,
+      `SELECT id, name, percentages, revision FROM users
+         WHERE household_id = ? ORDER BY rowid`,
       [owned.id],
-    );
-    const ownPercentages = await one<{ percentages: string }>(
-      transaction,
-      "SELECT percentages FROM member_percentages WHERE user_id = ?",
-      [user.id],
     );
     return {
       user: identity,
@@ -171,9 +161,7 @@ export async function snapshot(
       },
       budget: {
         ...emptyBudget(),
-        percentages: ownPercentages
-          ? storedPercentages(ownPercentages.percentages)
-          : { ...DEFAULT_PERCENTAGES },
+        percentages: storedPercentages(fresh.percentages),
         transactions: rows.map((row) => ({
           ...storedTransaction(row.payload),
           revision: row.revision,
@@ -456,29 +444,19 @@ export async function savePercentages(
       throw new RequestError(firstIssueMessage(parsed.error));
     const result = await execute(
       transaction,
-      "UPDATE member_percentages SET percentages = ?, revision = revision + 1 WHERE user_id = ? AND revision = ?",
+      "UPDATE users SET percentages = ?, revision = revision + 1 WHERE id = ? AND revision = ?",
       [JSON.stringify(parsed.data), user.id, revision(input.revision)],
     );
     if (result.rowsAffected !== 1) throw conflict();
   });
 }
 
-export function createBudgetStore(
-  filename: string,
-  options: { sendMagicLink?: MagicLinkSender } = {},
-) {
+export function createBudgetStore(filename: string) {
   const ctx = createStoreContext(filename);
   return {
-    snapshot: (session: string | undefined) => snapshot(ctx, session),
-    sessionUser: (session: string | undefined) => sessionUser(ctx, session),
+    snapshot: (user: UserRow | null) => snapshot(ctx, user),
+    ensureUser: (clerkUserId: string) => ensureUser(ctx, clerkUserId),
     householdFor: (user: UserRow) => householdFor(ctx, user),
-    requestLink: (input: { email: unknown; invite?: unknown }) =>
-      requestLink(ctx, input, options.sendMagicLink),
-    devLogin: (input: { email: unknown }, session: string | undefined) =>
-      devLogin(ctx, input, session),
-    verifyLink: (input: { token: unknown }, session: string | undefined) =>
-      verifyLink(ctx, input, session),
-    logout: (session: string | undefined) => logout(ctx, session),
     setName: (user: UserRow, name: string) => setName(ctx, user, name),
     createHousehold: (user: UserRow) => createHouseholdRecord(ctx, user),
     joinHousehold: (user: UserRow, tokenValue: string) =>

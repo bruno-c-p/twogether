@@ -1,12 +1,12 @@
 import { redirect } from "@tanstack/react-router";
 import { createMiddleware } from "@tanstack/react-start";
-import { sessionToken } from "@/features/auth/session.server";
+import { currentUser } from "@/features/auth/current-user.server";
 import { getBudgetStore } from "@/features/budget/budget.server";
 import { RequestError, throwHttpError } from "@/server/request-error";
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
-    const user = await getBudgetStore().sessionUser(sessionToken());
+    const user = await currentUser();
     if (!user) throw redirect({ to: "/entrar" });
     return next({ context: { user } });
   },
