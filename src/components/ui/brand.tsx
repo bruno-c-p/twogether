@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { cx } from "@/components/ui/cx";
+import { cx } from "@/lib/cx";
 
 export function Brand({
   className,

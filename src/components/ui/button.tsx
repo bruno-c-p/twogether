@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from "react";
-import { cx } from "@/components/ui/cx";
+import { cx } from "@/lib/cx";
 
 type Variant = "primary" | "secondary" | "text" | "icon" | "tag";
 

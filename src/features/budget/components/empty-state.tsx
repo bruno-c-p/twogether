@@ -1,5 +1,5 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
-import { cx } from "@/components/ui/cx";
+import { cx } from "@/lib/cx";
 
 export function EmptyState({
   icon,
