@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useRouter } from "@tanstack/react-router";
 import { useClerk, useUser } from "@clerk/tanstack-react-start";
 import { Copy } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import {
@@ -33,6 +34,7 @@ export function CoupleDialog({
 }) {
   const router = useRouter();
   const { signOut } = useClerk();
+  const posthog = usePostHog();
   const { user } = useUser();
   const invite = useMutation(() => createInvite());
   const revoke = useMutation(() => revokeInvite());
@@ -44,6 +46,7 @@ export function CoupleDialog({
   async function makeInvite() {
     const result = await invite.run();
     if (result?.ok) {
+      posthog.capture("household_invite_generated");
       setLink(`${window.location.origin}/?convite=${result.inviteToken}`);
       setCopied(false);
       setCopyError("");
@@ -65,6 +68,7 @@ export function CoupleDialog({
     }
   }
   async function leave() {
+    posthog.reset();
     await signOut({ redirectUrl: "/entrar" });
     await router.invalidate();
   }

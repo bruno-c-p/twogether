@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
+import { usePostHog } from "posthog-js/react";
 import {
   SignIn,
   useAuth,
@@ -90,6 +91,7 @@ export function AccountGate() {
   const { user, error, busy, search, navigate, run } = useGate();
   const router = useRouter();
   const { isSignedIn } = useAuth();
+  const posthog = usePostHog();
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
   const invitation = search.convite ?? "";
@@ -104,19 +106,27 @@ export function AccountGate() {
       replace: true,
     });
   async function acceptInvitation() {
-    await run(() =>
+    const result = await run(() =>
       joinHousehold({
         data: { token: inviteToken(invitation) },
       }),
     );
+    if (result) posthog.capture("household_joined");
   }
   async function submitName(name: string) {
-    await run(() => setName({ data: { name } }));
+    const result = await run(() => setName({ data: { name } }));
+    if (result) posthog.capture("profile_name_completed");
   }
   async function joinWithInvite(invite: string) {
-    await run(() => joinHousehold({ data: { token: invite } }));
+    const result = await run(() => joinHousehold({ data: { token: invite } }));
+    if (result) posthog.capture("household_joined");
+  }
+  async function startHousehold() {
+    const result = await run(() => createHousehold());
+    if (result) posthog.capture("household_created");
   }
   async function leave() {
+    posthog.reset();
     await signOut({ redirectUrl: "/entrar" });
     await router.invalidate();
   }
@@ -188,10 +198,7 @@ export function AccountGate() {
               </>
             ) : (
               <>
-                <Button
-                  disabled={busy}
-                  onClick={() => void run(() => createHousehold())}
-                >
+                <Button disabled={busy} onClick={() => void startHousehold()}>
                   Começar nosso orçamento
                   <ArrowRight size={18} />
                 </Button>

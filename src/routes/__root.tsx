@@ -1,5 +1,7 @@
-import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { useUser, ClerkProvider } from "@clerk/tanstack-react-start";
 import { ptBR } from "@clerk/localizations";
+import { useEffect, useRef } from "react";
+import { PostHogProvider, usePostHog } from "posthog-js/react";
 import {
   createRootRoute,
   HeadContent,
@@ -10,6 +12,51 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
+
+const posthogApiKey = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
+
+if (import.meta.env.DEV && !posthogApiKey) {
+  throw new Error(
+    "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured",
+  );
+}
+
+if (import.meta.env.DEV && !posthogHost) {
+  throw new Error(
+    "VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_HOST is configured",
+  );
+}
+
+function PostHogIdentity() {
+  const posthog = usePostHog();
+  const { isLoaded, user } = useUser();
+  const identifiedUserId = useRef<string | null>(null);
+  const userId = user?.id;
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const name = user?.fullName;
+
+  useEffect(() => {
+    if (!isLoaded) return;
+
+    if (!userId) {
+      identifiedUserId.current = null;
+      return;
+    }
+
+    if (identifiedUserId.current === userId) return;
+
+    if (identifiedUserId.current) posthog.reset();
+
+    posthog.identify(userId, {
+      ...(email ? { email } : {}),
+      ...(name ? { name } : {}),
+    });
+    identifiedUserId.current = userId;
+  }, [email, isLoaded, name, posthog, userId]);
+
+  return null;
+}
 
 export const Route = createRootRoute({
   errorComponent: RouteError,
@@ -69,7 +116,26 @@ export const Route = createRootRoute({
             },
           }}
         >
-          <Outlet />
+          {posthogApiKey && posthogHost ? (
+            <PostHogProvider
+              apiKey={posthogApiKey}
+              options={{
+                api_host: posthogHost,
+                defaults: "2025-05-24",
+                capture_exceptions: true,
+                debug: import.meta.env.DEV,
+                tracing_headers:
+                  typeof window !== "undefined"
+                    ? [window.location.hostname]
+                    : [],
+              }}
+            >
+              <PostHogIdentity />
+              <Outlet />
+            </PostHogProvider>
+          ) : (
+            <Outlet />
+          )}
           <Scripts />
         </ClerkProvider>
       </body>
