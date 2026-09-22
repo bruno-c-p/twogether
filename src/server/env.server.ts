@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { firstIssueMessage } from "@/features/budget/domain/schemas";
 
@@ -21,7 +22,7 @@ const databaseUrlSchema = z
     { error: DATABASE_MESSAGE },
   );
 
-export function databaseUrl() {
+export const databaseUrl = createServerOnlyFn(() => {
   const result = databaseUrlSchema.safeParse(
     process.env.TURSO_DATABASE_URL ||
       process.env.BUDGET_DATABASE_PATH ||
@@ -29,4 +30,8 @@ export function databaseUrl() {
   );
   if (!result.success) throw new Error(firstIssueMessage(result.error));
   return result.data;
-}
+});
+
+export const tursoAuthToken = createServerOnlyFn(
+  () => process.env.TURSO_AUTH_TOKEN,
+);

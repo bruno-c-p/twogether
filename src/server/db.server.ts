@@ -11,6 +11,7 @@ import {
   revisionSchema,
   textSchema,
 } from "@/features/budget/domain/schemas";
+import { tursoAuthToken } from "@/server/env.server";
 import { RequestError } from "@/server/request-error";
 
 export type { DatabaseTransaction };
@@ -102,7 +103,7 @@ export function createStoreContext(filename: string) {
     : filename;
   const db = createClient({
     url,
-    authToken: local ? undefined : process.env.TURSO_AUTH_TOKEN,
+    authToken: local ? undefined : tursoAuthToken(),
     intMode: "number",
     readYourWrites: true,
     timeout: 5000,
