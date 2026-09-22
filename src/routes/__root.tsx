@@ -12,21 +12,11 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
+import { parseClientEnv } from "@/lib/env";
 
-const posthogApiKey = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
-const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
-
-if (import.meta.env.DEV && !posthogApiKey) {
-  throw new Error(
-    "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured",
-  );
-}
-
-if (import.meta.env.DEV && !posthogHost) {
-  throw new Error(
-    "VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_HOST is configured",
-  );
-}
+const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
+const posthogApiKey = clientEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+const posthogHost = clientEnv.VITE_PUBLIC_POSTHOG_HOST;
 
 function PostHogIdentity() {
   const posthog = usePostHog();
