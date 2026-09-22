@@ -40,7 +40,10 @@ async function onboardCouple(page: Page, browser: Browser) {
   await openCouple(page);
   await page.getByRole("button", { name: "Gerar convite" }).click();
   const inviteUrl = await page.getByLabel("Link para seu par").inputValue();
-  await page.getByRole("button", { name: "Fechar nosso espaço" }).click();
+  await page.getByRole("link", { name: "twogether — início" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Visão geral" }),
+  ).toBeVisible();
   const bia = await browser.newContext();
   const biaPage = await bia.newPage();
   await biaPage.goto(inviteUrl);
@@ -52,7 +55,7 @@ async function onboardCouple(page: Page, browser: Browser) {
   ).toBeVisible();
   await reloadApp(page);
   await expect(
-    page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
+    page.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
   ).toBeVisible();
   return { bia, biaPage };
 }

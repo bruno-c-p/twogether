@@ -1,4 +1,4 @@
-export { loadBudget } from "@/features/budget/actions/load-budget";
+export { loadWorkspace } from "@/features/budget/actions/load-workspace";
 export { saveTransaction } from "@/features/budget/actions/save-transaction";
 export { deleteTransaction } from "@/features/budget/actions/delete-transaction";
 export { restoreTransaction } from "@/features/budget/actions/restore-transaction";

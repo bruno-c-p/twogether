@@ -111,7 +111,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const month = searchMonth ?? currentMonth();
-  const [coupleOpen, setCoupleOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
@@ -314,7 +313,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       memberLabel={memberLabel}
       hidden={hidden}
       onToggleHidden={() => setHidden(!hidden)}
-      onOpenCouple={() => setCoupleOpen(true)}
       overlays={
         <>
           <TransactionFlows
@@ -326,7 +324,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             deleting={deleting}
             following={following}
             editingPercentages={editingPercentages}
-            coupleOpen={coupleOpen}
             saveError={saveTx.error}
             accountError={saveAcc.error}
             deleteError={deleteTx.error}
@@ -340,7 +337,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             onCloseAccount={() => setAccountDialog(null)}
             onCloseDeleting={() => setDeleting(null)}
             onClosePercentages={() => setEditingPercentages(null)}
-            onCloseCouple={() => setCoupleOpen(false)}
           />
           {notice && (
             <NoticeToast

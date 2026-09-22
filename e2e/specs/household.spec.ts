@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import {
+  expectNoHorizontalOverflow,
   onboard,
   openCouple,
   signInClerk,
@@ -22,13 +23,17 @@ test.describe("household", () => {
     ).toBeVisible();
     await page.getByRole("button", { name: "Gerar convite" }).click();
     const invite = page.getByLabel("Link para seu par");
-    await expect(invite).toHaveValue(/\?convite=[0-9a-f]{64}$/);
+    await expect(invite).toHaveValue(/\/convite\/[0-9a-f]{64}$/);
     await expect(page.getByText("Expira em 48 horas")).toBeVisible();
     await page.getByRole("button", { name: "Copiar convite" }).click();
     const copied = page.getByRole("button", { name: "Link copiado" });
     const fallback = page.getByText("Selecione e copie o link acima.");
     await expect(copied.or(fallback)).toBeVisible();
     const inviteUrl = await invite.inputValue();
+    await page.getByRole("link", { name: "twogether — início" }).click();
+    await expect(
+      page.getByRole("heading", { name: "Visão geral" }),
+    ).toBeVisible();
 
     const bia = await browser.newContext();
     const biaPage = await bia.newPage();
@@ -44,9 +49,9 @@ test.describe("household", () => {
     await expect(
       biaPage.getByRole("heading", { name: "Visão geral" }),
     ).toBeVisible();
-    expect(new URL(biaPage.url()).searchParams.has("convite")).toBe(false);
+    expect(new URL(biaPage.url()).pathname).toBe("/");
     await expect(
-      biaPage.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
+      biaPage.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
     await expect(person(biaPage, "Nós")).toBeVisible();
     await expect(person(biaPage, "Eu")).toBeVisible();
@@ -54,7 +59,7 @@ test.describe("household", () => {
 
     await reloadApp(page);
     await expect(
-      page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
+      page.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
     await expect(person(page, "Bia")).toBeVisible();
     await openCouple(page);
@@ -66,9 +71,13 @@ test.describe("household", () => {
     ).toHaveCount(0);
 
     await withMobile(page, async () => {
-      await page.getByRole("button", { name: "Fechar nosso espaço" }).click();
-      await openCouple(page);
-      await expect(page.getByRole("heading", { name: "Nosso espaço" })).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Nosso espaço" }),
+      ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Gerar convite" }),
+      ).toHaveCount(0);
+      await expectNoHorizontalOverflow(page);
     });
 
     await bia.close();

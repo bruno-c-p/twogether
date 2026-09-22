@@ -2,10 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useRef, useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
-import {
-  retryAfterAuthRedirect,
-  workspaceQueryKey,
-} from "@/features/budget/workspace";
+import { workspaceQueryKey } from "@/features/budget/workspace";
 import { isMutationFailure } from "@/server/mutation-result";
 
 export function useMutation<TArgs extends unknown[], TResult>(
@@ -41,9 +38,7 @@ export function useMutation<TArgs extends unknown[], TResult>(
         queryClient.setQueryData(cached[0], applyOptimistic(previous, ...args));
       }
       try {
-        const result = await retryAfterAuthRedirect(() =>
-          fnRef.current(...args),
-        );
+        const result = await fnRef.current(...args);
         if (isMutationFailure(result)) {
           if (cached && previous) {
             queryClient.setQueryData(cached[0], previous);

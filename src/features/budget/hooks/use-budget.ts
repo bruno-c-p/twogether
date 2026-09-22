@@ -1,12 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
 import { useEffect } from "react";
-import {
-  fetchWorkspace,
-  workspaceQueryKeyFor,
-} from "@/features/budget/workspace";
+import { loadWorkspace } from "@/features/budget/actions";
+import { workspaceQueryKeyFor } from "@/features/budget/workspace";
 
-const workspaceRoute = getRouteApi("/");
+const workspaceRoute = getRouteApi("/_authenticated/");
 
 function syncMessage(error: unknown) {
   if (error instanceof Error && !(error instanceof TypeError)) {
@@ -20,7 +18,7 @@ export function useBudget() {
   const initial = workspaceRoute.useLoaderData();
   const query = useQuery({
     queryKey: workspaceQueryKeyFor(initial.user.id),
-    queryFn: fetchWorkspace,
+    queryFn: loadWorkspace,
     initialData: initial,
   });
 

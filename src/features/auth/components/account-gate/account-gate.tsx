@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
-import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
+import { isRedirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import {
   SignIn,
@@ -11,9 +11,9 @@ import {
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
 import { setName } from "@/features/auth/actions";
+import type { SessionState } from "@/features/auth/actions/load-session";
 import { createHousehold, joinHousehold } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
-import { inviteToken } from "@/features/auth/invite-token";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/field/field";
 import styles from "@/features/auth/components/account-gate/account-gate.module.css";
 
-const gateRoute = getRouteApi("/entrar");
+const SESSION_SYNC_INTERVAL_MS = 400;
 
 // The TanStack wrapper forwards every prop to Clerk's SignIn, but its published
 // types omit the loading fallback, so widen the signature here.
@@ -37,11 +37,8 @@ const GateSignIn = SignIn as (
   props: ComponentProps<typeof SignIn> & { fallback?: ReactNode },
 ) => ReactNode;
 
-function useGate() {
+function useGate(session: SessionState) {
   const router = useRouter();
-  const snapshot = gateRoute.useLoaderData();
-  const search = gateRoute.useSearch();
-  const navigate = gateRoute.useNavigate();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
@@ -78,38 +75,45 @@ function useGate() {
     [router],
   );
   return {
-    user: snapshot.user,
+    user: session.user,
     error,
     busy,
-    search,
-    navigate,
     run,
   };
 }
 
-export function AccountGate() {
-  const { user, error, busy, search, navigate, run } = useGate();
+export function AccountGate({
+  session,
+  invite = "",
+}: {
+  session: SessionState;
+  invite?: string;
+}) {
+  const { user, error, busy, run } = useGate(session);
   const router = useRouter();
+  const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const { user: clerkUser } = useUser();
   const { signOut } = useClerk();
-  const invitation = search.convite ?? "";
+  const invitation = invite;
   const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
+  const afterAuth = invitation ? `/convite/${invitation}` : "/entrar";
   useEffect(() => {
-    if (isSignedIn) void router.invalidate();
-  }, [isSignedIn, router]);
-  const clearInvitation = () =>
-    void navigate({
-      to: "/entrar",
-      search: (prev) => ({ ...prev, convite: undefined }),
-      replace: true,
-    });
+    if (!isSignedIn || user) return;
+    void router.invalidate();
+    const timer = setInterval(
+      () => void router.invalidate(),
+      SESSION_SYNC_INTERVAL_MS,
+    );
+    return () => clearInterval(timer);
+  }, [isSignedIn, router, user]);
+  function clearInvitation() {
+    void navigate({ to: "/entrar" });
+  }
   async function acceptInvitation() {
     const result = await run(() =>
-      joinHousehold({
-        data: { token: inviteToken(invitation) },
-      }),
+      joinHousehold({ data: { token: invitation } }),
     );
     if (result) posthog.capture("household_joined");
   }
@@ -165,9 +169,8 @@ export function AccountGate() {
                 routing="hash"
                 withSignUp
                 fallback={<SignInSkeleton />}
-                forceRedirectUrl={
-                  invitation ? `/entrar?convite=${invitation}` : "/entrar"
-                }
+                forceRedirectUrl={afterAuth}
+                signUpForceRedirectUrl={afterAuth}
                 appearance={{
                   elements: {
                     rootBox: styles.clerkRoot,

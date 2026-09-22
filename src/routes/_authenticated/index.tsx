@@ -1,29 +1,21 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
-import { loadBudget } from "@/features/budget/actions";
+import { loadWorkspace } from "@/features/budget/actions";
 import {
-  gateRedirectSearch,
   missingWorkspaceMonth,
-  validateBudgetSearch,
+  validateBudgetFilters,
   withDefaultMonth,
 } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
-import {
-  asWorkspaceSnapshot,
-  retryAfterAuthRedirect,
-} from "@/features/budget/workspace";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 
 function BudgetPending() {
   return <LoadingState>Carregando orçamento…</LoadingState>;
 }
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: BudgetRoute,
-  validateSearch: validateBudgetSearch,
-  loaderDeps: ({ search }) => ({
-    convite: search.convite,
-  }),
+  validateSearch: validateBudgetFilters,
   beforeLoad: ({ search }) => {
     if (missingWorkspaceMonth(search)) {
       throw redirect({
@@ -32,17 +24,7 @@ export const Route = createFileRoute("/")({
       });
     }
   },
-  loader: async ({ deps }): Promise<WorkspaceSnapshot> => {
-    if (deps.convite) {
-      throw redirect({
-        to: "/entrar",
-        search: gateRedirectSearch(deps),
-      });
-    }
-    return asWorkspaceSnapshot(
-      await retryAfterAuthRedirect(() => loadBudget()),
-    );
-  },
+  loader: async (): Promise<WorkspaceSnapshot> => loadWorkspace(),
   pendingComponent: BudgetPending,
   pendingMs: 300,
   pendingMinMs: 500,
