@@ -21,6 +21,7 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
+  retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   use: {
@@ -48,9 +49,11 @@ export default defineConfig({
   webServer: {
     cwd: root,
     command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun --bun vite --host 127.0.0.1 --port ${port}`,
-    url: baseURL,
+    // A static asset, not "/": the app root renders SSR, so a failing Clerk or
+    // database request would look like a server that never booted.
+    url: `${baseURL}/manifest.webmanifest`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 180_000,
     env: {
       ...env,
       BUDGET_DATABASE_PATH: databasePath,
