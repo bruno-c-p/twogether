@@ -1,9 +1,10 @@
 import { useUser, ClerkProvider } from "@clerk/tanstack-react-start";
 import { ptBR } from "@clerk/localizations";
 import { useEffect, useRef } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { PostHogProvider, usePostHog } from "posthog-js/react";
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   HeadContent,
   Outlet,
   Scripts,
@@ -57,7 +58,9 @@ function PostHogIdentity() {
   return null;
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   errorComponent: RouteError,
   head: () => ({
     meta: [

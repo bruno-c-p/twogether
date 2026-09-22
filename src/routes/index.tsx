@@ -3,7 +3,6 @@ import { createFileRoute, redirect } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { BudgetApp } from "@/features/budget";
-import { loadBudget } from "@/features/budget/actions";
 import {
   gateRedirectSearch,
   missingWorkspaceMonth,
@@ -11,10 +10,7 @@ import {
   withDefaultMonth,
 } from "@/features/budget/search";
 import { LoadingState } from "@/features/budget/components/empty-state";
-import {
-  asWorkspaceSnapshot,
-  retryAfterAuthRedirect,
-} from "@/features/budget/workspace";
+import { workspaceQueryOptions } from "@/features/budget/workspace";
 import {
   browserTimeZone,
   isValidTimeZone,
@@ -49,16 +45,14 @@ export const Route = createFileRoute("/")({
       search: withDefaultMonth(search, monthIn(timeZone)),
     });
   },
-  loader: async ({ deps }): Promise<WorkspaceSnapshot> => {
+  loader: async ({ context, deps }): Promise<WorkspaceSnapshot> => {
     if (deps.convite) {
       throw redirect({
         to: "/entrar",
         search: gateRedirectSearch(deps),
       });
     }
-    return asWorkspaceSnapshot(
-      await retryAfterAuthRedirect(() => loadBudget()),
-    );
+    return context.queryClient.ensureQueryData(workspaceQueryOptions);
   },
   pendingComponent: BudgetPending,
   pendingMs: 300,

@@ -1,6 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
 import { createRouter, stringifySearchWith } from "@tanstack/react-router";
-import type { ReactNode } from "react";
+import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
 import { routeTree } from "@/routeTree.gen";
 import { RouteError } from "@/components/route-error/route-error";
 import { reportError } from "@/lib/errors";
@@ -15,30 +15,30 @@ export function getRouter() {
   const queryClient = new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 0,
-        refetchOnMount: false,
+        staleTime: 30_000,
         refetchOnWindowFocus: true,
         refetchOnReconnect: true,
         retry: false,
       },
     },
   });
-  return createRouter({
+  const router = createRouter({
     routeTree,
+    context: { queryClient },
     scrollRestoration: true,
     parseSearch,
     stringifySearch: stringifySearchWith(String),
     defaultPreload: "intent",
+    defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
     defaultOnCatch: (error, errorInfo) => {
       reportError(error, {
         componentStack: errorInfo.componentStack ?? undefined,
       });
     },
-    Wrap: ({ children }: { children: ReactNode }) => (
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    ),
   });
+  setupRouterSsrQueryIntegration({ router, queryClient });
+  return router;
 }
 
 declare module "@tanstack/react-router" {
