@@ -13,10 +13,19 @@ import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
 import { parseClientEnv } from "@/lib/env";
+import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 
 const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
 const posthogApiKey = clientEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const posthogHost = clientEnv.VITE_PUBLIC_POSTHOG_HOST;
+
+function TimeZoneCookie() {
+  useEffect(() => {
+    rememberTimeZone(browserTimeZone());
+  }, []);
+
+  return null;
+}
 
 function PostHogIdentity() {
   const posthog = usePostHog();
@@ -106,6 +115,7 @@ export const Route = createRootRoute({
             },
           }}
         >
+          <TimeZoneCookie />
           {posthogApiKey && posthogHost ? (
             <PostHogProvider
               apiKey={posthogApiKey}
