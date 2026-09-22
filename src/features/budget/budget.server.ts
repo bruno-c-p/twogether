@@ -37,7 +37,7 @@ import {
   type UserRow,
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
-import { databaseUrl } from "@/server/env";
+import { databaseUrl } from "@/server/env.server";
 
 const STORED_MESSAGE = "Não foi possível ler os dados salvos.";
 

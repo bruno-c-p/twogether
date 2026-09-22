@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { parseServerEnv } from "@/server/env";
+import { parseServerEnv } from "@/server/env.server";
 
 const clerk = { CLERK_SECRET_KEY: "sk_test_placeholder" };
 

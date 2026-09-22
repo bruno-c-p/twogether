@@ -1,4 +1,5 @@
 import { resolve } from "node:path";
+import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { firstIssueMessage } from "@/features/budget/domain/schemas";
 
@@ -69,15 +70,19 @@ export function parseServerEnv(values: Record<string, string | undefined>) {
 
 let cached: ServerEnv | undefined;
 
-export function serverEnv() {
-  return (cached ??= parseServerEnv(process.env));
-}
+export const serverEnv = createServerOnlyFn(
+  () => (cached ??= parseServerEnv(process.env)),
+);
 
-export function databaseUrl() {
+export const databaseUrl = createServerOnlyFn(() => {
   const env = serverEnv();
   return (
     env.TURSO_DATABASE_URL ??
     env.BUDGET_DATABASE_PATH ??
     resolve("data/twogether.sqlite")
   );
-}
+});
+
+export const tursoAuthToken = createServerOnlyFn(
+  () => serverEnv().TURSO_AUTH_TOKEN,
+);
