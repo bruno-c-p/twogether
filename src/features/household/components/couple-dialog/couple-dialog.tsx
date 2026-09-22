@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { useRouter } from "@tanstack/react-router";
-import { useClerk, useUser } from "@clerk/tanstack-react-start";
+import { useUser } from "@clerk/tanstack-react-start";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
+import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import {
   createInvite,
   revokeInvite,
@@ -32,8 +32,7 @@ export function CoupleDialog({
   budget: BudgetController;
   onClose: () => void;
 }) {
-  const router = useRouter();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const posthog = usePostHog();
   const { user } = useUser();
   const invite = useMutation(() => createInvite());
@@ -69,8 +68,7 @@ export function CoupleDialog({
   }
   async function leave() {
     posthog.reset();
-    await signOut({ redirectUrl: "/entrar" });
-    await router.invalidate();
+    await signOut();
   }
   return (
     <Dialog labelledBy="couple-title" narrow onClose={onClose}>

@@ -1,3 +1,4 @@
+import { queryOptions } from "@tanstack/react-query";
 import { isRedirect, redirect } from "@tanstack/react-router";
 import { loadBudget } from "@/features/budget/actions";
 import type {
@@ -7,10 +8,6 @@ import type {
 } from "@/features/budget/domain/types";
 
 export const workspaceQueryKey = ["workspace"] as const;
-
-export function workspaceQueryKeyFor(userId: string) {
-  return ["workspace", userId] as const;
-}
 
 export function asWorkspaceSnapshot(
   snapshot: SharedSnapshot,
@@ -25,6 +22,11 @@ export function asWorkspaceSnapshot(
 export async function fetchWorkspace(): Promise<WorkspaceSnapshot> {
   return asWorkspaceSnapshot(await retryAfterAuthRedirect(() => loadBudget()));
 }
+
+export const workspaceQueryOptions = queryOptions({
+  queryKey: workspaceQueryKey,
+  queryFn: fetchWorkspace,
+});
 
 const AUTH_RETRY_DELAY_MS = 300;
 
