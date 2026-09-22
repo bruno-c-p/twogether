@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getRouteApi, isRedirect } from "@tanstack/react-router";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 
-const workspaceRoute = getRouteApi("/");
+const workspaceRoute = getRouteApi("/_authenticated/");
 
 function syncMessage(error: unknown) {
   if (error instanceof Error && !(error instanceof TypeError)) {

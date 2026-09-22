@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  budgetTokenSchema,
-  goalIdSchema,
-  monthSchema,
-} from "@/features/budget/domain/schemas";
+import { goalIdSchema, monthSchema } from "@/features/budget/domain/schemas";
 import type {
   GoalId,
   TransactionKind,
@@ -36,10 +32,6 @@ const budgetFiltersSchema = z.object({
   kind: drop(kindSchema),
 });
 
-const inviteSearchSchema = z.object({
-  convite: drop(budgetTokenSchema),
-});
-
 export interface BudgetFilters {
   view?: View;
   month?: string;
@@ -50,17 +42,11 @@ export interface BudgetFilters {
   kind?: TransactionKind;
 }
 
-export interface InviteSearch {
-  convite?: string;
-}
-
-export type BudgetSearch = BudgetFilters & InviteSearch;
-
-export function withView(search: BudgetSearch, view: View): BudgetSearch {
+export function withView(search: BudgetFilters, view: View): BudgetFilters {
   return { ...search, view };
 }
 
-export function openView(search: BudgetSearch, view: View): BudgetSearch {
+export function openView(search: BudgetFilters, view: View): BudgetFilters {
   return {
     ...search,
     view,
@@ -72,9 +58,9 @@ export function openView(search: BudgetSearch, view: View): BudgetSearch {
 }
 
 export function openGoalTransactions(
-  search: BudgetSearch,
+  search: BudgetFilters,
   goal: GoalId,
-): BudgetSearch {
+): BudgetFilters {
   return {
     ...search,
     view: "transactions",
@@ -85,38 +71,19 @@ export function openGoalTransactions(
   };
 }
 
-export function gateRedirectSearch(search: InviteSearch): InviteSearch {
-  return search.convite ? { convite: search.convite } : {};
-}
-
-export function missingWorkspaceMonth(search: BudgetSearch): boolean {
-  return !search.month && !search.convite;
+export function missingWorkspaceMonth(search: BudgetFilters): boolean {
+  return !search.month;
 }
 
 export function withDefaultMonth(
-  search: BudgetSearch,
+  search: BudgetFilters,
   month: string,
-): BudgetSearch {
+): BudgetFilters {
   return { ...search, month };
-}
-
-export function validateInviteSearch(
-  search: Record<string, unknown>,
-): InviteSearch {
-  return inviteSearchSchema.parse(search);
 }
 
 export function validateBudgetFilters(
   search: Record<string, unknown>,
 ): BudgetFilters {
   return budgetFiltersSchema.parse(search);
-}
-
-export function validateBudgetSearch(
-  search: Record<string, unknown>,
-): BudgetSearch {
-  return {
-    ...validateBudgetFilters(search),
-    ...validateInviteSearch(search),
-  };
 }

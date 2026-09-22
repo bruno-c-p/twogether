@@ -1,51 +1,16 @@
 import { queryOptions } from "@tanstack/react-query";
-import { isRedirect, redirect } from "@tanstack/react-router";
-import { loadBudget } from "@/features/budget/actions";
+import { loadWorkspace } from "@/features/budget/actions";
 import type {
-  SharedSnapshot,
   Transaction,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
 
 export const workspaceQueryKey = ["workspace"] as const;
 
-export function asWorkspaceSnapshot(
-  snapshot: SharedSnapshot,
-): WorkspaceSnapshot {
-  const { user, household, budget } = snapshot;
-  if (!user?.name || !household) {
-    throw redirect({ to: "/entrar" });
-  }
-  return { user, household, budget };
-}
-
-export async function fetchWorkspace(): Promise<WorkspaceSnapshot> {
-  return asWorkspaceSnapshot(await retryAfterAuthRedirect(() => loadBudget()));
-}
-
 export const workspaceQueryOptions = queryOptions({
   queryKey: workspaceQueryKey,
-  queryFn: fetchWorkspace,
+  queryFn: loadWorkspace,
 });
-
-const AUTH_RETRY_DELAY_MS = 300;
-
-function isGateRedirect(error: unknown) {
-  return isRedirect(error) && error.options.to === "/entrar";
-}
-
-export async function retryAfterAuthRedirect<T>(
-  call: () => Promise<T>,
-  delayMs = AUTH_RETRY_DELAY_MS,
-): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    if (!isGateRedirect(error)) throw error;
-    await new Promise((resolve) => setTimeout(resolve, delayMs));
-    return call();
-  }
-}
 
 export function optimisticSave(
   snapshot: WorkspaceSnapshot,

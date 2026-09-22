@@ -8,7 +8,7 @@ export function WorkspaceNavigation({
   view,
   variant,
 }: {
-  view: View;
+  view?: View;
   variant: "desktop" | "mobile";
 }) {
   if (variant === "mobile") {

@@ -42,6 +42,14 @@ export async function waitForGate(page: Page) {
   await waitForHydrated(page);
 }
 
+export async function waitForInvite(page: Page, token: string) {
+  await expect(page).toHaveURL(new RegExp(`/convite/${token}(?:\\?|$)`));
+  await expect(
+    page.getByRole("heading", { name: /A vida a dois/ }),
+  ).toBeVisible();
+  await waitForHydrated(page);
+}
+
 async function ensureClerkUser(email: string) {
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
@@ -56,9 +64,16 @@ async function ensureClerkUser(email: string) {
 
 export async function signInClerk(page: Page, email: string) {
   await setupClerkTestingToken({ page });
-  if (!new URL(page.url()).pathname.startsWith("/entrar"))
-    await page.goto("/entrar");
-  await waitForGate(page);
+  const path = new URL(page.url()).pathname;
+  if (path.startsWith("/convite/")) {
+    await expect(
+      page.getByRole("heading", { name: /A vida a dois/ }),
+    ).toBeVisible();
+    await waitForHydrated(page);
+  } else {
+    if (!path.startsWith("/entrar")) await page.goto("/entrar");
+    await waitForGate(page);
+  }
   const user = await ensureClerkUser(email);
   const secretKey = process.env.CLERK_SECRET_KEY;
   if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
@@ -109,10 +124,12 @@ export async function onboard(
 }
 
 export async function openCouple(page: Page) {
-  await page.getByRole("button", { name: /Abrir nosso espaço/ }).click();
+  await page.getByRole("link", { name: /Abrir nosso espaço/ }).click();
+  await expect(page).toHaveURL(/\/conta$/);
   await expect(
     page.getByRole("heading", { name: "Nosso espaço" }),
   ).toBeVisible();
+  await waitForHydrated(page);
 }
 
 export async function dismissToast(page: Page) {

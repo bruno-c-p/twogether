@@ -4,13 +4,12 @@ import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { BudgetApp } from "@/features/budget";
 import {
-  gateRedirectSearch,
   missingWorkspaceMonth,
-  validateBudgetSearch,
+  validateBudgetFilters,
   withDefaultMonth,
 } from "@/features/budget/search";
-import { LoadingState } from "@/features/budget/components/empty-state";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
+import { LoadingState } from "@/features/budget/components/empty-state";
 import {
   browserTimeZone,
   isValidTimeZone,
@@ -30,12 +29,9 @@ function BudgetPending() {
   return <LoadingState>Carregando orçamento…</LoadingState>;
 }
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/_authenticated/")({
   component: BudgetRoute,
-  validateSearch: validateBudgetSearch,
-  loaderDeps: ({ search }) => ({
-    convite: search.convite,
-  }),
+  validateSearch: validateBudgetFilters,
   beforeLoad: ({ search }) => {
     if (!missingWorkspaceMonth(search)) return;
     const timeZone = requestTimeZone();
@@ -45,15 +41,8 @@ export const Route = createFileRoute("/")({
       search: withDefaultMonth(search, monthIn(timeZone)),
     });
   },
-  loader: async ({ context, deps }): Promise<WorkspaceSnapshot> => {
-    if (deps.convite) {
-      throw redirect({
-        to: "/entrar",
-        search: gateRedirectSearch(deps),
-      });
-    }
-    return context.queryClient.ensureQueryData(workspaceQueryOptions);
-  },
+  loader: async ({ context }): Promise<WorkspaceSnapshot> =>
+    context.queryClient.ensureQueryData(workspaceQueryOptions),
   pendingComponent: BudgetPending,
   pendingMs: 300,
   pendingMinMs: 500,

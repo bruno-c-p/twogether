@@ -14,6 +14,7 @@ import type {
   GoalPercentages,
   SharedSnapshot,
   Transaction,
+  WorkspaceHousehold,
 } from "@/features/budget/domain/types";
 import {
   createHousehold as createHouseholdRecord,
@@ -31,6 +32,7 @@ import {
   revision,
   text,
   type AccountRow,
+  type DatabaseExecutor,
   type HouseholdRow,
   type StoreContext,
   type TransactionRow,
@@ -111,6 +113,46 @@ function canonicalAccount(value: BankAccount): BankAccount {
   };
 }
 
+async function memberBudgets(
+  database: DatabaseExecutor,
+  householdId: string,
+): Promise<WorkspaceHousehold["members"]> {
+  const members = await all<{
+    id: string;
+    name: string;
+    percentages: string;
+    revision: number;
+  }>(
+    database,
+    `SELECT id, name, percentages, revision FROM users
+       WHERE household_id = ? ORDER BY rowid`,
+    [householdId],
+  );
+  return members.map((member) => ({
+    id: member.id,
+    name: member.name,
+    percentages: storedPercentages(member.percentages),
+    percentagesRevision: member.revision,
+  }));
+}
+
+export async function householdSnapshot(
+  ctx: StoreContext,
+  user: UserRow,
+): Promise<WorkspaceHousehold> {
+  await ctx.ready;
+  return ctx.readOnly(async (transaction) => {
+    const fresh = await one<UserRow>(
+      transaction,
+      "SELECT * FROM users WHERE id = ?",
+      [user.id],
+    );
+    if (!fresh) throw new RequestError("Cadastro não encontrado.", 404);
+    const owned = await household(transaction, fresh);
+    return { id: owned.id, members: await memberBudgets(transaction, owned.id) };
+  });
+}
+
 export async function snapshot(
   ctx: StoreContext,
   user: UserRow | null,
@@ -137,27 +179,11 @@ export async function snapshot(
       "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
       [owned.id],
     );
-    const members = await all<{
-      id: string;
-      name: string;
-      percentages: string;
-      revision: number;
-    }>(
-      transaction,
-      `SELECT id, name, percentages, revision FROM users
-         WHERE household_id = ? ORDER BY rowid`,
-      [owned.id],
-    );
     return {
       user: identity,
       household: {
         id: owned.id,
-        members: members.map((member) => ({
-          id: member.id,
-          name: member.name,
-          percentages: storedPercentages(member.percentages),
-          percentagesRevision: member.revision,
-        })),
+        members: await memberBudgets(transaction, owned.id),
       },
       budget: {
         ...emptyBudget(),
@@ -455,6 +481,7 @@ export function createBudgetStore(filename: string) {
   const ctx = createStoreContext(filename);
   return {
     snapshot: (user: UserRow | null) => snapshot(ctx, user),
+    householdSnapshot: (user: UserRow) => householdSnapshot(ctx, user),
     ensureUser: (clerkUserId: string) => ensureUser(ctx, clerkUserId),
     householdFor: (user: UserRow) => householdFor(ctx, user),
     setName: (user: UserRow, name: string) => setName(ctx, user, name),

@@ -1,17 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
-  gateRedirectSearch,
   missingWorkspaceMonth,
   openGoalTransactions,
   openView,
-  validateBudgetSearch,
-  validateInviteSearch,
+  validateBudgetFilters,
   withDefaultMonth,
   withView,
-  type BudgetSearch,
+  type BudgetFilters,
 } from "@/features/budget/search";
 
-const filtered: BudgetSearch = {
+const filtered: BudgetFilters = {
   view: "overview",
   month: "2026-09",
   member: "alice",
@@ -19,7 +17,6 @@ const filtered: BudgetSearch = {
   goal: "fixed",
   tag: "casa",
   kind: "expense",
-  convite: "b".repeat(64),
 };
 
 describe("withView", () => {
@@ -57,42 +54,10 @@ describe("openGoalTransactions", () => {
   });
 });
 
-describe("gateRedirectSearch", () => {
-  const convite = "b".repeat(64);
-
-  it("forwards the invite to /entrar", () => {
-    expect(gateRedirectSearch({ convite })).toEqual({ convite });
-  });
-
-  it("omits a missing invite", () => {
-    expect(gateRedirectSearch({})).toEqual({});
-  });
-});
-
-describe("validateInviteSearch", () => {
-  const convite = "b".repeat(64);
-
-  it("keeps a 64-hex invite and drops junk and workspace filters", () => {
-    expect(validateInviteSearch({ convite, view: "accounts" })).toEqual({
-      convite,
-    });
-    expect(validateInviteSearch({ convite: "invite" })).toEqual({
-      convite: undefined,
-    });
-  });
-});
-
-describe("validateBudgetSearch", () => {
-  const convite = "b".repeat(64);
-
-  it("keeps a 64-hex invite token and drops junk", () => {
-    expect(validateBudgetSearch({ convite })).toMatchObject({ convite });
-    expect(validateBudgetSearch({ convite: "invite" }).convite).toBeUndefined();
-  });
-
+describe("validateBudgetFilters", () => {
   it("drops junk month, view, and kind", () => {
     expect(
-      validateBudgetSearch({
+      validateBudgetFilters({
         month: "2026-13",
         view: "settings",
         kind: "transfer",
@@ -105,10 +70,9 @@ describe("validateBudgetSearch", () => {
       goal: undefined,
       tag: undefined,
       kind: undefined,
-      convite: undefined,
     });
     expect(
-      validateBudgetSearch({
+      validateBudgetFilters({
         month: "2026-09",
         view: "accounts",
         kind: "income",
@@ -134,9 +98,7 @@ describe("withDefaultMonth", () => {
     });
   });
 
-  it("does not default month for invite URLs", () => {
-    const convite = "b".repeat(64);
-    expect(missingWorkspaceMonth({ convite })).toBe(false);
+  it("keeps a month that is already in the URL", () => {
     expect(missingWorkspaceMonth({ month: "2026-09" })).toBe(false);
   });
 });

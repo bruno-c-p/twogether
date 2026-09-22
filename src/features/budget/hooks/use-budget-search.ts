@@ -2,18 +2,18 @@ import { getRouteApi } from "@tanstack/react-router";
 import {
   openGoalTransactions,
   openView,
-  type BudgetSearch,
+  type BudgetFilters,
 } from "@/features/budget/search";
 import type { GoalId, TransactionKind, View } from "@/features/budget/domain/types";
 
-const workspaceRoute = getRouteApi("/");
+const workspaceRoute = getRouteApi("/_authenticated/");
 
 export function useBudgetSearch() {
   const search = workspaceRoute.useSearch();
   const navigate = workspaceRoute.useNavigate();
 
   function updateSearch(
-    next: (prev: BudgetSearch) => BudgetSearch,
+    next: (prev: BudgetFilters) => BudgetFilters,
     replace = false,
   ) {
     void navigate({ to: "/", search: next, replace });
