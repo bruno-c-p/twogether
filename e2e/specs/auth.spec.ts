@@ -124,7 +124,7 @@ test.describe("auth", () => {
     expect(new URL(page.url()).pathname).toBe(`/convite/${convite}`);
   });
 
-  test("M13 private routes send signed-out visitors to the gate", async ({
+  test("M14 private routes send signed-out visitors to the gate", async ({
     page,
   }) => {
     await page.goto("/conta");

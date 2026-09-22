@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { currentMonth } from "@/features/budget/domain/format";
 import { goalIdSchema, monthSchema } from "@/features/budget/domain/schemas";
 import type {
   GoalId,
@@ -78,7 +77,7 @@ export function missingWorkspaceMonth(search: BudgetFilters): boolean {
 
 export function withDefaultMonth(
   search: BudgetFilters,
-  month = currentMonth(),
+  month: string,
 ): BudgetFilters {
   return { ...search, month };
 }

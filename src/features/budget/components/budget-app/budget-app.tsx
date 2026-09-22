@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useHydrated } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
@@ -111,6 +112,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const month = searchMonth ?? currentMonth();
+  const today = useHydrated() ? currentMonth() : null;
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
@@ -399,10 +401,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               <ChevronRight size={17} />
             </Button>
           </div>
-          {month !== currentMonth() && (
+          {today && month !== today && (
             <button
               className={styles.todayButton}
-              onClick={() => setMonth(currentMonth())}
+              onClick={() => setMonth(today)}
             >
               Voltar para este mês
             </button>
