@@ -1,11 +1,11 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { BudgetApp } from "@/features/budget";
-import { loadWorkspace } from "@/features/budget/actions";
 import {
   missingWorkspaceMonth,
   validateBudgetFilters,
   withDefaultMonth,
 } from "@/features/budget/search";
+import { workspaceQueryOptions } from "@/features/budget/workspace";
 import { LoadingState } from "@/features/budget/components/empty-state";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 
@@ -24,7 +24,8 @@ export const Route = createFileRoute("/_authenticated/")({
       });
     }
   },
-  loader: async (): Promise<WorkspaceSnapshot> => loadWorkspace(),
+  loader: async ({ context }): Promise<WorkspaceSnapshot> =>
+    context.queryClient.ensureQueryData(workspaceQueryOptions),
   pendingComponent: BudgetPending,
   pendingMs: 300,
   pendingMinMs: 500,

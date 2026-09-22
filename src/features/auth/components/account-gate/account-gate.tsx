@@ -5,13 +5,13 @@ import { usePostHog } from "posthog-js/react";
 import {
   SignIn,
   useAuth,
-  useClerk,
   useUser,
 } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
 import { setName } from "@/features/auth/actions";
 import type { SessionState } from "@/features/auth/actions/load-session";
+import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import { createHousehold, joinHousehold } from "@/features/household/actions";
 import { isMutationFailure } from "@/server/mutation-result";
 import { InviteForm } from "@/features/auth/components/invite-form";
@@ -95,7 +95,7 @@ export function AccountGate({
   const { isSignedIn } = useAuth();
   const posthog = usePostHog();
   const { user: clerkUser } = useUser();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const invitation = invite;
   const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
   const afterAuth = invitation ? `/convite/${invitation}` : "/entrar";
@@ -131,8 +131,7 @@ export function AccountGate({
   }
   async function leave() {
     posthog.reset();
-    await signOut({ redirectUrl: "/entrar" });
-    await router.invalidate();
+    await signOut();
   }
   return (
     <main className={styles.accountPage}>

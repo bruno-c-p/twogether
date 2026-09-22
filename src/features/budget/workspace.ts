@@ -1,3 +1,5 @@
+import { queryOptions } from "@tanstack/react-query";
+import { loadWorkspace } from "@/features/budget/actions";
 import type {
   Transaction,
   WorkspaceSnapshot,
@@ -5,9 +7,10 @@ import type {
 
 export const workspaceQueryKey = ["workspace"] as const;
 
-export function workspaceQueryKeyFor(userId: string) {
-  return ["workspace", userId] as const;
-}
+export const workspaceQueryOptions = queryOptions({
+  queryKey: workspaceQueryKey,
+  queryFn: loadWorkspace,
+});
 
 export function optimisticSave(
   snapshot: WorkspaceSnapshot,

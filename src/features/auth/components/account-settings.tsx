@@ -1,9 +1,10 @@
 import { useCallback, useRef, useState, type FormEvent } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
-import { useClerk, useUser } from "@clerk/tanstack-react-start";
+import { useUser } from "@clerk/tanstack-react-start";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
+import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import { createInvite, revokeInvite } from "@/features/household/actions";
 import { MemberList } from "@/features/household/components/member-list/member-list";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
@@ -26,7 +27,7 @@ const contaRoute = getRouteApi("/_authenticated/conta");
 export function AccountSettings() {
   const { user, household } = contaRoute.useLoaderData();
   const router = useRouter();
-  const { signOut } = useClerk();
+  const signOut = useSignOut();
   const posthog = usePostHog();
   const { user: clerkUser } = useUser();
   const [busy, setBusy] = useState(false);
@@ -118,8 +119,7 @@ export function AccountSettings() {
   }
   async function leave() {
     posthog.reset();
-    await signOut({ redirectUrl: "/entrar" });
-    await router.invalidate();
+    await signOut();
   }
   return (
     <WorkspaceShell title="Sua conta" memberLabel={memberLabel}>
