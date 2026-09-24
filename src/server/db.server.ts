@@ -80,8 +80,44 @@ export async function one<T extends object>(
   return (await all<T>(database, sql, args))[0];
 }
 
+const LEGACY_TABLES = [
+  "transactions",
+  "accounts",
+  "invites",
+  "member_percentages",
+  "sessions",
+  "magic_links",
+  "attempts",
+  "users",
+  "households",
+] as const;
+
+async function resetLegacySchema(database: Client) {
+  const users = await all<{ name: string }>(
+    database,
+    "PRAGMA table_info(users)",
+  );
+  const households = await all<{ name: string }>(
+    database,
+    "PRAGMA table_info(households)",
+  );
+  const isLegacy =
+    (users.length > 0 &&
+      !users.some((column) => column.name === "percentages")) ||
+    households.some((column) => column.name === "percentages");
+  if (!isLegacy) return;
+  await database.batch(
+    LEGACY_TABLES.map((table) => ({
+      sql: `DROP TABLE IF EXISTS ${table}`,
+      args: [],
+    })),
+    "write",
+  );
+}
+
 async function initializeDatabase(database: Client, local: boolean) {
   if (local) await execute(database, "PRAGMA foreign_keys = ON");
+  await resetLegacySchema(database);
   await database.batch([...schema], "write");
 }
 
