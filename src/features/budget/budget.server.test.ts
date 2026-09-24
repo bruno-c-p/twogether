@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { createClient } from "@libsql/client";
 import { createBudgetStore } from "@/features/budget/budget.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
@@ -473,5 +474,53 @@ describe("bank accounts", () => {
       }),
     ).rejects.toThrow("mudou");
     expect((await store.snapshot(c.user)).budget.accounts).toHaveLength(0);
+  });
+});
+
+describe("legacy database", () => {
+  test("resets the magic-link schema and serves the workspace", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "twogether-legacy-"));
+    const path = join(dir, "legacy.sqlite");
+    const legacy = createClient({ url: `file:${path}`, intMode: "number" });
+    try {
+      await legacy.batch(
+        [
+          `CREATE TABLE households (id TEXT PRIMARY KEY, percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
+          `CREATE TABLE users (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL UNIQUE, household_id TEXT REFERENCES households(id))`,
+          `CREATE TABLE sessions (hash TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id), expires INTEGER NOT NULL)`,
+          `CREATE TABLE member_percentages (user_id TEXT PRIMARY KEY REFERENCES users(id), percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
+        ],
+        "write",
+      );
+      await legacy.batch(
+        [
+          {
+            sql: `INSERT INTO households(id, percentages, revision) VALUES (?,?,0)`,
+            args: ["legacy-household", JSON.stringify(DEFAULT_PERCENTAGES)],
+          },
+          {
+            sql: `INSERT INTO users(id, name, email, household_id) VALUES (?,?,?,?)`,
+            args: ["legacy-user", "Ana", "ana@example.com", "legacy-household"],
+          },
+        ],
+        "write",
+      );
+    } finally {
+      legacy.close();
+    }
+
+    const store = createBudgetStore(path);
+    try {
+      const user = await store.ensureUser("user_clerk_new");
+      await store.setName(user, "Bia");
+      await store.createHousehold(await store.ensureUser(user.id));
+      const snapshot = await store.snapshot(await store.ensureUser(user.id));
+      expect(snapshot.user?.name).toBe("Bia");
+      expect(snapshot.household?.members).toHaveLength(1);
+      expect(snapshot.budget.transactions).toEqual([]);
+    } finally {
+      store.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
