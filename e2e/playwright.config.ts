@@ -48,16 +48,19 @@ export default defineConfig({
   ],
   webServer: {
     cwd: root,
-    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun --bun vite --host 127.0.0.1 --port ${port}`,
+    // The suite runs the production build, not `vite dev`: the dev SSR module
+    // runner races on server-function modules (undefined middleware, then a
+    // poisoned module graph) and has been failing CI intermittently. The build
+    // is the artifact we ship, so this both stabilizes the run and tests prod.
+    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun run build && NODE_ENV=production HOST=127.0.0.1 PORT=${port} node .output/server/index.mjs`,
     // A static asset, not "/": the app root renders SSR, so a failing Clerk or
     // database request would look like a server that never booted.
     url: `${baseURL}/manifest.webmanifest`,
     reuseExistingServer: false,
-    timeout: 180_000,
+    timeout: 240_000,
     env: {
       ...env,
       BUDGET_DATABASE_PATH: databasePath,
-      NODE_ENV: "development",
     },
   },
 });
