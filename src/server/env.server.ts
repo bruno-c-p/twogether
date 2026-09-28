@@ -12,7 +12,10 @@ const TOKEN_MESSAGE =
 
 const remoteDatabase = /^(?:https?|libsql|wss?):/i;
 
-const emptyAsUndefined = (value: unknown) => (value === "" ? undefined : value);
+// Blank .env entries mean "not configured".
+function emptyAsUndefined<Value>(value: Value) {
+  return value === "" ? undefined : value;
+}
 
 const databaseUrlSchema = z
   .string({ error: DATABASE_MESSAGE })
@@ -47,7 +50,7 @@ const optionalToken = z.preprocess(
     .optional(),
 );
 
-export const serverEnvSchema = z
+const serverEnvSchema = z
   .object({
     CLERK_SECRET_KEY: z.preprocess(
       emptyAsUndefined,
@@ -66,7 +69,7 @@ export const serverEnvSchema = z
     { error: TOKEN_MESSAGE, path: ["TURSO_AUTH_TOKEN"] },
   );
 
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
+type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export function parseServerEnv(values: Record<string, string | undefined>) {
   const result = serverEnvSchema.safeParse(values);
@@ -78,7 +81,7 @@ export function parseServerEnv(values: Record<string, string | undefined>) {
 
 let cached: ServerEnv | undefined;
 
-export const serverEnv = createServerOnlyFn(
+const serverEnv = createServerOnlyFn(
   () => (cached ??= parseServerEnv(process.env)),
 );
 

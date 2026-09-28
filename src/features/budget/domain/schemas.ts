@@ -7,10 +7,6 @@ const HEX64 = /^[0-9a-f]{64}$/;
 
 const MONEY_MAX = 99999999999;
 
-export const budgetTokenSchema = z
-  .string({ error: "Token inválido." })
-  .regex(HEX64, { error: "Token inválido." });
-
 export const inviteTokenSchema = z
   .string({ error: "Convite inválido. Peça um novo link." })
   .regex(HEX64, { error: "Convite inválido. Peça um novo link." });

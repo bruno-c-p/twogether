@@ -106,13 +106,10 @@ const LEGACY_TABLES = [
 const columnSchema = z.object({ name: z.string() });
 
 async function resetLegacySchema(database: Client) {
-  const users = await all(database, columnSchema, "PRAGMA table_info(users)");
-
-  const households = await all(
-    database,
-    columnSchema,
-    "PRAGMA table_info(households)",
-  );
+  const [users, households] = await Promise.all([
+    all(database, columnSchema, "PRAGMA table_info(users)"),
+    all(database, columnSchema, "PRAGMA table_info(households)"),
+  ]);
 
   const isLegacy =
     (users.length > 0 &&

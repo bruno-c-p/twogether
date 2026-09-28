@@ -175,7 +175,7 @@ async function memberBudgets(
   }));
 }
 
-export async function householdSnapshot(
+async function householdSnapshot(
   ctx: StoreContext,
   user: UserRow,
 ): Promise<WorkspaceHousehold> {
@@ -199,7 +199,7 @@ export async function householdSnapshot(
   });
 }
 
-export async function snapshot(
+async function snapshot(
   ctx: StoreContext,
   user: UserRow | null,
 ): Promise<SharedSnapshot> {

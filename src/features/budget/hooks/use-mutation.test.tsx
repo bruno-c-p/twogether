@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
-import { workspaceQueryKeyFor } from "@/features/budget/workspace";
+import { workspaceQueryKey } from "@/features/budget/workspace";
 import type { MutationResult } from "@/server/mutation-result";
 import { ana } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
@@ -36,11 +36,13 @@ function Harness({
 }) {
   const mutation = useMutation(fn, optimistic);
 
+  async function go() {
+    onResult(await mutation.run("go"));
+  }
+
   return (
     <>
-      <button onClick={() => void mutation.run("go").then(onResult)}>
-        run
-      </button>
+      <button onClick={() => void go()}>run</button>
       <p role="status">
         {mutation.pending ? "pending" : mutation.error || "idle"}
       </p>
@@ -56,12 +58,11 @@ async function setup(fn: Run, optimistic?: typeof renamed) {
     "/?month=2026-09",
   );
 
-  view.queryClient.setQueryData(workspaceQueryKeyFor("ana"), snapshot);
+  view.queryClient.setQueryData(workspaceQueryKey, snapshot);
 
   const cachedName = () =>
-    view.queryClient.getQueryData<WorkspaceSnapshot>(
-      workspaceQueryKeyFor("ana"),
-    )?.user.name;
+    view.queryClient.getQueryData<WorkspaceSnapshot>(workspaceQueryKey)?.user
+      .name;
 
   return { ...view, onResult, cachedName };
 }

@@ -10,13 +10,11 @@ import {
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import {
-  validateBudgetSearch,
-  validateInviteSearch,
-} from "@/features/budget/search";
+import { validateBudgetFilters } from "@/features/budget/search";
 
-// Mirrors the app's "/" and "/entrar" routes (ids and search validation) so
-// components using getRouteApi() work, without loaders, Clerk or the server.
+// Mirrors the app's route ids ("/_authenticated/", "/_authenticated/conta",
+// "/entrar") and workspace search validation, so components using
+// getRouteApi() work without loaders, Clerk or the server.
 export async function renderWithProviders(ui: ReactNode, path = "/") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -24,17 +22,29 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
 
   const root = createRootRoute({ component: Outlet });
 
+  const authenticated = createRoute({
+    getParentRoute: () => root,
+    id: "_authenticated",
+    component: Outlet,
+  });
+
   const routeTree = root.addChildren([
-    createRoute({
-      getParentRoute: () => root,
-      path: "/",
-      validateSearch: validateBudgetSearch,
-      component: () => ui,
-    }),
+    authenticated.addChildren([
+      createRoute({
+        getParentRoute: () => authenticated,
+        path: "/",
+        validateSearch: validateBudgetFilters,
+        component: () => ui,
+      }),
+      createRoute({
+        getParentRoute: () => authenticated,
+        path: "conta",
+        component: () => ui,
+      }),
+    ]),
     createRoute({
       getParentRoute: () => root,
       path: "/entrar",
-      validateSearch: validateInviteSearch,
       component: () => ui,
     }),
   ]);

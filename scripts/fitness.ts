@@ -56,7 +56,7 @@ function productionEnv(port: number) {
     NITRO_PORT: String(port),
     NITRO_HOST: "127.0.0.1",
     HOST: "127.0.0.1",
-    NODE_ENV: "production",
+    NODE_ENV: "production" as const,
     BUDGET_DATABASE_PATH: ":memory:",
     // Clerk middleware boots on every request, so a keyless environment
     // would answer 500 before this header exists. Placeholders only keep the

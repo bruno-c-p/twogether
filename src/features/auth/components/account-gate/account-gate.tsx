@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect } from "react";
 import type { ComponentProps, ReactNode } from "react";
-import { isRedirect, useNavigate, useRouter } from "@tanstack/react-router";
+import { useNavigate, useRouter } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme";
@@ -8,9 +8,11 @@ import { ArrowRight, HeartHandshake } from "lucide-react";
 import { setName } from "@/features/auth/actions";
 import type { SessionState } from "@/features/auth/actions/load-session";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
+import {
+  useActionRun,
+  type ActionRun,
+} from "@/features/auth/hooks/use-action-run";
 import { createHousehold, joinHousehold } from "@/features/household/actions";
-import { isMutationFailure } from "@/server/mutation-result";
-import { failureMessage } from "@/features/budget/hooks/use-mutation";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
@@ -33,52 +35,6 @@ const SESSION_SYNC_INTERVAL_MS = 400;
 const GateSignIn = SignIn as (
   props: ComponentProps<typeof SignIn> & { fallback?: ReactNode },
 ) => ReactNode;
-
-export function useGateRun() {
-  const router = useRouter();
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const inFlight = useRef(false);
-
-  const run = useCallback(
-    async <T,>(fn: () => Promise<T>): Promise<T | null> => {
-      if (inFlight.current) return null;
-      inFlight.current = true;
-      setBusy(true);
-      setError("");
-
-      try {
-        const result = await fn();
-
-        if (isMutationFailure(result)) {
-          setError(result.message);
-
-          return null;
-        }
-
-        await router.invalidate();
-
-        return result;
-      } catch (cause) {
-        if (isRedirect(cause)) {
-          await router.navigate(router.resolveRedirect(cause).options);
-
-          return null;
-        }
-
-        setError(failureMessage(cause));
-
-        return null;
-      } finally {
-        inFlight.current = false;
-        setBusy(false);
-      }
-    },
-    [router],
-  );
-
-  return { error, busy, run };
-}
 
 type GateUser = SessionState["user"];
 
@@ -183,10 +139,7 @@ function StartChoice({
   );
 }
 
-function useGateActions(
-  run: ReturnType<typeof useGateRun>["run"],
-  invitation: string,
-) {
+function useGateActions(run: ActionRun, invitation: string) {
   const posthog = usePostHog();
   const signOut = useSignOut();
 
@@ -312,7 +265,7 @@ export function AccountGate({
   session: SessionState;
   invite?: string;
 }) {
-  const { error, busy, run } = useGateRun();
+  const { error, busy, run } = useActionRun();
   const user = session.user;
   const router = useRouter();
   const navigate = useNavigate();

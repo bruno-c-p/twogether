@@ -26,10 +26,10 @@ function cachedWorkspace(
   return { key: entry[0], previous: entry[1] };
 }
 
-export function failureMessage(cause: unknown) {
+export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
   return cause instanceof Error && !(cause instanceof TypeError)
     ? cause.message
-    : OFFLINE_MESSAGE;
+    : offline;
 }
 
 export function useMutation<TArgs extends unknown[], TResult>(

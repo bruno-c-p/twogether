@@ -73,7 +73,7 @@ export function TransactionFlows({
   following,
   ...flow
 }: FlowProps & { month: string; allTags: string[]; following: Transaction[] }) {
-  const { budget, dialogs, mutations, actions } = flow;
+  const { dialogs, mutations, actions } = flow;
 
   return (
     <>

@@ -6,8 +6,11 @@ import {
 } from "@/features/budget/domain/schemas";
 
 const form = z.object({
-  name: z.string().min(2, "Nome curto.").max(3, "Nome longo."),
-  amount: z.number("Valor inválido."),
+  name: z
+    .string()
+    .min(2, { error: "Nome curto." })
+    .max(3, { error: "Nome longo." }),
+  amount: z.number({ error: "Valor inválido." }),
 });
 
 describe("form error helpers", () => {
@@ -24,7 +27,7 @@ describe("form error helpers", () => {
   });
 
   test("fieldErrors skips issues that are not tied to a field", () => {
-    const parsed = z.string("Texto.").safeParse(1);
+    const parsed = z.string({ error: "Texto." }).safeParse(1);
 
     if (!parsed.success) expect(fieldErrors(parsed.error)).toEqual({});
   });

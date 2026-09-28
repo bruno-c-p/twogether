@@ -12,7 +12,10 @@ const POSTHOG_HOST_MESSAGE =
 
 const INVALID_MESSAGE = "must be a non-empty string when configured.";
 
-const emptyAsUndefined = (value: unknown) => (value === "" ? undefined : value);
+// Blank .env entries mean "not configured".
+function emptyAsUndefined<Value>(value: Value) {
+  return value === "" ? undefined : value;
+}
 
 const optionalValue = (key: string) =>
   z.preprocess(
@@ -23,7 +26,7 @@ const optionalValue = (key: string) =>
       .optional(),
   );
 
-export const clientEnvSchema = z.object({
+const clientEnvSchema = z.object({
   VITE_CLERK_PUBLISHABLE_KEY: z.preprocess(
     emptyAsUndefined,
     z.string({ error: CLERK_MESSAGE }).min(1, { error: CLERK_MESSAGE }),
@@ -33,8 +36,6 @@ export const clientEnvSchema = z.object({
   ),
   VITE_PUBLIC_POSTHOG_HOST: optionalValue("VITE_PUBLIC_POSTHOG_HOST"),
 });
-
-export type ClientEnv = z.infer<typeof clientEnvSchema>;
 
 export function parseClientEnv(
   values: Record<string, string | undefined>,

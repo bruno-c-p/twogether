@@ -51,7 +51,7 @@ describe("BudgetWorkspace", () => {
       screen.getByText("O planejado soma as metas individuais de cada pessoa."),
     ).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
+      screen.getByRole("link", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeTruthy();
     expect(screen.getByText("conta")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Editar Mercado" })).toBeTruthy();
