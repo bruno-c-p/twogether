@@ -73,6 +73,7 @@ function List({
       }}
       members={[ana]}
       accounts={[nubank]}
+      userId="ana"
       busy={false}
       hidden={hidden}
       compact={compact}

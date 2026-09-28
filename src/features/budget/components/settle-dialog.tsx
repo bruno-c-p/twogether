@@ -98,6 +98,7 @@ export function SettleDialog({
         {label}
         <select
           name={name}
+          aria-label={label}
           defaultValue={defaultAccount}
           required
           aria-describedby={errors[name] ? `${name}-error` : undefined}
@@ -137,6 +138,7 @@ export function SettleDialog({
               <input
                 type="date"
                 name="date"
+                aria-label="Data do pagamento"
                 defaultValue={localDate()}
                 min="1900-01-01"
                 max="9999-12-31"

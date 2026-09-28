@@ -282,45 +282,65 @@ async function requireAccount(
 
 // A create retried after a lost response carries no revision; accept it when
 // the stored row already matches the submission.
+const RETRY_FIELDS = [
+  "description",
+  "amount",
+  "date",
+  "kind",
+  "goal",
+  "accountId",
+] as const;
+
+function sameTags(a: string[], b: string[]) {
+  return a.length === b.length && a.every((tag, index) => tag === b[index]);
+}
+
 function isRetriedCreate(stored: Transaction, t: Transaction, userId: string) {
   return (
-    stored.description === t.description &&
-    stored.amount === t.amount &&
-    stored.date === t.date &&
-    stored.kind === t.kind &&
-    stored.goal === t.goal &&
-    stored.accountId === t.accountId &&
+    RETRY_FIELDS.every((field) => stored[field] === t[field]) &&
     Boolean(stored.split) === Boolean(t.split) &&
     stored.memberId === userId &&
-    stored.tags.length === t.tags.length &&
-    stored.tags.every((tag, index) => tag === t.tags[index])
+    sameTags(stored.tags, t.tags)
   );
 }
 
 // Repayments and paid splits are locked; a new split needs both partners.
 // Editing an existing split keeps its stored settlement state.
+function lockedEditError(t: Transaction, previous: Transaction | undefined) {
+  if (!previous) return undefined;
+
+  if (previous.settlementOf) return REPAYMENT_LOCKED;
+
+  if (!previous.split?.paidAt) return undefined;
+
+  const changed =
+    !t.split || t.amount !== previous.amount || t.kind !== previous.kind;
+
+  return changed ? PAID_LOCKED : undefined;
+}
+
 async function assertSplitEditable(
   transaction: DatabaseTransaction,
   homeRow: HouseholdRow,
   t: Transaction,
   previous: Transaction | undefined,
 ) {
-  if (previous?.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+  const locked = lockedEditError(t, previous);
 
-  const paidChange =
-    !t.split || t.amount !== previous?.amount || t.kind !== previous.kind;
+  if (locked) throw new RequestError(locked);
 
-  if (previous?.split?.paidAt && paidChange)
-    throw new RequestError(PAID_LOCKED);
+  if (!t.split) return;
 
-  const newSplit = t.split && !previous?.split;
+  if (previous?.split) {
+    t.split = previous.split;
 
-  if (newSplit && (await memberCount(transaction, homeRow.id)) < 2)
+    return;
+  }
+
+  if ((await memberCount(transaction, homeRow.id)) < 2)
     throw new RequestError(
       "Convide a outra pessoa do casal antes de dividir despesas.",
     );
-
-  if (t.split && previous?.split) t.split = previous.split;
 }
 
 function assertRevision(
@@ -424,6 +444,74 @@ async function saveTransaction(
   });
 }
 
+function matchesExpected(
+  rows: { id: string; revision: number }[],
+  expected: { id: string; revision: number }[],
+) {
+  return (
+    expected.length === rows.length &&
+    rows.every((row) =>
+      expected.some(
+        (item) => item.id === row.id && item.revision === row.revision,
+      ),
+    )
+  );
+}
+
+// Deletes the later occurrences of a series, but only the exact set (and
+// revisions) the client saw, and none that is locked.
+async function deleteFollowing(
+  transaction: DatabaseTransaction,
+  homeRow: HouseholdRow,
+  user: UserRow,
+  source: Transaction,
+  expected: { id: string; revision: number }[],
+) {
+  const index = source.recurrenceIndex;
+
+  if (!source.recurrenceId || index === undefined)
+    throw new RequestError("Recorrência inválida.");
+
+  const candidates = await all(
+    transaction,
+    transactionRowSchema
+      .pick({ payload: true, revision: true })
+      .extend({ id: z.string() }),
+    "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
+    [homeRow.id],
+  );
+
+  const following = candidates.filter((row) => {
+    const item = storedTransaction(row.payload);
+
+    return (
+      item.recurrenceId === source.recurrenceId &&
+      item.recurrenceIndex !== undefined &&
+      item.recurrenceIndex > index
+    );
+  });
+
+  if (!matchesExpected(following, expected)) throw conflict();
+
+  for (const row of following) assertUnlocked(storedTransaction(row.payload));
+
+  for (const row of following) {
+    await execute(
+      transaction,
+      "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
+      [
+        JSON.stringify({
+          ...storedTransaction(row.payload),
+          updatedBy: user.id,
+          updatedAt: new Date().toISOString(),
+        }),
+        homeRow.id,
+        row.id,
+      ],
+    );
+  }
+}
+
 async function deleteTransaction(
   ctx: StoreContext,
   user: UserRow,
@@ -449,63 +537,14 @@ async function deleteTransaction(
 
     if (!previous.deleted) assertUnlocked(storedTransaction(previous.payload));
 
-    if (input.following !== undefined) {
-      const source = storedTransaction(previous.payload);
-
-      if (!source.recurrenceId || source.recurrenceIndex === undefined)
-        throw new RequestError("Recorrência inválida.");
-
-      const candidates = await all(
+    if (input.following !== undefined)
+      await deleteFollowing(
         transaction,
-        transactionRowSchema
-          .pick({ payload: true, revision: true })
-          .extend({ id: z.string() }),
-        "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
-        [homeRow.id],
+        homeRow,
+        user,
+        storedTransaction(previous.payload),
+        input.following,
       );
-
-      const following = candidates.filter((row) => {
-        const item = storedTransaction(row.payload);
-
-        return (
-          item.recurrenceId === source.recurrenceId &&
-          item.recurrenceIndex !== undefined &&
-          item.recurrenceIndex > source.recurrenceIndex!
-        );
-      });
-
-      const expected = input.following;
-
-      if (
-        expected.length !== following.length ||
-        following.some(
-          (row) =>
-            !expected.some(
-              (item) => item.id === row.id && item.revision === row.revision,
-            ),
-        )
-      )
-        throw conflict();
-
-      for (const row of following)
-        assertUnlocked(storedTransaction(row.payload));
-
-      for (const row of following) {
-        await execute(
-          transaction,
-          "UPDATE transactions SET deleted = 1, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ?",
-          [
-            JSON.stringify({
-              ...storedTransaction(row.payload),
-              updatedBy: user.id,
-              updatedAt: new Date().toISOString(),
-            }),
-            homeRow.id,
-            row.id,
-          ],
-        );
-      }
-    }
 
     const payload = JSON.stringify({
       ...storedTransaction(previous.payload),
@@ -615,7 +654,7 @@ async function writeSplit(
   if (result.rowsAffected !== 1) throw conflict();
 }
 
-export async function settleSplit(
+async function settleSplit(
   ctx: StoreContext,
   user: UserRow,
   homeRow: HouseholdRow,
@@ -636,16 +675,11 @@ export async function settleSplit(
 
     if (!date.success) throw new RequestError(firstIssueMessage(date.error));
 
-    for (const accountId of [input.payerAccountId, input.partnerAccountId]) {
-      const account = await one(
-        transaction,
-        accountRowSchema.pick({ id: true }),
-        "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
-        [homeRow.id, text(accountId, 100)],
-      );
-
-      if (!account) throw new RequestError("Escolha uma conta bancária.");
-    }
+    await Promise.all(
+      [input.payerAccountId, input.partnerAccountId].map((accountId) =>
+        requireAccount(transaction, homeRow, text(accountId, 100)),
+      ),
+    );
 
     const now = new Date().toISOString();
     const { stored } = source;
@@ -695,7 +729,7 @@ export async function settleSplit(
   });
 }
 
-export async function unsettleSplit(
+async function unsettleSplit(
   ctx: StoreContext,
   user: UserRow,
   homeRow: HouseholdRow,

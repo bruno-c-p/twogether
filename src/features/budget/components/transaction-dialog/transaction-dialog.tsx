@@ -102,6 +102,32 @@ function defaultAccountId(
   return transaction?.accountId ?? fallback;
 }
 
+function useSplitChoice({
+  transaction,
+  members,
+  kind,
+  currentUserId,
+}: {
+  transaction: Transaction | null;
+  members: Member[];
+  kind: TransactionKind;
+  currentUserId: string;
+}) {
+  const [split, setSplit] = useState(Boolean(transaction?.split));
+
+  // Only expenses between the two partners split; repayments never do.
+  const canSplit =
+    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+
+  return {
+    split,
+    setSplit,
+    canSplit,
+    paid: Boolean(transaction?.split?.paidAt),
+    memberId: transaction?.memberId ?? currentUserId,
+  };
+}
+
 function useTransactionForm({
   transaction,
   members,
@@ -134,13 +160,13 @@ function useTransactionForm({
   const [occurrences, setOccurrences] = useState(12);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
-  const [split, setSplit] = useState(Boolean(transaction?.split));
-  const memberId = transaction?.memberId ?? currentUserId;
-  const paid = Boolean(transaction?.split?.paidAt);
 
-  // Only expenses between the two partners split; repayments never do.
-  const canSplit =
-    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+  const { split, setSplit, canSplit, paid, memberId } = useSplitChoice({
+    transaction,
+    members,
+    kind,
+    currentUserId,
+  });
 
   function changeKind(next: TransactionKind) {
     setKind(next);

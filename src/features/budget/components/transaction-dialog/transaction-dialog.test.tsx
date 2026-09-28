@@ -10,11 +10,16 @@ function setup({
   editing = null,
   accounts = [nubank],
   saved = true,
+  currentUserId = "ana",
 }: {
   editing?: Transaction | null;
   accounts?: BankAccount[];
   saved?: boolean;
+  currentUserId?: string;
 } = {}) {
+  const onSettle = vi.fn();
+  const onUnsettle = vi.fn(() => Promise.resolve(true));
+
   const onSave = vi.fn<
     (transaction: Transaction, occurrences?: number) => Promise<boolean>
   >(() => Promise.resolve(saved));
@@ -28,14 +33,17 @@ function setup({
       existingTags={["casa", "mercado"]}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
       accounts={accounts}
-      currentUserId="ana"
+      currentUserId={currentUserId}
       serverError=""
+      splitBusy={false}
       onSave={onSave}
+      onSettle={onSettle}
+      onUnsettle={onUnsettle}
       onClose={onClose}
     />,
   );
 
-  return { ...view, onSave, onClose };
+  return { ...view, onSave, onClose, onSettle, onUnsettle };
 }
 
 describe("TransactionDialog", () => {
@@ -111,7 +119,9 @@ describe("TransactionDialog", () => {
     expect(
       screen.getByText(/Registrado por Ana\. Última alteração por Bia\./),
     ).toBeTruthy();
-    expect(screen.queryByRole("switch")).toBeNull();
+    expect(
+      screen.queryByRole("switch", { name: "Repetir mensalmente" }),
+    ).toBeNull();
     await user.click(screen.getByRole("button", { name: "Remover tag casa" }));
     await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
 
@@ -160,5 +170,65 @@ describe("TransactionDialog", () => {
       expect.objectContaining({ tags: ["mercado"] }),
       1,
     );
+  });
+
+  test("splitting a new expense with the partner saves an open split", async () => {
+    const { screen, user, onSave } = setup();
+
+    await user.type(screen.getByLabelText("Valor"), "10000");
+    await user.type(screen.getByLabelText("Descrição"), "Jantar");
+    await user.click(screen.getByRole("button", { name: "Prazeres" }));
+    await user.click(screen.getByRole("switch", { name: "Dividir com Bia" }));
+    expect(screen.getByText("Bia deve R$ 50,00 a você.")).toBeTruthy();
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar transação" }),
+    );
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ split: {}, amount: 10000 }),
+      1,
+    );
+  });
+
+  test("the debtor can mark their share as paid", async () => {
+    const editing = transaction({ memberId: "ana", split: {} });
+    const { screen, user, onSettle } = setup({ editing, currentUserId: "bia" });
+
+    expect(
+      screen.getByRole("switch", { name: "Dividir entre Ana e você" }),
+    ).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Marcar como pago" }));
+    expect(onSettle).toHaveBeenCalledWith(editing);
+  });
+
+  test("a paid split locks amount and kind, and unmarking closes the dialog", async () => {
+    const editing = transaction({
+      memberId: "ana",
+      split: { paidAt: "2026-09-12T12:00:00.000Z" },
+    });
+
+    const { screen, user, onUnsettle, onClose } = setup({
+      editing,
+      currentUserId: "bia",
+    });
+
+    expect(screen.getByLabelText("Valor").hasAttribute("readonly")).toBe(true);
+    expect(
+      screen
+        .getByRole("switch", { name: "Dividir entre Ana e você" })
+        .hasAttribute("disabled"),
+    ).toBe(true);
+    await user.click(
+      screen.getByRole("button", { name: "Desmarcar pagamento" }),
+    );
+    await vi.waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(onUnsettle).toHaveBeenCalledWith(editing);
+  });
+
+  test("income cannot be split", async () => {
+    const { screen, user } = setup();
+
+    await user.click(screen.getByRole("button", { name: "Receita" }));
+    expect(screen.queryByRole("region", { name: "Divisão" })).toBeNull();
   });
 });

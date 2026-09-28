@@ -21,6 +21,9 @@ function fakeMutations(succeeds: boolean): BudgetMutations {
     saveAcc: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     deleteAcc: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     savePct: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
+    settleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
+    unsettleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
+    splitBusy: false,
     busy: false,
   };
 }

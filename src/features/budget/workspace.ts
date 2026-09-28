@@ -88,12 +88,14 @@ function replaceTransaction(
   update: (transaction: Transaction) => Transaction,
   drop: string[] = [],
 ): WorkspaceSnapshot {
+  const dropped = new Set(drop);
+
   return {
     ...snapshot,
     budget: {
       ...snapshot.budget,
       transactions: snapshot.budget.transactions
-        .filter((item) => !drop.includes(item.id))
+        .filter((item) => !dropped.has(item.id))
         .map((item) => (item.id === id ? update(item) : item)),
     },
   };

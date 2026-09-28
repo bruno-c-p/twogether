@@ -117,6 +117,42 @@ function GoalBadge({ goal }: { goal: Goal | undefined }) {
   );
 }
 
+function RowPerson({
+  transaction,
+  members,
+  accounts,
+  userId,
+}: {
+  transaction: Transaction;
+  members: Member[];
+  accounts: BankAccount[];
+  userId: string;
+}) {
+  const person =
+    members.find((member) => member.id === transaction.memberId)?.name ??
+    "Pessoa do casal";
+
+  const account =
+    accounts.find((item) => item.id === transaction.accountId)?.name ??
+    "Sem conta";
+
+  const label = splitLabel(transaction, userId);
+
+  return (
+    <div className={styles.transactionPerson}>
+      {person}
+      {" · "}
+      {account}
+      {label && (
+        <>
+          {" · "}
+          <span className="text-text-muted">{label}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function TransactionRow({
   transaction,
   members,
@@ -143,15 +179,7 @@ export function TransactionRow({
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
 
-  const person =
-    members.find((member) => member.id === t.memberId)?.name ??
-    "Pessoa do casal";
-
-  const account =
-    accounts.find((item) => item.id === t.accountId)?.name ?? "Sem conta";
-
   const tone = t.kind === "income" ? styles.positive : styles.negative;
-  const label = splitLabel(t, userId);
   const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
   const removeLock = deleteLock(t);
 
@@ -168,17 +196,12 @@ export function TransactionRow({
           >
             {t.description}
           </button>
-          <div className={styles.transactionPerson}>
-            {person}
-            {" · "}
-            {account}
-            {label && (
-              <>
-                {" · "}
-                <span className="text-text-muted">{label}</span>
-              </>
-            )}
-          </div>
+          <RowPerson
+            transaction={t}
+            members={members}
+            accounts={accounts}
+            userId={userId}
+          />
           <TransactionTags tags={t.tags} onTag={onTag} />
         </div>
       </div>

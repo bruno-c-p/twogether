@@ -2,17 +2,14 @@ import type { Transaction } from "@/features/budget/domain/types";
 
 export const partnerShare = (amount: number) => Math.floor(amount / 2);
 
-export const isRepayment = (transaction: Transaction) =>
+const isRepayment = (transaction: Transaction) =>
   Boolean(transaction.settlementOf);
-
-export const isPaidSplit = (transaction: Transaction) =>
-  Boolean(transaction.split?.paidAt);
 
 export function usTransactions(transactions: Transaction[]) {
   return transactions.filter((transaction) => !isRepayment(transaction));
 }
 
-export function unpaidSplits(transactions: Transaction[]) {
+function unpaidSplits(transactions: Transaction[]) {
   return transactions.filter(
     (transaction) =>
       transaction.kind === "expense" &&
