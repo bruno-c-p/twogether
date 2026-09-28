@@ -15,6 +15,7 @@ import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
+import { syncIdentity } from "@/lib/posthog-identity";
 
 const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
 
@@ -30,8 +31,6 @@ function TimeZoneCookie() {
   return null;
 }
 
-type PersonProperties = { email?: string; name?: string };
-
 function PostHogIdentity() {
   const posthog = usePostHog();
   const { isLoaded, user } = useUser();
@@ -41,25 +40,12 @@ function PostHogIdentity() {
   const name = user?.fullName;
 
   useEffect(() => {
-    if (!isLoaded) return;
-
-    if (!userId) {
-      identifiedUserId.current = null;
-
-      return;
-    }
-
-    if (identifiedUserId.current === userId) return;
-
-    if (identifiedUserId.current) posthog.reset();
-
-    const person: PersonProperties = {};
-
-    if (email) person.email = email;
-
-    if (name) person.name = name;
-    posthog.identify(userId, person);
-    identifiedUserId.current = userId;
+    identifiedUserId.current = syncIdentity(posthog, identifiedUserId.current, {
+      isLoaded,
+      userId,
+      email,
+      name,
+    });
   }, [email, isLoaded, name, posthog, userId]);
 
   return null;

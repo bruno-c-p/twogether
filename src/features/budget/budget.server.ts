@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
+import { firstOccurrence } from "@/features/budget/domain/recurrence";
 import { ensureUser, setName } from "@/features/auth/auth.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
@@ -371,22 +372,6 @@ async function insertLaterOccurrences(
   }
 }
 
-function firstOccurrence(
-  t: Transaction,
-  previous: Transaction | undefined,
-  recurring: boolean,
-  userId: string,
-): Transaction {
-  return {
-    ...t,
-    recurrenceId:
-      previous?.recurrenceId ?? (recurring ? randomUUID() : undefined),
-    recurrenceIndex: previous?.recurrenceIndex ?? (recurring ? 0 : undefined),
-    memberId: previous?.memberId ?? previous?.createdBy ?? userId,
-    createdBy: previous?.createdBy ?? userId,
-  };
-}
-
 async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
@@ -422,7 +407,13 @@ async function saveTransaction(
 
     await assertSplitEditable(transaction, homeRow, t, previous);
 
-    const first = firstOccurrence(t, previous, occurrences > 1, user.id);
+    const first = firstOccurrence({
+      transaction: t,
+      previous,
+      recurring: occurrences > 1,
+      userId: user.id,
+      newId: randomUUID,
+    });
 
     await execute(
       transaction,

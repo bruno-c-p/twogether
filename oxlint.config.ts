@@ -134,7 +134,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["e2e/**/*.ts"],
+      files: ["e2e/**/*.ts", "scripts/**/*.ts"],
       rules: { "no-restricted-imports": "off" },
     },
   ],

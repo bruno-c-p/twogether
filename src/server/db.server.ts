@@ -11,6 +11,7 @@ import { z } from "zod";
 import { revisionSchema, textSchema } from "@/features/budget/domain/schemas";
 import { tursoAuthToken } from "@/server/env.server";
 import { RequestError } from "@/server/request-error";
+import { databaseLocation } from "@/lib/database-location";
 
 export type { DatabaseTransaction };
 
@@ -135,24 +136,10 @@ async function initializeDatabase(database: Client, local: boolean) {
 }
 
 export function createStoreContext(filename: string) {
-  const remote = /^(?:https?|libsql|wss?):/i.test(filename);
-  const local = !remote;
+  const { url, local, localPath } = databaseLocation(filename);
 
-  const localPath =
-    local && filename !== ":memory:" && !filename.startsWith("file:")
-      ? filename
-      : undefined;
-
-  if (localPath && !filename.startsWith("file:"))
-    mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
-
-  const url = local
-    ? filename === ":memory:"
-      ? "file::memory:"
-      : filename.startsWith("file:")
-        ? filename
-        : `file:${filename}`
-    : filename;
+  if (localPath)
+    mkdirSync(dirname(localPath), { recursive: true, mode: 0o700 });
 
   const db = createClient({
     url,
