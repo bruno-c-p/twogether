@@ -9,7 +9,12 @@ import {
   Target,
   Wine,
 } from "lucide-react";
-import type { Goal, GoalId, GoalPercentages, View } from "@/features/budget/domain/types";
+import type {
+  Goal,
+  GoalId,
+  GoalPercentages,
+  View,
+} from "@/features/budget/domain/types";
 
 export const GOALS: Goal[] = [
   {
@@ -65,25 +70,27 @@ export const DEFAULT_PERCENTAGES: GoalPercentages = {
   knowledge: 5,
 };
 
-export const WORKSPACE_TITLES: Record<View, { title: string; subtitle: string }> =
-  {
-    overview: {
-      title: "Visão geral",
-      subtitle: "Saldo, entradas, despesas e metas do mês.",
-    },
-    transactions: {
-      title: "Transações",
-      subtitle: "Registre e acompanhe as entradas e despesas do mês.",
-    },
-    accounts: {
-      title: "Contas",
-      subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
-    },
-    goals: {
-      title: "Metas",
-      subtitle: "Divida sua renda por meta e compare gasto e planejado.",
-    },
-  };
+export const WORKSPACE_TITLES: Record<
+  View,
+  { title: string; subtitle: string }
+> = {
+  overview: {
+    title: "Visão geral",
+    subtitle: "Saldo, entradas, despesas e metas do mês.",
+  },
+  transactions: {
+    title: "Transações",
+    subtitle: "Registre e acompanhe as entradas e despesas do mês.",
+  },
+  accounts: {
+    title: "Contas",
+    subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
+  },
+  goals: {
+    title: "Metas",
+    subtitle: "Divida sua renda por meta e compare gasto e planejado.",
+  },
+};
 
 export const WORKSPACE_NAVIGATION = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },

@@ -4,13 +4,18 @@ import { z } from "zod";
 import { firstIssueMessage } from "@/features/budget/domain/schemas";
 
 const DATABASE_MESSAGE = "O caminho do banco de dados é inválido.";
+
 const CLERK_MESSAGE = "A variável de ambiente CLERK_SECRET_KEY é obrigatória.";
+
 const TOKEN_MESSAGE =
   "A variável de ambiente TURSO_AUTH_TOKEN é obrigatória quando o banco remoto está configurado.";
 
 const remoteDatabase = /^(?:https?|libsql|wss?):/i;
 
-const emptyAsUndefined = (value: unknown) => (value === "" ? undefined : value);
+// Blank .env entries mean "not configured".
+function emptyAsUndefined<Value>(value: Value) {
+  return value === "" ? undefined : value;
+}
 
 const databaseUrlSchema = z
   .string({ error: DATABASE_MESSAGE })
@@ -18,9 +23,12 @@ const databaseUrlSchema = z
   .refine(
     (value) => {
       if (value === ":memory:" || value.startsWith("file:")) return true;
+
       if (!remoteDatabase.test(value)) return true;
+
       try {
         new URL(value);
+
         return true;
       } catch {
         return false;
@@ -42,7 +50,7 @@ const optionalToken = z.preprocess(
     .optional(),
 );
 
-export const serverEnvSchema = z
+const serverEnvSchema = z
   .object({
     CLERK_SECRET_KEY: z.preprocess(
       emptyAsUndefined,
@@ -55,27 +63,31 @@ export const serverEnvSchema = z
   .refine(
     (env) => {
       const url = env.TURSO_DATABASE_URL ?? env.BUDGET_DATABASE_PATH;
+
       return !url || !remoteDatabase.test(url) || Boolean(env.TURSO_AUTH_TOKEN);
     },
     { error: TOKEN_MESSAGE, path: ["TURSO_AUTH_TOKEN"] },
   );
 
-export type ServerEnv = z.infer<typeof serverEnvSchema>;
+type ServerEnv = z.infer<typeof serverEnvSchema>;
 
 export function parseServerEnv(values: Record<string, string | undefined>) {
   const result = serverEnvSchema.safeParse(values);
+
   if (!result.success) throw new Error(firstIssueMessage(result.error));
+
   return result.data;
 }
 
 let cached: ServerEnv | undefined;
 
-export const serverEnv = createServerOnlyFn(
+const serverEnv = createServerOnlyFn(
   () => (cached ??= parseServerEnv(process.env)),
 );
 
 export const databaseUrl = createServerOnlyFn(() => {
   const env = serverEnv();
+
   return (
     env.TURSO_DATABASE_URL ??
     env.BUDGET_DATABASE_PATH ??

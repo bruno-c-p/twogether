@@ -25,6 +25,7 @@ describe("expense charts", () => {
       ],
       "2026-09",
     );
+
     expect(result.total).toBe(151);
     expect(result.days[0]).toBe(151);
     expect(result.firstWeekday).toBe(2);

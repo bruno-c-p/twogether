@@ -1,8 +1,8 @@
-.expense-charts {
+.expenseCharts {
   margin: 24px 0 32px;
 }
 
-.expense-chart-card {
+.expenseChartCard {
   min-width: 0;
   padding: 24px;
   border: 1px solid var(--border);
@@ -10,18 +10,18 @@
   background: var(--surface);
 }
 
-.expense-chart-card h2 {
+.expenseChartCard h2 {
   font-size: 18px;
 }
 
-.expense-chart-caption {
+.expenseChartCaption {
   color: var(--muted);
   font-size: 12px;
   line-height: 1.6;
   margin-top: 6px;
 }
 
-.expense-calendar-summary {
+.expenseCalendarSummary {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
@@ -29,22 +29,22 @@
   margin: 20px 0;
 }
 
-.expense-calendar-summary > strong {
+.expenseCalendarSummary > strong {
   font-size: clamp(22px, 2.2vw, 30px);
 }
 
-.expense-calendar-summary > span {
+.expenseCalendarSummary > span {
   color: var(--muted);
   font-size: 12px;
 }
 
-.expense-calendar {
+.expenseCalendar {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: 5px;
 }
 
-.expense-weekday {
+.expenseWeekday {
   text-align: center;
   text-transform: uppercase;
   color: var(--muted);
@@ -53,7 +53,7 @@
   padding-bottom: 6px;
 }
 
-.expense-day {
+.expenseDay {
   min-width: 0;
   min-height: 62px;
   padding: 7px;
@@ -70,12 +70,12 @@
   font-size: 11px;
 }
 
-.expense-day strong {
+.expenseDay strong {
   font-size: 10px;
   white-space: nowrap;
 }
 
-.expense-heat-legend {
+.expenseHeatLegend {
   display: flex;
   justify-content: flex-end;
   align-items: center;
@@ -85,33 +85,33 @@
   color: var(--muted);
 }
 
-.expense-heat-legend i {
+.expenseHeatLegend i {
   width: 13px;
   height: 13px;
   border-radius: 3px;
   background: color-mix(in srgb, var(--danger) 20%, var(--page));
 }
 
-.expense-heat-legend i:nth-of-type(2) {
+.expenseHeatLegend i:nth-of-type(2) {
   background: color-mix(in srgb, var(--danger) 40%, var(--page));
 }
 
-.expense-heat-legend i:nth-of-type(3) {
+.expenseHeatLegend i:nth-of-type(3) {
   background: color-mix(in srgb, var(--danger) 70%, var(--page));
 }
 
-.expense-tag-donut {
+.expenseTagDonut {
   width: min(240px, 100%);
   margin: 22px auto;
   position: relative;
 }
 
-.expense-tag-donut svg {
+.expenseTagDonut svg {
   width: 100%;
   display: block;
 }
 
-.expense-tag-donut > div {
+.expenseTagDonut > div {
   position: absolute;
   inset: 0;
   display: flex;
@@ -122,45 +122,45 @@
   pointer-events: none;
 }
 
-.expense-tag-donut strong {
+.expenseTagDonut strong {
   font-size: 17px;
 }
 
-.expense-tag-donut span {
+.expenseTagDonut span {
   color: var(--muted);
   font-size: 12px;
 }
 
-.expense-chart-empty {
+.expenseChartEmpty {
   color: var(--muted);
   text-align: center;
   font-size: 13px;
   line-height: 1.6;
 }
 
-.expense-tag-note {
+.expenseTagNote {
   margin-top: 20px;
 }
 
-.expense-day[data-intense="true"] {
+.expenseDay[data-intense="true"] {
   color: var(--surface);
 }
 
 @media (max-width: 1100px) {
-  .expense-chart-card {
+  .expenseChartCard {
     padding: 16px;
   }
-  
-  .expense-calendar {
+
+  .expenseCalendar {
     gap: 3px;
   }
-  
-  .expense-day {
+
+  .expenseDay {
     padding: 5px 3px;
-      min-height: 58px;
+    min-height: 58px;
   }
-  
-  .expense-day strong {
+
+  .expenseDay strong {
     font-size: 9px;
   }
 }

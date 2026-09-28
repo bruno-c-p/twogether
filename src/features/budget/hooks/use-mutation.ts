@@ -1,9 +1,36 @@
-import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import {
+  useQueryClient,
+  type QueryClient,
+  type QueryKey,
+} from "@tanstack/react-query";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { workspaceQueryKey } from "@/features/budget/workspace";
 import { isMutationFailure } from "@/server/mutation-result";
+
+const OFFLINE_MESSAGE =
+  "Sem conexão. Confira o orçamento antes de tentar novamente.";
+
+type CachedWorkspace = { key: QueryKey; previous: WorkspaceSnapshot };
+
+function cachedWorkspace(
+  queryClient: QueryClient,
+): CachedWorkspace | undefined {
+  const [entry] = queryClient.getQueriesData<WorkspaceSnapshot>({
+    queryKey: workspaceQueryKey,
+  });
+
+  if (!entry?.[1]) return undefined;
+
+  return { key: entry[0], previous: entry[1] };
+}
+
+export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
+  return cause instanceof Error && !(cause instanceof TypeError)
+    ? cause.message
+    : offline;
+}
 
 export function useMutation<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
@@ -15,9 +42,11 @@ export function useMutation<TArgs extends unknown[], TResult>(
   const router = useRouter();
   const queryClient = useQueryClient();
   const fnRef = useRef(fn);
-  fnRef.current = fn;
   const optimisticRef = useRef(optimistic);
-  optimisticRef.current = optimistic;
+  useLayoutEffect(() => {
+    fnRef.current = fn;
+    optimisticRef.current = optimistic;
+  });
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
@@ -28,43 +57,51 @@ export function useMutation<TArgs extends unknown[], TResult>(
       inFlight.current = true;
       setPending(true);
       setError("");
-      const cached = queryClient.getQueriesData<WorkspaceSnapshot>({
-        queryKey: workspaceQueryKey,
-      })[0];
-      const previous = cached?.[1];
+
+      const cached = cachedWorkspace(queryClient);
       const applyOptimistic = optimisticRef.current;
-      if (applyOptimistic && previous && cached) {
-        await queryClient.cancelQueries({ queryKey: cached[0] });
-        queryClient.setQueryData(cached[0], applyOptimistic(previous, ...args));
+
+      const restore = () => {
+        if (cached) queryClient.setQueryData(cached.key, cached.previous);
+      };
+
+      if (applyOptimistic && cached) {
+        await queryClient.cancelQueries({ queryKey: cached.key });
+        queryClient.setQueryData(
+          cached.key,
+          applyOptimistic(cached.previous, ...args),
+        );
       }
+
       try {
         const result = await fnRef.current(...args);
+
         if (isMutationFailure(result)) {
-          if (cached && previous) {
-            queryClient.setQueryData(cached[0], previous);
-          }
+          restore();
           setError(result.message);
+
           return null;
         }
+
         const refresh = queryClient.invalidateQueries({
           queryKey: workspaceQueryKey,
         });
+
         if (applyOptimistic) void refresh;
         else await refresh;
+
         return result;
-      } catch (error) {
-        if (cached && previous && applyOptimistic) {
-          queryClient.setQueryData(cached[0], previous);
-        }
-        if (isRedirect(error)) {
-          await router.navigate(router.resolveRedirect(error).options);
+      } catch (cause) {
+        if (applyOptimistic) restore();
+
+        if (isRedirect(cause)) {
+          await router.navigate(router.resolveRedirect(cause).options);
+
           return null;
         }
-        setError(
-          error instanceof Error && !(error instanceof TypeError)
-            ? error.message
-            : "Sem conexão. Confira o orçamento antes de tentar novamente.",
-        );
+
+        setError(failureMessage(cause));
+
         return null;
       } finally {
         inFlight.current = false;

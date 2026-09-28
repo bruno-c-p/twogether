@@ -1,0 +1,23 @@
+{
+  // This file is JSONC: fallow reads these comments; generic JSON tools may not.
+  "$schema": "./node_modules/fallow/schema.json",
+  // TanStack Start loads src/start.ts by convention; nothing imports it.
+  "entry": ["src/start.ts"],
+  // Vendored upstream code keeps its own shape (see tools/oxlint/anti-slop/UPSTREAM.md).
+  // It stays in the graph so its @oxlint/plugins import counts as a use.
+  "ignoreFindings": ["tools/oxlint/anti-slop/**"],
+  "health": {
+    // Vendored upstream code keeps its own shape.
+    "ignore": ["tools/oxlint/anti-slop/**"],
+    // Measured Vitest coverage; `bun run fallow` regenerates it first.
+    "coverage": "coverage/coverage-final.json"
+  },
+  "duplicates": {
+    // Hide pair-only clones; focus on widespread copy-paste
+    // worth refactoring. Lower to 2 to report every duplicate pair.
+    "minOccurrences": 3
+  },
+  "rules": {
+    "unused-dependencies": "warn"
+  }
+}

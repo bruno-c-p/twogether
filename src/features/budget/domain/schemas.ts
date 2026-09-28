@@ -4,11 +4,8 @@ import { parseAmount, parseBalance } from "@/features/budget/domain/format";
 import type { BankAccount, GoalId } from "@/features/budget/domain/types";
 
 const HEX64 = /^[0-9a-f]{64}$/;
-const MONEY_MAX = 99999999999;
 
-export const budgetTokenSchema = z
-  .string({ error: "Token inválido." })
-  .regex(HEX64, { error: "Token inválido." });
+const MONEY_MAX = 99999999999;
 
 export const inviteTokenSchema = z
   .string({ error: "Convite inválido. Peça um novo link." })
@@ -48,6 +45,7 @@ export const dateSchema = z
   .refine(
     (value) => {
       const date = new Date(`${value}T12:00:00`);
+
       return (
         !Number.isNaN(date.getTime()) &&
         `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` ===
@@ -59,39 +57,41 @@ export const dateSchema = z
   );
 
 export const goalIdSchema = z.enum(
+  // SAFETY: GOALS is a non-empty constant list, so the mapped ids form a
+  // non-empty tuple of GoalId values.
   GOALS.map((goal) => goal.id) as [GoalId, ...GoalId[]],
   { error: "Meta inválida." },
 );
 
-export const centsSchema = z
+const centsSchema = z
   .int({ error: "Digite um valor válido, como 45,90." })
   .min(1, { error: "Digite um valor válido, como 45,90." })
   .max(MONEY_MAX, { error: "Digite um valor válido, como 45,90." });
 
-export const balanceCentsSchema = z
+const balanceCentsSchema = z
   .int({ error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
   .min(0, { error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
   .max(MONEY_MAX, {
     error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
   });
 
-export const amountInputSchema = z
+const amountInputSchema = z
   .string({ error: "Digite um valor válido, como 45,90." })
   .transform((value) => parseAmount(value))
   .pipe(centsSchema);
 
-export const balanceInputSchema = z
+const balanceInputSchema = z
   .string({
     error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
   })
   .transform((value) => parseBalance(value))
   .pipe(balanceCentsSchema);
 
-export const tagSchema = z
+const tagSchema = z
   .string({ error: "Cada tag deve ter no máximo 24 caracteres." })
   .max(24, { error: "Cada tag deve ter no máximo 24 caracteres." });
 
-export const tagsSchema = z
+const tagsSchema = z
   .array(tagSchema, { error: "Use no máximo 8 tags." })
   .max(8, { error: "Use no máximo 8 tags." });
 
@@ -152,9 +152,7 @@ export const transactionSchema = z
       .min(1, { error: "Escolha uma conta bancária." })
       .max(100, { error: "Escolha uma conta bancária." }),
     recurrenceId: optionalText,
-    recurrenceIndex: z
-      .int({ error: "Recorrência inválida." })
-      .optional(),
+    recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
     memberId: optionalText,
     revision: revisionSchema.optional(),
     createdBy: optionalText,
@@ -201,9 +199,12 @@ const percentageValueSchema = z
   .refine((value) => Number.isFinite(value), {
     error: "Informe um percentual entre 0 e 100.",
   })
-  .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001, {
-    error: "Use no máximo duas casas decimais.",
-  });
+  .refine(
+    (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001,
+    {
+      error: "Use no máximo duas casas decimais.",
+    },
+  );
 
 export const goalPercentagesSchema = z
   .looseObject({
@@ -216,9 +217,8 @@ export const goalPercentagesSchema = z
   } satisfies Record<GoalId, typeof percentageValueSchema>)
   .refine(
     (values) =>
-      Math.round(
-        GOALS.reduce((sum, { id }) => sum + values[id] * 100, 0),
-      ) === 10000,
+      Math.round(GOALS.reduce((sum, { id }) => sum + values[id] * 100, 0)) ===
+      10000,
     { error: "Os percentuais devem somar 100%." },
   );
 
@@ -226,6 +226,7 @@ export function transactionFormSchema(accounts: BankAccount[]) {
   const accountError = accounts.length
     ? "Escolha uma conta bancária."
     : "Cadastre uma conta na aba Contas antes de lançar transações.";
+
   return z
     .object({
       amount: amountInputSchema,
@@ -237,10 +238,9 @@ export function transactionFormSchema(accounts: BankAccount[]) {
       date: dateSchema,
       accountId: z
         .string({ error: accountError })
-        .refine(
-          (value) => accounts.some((account) => account.id === value),
-          { error: accountError },
-        ),
+        .refine((value) => accounts.some((account) => account.id === value), {
+          error: accountError,
+        }),
       goal: goalIdSchema.nullable(),
       kind: z.enum(["expense", "income"], {
         error: "Tipo da transação inválido.",
@@ -279,11 +279,14 @@ export function firstIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Requisição inválida.";
 }
 
-export function fieldErrors(error: z.ZodError): Record<string, string> {
+export function fieldErrors(error: z.ZodError) {
   const errors: Record<string, string> = {};
+
   for (const issue of error.issues) {
     const field = String(issue.path[0] ?? "");
+
     if (field && !errors[field]) errors[field] = issue.message;
   }
+
   return errors;
 }

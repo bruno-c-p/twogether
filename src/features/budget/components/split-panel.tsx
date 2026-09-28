@@ -14,6 +14,75 @@ const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
 const capitalize = (value: string) =>
   value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
 
+function splitHint(
+  transaction: Transaction | null,
+  checked: boolean,
+  share: number,
+  names: { payer: string; debtor: string },
+) {
+  if (transaction?.split?.paidAt)
+    return "Pagamento registrado. Valor, tipo e divisão ficam travados enquanto estiver pago.";
+
+  if (checked && share)
+    return capitalize(`${names.debtor} deve ${money(share)} a ${names.payer}.`);
+
+  return "Metade fica com cada pessoa.";
+}
+
+function settlementStatus(
+  transaction: Transaction,
+  debtorName: string,
+  userIsDebtor: boolean,
+) {
+  const paidAt = transaction.split?.paidAt;
+
+  if (paidAt) {
+    const day = dateFormatter.format(new Date(paidAt)).replace(".", "");
+
+    return `Pago por ${debtorName} em ${day}.`;
+  }
+
+  return userIsDebtor
+    ? `Você deve ${money(partnerShare(transaction.amount))}.`
+    : `Aguardando ${debtorName}.`;
+}
+
+function SettlementRow({
+  transaction,
+  debtorName,
+  userIsDebtor,
+  busy,
+  onSettle,
+  onUnsettle,
+}: {
+  transaction: Transaction;
+  debtorName: string;
+  userIsDebtor: boolean;
+  busy: boolean;
+  onSettle: () => void;
+  onUnsettle: () => void;
+}) {
+  const paid = Boolean(transaction.split?.paidAt);
+
+  return (
+    <div className="flex items-center justify-between gap-[12px] flex-wrap px-[16px] py-[12px] [border-top:1px_solid_var(--border)] text-[12px] max-bp620:px-[14px]">
+      <span className="text-text-muted leading-[1.6]">
+        {settlementStatus(transaction, debtorName, userIsDebtor)}
+      </span>
+      {userIsDebtor && (
+        <Button
+          type="button"
+          variant="secondary"
+          disabled={busy}
+          onClick={paid ? onUnsettle : onSettle}
+        >
+          {paid ? "Desmarcar pagamento" : "Marcar como pago"}
+        </Button>
+      )}
+    </div>
+  );
+}
+
 export function SplitPanel({
   checked,
   amount,
@@ -40,9 +109,9 @@ export function SplitPanel({
   onUnsettle: () => void;
 }) {
   const paidAt = transaction?.split?.paidAt;
-  const saved = Boolean(transaction?.split);
   const share = amount >= 2 ? partnerShare(amount) : 0;
   const id = useId();
+
   return (
     <section
       aria-label="Divisão"
@@ -68,13 +137,10 @@ export function SplitPanel({
             id={`${id}-hint`}
             className="block text-text-muted text-[12px] leading-[1.6]"
           >
-            {paidAt
-              ? "Pagamento registrado. Valor, tipo e divisão ficam travados enquanto estiver pago."
-              : checked && share
-                ? capitalize(
-                    `${debtorName} deve ${money(share)} a ${payerName}.`,
-                  )
-                : "Metade fica com cada pessoa."}
+            {splitHint(transaction, checked, share, {
+              payer: payerName,
+              debtor: debtorName,
+            })}
           </span>
         </span>
         <input
@@ -97,26 +163,15 @@ export function SplitPanel({
           )}
         />
       </div>
-      {saved && transaction && (
-        <div className="flex items-center justify-between gap-[12px] flex-wrap px-[16px] py-[12px] [border-top:1px_solid_var(--border)] text-[12px] max-bp620:px-[14px]">
-          <span className="text-text-muted leading-[1.6]">
-            {paidAt
-              ? `Pago por ${debtorName} em ${dateFormatter.format(new Date(paidAt)).replace(".", "")}.`
-              : userIsDebtor
-                ? `Você deve ${money(partnerShare(transaction.amount))}.`
-                : `Aguardando ${debtorName}.`}
-          </span>
-          {userIsDebtor && (
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={busy}
-              onClick={paidAt ? onUnsettle : onSettle}
-            >
-              {paidAt ? "Desmarcar pagamento" : "Marcar como pago"}
-            </Button>
-          )}
-        </div>
+      {transaction?.split && (
+        <SettlementRow
+          transaction={transaction}
+          debtorName={debtorName}
+          userIsDebtor={userIsDebtor}
+          busy={busy}
+          onSettle={onSettle}
+          onUnsettle={onUnsettle}
+        />
       )}
     </section>
   );

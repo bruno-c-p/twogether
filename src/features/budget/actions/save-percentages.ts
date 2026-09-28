@@ -7,19 +7,17 @@ import {
 import { runMutation } from "@/server/request-error";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const savePercentagesSchema = inputSchema({
   percentages: goalPercentagesSchema,
   revision: revisionSchema,
 });
 
-export function parseSavePercentages(input: unknown): {
+export const parseSavePercentages = actionInput<{
   percentages: GoalPercentages;
   revision: number;
-} {
-  return parseInput(savePercentagesSchema, input);
-}
+}>(savePercentagesSchema);
 
 export const savePercentages = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

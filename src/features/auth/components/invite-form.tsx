@@ -16,18 +16,26 @@ export function InviteForm({
   onJoin: (invite: string) => Promise<void>;
 }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const parsed = inviteFormSchema.safeParse({
-      invite: inviteToken(formText(new FormData(event.currentTarget), "invite")),
+      invite: inviteToken(
+        formText(new FormData(event.currentTarget), "invite"),
+      ),
     });
+
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
+
       return;
     }
+
     setErrors({});
     await onJoin(parsed.data.invite);
   }
+
   return (
     <Form onSubmit={(event) => void submit(event)}>
       <label>

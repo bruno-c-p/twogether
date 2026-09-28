@@ -7,6 +7,7 @@ describe("parseDeleteAccount", () => {
       id: "account-1",
       revision: 0,
     });
+    // @ts-expect-error: the parser must reject untrusted request bodies
     expect(() => parseDeleteAccount({ id: "account-1" })).toThrow(
       "Versão inválida. Atualize a página.",
     );

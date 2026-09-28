@@ -1,380 +1,315 @@
-import { useMemo, useState } from "react";
 import { useHydrated } from "@tanstack/react-router";
-import { usePostHog } from "posthog-js/react";
+import { useState, type ReactNode } from "react";
+import { UserButton } from "@clerk/tanstack-react-start";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import {
-  deleteAccount,
-  deleteTransaction,
-  restoreTransaction,
-  saveAccount,
-  savePercentages,
-  saveTransaction,
-  settleSplit,
-  unsettleSplit,
-} from "@/features/budget/actions";
 import {
   useBudget,
   type BudgetController,
 } from "@/features/budget/hooks/use-budget";
-import { useMutation } from "@/features/budget/hooks/use-mutation";
+import {
+  useBudgetMutations,
+  type BudgetMutations,
+} from "@/features/budget/hooks/use-budget-mutations";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
+import {
+  useWorkspaceActions,
+  type WorkspaceActions,
+} from "@/features/budget/hooks/use-workspace-actions";
+import {
+  useWorkspaceData,
+  type WorkspaceData,
+} from "@/features/budget/hooks/use-workspace-data";
+import {
+  useWorkspaceDialogs,
+  type WorkspaceDialogs,
+} from "@/features/budget/hooks/use-workspace-dialogs";
 import {
   currentMonth,
   money,
   shiftMonth,
 } from "@/features/budget/domain/format";
 import { monthSchema } from "@/features/budget/domain/schemas";
-import {
-  optimisticDelete,
-  optimisticRestore,
-  optimisticSave,
-  optimisticSettle,
-  optimisticUnsettle,
-} from "@/features/budget/workspace";
-import { splitDebt, usTransactions } from "@/features/budget/domain/split";
-import type { SettleInput } from "@/features/budget/components/settle-dialog";
-import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
-import { planGoals, summarize } from "@/features/budget/domain/calc";
-import type {
-  BankAccount,
-  GoalPercentages,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_TITLES } from "@/features/budget/constants";
 import { AccountList } from "@/features/budget/components/account-list";
 import { GoalsSection } from "@/features/budget/components/goals-section/goals-section";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { NoticeToast, useNotice } from "@/features/budget/components/notice";
 import { Overview } from "@/features/budget/components/overview/overview";
+import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { TransactionList } from "@/features/budget/components/transaction-list/transaction-list";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 import { Button } from "@/components/ui/button";
 
+type BudgetSearchState = ReturnType<typeof useBudgetSearch>;
+
 export function BudgetApp() {
   const budget = useBudget();
+
   return (
     <BudgetWorkspace
       key={`${budget.household.id}:${budget.user.id}`}
       budget={budget}
+      account={<UserButton />}
     />
   );
 }
 
-function BudgetWorkspace({ budget }: { budget: BudgetController }) {
-  const posthog = usePostHog();
-  const saveTx = useMutation(
-    (data: { transaction: Transaction; occurrences?: number }) =>
-      saveTransaction({ data }),
-    optimisticSave,
+const FILTER_EXPLANATIONS = {
+  accounts: {
+    all: "O saldo de cada conta inclui as transações de todo o casal.",
+    member:
+      "O saldo de cada conta considera só as transações da pessoa selecionada.",
+  },
+  budget: {
+    all: "O planejado soma as metas individuais de cada pessoa.",
+    member: "Renda, gastos e metas da pessoa selecionada.",
+  },
+};
+
+function filterExplanation(view: View, memberFilter: string) {
+  const texts =
+    view === "accounts"
+      ? FILTER_EXPLANATIONS.accounts
+      : FILTER_EXPLANATIONS.budget;
+
+  return memberFilter === "all" ? texts.all : texts.member;
+}
+
+function WorkspaceHeading({
+  view,
+  busy,
+  onAdd,
+}: {
+  view: View;
+  busy: boolean;
+  onAdd: () => void;
+}) {
+  return (
+    <div className={styles.pageHeading}>
+      <div>
+        <h1>{WORKSPACE_TITLES[view].title}</h1>
+        <p>{WORKSPACE_TITLES[view].subtitle}</p>
+      </div>
+      <Button className={styles.addTransaction} disabled={busy} onClick={onAdd}>
+        <Plus size={19} />{" "}
+        {view === "accounts" ? "Nova conta" : "Nova transação"}
+      </Button>
+    </div>
   );
-  const deleteTx = useMutation(
-    (data: {
-      id: string;
-      revision: number;
-      following?: { id: string; revision: number }[];
-    }) => deleteTransaction({ data }),
-    optimisticDelete,
+}
+
+function MonthNavigator({
+  month,
+  setMonth,
+}: {
+  month: string;
+  setMonth: (month: string) => void;
+}) {
+  const today = useHydrated() ? currentMonth() : null;
+
+  return (
+    <div className={styles.monthRow}>
+      <div className={styles.monthPicker}>
+        <Button
+          variant="icon"
+          className={styles.monthIcon}
+          aria-label="Mês anterior"
+          disabled={!month}
+          onClick={() => setMonth(shiftMonth(month, -1))}
+        >
+          <ChevronLeft size={17} />
+        </Button>
+        <input
+          className={styles.monthInput}
+          type="month"
+          aria-label="Selecionar mês e ano"
+          value={month}
+          required
+          onChange={(event) => {
+            const next = event.currentTarget.value;
+
+            if (monthSchema.safeParse(next).success) setMonth(next);
+          }}
+        />
+        <Button
+          variant="icon"
+          className={styles.monthIcon}
+          aria-label="Próximo mês"
+          disabled={!month}
+          onClick={() => setMonth(shiftMonth(month, 1))}
+        >
+          <ChevronRight size={17} />
+        </Button>
+      </div>
+      {today && month !== today && (
+        <button className={styles.todayButton} onClick={() => setMonth(today)}>
+          Voltar para este mês
+        </button>
+      )}
+    </div>
   );
-  const restoreTx = useMutation(
-    (data: { id: string; revision: number; transaction: Transaction }) =>
-      restoreTransaction({ data: { id: data.id, revision: data.revision } }),
-    (snapshot, data) => optimisticRestore(snapshot, data.transaction),
+}
+
+type ViewProps = {
+  budget: BudgetController;
+  search: BudgetSearchState;
+  data: WorkspaceData;
+  month: string;
+  busy: boolean;
+  hidden: boolean;
+  displayMoney: (value: number) => string;
+  dialogs: WorkspaceDialogs;
+  actions: WorkspaceActions;
+};
+
+function BudgetViews({
+  budget,
+  search,
+  data,
+  month,
+  busy,
+  hidden,
+  displayMoney,
+  dialogs,
+  actions,
+}: ViewProps) {
+  const { view, memberFilter } = search;
+  const members = budget.household.members;
+  const ownMember = members.find((member) => member.id === budget.user.id);
+
+  return (
+    <>
+      {view === "overview" && (
+        <Overview
+          monthly={data.monthly}
+          historyTransactions={data.historyTransactions}
+          month={month}
+          memberFilter={memberFilter}
+          hidden={hidden}
+          displayMoney={displayMoney}
+          summary={data.summary}
+          debtCard={
+            data.partner && (
+              <SplitDebtCard
+                net={data.debt.net}
+                unpaid={data.debt.unpaid}
+                userId={budget.user.id}
+                partner={data.partner}
+                busy={busy}
+                displayMoney={displayMoney}
+                onSettle={actions.openSettle}
+              />
+            )
+          }
+        />
+      )}
+      {(view === "overview" || view === "goals") && (
+        <GoalsSection
+          view={view}
+          summary={data.summary}
+          plans={data.plans}
+          hidden={hidden}
+          displayMoney={displayMoney}
+          memberFilter={memberFilter}
+          userId={budget.user.id}
+          busy={busy}
+          onEditPercentages={() =>
+            dialogs.setPercentagesRevision(ownMember?.percentagesRevision ?? 0)
+          }
+          onFilterGoal={search.filterGoal}
+        />
+      )}
+      {(view === "overview" || view === "transactions") && (
+        <TransactionList
+          transactions={data.monthly}
+          members={members}
+          accounts={budget.state.accounts}
+          userId={budget.user.id}
+          busy={busy}
+          hidden={hidden}
+          filters={search}
+          onEdit={(transaction) => actions.openTransaction(transaction)}
+          onDelete={(transaction) => void actions.remove(transaction)}
+          onAdd={() => actions.openTransaction(null)}
+          compact={view === "overview"}
+          onViewAll={() => search.setView("transactions")}
+        />
+      )}
+    </>
   );
-  const saveAcc = useMutation((account: BankAccount) =>
-    saveAccount({ data: { account } }),
+}
+
+function WorkspaceViews(props: ViewProps) {
+  const { budget, search, busy, hidden, dialogs, actions } = props;
+
+  if (search.view !== "accounts") return <BudgetViews {...props} />;
+
+  return (
+    <AccountList
+      accounts={budget.state.accounts}
+      transactions={budget.state.transactions}
+      memberFilter={search.memberFilter}
+      busy={busy}
+      hidden={hidden}
+      onAdd={() => dialogs.setAccount({ account: null })}
+      onEdit={(account) => dialogs.setAccount({ account })}
+      onDelete={(account) => void actions.removeAccount(account)}
+    />
   );
-  const deleteAcc = useMutation((data: { id: string; revision: number }) =>
-    deleteAccount({ data }),
+}
+
+function listErrorFor(mutations: BudgetMutations, deleting: boolean) {
+  return (
+    mutations.deleteAcc.error ||
+    mutations.restoreTx.error ||
+    mutations.unsettleTx.error ||
+    (deleting ? "" : mutations.deleteTx.error)
   );
-  const savePct = useMutation(
-    (data: { percentages: GoalPercentages; revision: number }) =>
-      savePercentages({ data }),
+}
+
+export function BudgetWorkspace({
+  budget,
+  account,
+}: {
+  budget: BudgetController;
+  account?: ReactNode;
+}) {
+  const mutations = useBudgetMutations();
+  const search = useBudgetSearch();
+  const dialogs = useWorkspaceDialogs();
+  const { notice, setNotice } = useNotice();
+  const [hidden, setHidden] = useState(false);
+  const month = search.month ?? currentMonth();
+
+  const data = useWorkspaceData(
+    budget,
+    month,
+    search.memberFilter,
+    dialogs.deleting,
   );
-  const settleTx = useMutation(
-    (data: SettleInput & { id: string; revision: number }) =>
-      settleSplit({ data }),
-    optimisticSettle,
-  );
-  const unsettleTx = useMutation(
-    (data: { id: string; revision: number }) => unsettleSplit({ data }),
-    optimisticUnsettle,
-  );
-  const splitBusy = settleTx.pending || unsettleTx.pending;
-  const busy =
-    splitBusy ||
-    saveTx.pending ||
-    deleteTx.pending ||
-    restoreTx.pending ||
-    saveAcc.pending ||
-    deleteAcc.pending ||
-    savePct.pending;
-  const {
-    view,
-    month: searchMonth,
-    memberFilter,
-    query,
-    goalFilter,
-    tagFilter,
-    kindFilter,
-    setMonth,
-    setMemberFilter,
-    setQuery,
-    setGoalFilter,
-    setKindFilter,
-    setTag,
-    setView,
-    filterGoal,
-  } = useBudgetSearch();
+
+  const actions = useWorkspaceActions({
+    budget,
+    dialogs,
+    mutations,
+    following: data.following,
+    notice,
+    setNotice,
+    setMonth: search.setMonth,
+    setView: search.setView,
+  });
+
+  const { view } = search;
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
-  const month = searchMonth ?? currentMonth();
-  const today = useHydrated() ? currentMonth() : null;
-  const [hidden, setHidden] = useState(false);
-  const [dialog, setDialog] = useState<{
-    transaction: Transaction | null;
-  } | null>(null);
-  const [accountDialog, setAccountDialog] = useState<{
-    account: BankAccount | null;
-  } | null>(null);
-  const { notice, setNotice } = useNotice();
-  const [editingPercentages, setEditingPercentages] = useState<number | null>(
-    null,
-  );
-  const [deleting, setDeleting] = useState<Transaction | null>(null);
-  const [settling, setSettling] = useState<Transaction | null>(null);
-  const listError =
-    deleteAcc.error ||
-    restoreTx.error ||
-    unsettleTx.error ||
-    (!deleting ? deleteTx.error : "");
 
-  const members = budget.household.members;
-  const partner =
-    members.length === 2
-      ? members.find((member) => member.id !== budget.user.id)
-      : undefined;
-  const viewTransactions = useMemo(
-    () =>
-      memberFilter === "all"
-        ? usTransactions(budget.state.transactions)
-        : budget.state.transactions.filter((t) => t.memberId === memberFilter),
-    [budget.state.transactions, memberFilter],
-  );
-  const monthly = useMemo(
-    () => viewTransactions.filter((t) => t.date.startsWith(month)),
-    [viewTransactions, month],
-  );
-  const debt = useMemo(
-    () => splitDebt(budget.state.transactions, budget.user.id),
-    [budget.state.transactions, budget.user.id],
-  );
-  const summary = useMemo(() => summarize(monthly), [monthly]);
-  const ownMember = members.find((member) => member.id === budget.user.id);
-  const plans = useMemo(
-    () =>
-      planGoals(
-        monthly,
-        members.filter(
-          (member) => memberFilter === "all" || member.id === memberFilter,
-        ),
-      ),
-    [monthly, members, memberFilter],
-  );
-  const allTags = useMemo(
-    () =>
-      [...new Set(budget.state.transactions.flatMap((t) => t.tags))].sort(
-        (a, b) => a.localeCompare(b, "pt-BR"),
-      ),
-    [budget.state.transactions],
-  );
-  const historyTransactions = viewTransactions;
-  const following = useMemo(
-    () =>
-      deleting
-        ? budget.state.transactions.filter(
-            (item) =>
-              item.recurrenceId === deleting.recurrenceId &&
-              item.recurrenceIndex !== undefined &&
-              deleting.recurrenceIndex !== undefined &&
-              item.recurrenceIndex > deleting.recurrenceIndex,
-          )
-        : [],
-    [budget.state.transactions, deleting],
-  );
+  const alert =
+    budget.syncError || listErrorFor(mutations, Boolean(dialogs.deleting));
+
   const displayMoney = (value: number) => (hidden ? "R$ ••••" : money(value));
-  const filterExplanation =
-    view === "accounts"
-      ? memberFilter === "all"
-        ? "O saldo de cada conta inclui as transações de todo o casal."
-        : "O saldo de cada conta considera só as transações da pessoa selecionada."
-      : memberFilter === "all"
-        ? "O planejado soma as metas individuais de cada pessoa."
-        : "Renda, gastos e metas da pessoa selecionada.";
-
-  async function save(transaction: Transaction, occurrences = 1) {
-    const isUpdate = Boolean(dialog?.transaction);
-    if (!(await saveTx.run({ transaction, occurrences }))) return false;
-    posthog.capture(isUpdate ? "transaction_updated" : "transaction_created", {
-      transaction_kind: transaction.kind,
-      has_goal: Boolean(transaction.goal),
-      is_recurring: occurrences > 1,
-      occurrence_count: occurrences,
-    });
-    setMonth(transaction.date.slice(0, 7));
-    setNotice({
-      message: isUpdate
-        ? "Transação atualizada."
-        : occurrences > 1
-          ? `${occurrences} transações mensais adicionadas.`
-          : "Transação adicionada.",
-    });
-    return true;
-  }
-
-  async function remove(transaction: Transaction) {
-    if (transaction.recurrenceId) {
-      setDeleting(transaction);
-      return;
-    }
-    if (
-      await deleteTx.run({
-        id: transaction.id,
-        revision: transaction.revision ?? 0,
-      })
-    ) {
-      posthog.capture("transaction_deleted", { delete_scope: "single" });
-      setNotice({ message: "Transação excluída.", undo: transaction });
-    }
-  }
-
-  function openTransaction(transaction: Transaction | null) {
-    if (!transaction && budget.state.accounts.length === 0) {
-      setNotice({
-        message: "Cadastre uma conta para lançar transações.",
-      });
-      setView("accounts");
-      return;
-    }
-    setDialog({ transaction });
-  }
-
-  async function saveAccountRecord(account: BankAccount) {
-    const isUpdate = Boolean(accountDialog?.account);
-    if (!(await saveAcc.run(account))) return false;
-    posthog.capture(isUpdate ? "account_updated" : "account_created");
-    setNotice({
-      message: isUpdate ? "Conta atualizada." : "Conta adicionada.",
-    });
-    return true;
-  }
-
-  async function removeAccount(account: BankAccount) {
-    if (
-      await deleteAcc.run({
-        id: account.id,
-        revision: account.revision ?? 0,
-      })
-    ) {
-      posthog.capture("account_deleted");
-      setNotice({ message: "Conta excluída." });
-    }
-  }
-
-  function openSettle(transaction: Transaction) {
-    setDialog(null);
-    setSettling(transaction);
-  }
-
-  async function confirmSettle(input: SettleInput) {
-    if (!settling) return false;
-    const source = settling;
-    if (
-      !(await settleTx.run({
-        ...input,
-        id: source.id,
-        revision: source.revision ?? 0,
-      }))
-    )
-      return false;
-    posthog.capture("split_settled");
-    setNotice({
-      message: "Pagamento registrado.",
-      undoSettle: { ...source, revision: (source.revision ?? 0) + 1 },
-    });
-    return true;
-  }
-
-  async function unsettle(transaction: Transaction) {
-    if (
-      !(await unsettleTx.run({
-        id: transaction.id,
-        revision: transaction.revision ?? 0,
-      }))
-    )
-      return false;
-    posthog.capture("split_unsettled");
-    setNotice({ message: "Pagamento desmarcado." });
-    return true;
-  }
-
-  async function undoNotice() {
-    if (notice?.undoSettle) {
-      await unsettle(notice.undoSettle);
-      return;
-    }
-    if (
-      notice?.undo &&
-      (await restoreTx.run({
-        id: notice.undo.id,
-        revision: (notice.undo.revision ?? 0) + 1,
-        transaction: notice.undo,
-      }))
-    )
-      setNotice({ message: "Alteração desfeita." });
-  }
-
-  async function saveGoalPercentages(values: GoalPercentages) {
-    if (editingPercentages === null) return false;
-    if (
-      !(await savePct.run({
-        percentages: values,
-        revision: editingPercentages,
-      }))
-    )
-      return false;
-    posthog.capture("goal_percentages_saved");
-    setNotice({ message: "Percentuais atualizados." });
-    return true;
-  }
-
-  async function deleteRecurring(includeFollowing: boolean) {
-    if (!deleting) return;
-    if (
-      await deleteTx.run({
-        id: deleting.id,
-        revision: deleting.revision ?? 0,
-        following: includeFollowing
-          ? following.map((item) => ({
-              id: item.id,
-              revision: item.revision ?? 0,
-            }))
-          : undefined,
-      })
-    ) {
-      posthog.capture("transaction_deleted", {
-        delete_scope: includeFollowing ? "following" : "single",
-        deleted_count: includeFollowing ? following.length + 1 : 1,
-      });
-      setNotice(
-        includeFollowing
-          ? { message: `${following.length + 1} transações excluídas.` }
-          : { message: "Transação excluída.", undo: deleting },
-      );
-      setDeleting(null);
-    }
-  }
 
   return (
     <WorkspaceShell
@@ -382,201 +317,67 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       memberLabel={memberLabel}
       hidden={hidden}
       onToggleHidden={() => setHidden(!hidden)}
+      account={account}
       overlays={
         <>
           <TransactionFlows
             budget={budget}
+            dialogs={dialogs}
+            mutations={mutations}
+            actions={actions}
             month={month}
-            allTags={allTags}
-            dialog={dialog}
-            accountDialog={accountDialog}
-            deleting={deleting}
-            following={following}
-            editingPercentages={editingPercentages}
-            saveError={saveTx.error}
-            accountError={saveAcc.error}
-            deleteError={deleteTx.error}
-            percentagesError={savePct.error}
-            deleteBusy={deleteTx.pending}
-            settling={settling}
-            settleError={settleTx.error}
-            splitBusy={splitBusy}
-            onSettle={openSettle}
-            onConfirmSettle={confirmSettle}
-            onUnsettle={unsettle}
-            onCloseSettle={() => setSettling(null)}
-            onSave={save}
-            onSaveAccount={saveAccountRecord}
-            onSavePercentages={saveGoalPercentages}
-            onDelete={deleteRecurring}
-            onCloseDialog={() => setDialog(null)}
-            onCloseAccount={() => setAccountDialog(null)}
-            onCloseDeleting={() => setDeleting(null)}
-            onClosePercentages={() => setEditingPercentages(null)}
+            allTags={data.allTags}
+            following={data.following}
           />
           {notice && (
             <NoticeToast
               notice={notice}
-              onUndo={() => void undoNotice()}
+              onUndo={() => void actions.undoNotice()}
               onDismiss={() => setNotice(null)}
             />
           )}
         </>
       }
     >
-      <div className={styles.pageHeading}>
-        <div>
-          <h1>{WORKSPACE_TITLES[view].title}</h1>
-          <p>{WORKSPACE_TITLES[view].subtitle}</p>
-        </div>
-        <Button
-          className={styles.addTransaction}
-          disabled={busy}
-          onClick={() =>
-            view === "accounts"
-              ? setAccountDialog({ account: null })
-              : openTransaction(null)
-          }
-        >
-          <Plus size={19} />{" "}
-          {view === "accounts" ? "Nova conta" : "Nova transação"}
-        </Button>
-      </div>
+      <WorkspaceHeading
+        view={view}
+        busy={mutations.busy}
+        onAdd={() =>
+          view === "accounts"
+            ? dialogs.setAccount({ account: null })
+            : actions.openTransaction(null)
+        }
+      />
       {view !== "accounts" && (
-        <div className={styles.monthRow}>
-          <div className={styles.monthPicker}>
-            <Button
-              variant="icon"
-              className={styles.monthIcon}
-              aria-label="Mês anterior"
-              disabled={!month}
-              onClick={() => setMonth(shiftMonth(month, -1))}
-            >
-              <ChevronLeft size={17} />
-            </Button>
-            <input
-              className={styles.monthInput}
-              type="month"
-              aria-label="Selecionar mês e ano"
-              value={month}
-              required
-              onChange={(event) => {
-                const next = event.currentTarget.value;
-                if (monthSchema.safeParse(next).success) setMonth(next);
-              }}
-            />
-            <Button
-              variant="icon"
-              className={styles.monthIcon}
-              aria-label="Próximo mês"
-              disabled={!month}
-              onClick={() => setMonth(shiftMonth(month, 1))}
-            >
-              <ChevronRight size={17} />
-            </Button>
-          </div>
-          {today && month !== today && (
-            <button
-              className={styles.todayButton}
-              onClick={() => setMonth(today)}
-            >
-              Voltar para este mês
-            </button>
-          )}
-        </div>
+        <MonthNavigator month={month} setMonth={search.setMonth} />
       )}
       <div className={styles.coupleToolbar}>
         <MemberFilter
-          members={members}
+          members={budget.household.members}
           userId={budget.user.id}
-          value={memberFilter}
-          onChange={setMemberFilter}
+          value={search.memberFilter}
+          onChange={search.setMemberFilter}
         />
       </div>
-      <p className={styles.filterExplanation}>{filterExplanation}</p>
-      {(budget.syncError || listError) && (
+      <p className={styles.filterExplanation}>
+        {filterExplanation(view, search.memberFilter)}
+      </p>
+      {alert && (
         <div role="alert" className={styles.storageError}>
-          {budget.syncError || listError}
+          {alert}
         </div>
       )}
-      {view === "accounts" ? (
-        <AccountList
-          accounts={budget.state.accounts}
-          transactions={budget.state.transactions}
-          memberFilter={memberFilter}
-          busy={busy}
-          hidden={hidden}
-          onAdd={() => setAccountDialog({ account: null })}
-          onEdit={(account) => setAccountDialog({ account })}
-          onDelete={(account) => void removeAccount(account)}
-        />
-      ) : (
-        <>
-          {view === "overview" && (
-            <Overview
-              monthly={monthly}
-              historyTransactions={historyTransactions}
-              month={month}
-              memberFilter={memberFilter}
-              hidden={hidden}
-              displayMoney={displayMoney}
-              summary={summary}
-              debtCard={
-                partner && (
-                  <SplitDebtCard
-                    net={debt.net}
-                    unpaid={debt.unpaid}
-                    userId={budget.user.id}
-                    partner={partner}
-                    busy={busy}
-                    displayMoney={displayMoney}
-                    onSettle={openSettle}
-                  />
-                )
-              }
-            />
-          )}
-          {(view === "overview" || view === "goals") && (
-            <GoalsSection
-              view={view}
-              summary={summary}
-              plans={plans}
-              hidden={hidden}
-              displayMoney={displayMoney}
-              memberFilter={memberFilter}
-              userId={budget.user.id}
-              busy={busy}
-              onEditPercentages={() =>
-                setEditingPercentages(ownMember?.percentagesRevision ?? 0)
-              }
-              onFilterGoal={filterGoal}
-            />
-          )}
-          {(view === "overview" || view === "transactions") && (
-            <TransactionList
-              transactions={monthly}
-              members={members}
-              accounts={budget.state.accounts}
-              userId={budget.user.id}
-              busy={busy}
-              hidden={hidden}
-              query={query}
-              goalFilter={goalFilter}
-              tagFilter={tagFilter}
-              kindFilter={kindFilter}
-              onQuery={setQuery}
-              onGoal={setGoalFilter}
-              onTag={setTag}
-              onKind={setKindFilter}
-              onEdit={(transaction) => openTransaction(transaction)}
-              onDelete={(transaction) => void remove(transaction)}
-              onAdd={() => openTransaction(null)}
-              compact={view === "overview"}
-              onViewAll={() => setView("transactions")}
-            />
-          )}
-        </>
-      )}
+      <WorkspaceViews
+        budget={budget}
+        search={search}
+        data={data}
+        month={month}
+        busy={mutations.busy}
+        hidden={hidden}
+        displayMoney={displayMoney}
+        dialogs={dialogs}
+        actions={actions}
+      />
     </WorkspaceShell>
   );
 }

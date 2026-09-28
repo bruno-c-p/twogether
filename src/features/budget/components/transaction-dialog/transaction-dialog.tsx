@@ -3,14 +3,16 @@ import {
   useRef,
   useState,
   type FormEvent,
+  type ReactNode,
+  type RefObject,
 } from "react";
 import { Check } from "lucide-react";
 import {
   formatAmountInput,
   formText,
   newId,
-  parseAmount,
   normalizeTag,
+  parseAmount,
 } from "@/features/budget/domain/format";
 import {
   fieldErrors,
@@ -60,6 +62,443 @@ interface Props {
   onClose: () => void;
 }
 
+type FieldErrors = Record<string, string>;
+
+const MAX_TAGS = 8;
+
+const SOMEONE = "uma pessoa do casal";
+
+function invalidProps(errors: FieldErrors, field: string, id: string) {
+  return {
+    "aria-describedby": errors[field] ? id : undefined,
+    "aria-invalid": errors[field] ? true : undefined,
+  };
+}
+
+function withPendingTag(tags: string[], input: string) {
+  const pending = normalizeTag(input);
+
+  if (!pending || tags.includes(pending)) return tags;
+
+  return [...tags, pending].slice(0, MAX_TAGS);
+}
+
+function memberName(members: Member[], id: string | undefined) {
+  return members.find((member) => member.id === id)?.name ?? SOMEONE;
+}
+
+function submitLabel(saving: boolean, editing: boolean) {
+  if (saving) return "Salvando…";
+
+  return editing ? "Salvar alterações" : "Adicionar transação";
+}
+
+function defaultAccountId(
+  transaction: Transaction | null,
+  accounts: BankAccount[],
+) {
+  const fallback = accounts.length === 1 ? accounts[0].id : "";
+
+  return transaction?.accountId ?? fallback;
+}
+
+function useSplitChoice({
+  transaction,
+  members,
+  kind,
+  currentUserId,
+}: {
+  transaction: Transaction | null;
+  members: Member[];
+  kind: TransactionKind;
+  currentUserId: string;
+}) {
+  const [split, setSplit] = useState(Boolean(transaction?.split));
+
+  // Only expenses between the two partners split; repayments never do.
+  const canSplit =
+    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+
+  return {
+    split,
+    setSplit,
+    canSplit,
+    paid: Boolean(transaction?.split?.paidAt),
+    memberId: transaction?.memberId ?? currentUserId,
+  };
+}
+
+function useTransactionForm({
+  transaction,
+  members,
+  accounts,
+  currentUserId,
+  onSave,
+  onClose,
+}: Pick<
+  Props,
+  | "transaction"
+  | "members"
+  | "accounts"
+  | "currentUserId"
+  | "onSave"
+  | "onClose"
+>) {
+  const [kind, setKind] = useState<TransactionKind>(
+    transaction?.kind ?? "expense",
+  );
+
+  const [goal, setGoal] = useState(transaction?.goal ?? null);
+  const [tags, setTags] = useState(transaction?.tags ?? []);
+  const [tagInput, setTagInput] = useState("");
+
+  const [amountValue, setAmountValue] = useState(
+    transaction ? formatAmountInput(String(transaction.amount)) : "",
+  );
+
+  const [recurring, setRecurring] = useState(false);
+  const [occurrences, setOccurrences] = useState(12);
+  const [saving, setSaving] = useState(false);
+  const [errors, setErrors] = useState<FieldErrors>({});
+
+  const { split, setSplit, canSplit, paid, memberId } = useSplitChoice({
+    transaction,
+    members,
+    kind,
+    currentUserId,
+  });
+
+  function changeKind(next: TransactionKind) {
+    setKind(next);
+
+    if (next === "income") setGoal(null);
+  }
+
+  function addTag(value: string) {
+    const tag = normalizeTag(value);
+
+    if (tag && !tags.includes(tag) && tags.length < MAX_TAGS)
+      setTags([...tags, tag]);
+
+    setTagInput("");
+  }
+
+  function removeTag(tag: string) {
+    setTags(tags.filter((t) => t !== tag));
+  }
+
+  async function save(parsed: TransactionForm, completeTags: string[]) {
+    setErrors({});
+    setSaving(true);
+
+    const next: Transaction = {
+      id: transaction?.id ?? newId(),
+      amount: parsed.amount,
+      description: parsed.description,
+      date: parsed.date,
+      kind: parsed.kind,
+      goal: parsed.kind === "income" ? null : parsed.goal,
+      tags: completeTags,
+      accountId: parsed.accountId,
+      memberId,
+      revision: transaction?.revision,
+    };
+
+    if (canSplit && split) next.split = transaction?.split ?? {};
+
+    try {
+      const saved = await onSave(next, parsed.occurrences);
+
+      if (saved) onClose();
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (saving) return;
+
+    const form = new FormData(event.currentTarget);
+
+    const parsed = transactionFormSchema(accounts).safeParse({
+      amount: formText(form, "amount"),
+      description: formText(form, "description"),
+      date: formText(form, "date"),
+      accountId: formText(form, "accountId"),
+      goal,
+      kind,
+      occurrences: recurring && !transaction ? occurrences : 1,
+      split: canSplit && split,
+    });
+
+    if (!parsed.success) {
+      setErrors(fieldErrors(parsed.error));
+
+      return;
+    }
+
+    await save(parsed.data, withPendingTag(tags, tagInput));
+  }
+
+  return {
+    kind,
+    changeKind,
+    goal,
+    setGoal,
+    tags,
+    tagInput,
+    setTagInput,
+    addTag,
+    removeTag,
+    amountValue,
+    setAmountValue,
+    recurring,
+    setRecurring,
+    occurrences,
+    setOccurrences,
+    saving,
+    errors,
+    submit,
+    split,
+    setSplit,
+    canSplit,
+    paid,
+    memberId,
+  };
+}
+
+type TransactionFormState = ReturnType<typeof useTransactionForm>;
+
+type TransactionForm = Extract<
+  ReturnType<ReturnType<typeof transactionFormSchema>["safeParse"]>,
+  { success: true }
+>["data"];
+
+function AmountInput({
+  form,
+  amountInput,
+}: {
+  form: TransactionFormState;
+  amountInput: RefObject<HTMLInputElement | null>;
+}) {
+  useEffect(() => {
+    const input = amountInput.current;
+
+    if (!input) return;
+
+    input.setSelectionRange(input.value.length, input.value.length);
+  }, [amountInput, form.amountValue]);
+
+  return (
+    <>
+      <AmountField label="Valor" htmlFor="amount">
+        <input
+          id="amount"
+          ref={amountInput}
+          name="amount"
+          autoFocus
+          type="text"
+          inputMode="numeric"
+          placeholder="0,00"
+          maxLength={14}
+          required
+          readOnly={form.paid}
+          value={form.amountValue}
+          onChange={(event) =>
+            form.setAmountValue(formatAmountInput(event.currentTarget.value))
+          }
+          {...invalidProps(form.errors, "amount", "amount-error")}
+        />
+      </AmountField>
+      <FieldError id="amount-error">{form.errors.amount}</FieldError>
+    </>
+  );
+}
+
+function DescriptionAndDate({
+  transaction,
+  defaultDate,
+  errors,
+}: {
+  transaction: Transaction | null;
+  defaultDate: string;
+  errors: FieldErrors;
+}) {
+  return (
+    <FieldRow>
+      <label>
+        Descrição
+        <input
+          name="description"
+          placeholder="Ex.: supermercado"
+          maxLength={80}
+          defaultValue={transaction?.description}
+          required
+          {...invalidProps(errors, "description", "description-error")}
+        />
+        <FieldError id="description-error">{errors.description}</FieldError>
+      </label>
+      <label>
+        Data
+        <input
+          type="date"
+          name="date"
+          defaultValue={transaction?.date ?? defaultDate}
+          min="1900-01-01"
+          max="9999-12-31"
+          required
+          {...invalidProps(errors, "date", "date-error")}
+        />
+        <FieldError id="date-error">{errors.date}</FieldError>
+      </label>
+    </FieldRow>
+  );
+}
+
+function AccountSelect({
+  transaction,
+  accounts,
+  errors,
+}: {
+  transaction: Transaction | null;
+  accounts: BankAccount[];
+  errors: FieldErrors;
+}) {
+  return (
+    <Field htmlFor="transaction-account">
+      Conta
+      <select
+        id="transaction-account"
+        name="accountId"
+        aria-label="Conta"
+        defaultValue={defaultAccountId(transaction, accounts)}
+        required
+        {...invalidProps(errors, "accountId", "account-error")}
+      >
+        {accounts.length !== 1 && <option value="">Selecione uma conta</option>}
+        {accounts.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name}
+          </option>
+        ))}
+      </select>
+      <FieldError id="account-error">{errors.accountId}</FieldError>
+    </Field>
+  );
+}
+
+function AuditHint({
+  transaction,
+  members,
+}: {
+  transaction: Transaction | null;
+  members: Member[];
+}) {
+  if (!transaction?.updatedBy) return null;
+
+  return (
+    <FieldHint>
+      Registrado por {memberName(members, transaction.createdBy)}. Última
+      alteração por {memberName(members, transaction.updatedBy)}.
+    </FieldHint>
+  );
+}
+
+function SplitSection({
+  form,
+  transaction,
+  members,
+  currentUserId,
+  busy,
+  onSettle,
+  onUnsettle,
+  onClose,
+}: Pick<
+  Props,
+  "members" | "currentUserId" | "onSettle" | "onUnsettle" | "onClose"
+> & {
+  form: TransactionFormState;
+  transaction: Transaction | null;
+  busy: boolean;
+}) {
+  const payer = members.find((member) => member.id === form.memberId);
+  const debtor = members.find((member) => member.id !== form.memberId);
+
+  if (!form.canSplit || !debtor) return null;
+
+  const userIsDebtor = debtor.id === currentUserId;
+  const payerName = payer?.name ?? "a outra pessoa";
+
+  async function unsettle() {
+    if (transaction && (await onUnsettle(transaction))) onClose();
+  }
+
+  return (
+    <SplitPanel
+      checked={form.split}
+      amount={parseAmount(form.amountValue) ?? 0}
+      transaction={transaction}
+      title={
+        userIsDebtor
+          ? `Dividir entre ${payerName} e você`
+          : `Dividir com ${debtor.name}`
+      }
+      payerName={payer?.id === currentUserId ? "você" : (payer?.name ?? "")}
+      debtorName={userIsDebtor ? "você" : debtor.name}
+      userIsDebtor={userIsDebtor}
+      busy={busy}
+      onChange={form.setSplit}
+      onSettle={() => {
+        if (transaction) onSettle(transaction);
+      }}
+      onUnsettle={() => void unsettle()}
+    />
+  );
+}
+
+function ClassificationFields({
+  form,
+  transaction,
+  existingTags,
+  split,
+}: {
+  form: TransactionFormState;
+  transaction: Transaction | null;
+  existingTags: string[];
+  split: ReactNode;
+}) {
+  return (
+    <>
+      {!transaction && (
+        <RecurrencePanel
+          recurring={form.recurring}
+          occurrences={form.occurrences}
+          error={form.errors.occurrences}
+          onRecurringChange={form.setRecurring}
+          onOccurrencesChange={form.setOccurrences}
+        />
+      )}
+      {form.kind === "expense" && (
+        <>
+          <GoalPicker value={form.goal} onChange={form.setGoal} />
+          <FieldError id="goal-error">{form.errors.goal}</FieldError>
+        </>
+      )}
+      {split}
+      <TagPicker
+        tags={form.tags}
+        input={form.tagInput}
+        existingTags={existingTags}
+        onInput={form.setTagInput}
+        onAdd={form.addTag}
+        onRemove={form.removeTag}
+      />
+    </>
+  );
+}
+
 export function TransactionDialog({
   transaction,
   defaultDate,
@@ -74,93 +513,22 @@ export function TransactionDialog({
   onUnsettle,
   onClose,
 }: Props) {
-  const amountInput = useRef<HTMLInputElement>(null);
-  const [kind, setKind] = useState<TransactionKind>(
-    transaction?.kind ?? "expense",
-  );
-  const [goal, setGoal] = useState(transaction?.goal ?? null);
-  const [tags, setTags] = useState(transaction?.tags ?? []);
-  const [tagInput, setTagInput] = useState("");
-  const [amountValue, setAmountValue] = useState(
-    transaction ? formatAmountInput(String(transaction.amount)) : "",
-  );
-  const [recurring, setRecurring] = useState(false);
-  const [occurrences, setOccurrences] = useState(12);
-  const [saving, setSaving] = useState(false);
-  const memberId = transaction?.memberId ?? currentUserId;
-  const [split, setSplit] = useState(Boolean(transaction?.split));
-  const paid = Boolean(transaction?.split?.paidAt);
-  const payer = members.find((member) => member.id === memberId);
-  const debtor = members.find((member) => member.id !== memberId);
-  const canSplit =
-    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const form = useTransactionForm({
+    transaction,
+    members,
+    accounts,
+    currentUserId,
+    onSave,
+    onClose,
+  });
 
+  const amountInput = useRef<HTMLInputElement>(null);
+
+  // Runs after <Dialog> calls showModal(), which would otherwise move focus
+  // to the close button.
   useEffect(() => {
     amountInput.current?.focus();
   }, []);
-
-  useEffect(() => {
-    const input = amountInput.current;
-    if (!input) return;
-    input.setSelectionRange(input.value.length, input.value.length);
-  }, [amountValue]);
-
-  function addTag(value: string) {
-    const tag = normalizeTag(value);
-    if (tag && !tags.includes(tag) && tags.length < 8) setTags([...tags, tag]);
-    setTagInput("");
-  }
-
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (saving) return;
-    const form = new FormData(event.currentTarget);
-    const pendingTag = normalizeTag(tagInput);
-    const completeTags =
-      pendingTag && !tags.includes(pendingTag)
-        ? [...tags, pendingTag].slice(0, 8)
-        : tags;
-    const parsed = transactionFormSchema(accounts).safeParse({
-      amount: formText(form, "amount"),
-      description: formText(form, "description"),
-      date: formText(form, "date"),
-      accountId: formText(form, "accountId"),
-      goal,
-      kind,
-      occurrences: recurring && !transaction ? occurrences : 1,
-      split: canSplit && split,
-    });
-    if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
-      return;
-    }
-    setErrors({});
-    setSaving(true);
-    try {
-      if (
-        await onSave(
-          {
-            id: transaction?.id ?? newId(),
-            amount: parsed.data.amount,
-            description: parsed.data.description,
-            date: parsed.data.date,
-            kind: parsed.data.kind,
-            goal: parsed.data.kind === "income" ? null : parsed.data.goal,
-            tags: completeTags,
-            accountId: parsed.data.accountId,
-            memberId,
-            revision: transaction?.revision,
-            ...(canSplit && split ? { split: transaction?.split ?? {} } : {}),
-          },
-          parsed.data.occurrences,
-        )
-      )
-        onClose();
-    } finally {
-      setSaving(false);
-    }
-  }
 
   return (
     <Dialog
@@ -177,163 +545,50 @@ export function TransactionDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={(event) => void submit(event)}>
-          <Fieldset disabled={saving}>
+        <form onSubmit={(event) => void form.submit(event)}>
+          <Fieldset disabled={form.saving}>
             <KindToggle
-              kind={kind}
-              disabled={paid}
-              onChange={(next) => {
-                setKind(next);
-                if (next === "income") setGoal(null);
-              }}
+              kind={form.kind}
+              disabled={form.paid}
+              onChange={form.changeKind}
             />
-            <AmountField label="Valor" htmlFor="amount">
-              <input
-                id="amount"
-                ref={amountInput}
-                name="amount"
-                autoFocus
-                type="text"
-                inputMode="numeric"
-                placeholder="0,00"
-                maxLength={14}
-                required
-                readOnly={paid}
-                value={amountValue}
-                onChange={(event) =>
-                  setAmountValue(formatAmountInput(event.currentTarget.value))
-                }
-                aria-describedby={errors.amount ? "amount-error" : undefined}
-                aria-invalid={errors.amount ? true : undefined}
-              />
-            </AmountField>
-            <FieldError id="amount-error">{errors.amount}</FieldError>
-            <FieldRow>
-              <label>
-                Descrição
-                <input
-                  name="description"
-                  placeholder="Ex.: supermercado"
-                  maxLength={80}
-                  defaultValue={transaction?.description}
-                  required
-                  aria-describedby={
-                    errors.description ? "description-error" : undefined
-                  }
-                  aria-invalid={errors.description ? true : undefined}
-                />
-                <FieldError id="description-error">
-                  {errors.description}
-                </FieldError>
-              </label>
-              <label>
-                Data
-                <input
-                  type="date"
-                  name="date"
-                  defaultValue={transaction?.date ?? defaultDate}
-                  min="1900-01-01"
-                  max="9999-12-31"
-                  required
-                  aria-describedby={errors.date ? "date-error" : undefined}
-                  aria-invalid={errors.date ? true : undefined}
-                />
-                <FieldError id="date-error">{errors.date}</FieldError>
-              </label>
-            </FieldRow>
-            <Field>
-              Conta
-              <select
-                name="accountId"
-                defaultValue={
-                  transaction?.accountId ??
-                  (accounts.length === 1 ? accounts[0].id : "")
-                }
-                required
-                aria-describedby={errors.accountId ? "account-error" : undefined}
-                aria-invalid={errors.accountId ? true : undefined}
-              >
-                {accounts.length !== 1 && (
-                  <option value="">Selecione uma conta</option>
-                )}
-                {accounts.map((item) => (
-                  <option key={item.id} value={item.id}>
-                    {item.name}
-                  </option>
-                ))}
-              </select>
-              <FieldError id="account-error">{errors.accountId}</FieldError>
-            </Field>
-            {!transaction && (
-              <RecurrencePanel
-                recurring={recurring}
-                occurrences={occurrences}
-                error={errors.occurrences}
-                onRecurringChange={setRecurring}
-                onOccurrencesChange={setOccurrences}
-              />
-            )}
-            {kind === "expense" && (
-              <>
-                <GoalPicker value={goal} onChange={setGoal} />
-                <FieldError id="goal-error">{errors.goal}</FieldError>
-              </>
-            )}
-            {canSplit && debtor && (
-              <SplitPanel
-                checked={split}
-                amount={parseAmount(amountValue) ?? 0}
-                transaction={transaction}
-                title={
-                  debtor.id === currentUserId
-                    ? `Dividir entre ${payer?.name ?? "a outra pessoa"} e você`
-                    : `Dividir com ${debtor.name}`
-                }
-                payerName={
-                  payer?.id === currentUserId ? "você" : (payer?.name ?? "")
-                }
-                debtorName={debtor.id === currentUserId ? "você" : debtor.name}
-                userIsDebtor={debtor.id === currentUserId}
-                busy={splitBusy}
-                onChange={setSplit}
-                onSettle={() => transaction && onSettle(transaction)}
-                onUnsettle={() => {
-                  if (transaction)
-                    void onUnsettle(transaction).then((ok) => ok && onClose());
-                }}
-              />
-            )}
-            <TagPicker
-              tags={tags}
-              input={tagInput}
+            <AmountInput form={form} amountInput={amountInput} />
+            <DescriptionAndDate
+              transaction={transaction}
+              defaultDate={defaultDate}
+              errors={form.errors}
+            />
+            <AccountSelect
+              transaction={transaction}
+              accounts={accounts}
+              errors={form.errors}
+            />
+            <ClassificationFields
+              form={form}
+              transaction={transaction}
               existingTags={existingTags}
-              onInput={setTagInput}
-              onAdd={addTag}
-              onRemove={(tag) => setTags(tags.filter((t) => t !== tag))}
+              split={
+                <SplitSection
+                  form={form}
+                  transaction={transaction}
+                  members={members}
+                  currentUserId={currentUserId}
+                  busy={splitBusy}
+                  onSettle={onSettle}
+                  onUnsettle={onUnsettle}
+                  onClose={onClose}
+                />
+              }
             />
             {serverError && <FormError>{serverError}</FormError>}
-            {transaction?.updatedBy && (
-              <FieldHint>
-                Registrado por{" "}
-                {members.find((member) => member.id === transaction.createdBy)
-                  ?.name ?? "uma pessoa do casal"}
-                . Última alteração por{" "}
-                {members.find((member) => member.id === transaction.updatedBy)
-                  ?.name ?? "uma pessoa do casal"}
-                .
-              </FieldHint>
-            )}
+            <AuditHint transaction={transaction} members={members} />
             <DialogFooter>
               <Button type="button" variant="text" onClick={onClose}>
                 Cancelar
               </Button>
               <Button type="submit">
                 <Check size={17} />
-                {saving
-                  ? "Salvando…"
-                  : transaction
-                    ? "Salvar alterações"
-                    : "Adicionar transação"}
+                {submitLabel(form.saving, Boolean(transaction))}
               </Button>
             </DialogFooter>
           </Fieldset>

@@ -29,24 +29,33 @@ export function GoalPercentagesDialog({
   const parsed = goalPercentagesSchema.safeParse(values);
   const valid = parsed.success;
   const invalidMessage = parsed.success ? "" : parsed.error.issues[0].message;
+
   const total = GOALS.reduce(
     (sum, goal) =>
       sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
     0,
   );
+
   async function submit(event: FormEvent) {
     event.preventDefault();
+
     if (!valid || saving) return;
     setSaving(true);
-    if (await onSave(values)) onClose();
-    setSaving(false);
+
+    let saved = false;
+
+    try {
+      saved = await onSave(values);
+    } finally {
+      setSaving(false);
+    }
+
+    if (saved) onClose();
   }
+
   return (
     <Dialog labelledBy="percentages-title" narrow onClose={onClose}>
-      <DialogContent
-        as="form"
-        onSubmit={(event) => void submit(event)}
-      >
+      <DialogContent as="form" onSubmit={(event) => void submit(event)}>
         <DialogHeader onClose={onClose} closeLabel="Fechar percentuais">
           <h2 id="percentages-title">Divisão da minha renda</h2>
         </DialogHeader>

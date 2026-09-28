@@ -55,10 +55,13 @@ export function ListRowValue({
   ...props
 }: ComponentPropsWithoutRef<"span"> & { tone?: "positive" | "negative" }) {
   const toneClass = valueTone(tone);
+
   return (
     <span
       className={
-        className ? `${styles.value} ${toneClass} ${className}` : `${styles.value} ${toneClass}`
+        className
+          ? `${styles.value} ${toneClass} ${className}`
+          : `${styles.value} ${toneClass}`
       }
       {...props}
     />
@@ -77,9 +80,6 @@ export function ListRowActions({
   );
 }
 
-export const listRowAction = styles.actionButton;
-export const listRowDelete = styles.deleteButton;
-
 function valueTone(tone: "positive" | "negative") {
   switch (tone) {
     case "positive":
@@ -88,6 +88,7 @@ function valueTone(tone: "positive" | "negative") {
       return styles.negative;
     default: {
       const _exhaustive: never = tone;
+
       return _exhaustive;
     }
   }

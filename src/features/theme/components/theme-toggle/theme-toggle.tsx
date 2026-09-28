@@ -21,22 +21,26 @@ function preference(): Theme {
 
 function subscribe(notify: () => void) {
   const media = window.matchMedia("(prefers-color-scheme: dark)");
+
   const sync = () => {
     const theme = preference();
     document.documentElement.dataset.theme =
       theme === "system" ? (media.matches ? "dark" : "light") : theme;
     notify();
   };
+
   const storage = (event: StorageEvent) => {
     if (event.key !== THEME_STORAGE_KEY && event.key !== null) return;
     document.documentElement.dataset.themePreference =
       themePreferenceSchema.parse(event.newValue);
     sync();
   };
+
   sync();
   media.addEventListener("change", sync);
   window.addEventListener(THEME_CHANGE_EVENT, sync);
   window.addEventListener("storage", storage);
+
   return () => {
     media.removeEventListener("change", sync);
     window.removeEventListener(THEME_CHANGE_EVENT, sync);
@@ -46,11 +50,15 @@ function subscribe(notify: () => void) {
 
 export function ThemeToggle({ className }: { className?: string } = {}) {
   const theme = useSyncExternalStore(subscribe, preference, () => "system");
+
   return (
     <div
       className={
         className ? `${styles.themeToggle} ${className}` : styles.themeToggle
-      } role="group" aria-label="Aparência">
+      }
+      role="group"
+      aria-label="Aparência"
+    >
       {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
         <button
           key={value}
@@ -64,11 +72,13 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
           }
           onClick={() => {
             document.documentElement.dataset.themePreference = value;
+
             try {
               localStorage.setItem(THEME_STORAGE_KEY, value);
             } catch {
               /* Session-only when storage is unavailable. */
             }
+
             window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
           }}
         >

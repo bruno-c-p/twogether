@@ -1,4 +1,4 @@
-.person-filter {
+.personFilter {
   display: inline-flex;
   gap: 4px;
   padding: 4px;
@@ -8,7 +8,7 @@
   max-width: 100%;
 }
 
-.person-filter button {
+.personFilter button {
   border: 0;
   padding: 9px 17px;
   background: transparent;
@@ -23,13 +23,13 @@
   cursor: pointer;
 }
 
-.person-filter button.active {
+.personFilter button.active {
   background: var(--surface-soft);
   color: var(--text);
 }
 
 @media (max-width: 620px) {
-  .person-filter button {
+  .personFilter button {
     padding: 9px 14px;
     max-width: 135px;
   }

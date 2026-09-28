@@ -14,6 +14,7 @@ export const rateLimitMiddleware = createMiddleware({
   const { userId } = await auth();
   const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
   const verdict = consumeRateLimit(key);
+
   if (!verdict.ok)
     throwHttpError(
       new RequestError(
@@ -22,13 +23,16 @@ export const rateLimitMiddleware = createMiddleware({
         "limited",
       ),
     );
+
   return next();
 });
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
     const user = await currentUser();
+
     if (!user) throw redirect({ to: "/entrar" });
+
     return next({ context: { user } });
   },
 );
@@ -42,8 +46,10 @@ export const householdMiddleware = createMiddleware({ type: "function" })
   .server(async ({ next, context }) => {
     try {
       const household = await getBudgetStore().householdFor(context.user);
+
       if (!household)
         throw new RequestError("Crie um orçamento ou aceite um convite.");
+
       return next({ context: { household } });
     } catch (error) {
       throwHttpError(error);

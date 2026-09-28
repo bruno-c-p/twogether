@@ -4,14 +4,14 @@
   margin-bottom: 20px;
 }
 
-.percentage-total {
+.percentageTotal {
   margin-top: 20px;
   padding: 12px;
   border-radius: 8px;
   background: var(--surface-soft);
 }
 
-.percentage-total.invalid {
+.percentageTotal.invalid {
   background: var(--danger-soft);
   color: var(--danger);
 }

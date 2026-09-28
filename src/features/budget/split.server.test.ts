@@ -31,10 +31,12 @@ async function setup() {
   await store.saveTransaction(ana.user, ana.household, {
     transaction: rent(ana.user.id),
   });
+
   const find = async (id = "rent") =>
     (await store.snapshot(ana.user)).budget.transactions.find(
       (row) => row.id === id,
     )!;
+
   return { store, ana, bia, find };
 }
 
@@ -134,7 +136,11 @@ describe("split transactions", () => {
   test("stale settle attempts conflict", async () => {
     const { store, ana, bia } = await setup();
     await store.saveTransaction(ana.user, ana.household, {
-      transaction: { ...rent(ana.user.id), description: "Aluguel set", revision: 1 },
+      transaction: {
+        ...rent(ana.user.id),
+        description: "Aluguel set",
+        revision: 1,
+      },
     });
     await expect(
       store.settleSplit(bia.user, bia.household, settleInput),
@@ -155,6 +161,7 @@ describe("split transactions", () => {
     const { store, ana, bia, find } = await setup();
     await store.settleSplit(bia.user, bia.household, settleInput);
     const paid = await find();
+
     for (const change of [
       { amount: 1000 },
       { split: undefined },
@@ -183,9 +190,11 @@ describe("split transactions", () => {
   test("repayment entries cannot be edited, deleted or restored directly", async () => {
     const { store, ana, bia } = await setup();
     await store.settleSplit(bia.user, bia.household, settleInput);
+
     const entry = (await store.snapshot(ana.user)).budget.transactions.find(
       (row) => row.settlementOf,
     )!;
+
     await expect(
       store.saveTransaction(ana.user, ana.household, {
         transaction: { ...entry, amount: 5 },
@@ -215,18 +224,22 @@ describe("split transactions", () => {
       transaction: { ...rent(ana.user.id), id: "series" },
       occurrences: 3,
     });
+
     const series = (await store.snapshot(ana.user)).budget.transactions.filter(
       (row) => row.recurrenceId,
     );
+
     expect(series).toHaveLength(3);
     expect(series.every((row) => row.split && !row.split.paidAt)).toBe(true);
     await store.settleSplit(bia.user, bia.household, {
       ...settleInput,
       id: "series",
     });
+
     const after = (await store.snapshot(ana.user)).budget.transactions.filter(
       (row) => row.recurrenceId,
     );
+
     expect(after.filter((row) => row.split?.paidAt)).toHaveLength(1);
     await expect(
       store.deleteTransaction(ana.user, ana.household, {

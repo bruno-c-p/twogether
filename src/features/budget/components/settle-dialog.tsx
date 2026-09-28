@@ -46,34 +46,45 @@ export function SettleDialog({
 }) {
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   const payer =
     members.find((member) => member.id === transaction.memberId)?.name ??
     "a outra pessoa";
+
   const share = partnerShare(transaction.amount);
   const accountIds = new Set(accounts.map((account) => account.id));
+
   const defaultAccount = accountIds.has(transaction.accountId)
     ? transaction.accountId
     : "";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (saving) return;
     const form = new FormData(event.currentTarget);
+
     const input = {
       date: formText(form, "date"),
       payerAccountId: formText(form, "payerAccountId"),
       partnerAccountId: formText(form, "partnerAccountId"),
     };
+
     const next: Record<string, string> = {};
+
     if (!dateSchema.safeParse(input.date).success)
       next.date = "Escolha uma data válida.";
+
     if (!accountIds.has(input.payerAccountId))
       next.payerAccountId = "Escolha uma conta bancária.";
+
     if (!accountIds.has(input.partnerAccountId))
       next.partnerAccountId = "Escolha uma conta bancária.";
     setErrors(next);
+
     if (Object.keys(next).length) return;
     setSaving(true);
+
     try {
       if (await onConfirm(input)) onClose();
     } finally {
@@ -87,6 +98,7 @@ export function SettleDialog({
         {label}
         <select
           name={name}
+          aria-label={label}
           defaultValue={defaultAccount}
           required
           aria-describedby={errors[name] ? `${name}-error` : undefined}
@@ -126,6 +138,7 @@ export function SettleDialog({
               <input
                 type="date"
                 name="date"
+                aria-label="Data do pagamento"
                 defaultValue={localDate()}
                 min="1900-01-01"
                 max="9999-12-31"

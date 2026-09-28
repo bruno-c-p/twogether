@@ -4,7 +4,9 @@ import { createClerkClient } from "@clerk/backend";
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 
 export const desktop = { width: 1280, height: 800 };
+
 export const mobile = { width: 320, height: 720 };
+
 export const commandBus = ["/api", "budget"].join("/");
 
 export function randomToken() {
@@ -13,10 +15,12 @@ export function randomToken() {
 
 export function uniqueEmail(label: string) {
   const info = test.info();
+
   const key = createHash("sha1")
     .update(`${info.project.name}:${info.title}`)
     .digest("hex")
     .slice(0, 12);
+
   return `e2e.${key}.${label}+clerk_test@example.com`;
 }
 
@@ -52,10 +56,13 @@ export async function waitForInvite(page: Page, token: string) {
 
 async function ensureClerkUser(email: string) {
   const secretKey = process.env.CLERK_SECRET_KEY;
+
   if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
   const client = createClerkClient({ secretKey });
   const existing = await client.users.getUserList({ emailAddress: [email] });
+
   if (existing.data.length > 0) return existing.data[0];
+
   return client.users.createUser({
     emailAddress: [email],
     skipPasswordRequirement: true,
@@ -65,6 +72,7 @@ async function ensureClerkUser(email: string) {
 export async function signInClerk(page: Page, email: string) {
   await setupClerkTestingToken({ page });
   const path = new URL(page.url()).pathname;
+
   if (path.startsWith("/convite/")) {
     await expect(
       page.getByRole("heading", { name: /A vida a dois/ }),
@@ -74,14 +82,18 @@ export async function signInClerk(page: Page, email: string) {
     if (!path.startsWith("/entrar")) await page.goto("/entrar");
     await waitForGate(page);
   }
+
   const user = await ensureClerkUser(email);
   const secretKey = process.env.CLERK_SECRET_KEY;
+
   if (!secretKey) throw new Error("CLERK_SECRET_KEY is missing");
   const client = createClerkClient({ secretKey });
+
   const signInToken = await client.signInTokens.createSignInToken({
     userId: user.id,
     expiresInSeconds: 600,
   });
+
   await clerk.signIn({
     page,
     signInParams: { strategy: "ticket", ticket: signInToken.token },
@@ -96,10 +108,12 @@ export async function signInClerk(page: Page, email: string) {
 export async function setName(page: Page, name: string) {
   await waitForHydrated(page);
   const field = page.getByLabel("Seu nome");
+
   if (await field.isVisible()) {
     await field.fill(name);
     await page.getByRole("button", { name: "Continuar" }).click();
   }
+
   await expect(
     page.getByRole("heading", { name: `Vamos começar, ${name}?` }),
   ).toBeVisible();
@@ -120,6 +134,7 @@ export async function onboard(
   await signInClerk(page, email);
   await setName(page, name);
   await createHousehold(page);
+
   return email;
 }
 
@@ -134,6 +149,7 @@ export async function openCouple(page: Page) {
 
 export async function dismissToast(page: Page) {
   const close = page.getByRole("button", { name: "Fechar aviso" });
+
   if (await close.isVisible()) await close.click();
 }
 
@@ -149,11 +165,13 @@ export async function expectNoHorizontalOverflow(page: Page) {
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
   }));
+
   expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth);
 }
 
 export async function withMobile(page: Page, run: () => Promise<void>) {
   await page.setViewportSize(mobile);
+
   try {
     await run();
   } finally {
@@ -167,11 +185,13 @@ export async function setMonth(page: Page, month: string) {
 
 export async function sessionCookie(page: Page) {
   const cookies = await page.context().cookies();
+
   return cookies.find((cookie) => cookie.name === "__session");
 }
 
 export function nav(page: Page, kind: "desktop" | "mobile") {
   const label = kind === "desktop" ? "Navegação principal" : "Navegação mobile";
+
   return page.getByRole("navigation", { name: label });
 }
 

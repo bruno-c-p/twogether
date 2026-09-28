@@ -26,8 +26,10 @@ describe("parseSaveTransaction", () => {
       "Escolha entre 1 e 120 ocorrências.",
     );
     expect(() =>
+      // @ts-expect-error: the parser must reject untrusted request bodies
       parseSaveTransaction({ transaction, occurrences: "12" }),
     ).toThrow("Escolha entre 1 e 120 ocorrências.");
+    // @ts-expect-error: the parser must reject untrusted request bodies
     expect(parseSaveTransaction({ action: "save", transaction })).toEqual({
       transaction,
     });

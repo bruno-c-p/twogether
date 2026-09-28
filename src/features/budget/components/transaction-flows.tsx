@@ -1,130 +1,101 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
-import {
-  SettleDialog,
-  type SettleInput,
-} from "@/features/budget/components/settle-dialog";
+import { SettleDialog } from "@/features/budget/components/settle-dialog";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
+import type { WorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
+import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
-import type {
-  BankAccount,
-  GoalPercentages,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { Transaction } from "@/features/budget/domain/types";
 
-export function TransactionFlows({
+type FlowProps = {
+  budget: BudgetController;
+  dialogs: WorkspaceDialogs;
+  mutations: BudgetMutations;
+  actions: WorkspaceActions;
+};
+
+function transactionDefaultDate(month: string) {
+  return month === currentMonth() ? localDate() : `${month}-01`;
+}
+
+function EditorDialogs({
   budget,
+  dialogs,
+  mutations,
+  actions,
   month,
   allTags,
-  dialog,
-  accountDialog,
-  deleting,
-  following,
-  editingPercentages,
-  saveError,
-  accountError,
-  deleteError,
-  percentagesError,
-  deleteBusy,
-  settling,
-  settleError,
-  splitBusy,
-  onSettle,
-  onConfirmSettle,
-  onUnsettle,
-  onCloseSettle,
-  onSave,
-  onSaveAccount,
-  onSavePercentages,
-  onDelete,
-  onCloseDialog,
-  onCloseAccount,
-  onCloseDeleting,
-  onClosePercentages,
-}: {
-  budget: BudgetController;
-  month: string;
-  allTags: string[];
-  dialog: { transaction: Transaction | null } | null;
-  accountDialog: { account: BankAccount | null } | null;
-  deleting: Transaction | null;
-  following: Transaction[];
-  editingPercentages: number | null;
-  saveError: string;
-  accountError: string;
-  deleteError: string;
-  percentagesError: string;
-  deleteBusy: boolean;
-  settling: Transaction | null;
-  settleError: string;
-  splitBusy: boolean;
-  onSettle: (transaction: Transaction) => void;
-  onConfirmSettle: (input: SettleInput) => Promise<boolean>;
-  onUnsettle: (transaction: Transaction) => Promise<boolean>;
-  onCloseSettle: () => void;
-  onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
-  onSaveAccount: (account: BankAccount) => Promise<boolean>;
-  onSavePercentages: (values: GoalPercentages) => Promise<boolean>;
-  onDelete: (includeFollowing: boolean) => Promise<void>;
-  onCloseDialog: () => void;
-  onCloseAccount: () => void;
-  onCloseDeleting: () => void;
-  onClosePercentages: () => void;
-}) {
+}: FlowProps & { month: string; allTags: string[] }) {
   return (
     <>
-      {editingPercentages !== null && (
+      {dialogs.percentagesRevision !== null && (
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
-          onClose={onClosePercentages}
-          error={percentagesError}
-          onSave={onSavePercentages}
+          onClose={() => dialogs.setPercentagesRevision(null)}
+          error={mutations.savePct.error}
+          onSave={actions.saveGoalPercentages}
         />
       )}
-      {dialog && (
+      {dialogs.transaction && (
         <TransactionDialog
-          transaction={dialog.transaction}
-          defaultDate={month === currentMonth() ? localDate() : `${month}-01`}
+          transaction={dialogs.transaction.transaction}
+          defaultDate={transactionDefaultDate(month)}
           existingTags={allTags}
           members={budget.household.members}
           accounts={budget.state.accounts}
           currentUserId={budget.user.id}
-          serverError={saveError}
-          splitBusy={splitBusy}
-          onSave={onSave}
-          onSettle={onSettle}
-          onUnsettle={onUnsettle}
-          onClose={onCloseDialog}
+          serverError={mutations.saveTx.error}
+          splitBusy={mutations.splitBusy}
+          onSave={actions.save}
+          onSettle={actions.openSettle}
+          onUnsettle={actions.unsettle}
+          onClose={() => dialogs.setTransaction(null)}
         />
       )}
-      {accountDialog && (
+      {dialogs.account && (
         <AccountDialog
-          account={accountDialog.account}
-          serverError={accountError}
-          onSave={onSaveAccount}
-          onClose={onCloseAccount}
+          account={dialogs.account.account}
+          serverError={mutations.saveAcc.error}
+          onSave={actions.saveAccountRecord}
+          onClose={() => dialogs.setAccount(null)}
         />
       )}
-      {deleting && (
+    </>
+  );
+}
+
+export function TransactionFlows({
+  month,
+  allTags,
+  following,
+  ...flow
+}: FlowProps & { month: string; allTags: string[]; following: Transaction[] }) {
+  const { budget, dialogs, mutations, actions } = flow;
+
+  return (
+    <>
+      <EditorDialogs {...flow} month={month} allTags={allTags} />
+      {dialogs.deleting && (
         <DeleteRecurrenceDialog
-          transaction={deleting}
+          transaction={dialogs.deleting}
           count={following.length + 1}
-          busy={deleteBusy}
-          error={deleteError}
-          onClose={onCloseDeleting}
-          onDelete={onDelete}
+          busy={mutations.deleteTx.pending}
+          error={mutations.deleteTx.error}
+          onClose={() => dialogs.setDeleting(null)}
+          onDelete={actions.deleteRecurring}
         />
       )}
-      {settling && (
+      {dialogs.settling && (
         <SettleDialog
-          transaction={settling}
+          transaction={dialogs.settling}
           members={budget.household.members}
           accounts={budget.state.accounts}
-          serverError={settleError}
-          onConfirm={onConfirmSettle}
-          onClose={onCloseSettle}
+          serverError={mutations.settleTx.error}
+          onConfirm={actions.confirmSettle}
+          onClose={() => dialogs.setSettling(null)}
         />
       )}
     </>

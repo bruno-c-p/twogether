@@ -82,11 +82,7 @@ export function Overview({
       </OverviewGrid>
       {debtCard}
       {month && (
-        <ExpenseCharts
-          transactions={monthly}
-          month={month}
-          hidden={hidden}
-        />
+        <ExpenseCharts transactions={monthly} month={month} hidden={hidden} />
       )}
       {month && (
         <FinancialHistory

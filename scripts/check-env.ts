@@ -1,12 +1,12 @@
 import { loadEnv } from "vite";
 import { parseClientEnv } from "@/lib/env";
 
-const env: Record<string, string | undefined> = {
+const env = {
   ...loadEnv("production", process.cwd(), "VITE_"),
+  ...Object.fromEntries(
+    Object.entries(process.env).filter(([key]) => key.startsWith("VITE_")),
+  ),
 };
-for (const [key, value] of Object.entries(process.env)) {
-  if (key.startsWith("VITE_")) env[key] = value;
-}
 
 try {
   parseClientEnv(env);

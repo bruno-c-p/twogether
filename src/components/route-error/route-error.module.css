@@ -1,25 +1,25 @@
-.not-found {
+.notFound {
   padding: 80px 30px;
   display: grid;
   gap: 20px;
 }
 
-.not-found a {
+.notFound a {
   text-decoration: underline;
 }
 
-.route-error {
+.routeError {
   padding: 80px 30px;
   display: grid;
   gap: 16px;
   justify-items: start;
 }
 
-.route-error h1 {
+.routeError h1 {
   margin: 0;
 }
 
-.route-error p {
+.routeError p {
   margin: 0;
   color: var(--text-muted);
 }

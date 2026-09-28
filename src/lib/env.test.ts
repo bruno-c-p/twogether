@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { parseClientEnv } from "@/lib/env";
 
 const clerk = { VITE_CLERK_PUBLISHABLE_KEY: "pk_test_placeholder" };
+
 const posthog = {
   VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: "phc_placeholder",
   VITE_PUBLIC_POSTHOG_HOST: "https://us.i.posthog.com",
@@ -34,6 +35,7 @@ describe("parseClientEnv", () => {
       VITE_PUBLIC_POSTHOG_PROJECT_TOKEN: "",
       VITE_PUBLIC_POSTHOG_HOST: "",
     });
+
     expect(env.VITE_PUBLIC_POSTHOG_HOST).toBeUndefined();
   });
 });

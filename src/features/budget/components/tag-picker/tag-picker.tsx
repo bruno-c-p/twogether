@@ -19,7 +19,9 @@ export function TagPicker({
   onRemove: (tag: string) => void;
 }) {
   const full = tags.length >= 8;
-  const suggestions = existingTags.filter((tag) => !tags.includes(tag));
+  const selected = new Set(tags);
+  const suggestions = existingTags.filter((tag) => !selected.has(tag));
+
   return (
     <>
       <label htmlFor="tag-input">

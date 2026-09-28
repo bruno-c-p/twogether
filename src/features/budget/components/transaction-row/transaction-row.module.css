@@ -2,23 +2,23 @@
   transition: background 0.15s;
 }
 
-.goal-dot {
+.goalDot {
   width: 4px;
   height: 4px;
 }
 
-.transaction-description {
+.transactionDescription {
   display: flex;
   align-items: center;
   gap: 11px;
   min-width: 0;
 }
 
-.transaction-description > div {
+.transactionDescription > div {
   min-width: 0;
 }
 
-.transaction-icon {
+.transactionIcon {
   width: 34px;
   height: 34px;
   border-radius: 9px;
@@ -27,12 +27,12 @@
   flex-shrink: 0;
 }
 
-.income-icon {
+.incomeIcon {
   background: var(--surface-soft);
   color: var(--text);
 }
 
-.transaction-name {
+.transactionName {
   background: none;
   border: 0;
   padding: 0;
@@ -47,20 +47,20 @@
   display: block;
 }
 
-.transaction-name:hover {
+.transactionName:hover {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
 
-.row-tags {
+.rowTags {
   display: flex;
   gap: 6px;
   margin-top: 5px;
   flex-wrap: wrap;
 }
 
-.row-tags button,
-.row-tags span {
+.rowTags button,
+.rowTags span {
   border: 0;
   background: none;
   padding: 0;
@@ -68,11 +68,11 @@
   font-size: 9px;
 }
 
-.row-tags button:hover {
+.rowTags button:hover {
   color: var(--green);
 }
 
-.goal-badge {
+.goalBadge {
   display: inline-flex;
   align-items: center;
   gap: 5px;
@@ -82,17 +82,17 @@
   white-space: nowrap;
 }
 
-.income-label {
+.incomeLabel {
   font-size: 10px;
   color: var(--text-muted);
 }
 
-.transaction-date {
+.transactionDate {
   font-size: 10px;
   color: var(--text-muted);
 }
 
-.transaction-value {
+.transactionValue {
   font-size: 11px;
   font-weight: 500;
   text-align: right;
@@ -101,222 +101,222 @@
   font-variant-numeric: tabular-nums;
 }
 
-.transaction-value.positive {
+.transactionValue.positive {
   color: var(--text);
 }
 
-.transaction-value.negative {
+.transactionValue.negative {
   color: var(--danger);
 }
 
-.row-actions {
+.rowActions {
   display: flex;
   justify-content: flex-end;
   opacity: 0;
   transition: opacity 0.15s;
 }
 
-.row:hover .row-actions,
-.row:focus-within .row-actions {
+.row:hover .rowActions,
+.row:focus-within .rowActions {
   opacity: 1;
 }
 
-.row-actions .actionButton {
+.rowActions .actionButton {
   width: 25px;
   height: 30px;
   color: var(--text-muted);
 }
 
-.row-actions .delete-button:hover {
+.rowActions .deleteButton:hover {
   background: var(--warning-soft);
   color: var(--warning);
 }
 
-.transaction-name,
-.transaction-value {
+.transactionName,
+.transactionValue {
   font-size: 12px;
 }
 
-.row-tags button,
-.row-tags span {
+.rowTags button,
+.rowTags span {
   color: var(--text-muted);
   font-size: 11px;
 }
 
-.transaction-date {
+.transactionDate {
   color: var(--text-muted);
   font-size: 11px;
 }
 
-.goal-badge {
+.goalBadge {
   font-size: 10px;
 }
 
-.transaction-person {
+.transactionPerson {
   color: var(--text);
   font-size: 11px;
   margin: 4px 0;
 }
 
 @media (min-width: 1450px) {
-  .transaction-name,
-  .transaction-value {
+  .transactionName,
+  .transactionValue {
     font-size: 13px;
   }
 
-  .row-tags button,
-  .row-tags span {
+  .rowTags button,
+  .rowTags span {
     font-size: 11px;
   }
 
-  .goal-badge {
+  .goalBadge {
     font-size: 11px;
   }
 
-  .transaction-date {
+  .transactionDate {
     font-size: 12px;
   }
 
-  .transaction-name,
-  .transaction-value {
+  .transactionName,
+  .transactionValue {
     font-size: 14px;
   }
 }
 
 @media (max-width: 1190px) {
-  .row-actions {
+  .rowActions {
     flex-direction: column;
     opacity: 1;
   }
 
-  .row-actions .actionButton {
+  .rowActions .actionButton {
     height: 24px;
   }
 
-  .transaction-name {
+  .transactionName {
     font-size: 10px;
   }
 
-  .transaction-description {
+  .transactionDescription {
     gap: 8px;
   }
 
-  .goal-badge {
+  .goalBadge {
     font-size: 8px;
   }
 }
 
 @media (max-width: 800px) {
-  .transaction-date {
+  .transactionDate {
     display: none;
   }
 
-  .transaction-value {
+  .transactionValue {
     font-size: 10px;
   }
 
-  .transaction-description {
+  .transactionDescription {
     gap: 7px;
   }
 
-  .transaction-icon {
+  .transactionIcon {
     width: 29px;
     height: 29px;
   }
 
-  .transaction-icon svg {
+  .transactionIcon svg {
     width: 17px;
   }
 
-  .transaction-name {
+  .transactionName {
     font-size: 10px;
   }
 
-  .transaction-goal .goal-badge {
+  .transactionGoal .goalBadge {
     font-size: 9px;
   }
 
-  .transaction-name,
-  .transaction-value {
+  .transactionName,
+  .transactionValue {
     font-size: 11px;
   }
 }
 
 @media (max-width: 620px) {
-  .transaction-description {
+  .transactionDescription {
     gap: 9px;
     grid-row: 1 / 3;
     align-self: center;
   }
 
-  .transaction-description > div {
+  .transactionDescription > div {
     padding-bottom: 19px;
   }
 
-  .transaction-icon {
+  .transactionIcon {
     width: 32px;
     height: 32px;
   }
 
-  .transaction-name {
+  .transactionName {
     font-size: 11px;
     line-height: 1.5;
   }
 
-  .row-tags {
+  .rowTags {
     gap: 5px;
     max-width: 180px;
   }
 
-  .row-tags button,
-  .row-tags span {
+  .rowTags button,
+  .rowTags span {
     font-size: 9px;
   }
 
-  .transaction-value {
+  .transactionValue {
     grid-column: 2;
     grid-row: 1 / 3;
     font-size: 11px;
   }
 
-  .transaction-goal {
+  .transactionGoal {
     position: absolute;
     left: 53px;
     bottom: 10px;
   }
 
-  .goal-badge {
+  .goalBadge {
     font-size: 8px;
     padding: 3px 5px;
   }
 
-  .income-label {
+  .incomeLabel {
     font-size: 9px;
   }
 
-  .row-actions {
+  .rowActions {
     grid-column: 3;
     grid-row: 1 / 3;
   }
 
-  .row-actions .actionButton {
+  .rowActions .actionButton {
     width: 24px;
     height: 27px;
   }
 
-  .row-actions .actionButton svg {
+  .rowActions .actionButton svg {
     width: 13px;
   }
 
-  .transaction-description > div {
+  .transactionDescription > div {
     padding-bottom: 5px;
   }
 
-  .transaction-goal {
+  .transactionGoal {
     bottom: 9px;
   }
 
-  .transaction-date {
+  .transactionDate {
     display: block;
     position: absolute;
     bottom: 12px;
@@ -324,27 +324,27 @@
     font-size: 10px;
   }
 
-  .transaction-name {
+  .transactionName {
     font-size: 12px;
   }
 
-  .row-tags button,
-  .row-tags span {
+  .rowTags button,
+  .rowTags span {
     font-size: 10px;
   }
 
-  .transaction-value {
+  .transactionValue {
     font-size: 11px;
   }
 }
 
 @media (max-width: 1190px) and (min-width: 801px) {
-  .transaction-name,
-  .transaction-value {
+  .transactionName,
+  .transactionValue {
     font-size: 11px;
   }
 
-  .goal-badge {
+  .goalBadge {
     font-size: 9px;
   }
 }

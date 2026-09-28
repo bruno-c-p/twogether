@@ -33,15 +33,19 @@ export function Dialog({
     element?.showModal();
     const overflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+
     return () => {
       element?.close();
       document.body.style.overflow = overflow;
+
       if (previous instanceof HTMLElement) previous.focus();
     };
   }, []);
+
   const classes = [styles.dialog, narrow ? styles.narrow : "", className]
     .filter(Boolean)
     .join(" ");
+
   return (
     <dialog
       ref={dialog}
@@ -50,8 +54,10 @@ export function Dialog({
       onCancel={(event) => {
         if (onCancel) {
           onCancel(event);
+
           return;
         }
+
         onClose();
       }}
       onClick={
@@ -76,6 +82,7 @@ export function DialogContent({
 } & ComponentPropsWithoutRef<"div"> &
   ComponentPropsWithoutRef<"form">) {
   const classes = className ? `${styles.content} ${className}` : styles.content;
+
   switch (as) {
     case "form":
       return <form className={classes} {...props} />;
@@ -83,6 +90,7 @@ export function DialogContent({
       return <div className={classes} {...props} />;
     default: {
       const _exhaustive: never = as;
+
       return _exhaustive;
     }
   }
@@ -123,7 +131,9 @@ export function DialogFooter({
   className?: string;
 }) {
   return (
-    <footer className={className ? `${styles.footer} ${className}` : styles.footer}>
+    <footer
+      className={className ? `${styles.footer} ${className}` : styles.footer}
+    >
       {children}
     </footer>
   );

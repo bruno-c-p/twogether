@@ -36,6 +36,7 @@ export function SplitDebtCard({
         : unpaid.length
           ? "Vocês estão quites"
           : "Nada pendente entre vocês";
+
   return (
     <Panel aria-labelledby="split-debt-title">
       <SectionHeading
@@ -58,6 +59,7 @@ export function SplitDebtCard({
           <ul className="list-none m-0 p-0 flex flex-col">
             {unpaid.map((transaction) => {
               const debtorIsUser = transaction.memberId !== userId;
+
               return (
                 <li
                   key={transaction.id}

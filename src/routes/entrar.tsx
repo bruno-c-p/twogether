@@ -17,5 +17,6 @@ export const Route = createFileRoute("/entrar")({
 
 function EntrarRoute() {
   const session = Route.useLoaderData();
+
   return <AccountGate session={session} />;
 }

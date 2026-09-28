@@ -20,6 +20,7 @@
     "vite.config.ts",
     "vitest.config.ts",
     "uno.config.ts",
+    "oxlint.config.ts",
     "e2e"
   ]
 }

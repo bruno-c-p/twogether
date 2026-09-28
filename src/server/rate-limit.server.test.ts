@@ -12,6 +12,7 @@ describe("consumeRateLimit", () => {
     expect(consumeRateLimit("user_blocked", 2, 60_000).ok).toBe(true);
     const blocked = consumeRateLimit("user_blocked", 2, 60_000);
     expect(blocked.ok).toBe(false);
+
     if (!blocked.ok) expect(blocked.retryAfterSeconds).toBeGreaterThan(0);
   });
 

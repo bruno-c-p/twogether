@@ -4,10 +4,11 @@ import { workspaceQueryOptions } from "@/features/budget/workspace";
 
 const workspaceRoute = getRouteApi("/_authenticated/");
 
-function syncMessage(error: unknown) {
-  if (error instanceof Error && !(error instanceof TypeError)) {
-    return error.message;
+function syncMessage(cause: unknown) {
+  if (cause instanceof Error && !(cause instanceof TypeError)) {
+    return cause.message;
   }
+
   return "Sem conexão com o servidor. Tentaremos sincronizar novamente.";
 }
 
@@ -16,6 +17,7 @@ export function useBudget() {
   const query = useQuery(workspaceQueryOptions);
 
   const snapshot = query.data ?? initial;
+
   const syncError =
     query.error && !isRedirect(query.error) ? syncMessage(query.error) : "";
 
@@ -27,4 +29,5 @@ export function useBudget() {
     refresh: query.refetch,
   };
 }
+
 export type BudgetController = ReturnType<typeof useBudget>;

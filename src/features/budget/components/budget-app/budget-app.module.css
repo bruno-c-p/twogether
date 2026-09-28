@@ -1,22 +1,22 @@
-.page-heading {
+.pageHeading {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 20px;
 }
 
-.page-heading p {
+.pageHeading p {
   font-size: 13px;
   color: var(--text-muted);
   margin-top: 9px;
 }
 
-.add-transaction {
+.addTransaction {
   align-self: center;
   margin-top: 14px;
 }
 
-.month-row {
+.monthRow {
   display: flex;
   align-items: center;
   gap: 14px;
@@ -24,13 +24,13 @@
   min-height: 36px;
 }
 
-.month-picker {
+.monthPicker {
   display: flex;
   align-items: center;
   gap: 9px;
 }
 
-.month-picker .month-input {
+.monthPicker .monthInput {
   width: 180px;
   min-height: 32px;
   padding: 4px 8px;
@@ -59,7 +59,7 @@
   background: var(--surface-soft);
 }
 
-.today-button {
+.todayButton {
   font-size: 11px;
   border: 0;
   background: none;
@@ -68,7 +68,7 @@
   color: var(--text-muted);
 }
 
-.storage-error {
+.storageError {
   padding: 15px;
   background: var(--warning-soft);
   border: 1px solid var(--border);
@@ -78,11 +78,11 @@
   margin: 15px 0;
 }
 
-.page-heading p {
+.pageHeading p {
   color: var(--text-muted);
 }
 
-.couple-toolbar {
+.coupleToolbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -91,11 +91,11 @@
   flex-wrap: wrap;
 }
 
-.page-heading + .couple-toolbar {
+.pageHeading + .coupleToolbar {
   margin-top: 25px;
 }
 
-.filter-explanation {
+.filterExplanation {
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.5;
@@ -103,70 +103,70 @@
 }
 
 @media (min-width: 1450px) {
-.page-heading h1 {
+  .pageHeading h1 {
     font-size: 35px;
-}
-.page-heading p {
+  }
+  .pageHeading p {
     font-size: 15px;
-}
+  }
 }
 
 @media (max-width: 800px) {
-.page-heading h1 {
+  .pageHeading h1 {
     font-size: 24px;
-}
-.page-heading p {
+  }
+  .pageHeading p {
     font-size: 11px;
-}
+  }
 }
 
 @media (max-width: 620px) {
-.page-heading {
+  .pageHeading {
     align-items: flex-start;
-      gap: 17px;
-      flex-wrap: wrap;
-}
-.page-heading h1 {
+    gap: 17px;
+    flex-wrap: wrap;
+  }
+  .pageHeading h1 {
     font-size: 27px;
-      letter-spacing: -1.25px;
-}
-.page-heading p {
+    letter-spacing: -1.25px;
+  }
+  .pageHeading p {
     font-size: 12px;
-      line-height: 1.65;
-      margin-top: 7px;
-}
-.add-transaction {
+    line-height: 1.65;
+    margin-top: 7px;
+  }
+  .addTransaction {
     margin: 0;
-      padding: 11px 14px;
-      min-height: 41px;
-      font-size: 12px;
-      width: 100%;
-}
-.month-row {
-    margin: 21px 0 17px;
-      gap: 8px;
-      flex-wrap: wrap;
-}
-.month-picker {
-    gap: 6px;
-}
-.month-picker .month-input {
+    padding: 11px 14px;
+    min-height: 41px;
     font-size: 12px;
-      min-width: 100px;
-}
-.monthIcon {
+    width: 100%;
+  }
+  .monthRow {
+    margin: 21px 0 17px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .monthPicker {
+    gap: 6px;
+  }
+  .monthPicker .monthInput {
+    font-size: 12px;
+    min-width: 100px;
+  }
+  .monthIcon {
     width: 28px;
     height: 30px;
-}
-.today-button {
+  }
+  .todayButton {
     font-size: 10px;
-      order: 3;
-      width: 100%;
-      text-align: left;
-      padding-left: 0;
-}
-.couple-toolbar {
+    order: 3;
+    width: 100%;
+    text-align: left;
+    padding-left: 0;
+  }
+  .coupleToolbar {
     gap: 12px;
-      margin-bottom: 20px;
-}
+    margin-bottom: 20px;
+  }
 }

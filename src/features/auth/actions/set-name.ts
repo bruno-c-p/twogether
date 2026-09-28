@@ -3,13 +3,11 @@ import { getBudgetStore } from "@/features/budget/budget.server";
 import { nameSchema } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { authMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const setNameSchema = inputSchema({ name: nameSchema });
 
-export function parseSetName(input: unknown): { name: string } {
-  return parseInput(setNameSchema, input);
-}
+export const parseSetName = actionInput<{ name: string }>(setNameSchema);
 
 export const setName = createServerFn({ method: "POST" })
   .middleware([authMiddleware])

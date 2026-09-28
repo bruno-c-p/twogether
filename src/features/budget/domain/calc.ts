@@ -11,6 +11,7 @@ export function accountBalance(
 ): number {
   return transactions.reduce((balance, transaction) => {
     if (transaction.accountId !== account.id) return balance;
+
     switch (transaction.kind) {
       case "income":
         return balance + transaction.amount;
@@ -18,6 +19,7 @@ export function accountBalance(
         return balance - transaction.amount;
       default: {
         const _exhaustive: never = transaction.kind;
+
         return _exhaustive;
       }
     }
@@ -28,9 +30,11 @@ export function summarize(transactions: Transaction[]) {
   const income = transactions
     .filter((t) => t.kind === "income")
     .reduce((total, t) => total + t.amount, 0);
+
   const expenses = transactions
     .filter((t) => t.kind === "expense")
     .reduce((total, t) => total + t.amount, 0);
+
   const goals = GOALS.map((goal) => ({
     ...goal,
     amount: transactions
@@ -40,6 +44,7 @@ export function summarize(transactions: Transaction[]) {
       (t) => t.kind === "expense" && t.goal === goal.id,
     ).length,
   }));
+
   return { income, expenses, balance: income - expenses, goals };
 }
 
@@ -58,7 +63,9 @@ export function planGoals(
       0,
     ),
   }));
+
   const income = incomes.reduce((sum, item) => sum + item.income, 0);
+
   return GOALS.map((goal) => {
     const planned = incomes.reduce(
       (sum, item) =>
@@ -66,6 +73,7 @@ export function planGoals(
         Math.round((item.income * item.member.percentages[goal.id]) / 100),
       0,
     );
+
     return {
       id: goal.id,
       planned,

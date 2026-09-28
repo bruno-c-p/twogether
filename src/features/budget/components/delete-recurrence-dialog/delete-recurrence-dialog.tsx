@@ -29,6 +29,7 @@ export function DeleteRecurrenceDialog({
   onDelete,
 }: Props) {
   const [following, setFollowing] = useState(false);
+
   return (
     <Dialog
       className={styles.deleteDialog}
@@ -36,6 +37,7 @@ export function DeleteRecurrenceDialog({
       onClose={onClose}
       onCancel={(event) => {
         event.preventDefault();
+
         if (!busy) onClose();
       }}
     >

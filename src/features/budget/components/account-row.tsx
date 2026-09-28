@@ -9,9 +9,11 @@ import {
   ListRowMeta,
   ListRowName,
   ListRowValue,
+} from "@/features/budget/components/list-row/list-row";
+import {
   listRowAction,
   listRowDelete,
-} from "@/features/budget/components/list-row/list-row";
+} from "@/features/budget/components/list-row/list-row-classes";
 
 export function AccountRow({
   account,

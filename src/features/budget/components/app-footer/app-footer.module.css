@@ -1,4 +1,4 @@
-.site-footer {
+.siteFooter {
   max-width: 1450px;
   margin: 0 auto;
   padding: 28px 43px 32px;
@@ -10,7 +10,7 @@
   font-size: 11px;
 }
 
-.site-footer-brand {
+.siteFooterBrand {
   color: var(--text-muted);
   font-family: "Manrope", sans-serif;
   font-weight: 700;
@@ -18,15 +18,15 @@
 }
 
 @media (max-width: 1190px) {
-  .site-footer {
+  .siteFooter {
     padding-left: 28px;
-      padding-right: 28px;
+    padding-right: 28px;
   }
 }
 
 @media (max-width: 800px) {
-  .site-footer {
+  .siteFooter {
     padding-left: 22px;
-      padding-right: 22px;
+    padding-right: 22px;
   }
 }

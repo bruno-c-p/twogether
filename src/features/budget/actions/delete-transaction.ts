@@ -7,7 +7,7 @@ import {
 } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const deleteTransactionSchema = inputSchema({
   id: idSchema,
@@ -15,13 +15,11 @@ const deleteTransactionSchema = inputSchema({
   following: followingSchema.optional(),
 });
 
-export function parseDeleteTransaction(input: unknown): {
+export const parseDeleteTransaction = actionInput<{
   id: string;
   revision: number;
   following?: { id: string; revision: number }[];
-} {
-  return parseInput(deleteTransactionSchema, input);
-}
+}>(deleteTransactionSchema);
 
 export const deleteTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

@@ -14,11 +14,13 @@ const csrfMiddleware = createCsrfMiddleware({
 const rateLimitHeadersMiddleware = createMiddleware().server(
   async ({ next }) => {
     const result = await next();
+
     if (result.response.status === 429)
       result.response.headers.set(
         "Retry-After",
         String(RATE_LIMIT_WINDOW_SECONDS),
       );
+
     return result;
   },
 );
@@ -44,6 +46,7 @@ const securityHeadersMiddleware = createMiddleware().server(
     );
     result.response.headers.set("X-Content-Type-Options", "nosniff");
     result.response.headers.set("X-Frame-Options", "DENY");
+
     return result;
   },
 );
@@ -51,6 +54,7 @@ const securityHeadersMiddleware = createMiddleware().server(
 const privateNoStoreMiddleware = createMiddleware().server(async ({ next }) => {
   const result = await next();
   result.response.headers.set("Cache-Control", "private, no-store");
+
   return result;
 });
 

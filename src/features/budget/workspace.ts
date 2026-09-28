@@ -19,6 +19,7 @@ export function optimisticSave(
   const existing = snapshot.budget.transactions.find(
     (item) => item.id === input.transaction.id,
   );
+
   const next: Transaction = {
     ...input.transaction,
     memberId: existing?.memberId ?? snapshot.user.id,
@@ -27,11 +28,13 @@ export function optimisticSave(
     recurrenceId: existing?.recurrenceId,
     recurrenceIndex: existing?.recurrenceIndex,
   };
+
   const transactions = existing
     ? snapshot.budget.transactions.map((item) =>
         item.id === next.id ? next : item,
       )
     : [...snapshot.budget.transactions, next];
+
   // ponytail: extra recurrence rows wait for refetch; the server mints their UUIDs
   return { ...snapshot, budget: { ...snapshot.budget, transactions } };
 }
@@ -47,6 +50,7 @@ export function optimisticDelete(
     input.id,
     ...(input.following?.map((item) => item.id) ?? []),
   ]);
+
   return {
     ...snapshot,
     budget: {
@@ -65,6 +69,7 @@ export function optimisticRestore(
   if (snapshot.budget.transactions.some((item) => item.id === transaction.id)) {
     return snapshot;
   }
+
   return {
     ...snapshot,
     budget: {
@@ -83,12 +88,14 @@ function replaceTransaction(
   update: (transaction: Transaction) => Transaction,
   drop: string[] = [],
 ): WorkspaceSnapshot {
+  const dropped = new Set(drop);
+
   return {
     ...snapshot,
     budget: {
       ...snapshot.budget,
       transactions: snapshot.budget.transactions
-        .filter((item) => !drop.includes(item.id))
+        .filter((item) => !dropped.has(item.id))
         .map((item) => (item.id === id ? update(item) : item)),
     },
   };
@@ -113,10 +120,12 @@ export function optimisticUnsettle(
   const source = snapshot.budget.transactions.find(
     (item) => item.id === input.id,
   );
+
   const drop = snapshot.budget.transactions
     .filter((item) => item.settlementOf === input.id)
     .map((item) => item.id)
     .concat(source?.split?.entryIds ?? []);
+
   return replaceTransaction(
     snapshot,
     input.id,

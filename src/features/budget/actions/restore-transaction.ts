@@ -1,24 +1,19 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
-import {
-  idSchema,
-  revisionSchema,
-} from "@/features/budget/domain/schemas";
+import { idSchema, revisionSchema } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const restoreTransactionSchema = inputSchema({
   id: idSchema,
   revision: revisionSchema,
 });
 
-export function parseRestoreTransaction(input: unknown): {
+export const parseRestoreTransaction = actionInput<{
   id: string;
   revision: number;
-} {
-  return parseInput(restoreTransactionSchema, input);
-}
+}>(restoreTransactionSchema);
 
 export const restoreTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

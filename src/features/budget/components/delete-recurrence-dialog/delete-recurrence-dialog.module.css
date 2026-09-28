@@ -1,8 +1,8 @@
-.delete-dialog header {
+.deleteDialog header {
   margin-bottom: 8px;
 }
 
-.delete-description {
+.deleteDescription {
   margin: 0 0 24px;
   color: var(--text-muted);
   font-size: 14px;
@@ -10,19 +10,19 @@
   overflow-wrap: anywhere;
 }
 
-.delete-options {
+.deleteOptions {
   border: 0;
   padding: 0;
   margin: 0;
   min-width: 0;
 }
 
-.delete-options legend {
+.deleteOptions legend {
   font-size: 13px;
   margin-bottom: 12px;
 }
 
-.delete-option {
+.deleteOption {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -33,58 +33,58 @@
   cursor: pointer;
 }
 
-.delete-option.is-selected {
+.deleteOption.isSelected {
   border-color: var(--text-muted);
   background: var(--surface-soft);
 }
 
-.delete-option input {
+.deleteOption input {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
   accent-color: var(--accent);
 }
 
-.delete-option strong,
-.delete-option small {
+.deleteOption strong,
+.deleteOption small {
   display: block;
 }
 
-.delete-option strong {
+.deleteOption strong {
   font-size: 13px;
   font-weight: 600;
   margin-bottom: 5px;
 }
 
-.delete-option small {
+.deleteOption small {
   font-size: 12px;
   color: var(--text-muted);
   line-height: 1.5;
 }
 
-.delete-warning {
+.deleteWarning {
   font-size: 12px;
   line-height: 1.6;
   color: var(--text-muted);
   margin: 14px 0 0;
 }
 
-.delete-confirm {
+.deleteConfirm {
   border-color: transparent;
   background: var(--danger);
   color: var(--on-danger);
 }
 
-.delete-confirm:hover {
+.deleteConfirm:hover {
   background: color-mix(in srgb, var(--danger) 82%, #000);
 }
 
 @media (max-width: 480px) {
-  .delete-dialog footer {
+  .deleteDialog footer {
     gap: 10px;
   }
 
-  .delete-confirm {
+  .deleteConfirm {
     flex: 1;
     justify-content: center;
   }

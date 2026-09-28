@@ -1,4 +1,4 @@
-.balance-card {
+.balanceCard {
   background: var(--balance);
   color: var(--on-balance);
   border: 1px solid var(--balance-border);
@@ -9,27 +9,27 @@
   min-height: 236px;
 }
 
-.balance-card.negative {
+.balanceCard.negative {
   border: 1px solid var(--danger-on-brand);
 }
 
-.balance-card.negative .balance-amount {
+.balanceCard.negative .balanceAmount {
   color: var(--danger-on-brand);
 }
 
-.balance-card.negative .balance-caption {
+.balanceCard.negative .balanceCaption {
   color: var(--danger-on-brand);
 }
 
-.balance-card.negative .balance-dot {
+.balanceCard.negative .balanceDot {
   background: var(--danger-on-brand);
 }
 
-.balance-card.negative .balance-bottom > div:nth-child(2) strong {
+.balanceCard.negative .balanceBottom > div:nth-child(2) strong {
   color: var(--danger-on-brand);
 }
 
-.balance-top {
+.balanceTop {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -37,7 +37,7 @@
   font-size: 12px;
 }
 
-.balance-amount {
+.balanceAmount {
   font-family: "Manrope", sans-serif;
   letter-spacing: -1.7px;
   font-size: 39px;
@@ -47,7 +47,7 @@
   font-variant-numeric: tabular-nums;
 }
 
-.balance-caption {
+.balanceCaption {
   display: flex;
   align-items: center;
   gap: 7px;
@@ -56,26 +56,26 @@
   margin-top: 4px;
 }
 
-.balance-dot {
+.balanceDot {
   width: 4px;
   height: 4px;
   border-radius: 50%;
   background: var(--accent);
 }
 
-.balance-divider {
+.balanceDivider {
   height: 1px;
   background: color-mix(in srgb, var(--on-balance) 12%, transparent);
   margin: 23px 0 18px;
 }
 
-.balance-bottom {
+.balanceBottom {
   display: flex;
   gap: 51px;
   position: relative;
 }
 
-.balance-bottom > div > span {
+.balanceBottom > div > span {
   font-size: 11px;
   display: flex;
   gap: 5px;
@@ -83,7 +83,7 @@
   color: var(--on-balance-muted);
 }
 
-.money-icon {
+.moneyIcon {
   width: 18px;
   height: 18px;
   background: color-mix(in srgb, var(--on-balance) 6%, transparent);
@@ -92,7 +92,7 @@
   place-items: center;
 }
 
-.balance-bottom strong {
+.balanceBottom strong {
   font-family: "Manrope", sans-serif;
   font-weight: 500;
   display: block;
@@ -101,7 +101,7 @@
   letter-spacing: -0.2px;
 }
 
-.balance-decoration {
+.balanceDecoration {
   display: flex;
   gap: 5px;
   align-items: flex-end;
@@ -113,7 +113,7 @@
   opacity: 0.35;
 }
 
-.balance-decoration i {
+.balanceDecoration i {
   display: block;
   width: 12px;
   height: 65px;
@@ -121,106 +121,106 @@
   border-radius: 10px;
 }
 
-.balance-decoration i:nth-child(2) {
+.balanceDecoration i:nth-child(2) {
   height: 87px;
 }
 
-.balance-decoration i:nth-child(3) {
+.balanceDecoration i:nth-child(3) {
   height: 110px;
 }
 
-.balance-decoration i:nth-child(4) {
+.balanceDecoration i:nth-child(4) {
   height: 130px;
 }
 
-.balance-decoration i:nth-child(5) {
+.balanceDecoration i:nth-child(5) {
   height: 150px;
 }
 
 @media (min-width: 1450px) {
-.balance-card {
+  .balanceCard {
     padding: 28px 32px;
-}
-.balance-amount {
+  }
+  .balanceAmount {
     font-size: 46px;
-}
-.balance-divider {
+  }
+  .balanceDivider {
     margin-top: 25px;
-}
-.balance-bottom strong {
+  }
+  .balanceBottom strong {
     font-size: 21px;
-}
+  }
 }
 
 @media (max-width: 1190px) {
-.balance-card {
+  .balanceCard {
     padding: 21px 23px;
-}
-.balance-amount {
+  }
+  .balanceAmount {
     font-size: 35px;
-}
-.balance-bottom {
+  }
+  .balanceBottom {
     gap: 25px;
-}
+  }
 }
 
 @media (max-width: 1000px) {
-.balance-decoration {
+  .balanceDecoration {
     opacity: 0.2;
-}
+  }
 }
 
 @media (max-width: 800px) {
-.balance-card {
+  .balanceCard {
     padding: 20px;
-      min-height: 230px;
-}
-.balance-amount {
+    min-height: 230px;
+  }
+  .balanceAmount {
     font-size: 31px;
-}
-.balance-caption {
+  }
+  .balanceCaption {
     font-size: 9px;
-}
-.balance-bottom {
+  }
+  .balanceBottom {
     gap: 20px;
-}
-.balance-bottom strong {
+  }
+  .balanceBottom strong {
     font-size: 15px;
-}
+  }
 }
 
 @media (max-width: 620px) {
-.balance-card {
+  .balanceCard {
     padding: 23px 24px;
-      min-height: 233px;
-      border-radius: 11px;
-}
-.balance-top {
+    min-height: 233px;
+    border-radius: 11px;
+  }
+  .balanceTop {
     font-size: 12px;
-}
-.balance-amount {
+  }
+  .balanceAmount {
     font-size: 39px;
-      margin-top: 2px;
-}
-.balance-caption {
+    margin-top: 2px;
+  }
+  .balanceCaption {
     font-size: 10px;
-}
-.balance-divider {
+  }
+  .balanceDivider {
     margin: 22px 0 18px;
-}
-.balance-bottom {
+  }
+  .balanceBottom {
     gap: 43px;
-}
-.balance-bottom strong {
+  }
+  .balanceBottom strong {
     font-size: 19px;
-}
-.balance-decoration {
+  }
+  .balanceDecoration {
     opacity: 0.35;
-}
+  }
 }
 
 @media (max-width: 360px) {
-.balance-bottom strong {
+  .balanceBottom strong {
     font-size: 15px;
-}
+  }
 }

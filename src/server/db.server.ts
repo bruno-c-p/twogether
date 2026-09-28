@@ -7,43 +7,50 @@ import {
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
-import {
-  revisionSchema,
-  textSchema,
-} from "@/features/budget/domain/schemas";
+import { z } from "zod";
+import { revisionSchema, textSchema } from "@/features/budget/domain/schemas";
 import { tursoAuthToken } from "@/server/env.server";
 import { RequestError } from "@/server/request-error";
+import { databaseLocation } from "@/lib/database-location";
 
 export type { DatabaseTransaction };
+
 export type DatabaseExecutor = Client | DatabaseTransaction;
 
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
+
 export const token = () => randomBytes(32).toString("hex");
 
-export interface UserRow {
-  id: string;
-  name: string;
-  household_id: string | null;
-  percentages: string;
-  revision: number;
-}
-export interface HouseholdRow {
-  id: string;
-  percentages: string;
-  revision: number;
-}
-export interface TransactionRow {
-  payload: string;
-  revision: number;
-  deleted: number;
-}
-export interface AccountRow {
-  id: string;
-  payload: string;
-  revision: number;
-  deleted: number;
-}
+export const userRowSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  household_id: z.string().nullable(),
+  percentages: z.string(),
+  revision: z.number(),
+});
+
+export type UserRow = z.infer<typeof userRowSchema>;
+
+export const householdRowSchema = z.object({
+  id: z.string(),
+  revision: z.number(),
+});
+
+export type HouseholdRow = z.infer<typeof householdRowSchema>;
+
+export const transactionRowSchema = z.object({
+  payload: z.string(),
+  revision: z.number(),
+  deleted: z.number(),
+});
+
+export const accountRowSchema = z.object({
+  id: z.string(),
+  payload: z.string(),
+  revision: z.number(),
+  deleted: z.number(),
+});
 
 const schema = [
   `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0)`,
@@ -64,20 +71,24 @@ export async function execute(
   return database.execute({ sql, args });
 }
 
-export async function all<T extends object>(
+export async function all<Row extends z.ZodType>(
   database: DatabaseExecutor,
+  row: Row,
   sql: string,
   args: InArgs = [],
-) {
-  return (await execute(database, sql, args)).rows as unknown as T[];
+): Promise<z.output<Row>[]> {
+  const { rows } = await execute(database, sql, args);
+
+  return z.array(row).parse(rows);
 }
 
-export async function one<T extends object>(
+export async function one<Row extends z.ZodType>(
   database: DatabaseExecutor,
+  row: Row,
   sql: string,
   args: InArgs = [],
-) {
-  return (await all<T>(database, sql, args))[0];
+): Promise<z.output<Row> | undefined> {
+  return (await all(database, row, sql, args))[0];
 }
 
 const LEGACY_TABLES = [
@@ -92,19 +103,19 @@ const LEGACY_TABLES = [
   "households",
 ] as const;
 
+const columnSchema = z.object({ name: z.string() });
+
 async function resetLegacySchema(database: Client) {
-  const users = await all<{ name: string }>(
-    database,
-    "PRAGMA table_info(users)",
-  );
-  const households = await all<{ name: string }>(
-    database,
-    "PRAGMA table_info(households)",
-  );
+  const [users, households] = await Promise.all([
+    all(database, columnSchema, "PRAGMA table_info(users)"),
+    all(database, columnSchema, "PRAGMA table_info(households)"),
+  ]);
+
   const isLegacy =
     (users.length > 0 &&
       !users.some((column) => column.name === "percentages")) ||
     households.some((column) => column.name === "percentages");
+
   if (!isLegacy) return;
   await database.batch(
     LEGACY_TABLES.map((table) => ({
@@ -122,21 +133,11 @@ async function initializeDatabase(database: Client, local: boolean) {
 }
 
 export function createStoreContext(filename: string) {
-  const remote = /^(?:https?|libsql|wss?):/i.test(filename);
-  const local = !remote;
-  const localPath =
-    local && filename !== ":memory:" && !filename.startsWith("file:")
-      ? filename
-      : undefined;
-  if (localPath && !filename.startsWith("file:"))
-    mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
-  const url = local
-    ? filename === ":memory:"
-      ? "file::memory:"
-      : filename.startsWith("file:")
-        ? filename
-        : `file:${filename}`
-    : filename;
+  const { url, local, localPath } = databaseLocation(filename);
+
+  if (localPath)
+    mkdirSync(dirname(localPath), { recursive: true, mode: 0o700 });
+
   const db = createClient({
     url,
     authToken: local ? undefined : tursoAuthToken(),
@@ -144,18 +145,22 @@ export function createStoreContext(filename: string) {
     readYourWrites: true,
     timeout: 5000,
   });
+
   const ready = initializeDatabase(db, local).then(() => {
     if (localPath) chmodSync(localPath, 0o600);
   });
+
   async function inTransaction<T>(
     mode: "read" | "write",
     fn: (transaction: DatabaseTransaction) => Promise<T>,
   ) {
     await ready;
     const transaction = await db.transaction(mode);
+
     try {
       const result = await fn(transaction);
       await transaction.commit();
+
       return result;
     } catch (error) {
       try {
@@ -163,15 +168,19 @@ export function createStoreContext(filename: string) {
       } catch {
         transaction.close();
       }
+
       throw error;
     } finally {
       transaction.close();
     }
   }
+
   const atomic = <T>(fn: (transaction: DatabaseTransaction) => Promise<T>) =>
     inTransaction("write", fn);
+
   const readOnly = <T>(fn: (transaction: DatabaseTransaction) => Promise<T>) =>
     inTransaction("read", fn);
+
   return {
     db,
     ready,
@@ -183,16 +192,19 @@ export function createStoreContext(filename: string) {
 
 export type StoreContext = ReturnType<typeof createStoreContext>;
 
-export function text(value: unknown, max: number) {
+export function text(value: string, max: number) {
   const result = textSchema(max).safeParse(value);
-  if (!result.success)
-    throw new RequestError("Confira os campos informados.");
+
+  if (!result.success) throw new RequestError("Confira os campos informados.");
+
   return result.data;
 }
 
-export function revision(value: unknown) {
+export function revision(value: number) {
   const result = revisionSchema.safeParse(value);
+
   if (!result.success)
     throw new RequestError("Versão inválida. Atualize a página.");
+
   return result.data;
 }
