@@ -21,3 +21,4 @@ data/
 *.zone
 .env.local
 .fallow/
+coverage/

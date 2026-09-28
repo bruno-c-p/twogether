@@ -14,7 +14,7 @@
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "doctor": "react-doctor --yes --verbose --blocking warning",
-    "fallow": "fallow --format compact"
+    "fallow": "vitest run --coverage --silent && fallow --format compact"
   },
   "dependencies": {
     "@clerk/localizations": "^4.17.1",
@@ -35,11 +35,16 @@
     "@clerk/testing": "^2.2.36",
     "@oxlint/plugins": "1.85.0",
     "@playwright/test": "^1.63.0",
+    "@testing-library/dom": "^10.4.2",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/bun": "^1.4.2",
     "@types/node": "^24.0.0",
     "@types/react": "^19.2.0",
     "@vitejs/plugin-react": "^5.1.0",
+    "@vitest/coverage-v8": "4.1.11",
     "fallow": "3.30.0",
+    "jsdom": "^30.1.1",
     "nitro": "^3.0.260903-beta",
     "oxlint": "1.85.0",
     "oxlint-tsgolint": "7.0.2003",

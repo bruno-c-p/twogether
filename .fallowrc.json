@@ -8,7 +8,9 @@
   "ignoreFindings": ["tools/oxlint/anti-slop/**"],
   "health": {
     // Vendored upstream code keeps its own shape.
-    "ignore": ["tools/oxlint/anti-slop/**"]
+    "ignore": ["tools/oxlint/anti-slop/**"],
+    // Measured Vitest coverage; `bun run fallow` regenerates it first.
+    "coverage": "coverage/coverage-final.json"
   },
   "duplicates": {
     // Hide pair-only clones; focus on widespread copy-paste
