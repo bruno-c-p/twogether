@@ -5,17 +5,18 @@ export function invalid(message = "Requisição inválida."): never {
   throw new Error(message);
 }
 
-export function inputSchema<Shape extends z.ZodRawShape>(shape: Shape) {
-  return z.object(shape, { error: "Requisição inválida." });
+export function inputSchema<Fields extends Record<string, z.ZodType>>(
+  fields: Fields,
+) {
+  return z.object(fields, { error: "Requisição inválida." });
 }
 
-export function parseInput<Schema extends z.ZodType>(
-  schema: Schema,
-  input: unknown,
-): z.output<Schema> {
-  const result = schema.safeParse(input);
+export function actionInput<Input>(schema: z.ZodType<Input>) {
+  return (input: Input): Input => {
+    const result = schema.safeParse(input);
 
-  if (!result.success) invalid(firstIssueMessage(result.error));
+    if (!result.success) invalid(firstIssueMessage(result.error));
 
-  return result.data;
+    return result.data;
+  };
 }

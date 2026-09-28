@@ -30,6 +30,8 @@ function TimeZoneCookie() {
   return null;
 }
 
+type PersonProperties = { email?: string; name?: string };
+
 function PostHogIdentity() {
   const posthog = usePostHog();
   const { isLoaded, user } = useUser();
@@ -51,10 +53,12 @@ function PostHogIdentity() {
 
     if (identifiedUserId.current) posthog.reset();
 
-    posthog.identify(userId, {
-      ...(email ? { email } : {}),
-      ...(name ? { name } : {}),
-    });
+    const person: PersonProperties = {};
+
+    if (email) person.email = email;
+
+    if (name) person.name = name;
+    posthog.identify(userId, person);
     identifiedUserId.current = userId;
   }, [email, isLoaded, name, posthog, userId]);
 

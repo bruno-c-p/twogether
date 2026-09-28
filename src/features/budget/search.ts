@@ -86,8 +86,8 @@ export function withDefaultMonth(
   return { ...search, month };
 }
 
-export function validateBudgetFilters(
-  search: Record<string, unknown>,
-): BudgetFilters {
+export function validateBudgetFilters<
+  RawSearch extends Record<string, unknown>,
+>(search: RawSearch): BudgetFilters {
   return budgetFiltersSchema.parse(search);
 }

@@ -7,19 +7,17 @@ import {
 import { runMutation } from "@/server/request-error";
 import type { Transaction } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const saveTransactionSchema = inputSchema({
   transaction: transactionSchema,
   occurrences: occurrencesSchema.optional(),
 });
 
-export function parseSaveTransaction(input: unknown): {
+export const parseSaveTransaction = actionInput<{
   transaction: Transaction;
   occurrences?: number;
-} {
-  return parseInput(saveTransactionSchema, input);
-}
+}>(saveTransactionSchema);
 
 export const saveTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

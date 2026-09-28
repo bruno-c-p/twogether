@@ -13,7 +13,7 @@ export const money = (cents: number) => moneyFormatter.format(cents / 100);
 export function formText(form: FormData, name: string): string {
   const value = form.get(name);
 
-  return typeof value === "string" ? value : "";
+  return value instanceof File ? "" : (value ?? "");
 }
 
 export function formatAmountInput(value: string): string {
@@ -82,7 +82,7 @@ export function normalizeTag(value: string) {
 }
 
 export function newId(): string {
-  if (typeof crypto.randomUUID === "function") return crypto.randomUUID();
+  if (crypto.randomUUID !== undefined) return crypto.randomUUID();
   const bytes = new Uint8Array(16);
   crypto.getRandomValues(bytes);
   bytes[6] = (bytes[6] & 0x0f) | 0x40;

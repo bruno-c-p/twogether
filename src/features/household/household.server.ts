@@ -5,12 +5,16 @@ import {
   one,
   text,
   token,
+  householdRowSchema,
   type DatabaseExecutor,
   type HouseholdRow,
   type StoreContext,
   type UserRow,
 } from "@/server/db.server";
+import { z } from "zod";
 import { RequestError } from "@/server/request-error";
+
+const countRowSchema = z.object({ total: z.number() });
 
 export type { HouseholdRow };
 
@@ -21,8 +25,9 @@ export async function household(
   if (!user.household_id)
     throw new RequestError("Crie um orçamento ou aceite um convite.");
 
-  const home = await one<HouseholdRow>(
+  const home = await one(
     database,
+    householdRowSchema,
     "SELECT * FROM households WHERE id = ?",
     [user.household_id],
   );
@@ -75,8 +80,9 @@ export async function joinHousehold(
   await ctx.atomic(async (transaction) => {
     requireOpenSeat(user);
 
-    const invite = await one<{ household_id: string }>(
+    const invite = await one(
       transaction,
+      z.object({ household_id: z.string() }),
       "SELECT household_id FROM invites WHERE hash = ? AND expires > ?",
       [digest(text(tokenValue, 128)), Date.now()],
     );
@@ -88,8 +94,9 @@ export async function joinHousehold(
         "expired",
       );
 
-    const count = await one<{ total: number }>(
+    const count = await one(
       transaction,
+      countRowSchema,
       "SELECT count(*) AS total FROM users WHERE household_id = ?",
       [invite.household_id],
     );
@@ -119,8 +126,9 @@ export async function createInvite(
   await ctx.ready;
   let inviteToken = "";
   await ctx.atomic(async (transaction) => {
-    const count = await one<{ total: number }>(
+    const count = await one(
       transaction,
+      countRowSchema,
       "SELECT count(*) AS total FROM users WHERE household_id = ?",
       [home.id],
     );

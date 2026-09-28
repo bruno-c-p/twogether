@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import { ensureUser, setName } from "@/features/auth/auth.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
@@ -36,9 +37,11 @@ import {
   type AccountRow,
   type DatabaseExecutor,
   type DatabaseTransaction,
+  accountRowSchema,
+  transactionRowSchema,
+  userRowSchema,
   type HouseholdRow,
   type StoreContext,
-  type TransactionRow,
   type UserRow,
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
@@ -46,37 +49,33 @@ import { databaseUrl } from "@/server/env.server";
 
 const STORED_MESSAGE = "Não foi possível ler os dados salvos.";
 
-function storedJson(payload: string): unknown {
+const storedJsonSchema = z.string().transform((payload, context) => {
   try {
-    return JSON.parse(payload);
+    return z.json().parse(JSON.parse(payload));
   } catch {
-    return undefined;
+    context.addIssue({ code: "custom", message: STORED_MESSAGE });
+
+    return z.NEVER;
   }
-}
+});
 
-function storedTransaction(payload: string): Transaction {
-  const result = transactionSchema.safeParse(storedJson(payload));
+function stored<Output>(schema: z.ZodType<Output>, payload: string): Output {
+  const json = storedJsonSchema.safeParse(payload);
+  const result = json.success ? schema.safeParse(json.data) : undefined;
 
-  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
-
-  return result.data;
-}
-
-function storedAccount(payload: string): BankAccount {
-  const result = bankAccountSchema.safeParse(storedJson(payload));
-
-  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+  if (!result?.success) throw new RequestError(STORED_MESSAGE, 500);
 
   return result.data;
 }
 
-function storedPercentages(payload: string): GoalPercentages {
-  const result = goalPercentagesSchema.safeParse(storedJson(payload));
+const storedTransaction = (payload: string): Transaction =>
+  stored(transactionSchema, payload);
 
-  if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+const storedAccount = (payload: string): BankAccount =>
+  stored(bankAccountSchema, payload);
 
-  return result.data;
-}
+const storedPercentages = (payload: string): GoalPercentages =>
+  stored(goalPercentagesSchema, payload);
 
 const emptyBudget = (): BudgetState => ({
   transactions: [],
@@ -122,8 +121,9 @@ async function memberCount(
   transaction: DatabaseTransaction,
   householdId: string,
 ) {
-  const row = await one<{ count: number }>(
+  const row = await one(
     transaction,
+    z.object({ count: z.number() }),
     "SELECT count(*) AS count FROM users WHERE household_id = ?",
     [householdId],
   );
@@ -154,13 +154,14 @@ async function memberBudgets(
   database: DatabaseExecutor,
   householdId: string,
 ): Promise<WorkspaceHousehold["members"]> {
-  const members = await all<{
-    id: string;
-    name: string;
-    percentages: string;
-    revision: number;
-  }>(
+  const members = await all(
     database,
+    userRowSchema.pick({
+      id: true,
+      name: true,
+      percentages: true,
+      revision: true,
+    }),
     `SELECT id, name, percentages, revision FROM users
        WHERE household_id = ? ORDER BY rowid`,
     [householdId],
@@ -181,8 +182,9 @@ export async function householdSnapshot(
   await ctx.ready;
 
   return ctx.readOnly(async (transaction) => {
-    const fresh = await one<UserRow>(
+    const fresh = await one(
       transaction,
+      userRowSchema,
       "SELECT * FROM users WHERE id = ?",
       [user.id],
     );
@@ -204,8 +206,9 @@ export async function snapshot(
   if (!user) return { user: null, household: null, budget: emptyBudget() };
 
   return ctx.readOnly(async (transaction) => {
-    const fresh = await one<UserRow>(
+    const fresh = await one(
       transaction,
+      userRowSchema,
       "SELECT * FROM users WHERE id = ?",
       [user.id],
     );
@@ -217,14 +220,16 @@ export async function snapshot(
       return { user: identity, household: null, budget: emptyBudget() };
     const owned = await household(transaction, fresh);
 
-    const rows = await all<TransactionRow>(
+    const rows = await all(
       transaction,
+      transactionRowSchema,
       "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
       [owned.id],
     );
 
-    const accountRows = await all<AccountRow>(
+    const accountRows = await all(
       transaction,
+      accountRowSchema.pick({ payload: true, revision: true }),
       "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
       [owned.id],
     );
@@ -266,16 +271,18 @@ export async function saveTransaction(
       throw new RequestError(firstIssueMessage(parsedOccurrences.error));
     const t = canonical(input.transaction, user);
 
-    const account = await one<AccountRow>(
+    const account = await one(
       transaction,
+      accountRowSchema.pick({ id: true }),
       "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
       [homeRow.id, t.accountId],
     );
 
     if (!account) throw new RequestError("Escolha uma conta bancária.");
 
-    const old = await one<TransactionRow>(
+    const old = await one(
       transaction,
+      transactionRowSchema,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, t.id],
     );
@@ -329,12 +336,7 @@ export async function saveTransaction(
     if (t.split && previous?.split) t.split = previous.split;
     const createdBy = previous?.createdBy ?? user.id;
 
-    const memberId =
-      typeof previous?.memberId === "string"
-        ? previous.memberId
-        : typeof previous?.createdBy === "string"
-          ? previous.createdBy
-          : user.id;
+    const memberId = previous?.memberId ?? previous?.createdBy ?? user.id;
 
     t.recurrenceId =
       previous?.recurrenceId ?? (occurrences > 1 ? randomUUID() : undefined);
@@ -393,8 +395,9 @@ export async function deleteTransaction(
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
 
-    const previous = await one<TransactionRow>(
+    const previous = await one(
       transaction,
+      transactionRowSchema,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
@@ -409,8 +412,11 @@ export async function deleteTransaction(
       if (!source.recurrenceId || source.recurrenceIndex === undefined)
         throw new RequestError("Recorrência inválida.");
 
-      const candidates = await all<TransactionRow & { id: string }>(
+      const candidates = await all(
         transaction,
+        transactionRowSchema
+          .pick({ payload: true, revision: true })
+          .extend({ id: z.string() }),
         "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
         [homeRow.id],
       );
@@ -484,8 +490,9 @@ export async function restoreTransaction(
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
 
-    const previous = await one<TransactionRow>(
+    const previous = await one(
       transaction,
+      transactionRowSchema,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
@@ -519,8 +526,9 @@ async function splitSource(
 ) {
   const id = text(input.id, 100);
 
-  const row = await one<TransactionRow>(
+  const row = await one(
     transaction,
+    transactionRowSchema,
     "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
     [homeRow.id, id],
   );
@@ -586,8 +594,9 @@ export async function settleSplit(
     if (!date.success) throw new RequestError(firstIssueMessage(date.error));
 
     for (const accountId of [input.payerAccountId, input.partnerAccountId]) {
-      const account = await one<AccountRow>(
+      const account = await one(
         transaction,
+        accountRowSchema.pick({ id: true }),
         "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
         [homeRow.id, text(accountId, 100)],
       );
@@ -675,8 +684,9 @@ export async function saveAccount(
   await ctx.atomic(async (transaction) => {
     const account = canonicalAccount(accountInput);
 
-    const old = await one<AccountRow>(
+    const old = await one(
       transaction,
+      accountRowSchema,
       "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
       [homeRow.id, account.id],
     );
@@ -703,16 +713,18 @@ export async function deleteAccount(
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
 
-    const previous = await one<AccountRow>(
+    const previous = await one(
       transaction,
+      accountRowSchema,
       "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
 
     if (!previous || previous.deleted) throw conflict();
 
-    const rows = await all<TransactionRow>(
+    const rows = await all(
       transaction,
+      transactionRowSchema.pick({ payload: true }),
       "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
       [homeRow.id],
     );

@@ -4,9 +4,9 @@ import { workspaceQueryOptions } from "@/features/budget/workspace";
 
 const workspaceRoute = getRouteApi("/_authenticated/");
 
-function syncMessage(error: unknown) {
-  if (error instanceof Error && !(error instanceof TypeError)) {
-    return error.message;
+function syncMessage(cause: unknown) {
+  if (cause instanceof Error && !(cause instanceof TypeError)) {
+    return cause.message;
   }
 
   return "Sem conexão com o servidor. Tentaremos sincronizar novamente.";

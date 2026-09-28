@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { money } from "@/features/budget/domain/format";
 import { donutSegments } from "@/features/budget/services/donut";
 import { summarizeExpenses } from "@/features/budget/services/expense-charts";
@@ -88,12 +87,10 @@ export function ExpenseCharts({
               key={index}
               className={styles.expenseDay}
               data-intense={!hidden && amount / max > 0.6}
-              style={
-                {
-                  "--day-strength":
-                    hidden || !amount ? "0%" : `${15 + (amount / max) * 55}%`,
-                } as CSSProperties
-              }
+              style={{
+                "--day-strength":
+                  hidden || !amount ? "0%" : `${15 + (amount / max) * 55}%`,
+              }}
               title={`${index + 1} de ${monthLabel}: ${display(amount)}`}
             >
               <span>{index + 1}</span>

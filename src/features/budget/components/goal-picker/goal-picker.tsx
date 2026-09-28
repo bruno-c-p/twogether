@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { Check } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import type { GoalId } from "@/features/budget/domain/types";
@@ -21,12 +20,10 @@ export function GoalPicker({
             key={item.id}
             type="button"
             className={`${styles.goalOption} ${value === item.id ? styles.selected : ""}`}
-            style={
-              {
-                "--goal-color": item.color,
-                "--goal-bg": item.background,
-              } as CSSProperties
-            }
+            style={{
+              "--goal-color": item.color,
+              "--goal-bg": item.background,
+            }}
             aria-pressed={value === item.id}
             onClick={() => onChange(item.id)}
           >

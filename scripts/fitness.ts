@@ -2,6 +2,7 @@ import { execFileSync, spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:net";
 import { setTimeout as sleep } from "node:timers/promises";
+import { z } from "zod";
 
 const failures: string[] = [];
 
@@ -17,6 +18,16 @@ const resurrectedCss = [
 const bannedCssDeps = ["tailwindcss", "shadcn"];
 
 const cacheControlFiles = ["src/start.ts"] as const;
+
+const dependencyMap = z.record(z.string(), z.string()).optional();
+
+const packageJsonSchema = z.object({
+  dependencies: dependencyMap,
+  devDependencies: dependencyMap,
+  peerDependencies: dependencyMap,
+});
+
+const boundAddressSchema = z.object({ port: z.number() });
 
 function fail(message: string) {
   failures.push(message);
@@ -121,11 +132,9 @@ function assertCacheControlSource() {
 }
 
 function assertCssHouseStyle() {
-  const pkg = JSON.parse(readFileSync("package.json", "utf8")) as {
-    dependencies?: Record<string, string>;
-    devDependencies?: Record<string, string>;
-    peerDependencies?: Record<string, string>;
-  };
+  const pkg = packageJsonSchema.parse(
+    JSON.parse(readFileSync("package.json", "utf8")),
+  );
 
   const names = Object.keys({
     ...pkg.dependencies,
@@ -175,16 +184,16 @@ async function freePort() {
   return await new Promise<number>((resolve, reject) => {
     const server = createServer();
     server.listen(0, "127.0.0.1", () => {
-      const address = server.address();
+      const address = boundAddressSchema.safeParse(server.address());
 
-      if (!address || typeof address === "string") {
+      if (!address.success) {
         server.close();
         reject(new Error("could not bind an ephemeral port"));
 
         return;
       }
 
-      const port = address.port;
+      const { port } = address.data;
       server.close((error) => {
         if (error) reject(error);
         else resolve(port);

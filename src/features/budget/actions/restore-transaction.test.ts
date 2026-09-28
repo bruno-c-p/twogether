@@ -6,9 +6,11 @@ describe("parseRestoreTransaction", () => {
     expect(
       parseRestoreTransaction({ id: "transaction-1", revision: 2 }),
     ).toEqual({ id: "transaction-1", revision: 2 });
+    // @ts-expect-error: the parser must reject untrusted request bodies
     expect(() => parseRestoreTransaction({ revision: 2 })).toThrow(
       "Informe um identificador válido.",
     );
+    // @ts-expect-error: the parser must reject untrusted request bodies
     expect(() => parseRestoreTransaction({ id: "transaction-1" })).toThrow(
       "Versão inválida. Atualize a página.",
     );

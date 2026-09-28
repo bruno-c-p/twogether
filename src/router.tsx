@@ -5,7 +5,7 @@ import { routeTree } from "@/routeTree.gen";
 import { RouteError } from "@/components/route-error/route-error";
 import { reportError } from "@/lib/errors";
 
-function parseSearch(searchStr: string): Record<string, string> {
+function parseSearch(searchStr: string) {
   const query: Record<string, string> = {};
 
   for (const [key, value] of new URLSearchParams(searchStr)) query[key] = value;

@@ -1,4 +1,3 @@
-import type { CSSProperties } from "react";
 import { ArrowUpRight, TriangleAlert } from "lucide-react";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { planGoals, summarize } from "@/features/budget/domain/calc";
@@ -38,12 +37,10 @@ export function GoalList({
             key={goal.id}
             className={`${styles.goalCard} ${overBudget ? styles.overBudget : ""}`}
             aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
-            style={
-              {
-                "--goal-color": goal.color,
-                "--goal-bg": goal.background,
-              } as CSSProperties
-            }
+            style={{
+              "--goal-color": goal.color,
+              "--goal-bg": goal.background,
+            }}
             onClick={() => onFilterGoal(goal.id)}
           >
             <div className={styles.goalCardTop}>

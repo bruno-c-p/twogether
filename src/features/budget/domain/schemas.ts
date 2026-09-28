@@ -61,6 +61,8 @@ export const dateSchema = z
   );
 
 export const goalIdSchema = z.enum(
+  // SAFETY: GOALS is a non-empty constant list, so the mapped ids form a
+  // non-empty tuple of GoalId values.
   GOALS.map((goal) => goal.id) as [GoalId, ...GoalId[]],
   { error: "Meta inválida." },
 );
@@ -281,7 +283,7 @@ export function firstIssueMessage(error: z.ZodError): string {
   return error.issues[0]?.message ?? "Requisição inválida.";
 }
 
-export function fieldErrors(error: z.ZodError): Record<string, string> {
+export function fieldErrors(error: z.ZodError) {
   const errors: Record<string, string> = {};
 
   for (const issue of error.issues) {

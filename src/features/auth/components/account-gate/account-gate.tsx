@@ -27,8 +27,8 @@ import styles from "@/features/auth/components/account-gate/account-gate.module.
 
 const SESSION_SYNC_INTERVAL_MS = 400;
 
-// The TanStack wrapper forwards every prop to Clerk's SignIn, but its published
-// types omit the loading fallback, so widen the signature here.
+// SAFETY: the TanStack wrapper forwards every prop to Clerk's SignIn, but its
+// published types omit the loading fallback, so widen the signature here.
 const GateSignIn = SignIn as (
   props: ComponentProps<typeof SignIn> & { fallback?: ReactNode },
 ) => ReactNode;

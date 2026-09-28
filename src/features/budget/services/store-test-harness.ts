@@ -78,16 +78,21 @@ export async function householdReady(store: BudgetStore) {
 }
 
 export function setupMemoryStore() {
-  const state: { store: BudgetStore } = {
-    store: undefined as unknown as BudgetStore,
-  };
+  let current: BudgetStore | undefined;
 
   beforeEach(() => {
-    state.store = createBudgetStore(":memory:");
+    current = createBudgetStore(":memory:");
   });
   afterEach(() => {
-    state.store.close();
+    current?.close();
   });
 
-  return state;
+  return {
+    get store() {
+      if (!current)
+        throw new Error("The memory store only exists inside a test.");
+
+      return current;
+    },
+  };
 }

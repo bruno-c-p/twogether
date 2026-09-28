@@ -16,31 +16,39 @@ export class RequestError extends Error {
   }
 }
 
-function errorForLogs(error: unknown) {
-  if (!(error instanceof Error)) return typeof error;
+function errorForLogs(cause: unknown) {
+  if (!(cause instanceof Error)) return "non-Error value";
 
-  return process.env.NODE_ENV === "production" ? error.name : error;
+  return process.env.NODE_ENV === "production" ? cause.name : cause;
 }
 
-export function throwHttpError(error: unknown): never {
-  if (isRedirect(error)) throw error;
+export function throwHttpError(cause: unknown): never {
+  if (isRedirect(cause)) throw cause;
 
-  if (error instanceof RequestError) {
-    setResponseStatus(error.status);
-    throw new Error(error.message);
+  if (cause instanceof RequestError) {
+    setResponseStatus(cause.status);
+    throw new Error(cause.message);
   }
 
-  reportError(errorForLogs(error), { context: "Budget mutation failed" });
+  reportError(errorForLogs(cause), { context: "Budget mutation failed" });
   throw new Error("Não foi possível concluir. Tente novamente.");
 }
 
-export async function runMutation<T extends object = Record<string, never>>(
+export async function runMutation(
+  fn: () => Promise<void>,
+): Promise<MutationResult>;
+
+export async function runMutation<T extends object>(
+  fn: () => Promise<T>,
+): Promise<MutationResult<T>>;
+
+export async function runMutation<T extends object>(
   fn: () => Promise<T | void>,
-): Promise<MutationResult<T>> {
+): Promise<MutationResult<T> | MutationResult> {
   try {
     const value = await fn();
 
-    return { ok: true, ...(value as T) };
+    return value ? { ok: true, ...value } : { ok: true };
   } catch (error) {
     if (
       error instanceof RequestError &&

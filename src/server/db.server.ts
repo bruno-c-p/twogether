@@ -7,6 +7,7 @@ import {
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
+import { z } from "zod";
 import { revisionSchema, textSchema } from "@/features/budget/domain/schemas";
 import { tursoAuthToken } from "@/server/env.server";
 import { RequestError } from "@/server/request-error";
@@ -20,32 +21,39 @@ export const digest = (value: string) =>
 
 export const token = () => randomBytes(32).toString("hex");
 
-export interface UserRow {
-  id: string;
-  name: string;
-  household_id: string | null;
-  percentages: string;
-  revision: number;
-}
+export const userRowSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  household_id: z.string().nullable(),
+  percentages: z.string(),
+  revision: z.number(),
+});
 
-export interface HouseholdRow {
-  id: string;
-  percentages: string;
-  revision: number;
-}
+export type UserRow = z.infer<typeof userRowSchema>;
 
-export interface TransactionRow {
-  payload: string;
-  revision: number;
-  deleted: number;
-}
+export const householdRowSchema = z.object({
+  id: z.string(),
+  revision: z.number(),
+});
 
-export interface AccountRow {
-  id: string;
-  payload: string;
-  revision: number;
-  deleted: number;
-}
+export type HouseholdRow = z.infer<typeof householdRowSchema>;
+
+export const transactionRowSchema = z.object({
+  payload: z.string(),
+  revision: z.number(),
+  deleted: z.number(),
+});
+
+export type TransactionRow = z.infer<typeof transactionRowSchema>;
+
+export const accountRowSchema = z.object({
+  id: z.string(),
+  payload: z.string(),
+  revision: z.number(),
+  deleted: z.number(),
+});
+
+export type AccountRow = z.infer<typeof accountRowSchema>;
 
 const schema = [
   `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0)`,
@@ -66,20 +74,24 @@ export async function execute(
   return database.execute({ sql, args });
 }
 
-export async function all<T extends object>(
+export async function all<Row extends z.ZodType>(
   database: DatabaseExecutor,
+  row: Row,
   sql: string,
   args: InArgs = [],
-) {
-  return (await execute(database, sql, args)).rows as unknown as T[];
+): Promise<z.output<Row>[]> {
+  const { rows } = await execute(database, sql, args);
+
+  return z.array(row).parse(rows);
 }
 
-export async function one<T extends object>(
+export async function one<Row extends z.ZodType>(
   database: DatabaseExecutor,
+  row: Row,
   sql: string,
   args: InArgs = [],
-) {
-  return (await all<T>(database, sql, args))[0];
+): Promise<z.output<Row> | undefined> {
+  return (await all(database, row, sql, args))[0];
 }
 
 const LEGACY_TABLES = [
@@ -94,14 +106,14 @@ const LEGACY_TABLES = [
   "households",
 ] as const;
 
-async function resetLegacySchema(database: Client) {
-  const users = await all<{ name: string }>(
-    database,
-    "PRAGMA table_info(users)",
-  );
+const columnSchema = z.object({ name: z.string() });
 
-  const households = await all<{ name: string }>(
+async function resetLegacySchema(database: Client) {
+  const users = await all(database, columnSchema, "PRAGMA table_info(users)");
+
+  const households = await all(
     database,
+    columnSchema,
     "PRAGMA table_info(households)",
   );
 
@@ -200,7 +212,7 @@ export function createStoreContext(filename: string) {
 
 export type StoreContext = ReturnType<typeof createStoreContext>;
 
-export function text(value: unknown, max: number) {
+export function text(value: string, max: number) {
   const result = textSchema(max).safeParse(value);
 
   if (!result.success) throw new RequestError("Confira os campos informados.");
@@ -208,7 +220,7 @@ export function text(value: unknown, max: number) {
   return result.data;
 }
 
-export function revision(value: unknown) {
+export function revision(value: number) {
   const result = revisionSchema.safeParse(value);
 
   if (!result.success)
