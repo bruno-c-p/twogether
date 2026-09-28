@@ -1,5 +1,5 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { workspaceQueryKey } from "@/features/budget/workspace";
@@ -15,9 +15,11 @@ export function useMutation<TArgs extends unknown[], TResult>(
   const router = useRouter();
   const queryClient = useQueryClient();
   const fnRef = useRef(fn);
-  fnRef.current = fn;
   const optimisticRef = useRef(optimistic);
-  optimisticRef.current = optimistic;
+  useLayoutEffect(() => {
+    fnRef.current = fn;
+    optimisticRef.current = optimistic;
+  });
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
