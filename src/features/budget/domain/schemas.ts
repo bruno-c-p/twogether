@@ -246,6 +246,11 @@ export function transactionFormSchema(accounts: BankAccount[]) {
         error: "Tipo da transação inválido.",
       }),
       occurrences: occurrencesSchema,
+      split: z.boolean(),
+    })
+    .refine((value) => !(value.split && value.amount < 2), {
+      error: "Use um valor de pelo menos R$ 0,02 para dividir.",
+      path: ["amount"],
     })
     .refine((value) => !(value.kind === "expense" && value.goal === null), {
       error: "Escolha uma das seis metas para esta despesa.",

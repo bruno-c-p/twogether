@@ -20,6 +20,7 @@ export function TransactionRow({
   transaction,
   members,
   accounts,
+  userId,
   busy,
   hidden,
   className,
@@ -30,6 +31,7 @@ export function TransactionRow({
   transaction: Transaction;
   members: Member[];
   accounts: BankAccount[];
+  userId: string;
   busy: boolean;
   hidden: boolean;
   className?: string;
@@ -40,6 +42,22 @@ export function TransactionRow({
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
   const date = new Date(`${t.date}T12:00:00`);
+  const repayment = Boolean(t.settlementOf);
+  const paidSplit = Boolean(t.split?.paidAt);
+  const splitLabel = repayment
+    ? t.kind === "income"
+      ? "Reembolso"
+      : "Parte paga"
+    : t.split
+      ? paidSplit
+        ? "Dividida · paga"
+        : t.memberId === userId
+          ? "Dividida · a receber"
+          : "Dividida · a pagar"
+      : "";
+  const lockedLabel = repayment
+    ? "reembolso: desmarque o pagamento na transação original"
+    : "";
   return (
     <div className={className ? `${styles.row} ${className}` : styles.row}>
       <div className={styles.transactionDescription}>
@@ -62,7 +80,8 @@ export function TransactionRow({
         <div>
           <button
             className={styles.transactionName}
-            disabled={busy}
+            disabled={busy || repayment}
+            title={lockedLabel || undefined}
             onClick={() => onEdit(t)}
           >
             {t.description}
@@ -73,6 +92,12 @@ export function TransactionRow({
             {" · "}
             {accounts.find((account) => account.id === t.accountId)?.name ??
               "Sem conta"}
+            {splitLabel && (
+              <>
+                {" · "}
+                <span className="text-text-muted">{splitLabel}</span>
+              </>
+            )}
           </div>
           <div className={styles.rowTags}>
             {t.tags.length ? (
@@ -117,8 +142,12 @@ export function TransactionRow({
         <Button
           variant="icon"
           className={styles.actionButton}
-          disabled={busy}
-          aria-label={`Editar ${t.description}`}
+          disabled={busy || repayment}
+          aria-label={
+            lockedLabel
+              ? `Editar ${t.description} (${lockedLabel})`
+              : `Editar ${t.description}`
+          }
           onClick={() => onEdit(t)}
         >
           <Pencil size={15} />
@@ -126,8 +155,14 @@ export function TransactionRow({
         <Button
           variant="icon"
           className={`${styles.actionButton} ${styles.deleteButton}`}
-          disabled={busy}
-          aria-label={`Excluir ${t.description}`}
+          disabled={busy || repayment || paidSplit}
+          aria-label={
+            lockedLabel
+              ? `Excluir ${t.description} (${lockedLabel})`
+              : paidSplit
+                ? `Excluir ${t.description} (desmarque o pagamento antes)`
+                : `Excluir ${t.description}`
+          }
           onClick={() => onDelete(t)}
         >
           <Trash2 size={15} />

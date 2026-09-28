@@ -17,6 +17,7 @@ interface Props {
   transactions: Transaction[];
   members: Member[];
   accounts: BankAccount[];
+  userId: string;
   busy: boolean;
   hidden: boolean;
   query: string;
@@ -38,6 +39,7 @@ export function TransactionList({
   transactions,
   members,
   accounts,
+  userId,
   busy,
   hidden,
   query,
@@ -156,6 +158,7 @@ export function TransactionList({
               transaction={t}
               members={members}
               accounts={accounts}
+              userId={userId}
               busy={busy}
               hidden={hidden}
               className={styles.transactionRow}

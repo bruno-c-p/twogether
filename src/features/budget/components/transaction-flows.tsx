@@ -1,6 +1,10 @@
 import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
+import {
+  SettleDialog,
+  type SettleInput,
+} from "@/features/budget/components/settle-dialog";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { CoupleDialog } from "@/features/household/components/couple-dialog/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -26,6 +30,13 @@ export function TransactionFlows({
   deleteError,
   percentagesError,
   deleteBusy,
+  settling,
+  settleError,
+  splitBusy,
+  onSettle,
+  onConfirmSettle,
+  onUnsettle,
+  onCloseSettle,
   onSave,
   onSaveAccount,
   onSavePercentages,
@@ -50,6 +61,13 @@ export function TransactionFlows({
   deleteError: string;
   percentagesError: string;
   deleteBusy: boolean;
+  settling: Transaction | null;
+  settleError: string;
+  splitBusy: boolean;
+  onSettle: (transaction: Transaction) => void;
+  onConfirmSettle: (input: SettleInput) => Promise<boolean>;
+  onUnsettle: (transaction: Transaction) => Promise<boolean>;
+  onCloseSettle: () => void;
   onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
   onSaveAccount: (account: BankAccount) => Promise<boolean>;
   onSavePercentages: (values: GoalPercentages) => Promise<boolean>;
@@ -79,7 +97,10 @@ export function TransactionFlows({
           accounts={budget.state.accounts}
           currentUserId={budget.user.id}
           serverError={saveError}
+          splitBusy={splitBusy}
           onSave={onSave}
+          onSettle={onSettle}
+          onUnsettle={onUnsettle}
           onClose={onCloseDialog}
         />
       )}
@@ -99,6 +120,16 @@ export function TransactionFlows({
           error={deleteError}
           onClose={onCloseDeleting}
           onDelete={onDelete}
+        />
+      )}
+      {settling && (
+        <SettleDialog
+          transaction={settling}
+          members={budget.household.members}
+          accounts={budget.state.accounts}
+          serverError={settleError}
+          onConfirm={onConfirmSettle}
+          onClose={onCloseSettle}
         />
       )}
       {coupleOpen && <CoupleDialog budget={budget} onClose={onCloseCouple} />}

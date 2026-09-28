@@ -8,6 +8,8 @@ import {
   saveAccount,
   savePercentages,
   saveTransaction,
+  settleSplit,
+  unsettleSplit,
 } from "@/features/budget/actions";
 import {
   useBudget,
@@ -25,7 +27,12 @@ import {
   optimisticDelete,
   optimisticRestore,
   optimisticSave,
+  optimisticSettle,
+  optimisticUnsettle,
 } from "@/features/budget/workspace";
+import { splitDebt, usTransactions } from "@/features/budget/domain/split";
+import type { SettleInput } from "@/features/budget/components/settle-dialog";
+import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
 import { planGoals, summarize } from "@/features/budget/domain/calc";
 import type {
   BankAccount,
@@ -84,7 +91,18 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     (data: { percentages: GoalPercentages; revision: number }) =>
       savePercentages({ data }),
   );
+  const settleTx = useMutation(
+    (data: SettleInput & { id: string; revision: number }) =>
+      settleSplit({ data }),
+    optimisticSettle,
+  );
+  const unsettleTx = useMutation(
+    (data: { id: string; revision: number }) => unsettleSplit({ data }),
+    optimisticUnsettle,
+  );
+  const splitBusy = settleTx.pending || unsettleTx.pending;
   const busy =
+    splitBusy ||
     saveTx.pending ||
     deleteTx.pending ||
     restoreTx.pending ||
@@ -124,18 +142,32 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     null,
   );
   const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const [settling, setSettling] = useState<Transaction | null>(null);
   const listError =
-    deleteAcc.error || restoreTx.error || (!deleting ? deleteTx.error : "");
+    deleteAcc.error ||
+    restoreTx.error ||
+    unsettleTx.error ||
+    (!deleting ? deleteTx.error : "");
 
   const members = budget.household.members;
-  const monthly = useMemo(
+  const partner =
+    members.length === 2
+      ? members.find((member) => member.id !== budget.user.id)
+      : undefined;
+  const viewTransactions = useMemo(
     () =>
-      budget.state.transactions.filter(
-        (t) =>
-          t.date.startsWith(month) &&
-          (memberFilter === "all" || t.memberId === memberFilter),
-      ),
-    [budget.state.transactions, month, memberFilter],
+      memberFilter === "all"
+        ? usTransactions(budget.state.transactions)
+        : budget.state.transactions.filter((t) => t.memberId === memberFilter),
+    [budget.state.transactions, memberFilter],
+  );
+  const monthly = useMemo(
+    () => viewTransactions.filter((t) => t.date.startsWith(month)),
+    [viewTransactions, month],
+  );
+  const debt = useMemo(
+    () => splitDebt(budget.state.transactions, budget.user.id),
+    [budget.state.transactions, budget.user.id],
   );
   const summary = useMemo(() => summarize(monthly), [monthly]);
   const ownMember = members.find((member) => member.id === budget.user.id);
@@ -156,13 +188,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       ),
     [budget.state.transactions],
   );
-  const historyTransactions = useMemo(
-    () =>
-      budget.state.transactions.filter(
-        (t) => memberFilter === "all" || t.memberId === memberFilter,
-      ),
-    [budget.state.transactions, memberFilter],
-  );
+  const historyTransactions = viewTransactions;
   const following = useMemo(
     () =>
       deleting
@@ -255,7 +281,48 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     }
   }
 
+  function openSettle(transaction: Transaction) {
+    setDialog(null);
+    setSettling(transaction);
+  }
+
+  async function confirmSettle(input: SettleInput) {
+    if (!settling) return false;
+    const source = settling;
+    if (
+      !(await settleTx.run({
+        ...input,
+        id: source.id,
+        revision: source.revision ?? 0,
+      }))
+    )
+      return false;
+    posthog.capture("split_settled");
+    setNotice({
+      message: "Pagamento registrado.",
+      undoSettle: { ...source, revision: (source.revision ?? 0) + 1 },
+    });
+    return true;
+  }
+
+  async function unsettle(transaction: Transaction) {
+    if (
+      !(await unsettleTx.run({
+        id: transaction.id,
+        revision: transaction.revision ?? 0,
+      }))
+    )
+      return false;
+    posthog.capture("split_unsettled");
+    setNotice({ message: "Pagamento desmarcado." });
+    return true;
+  }
+
   async function undoNotice() {
+    if (notice?.undoSettle) {
+      await unsettle(notice.undoSettle);
+      return;
+    }
     if (
       notice?.undo &&
       (await restoreTx.run({
@@ -332,6 +399,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             deleteError={deleteTx.error}
             percentagesError={savePct.error}
             deleteBusy={deleteTx.pending}
+            settling={settling}
+            settleError={settleTx.error}
+            splitBusy={splitBusy}
+            onSettle={openSettle}
+            onConfirmSettle={confirmSettle}
+            onUnsettle={unsettle}
+            onCloseSettle={() => setSettling(null)}
             onSave={save}
             onSaveAccount={saveAccountRecord}
             onSavePercentages={saveGoalPercentages}
@@ -449,6 +523,19 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               hidden={hidden}
               displayMoney={displayMoney}
               summary={summary}
+              debtCard={
+                partner && (
+                  <SplitDebtCard
+                    net={debt.net}
+                    unpaid={debt.unpaid}
+                    userId={budget.user.id}
+                    partner={partner}
+                    busy={busy}
+                    displayMoney={displayMoney}
+                    onSettle={openSettle}
+                  />
+                )
+              }
             />
           )}
           {(view === "overview" || view === "goals") && (
@@ -472,6 +559,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               transactions={monthly}
               members={members}
               accounts={budget.state.accounts}
+              userId={budget.user.id}
               busy={busy}
               hidden={hidden}
               query={query}
