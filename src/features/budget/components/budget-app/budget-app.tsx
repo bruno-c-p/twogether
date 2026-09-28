@@ -1,5 +1,6 @@
 import { useHydrated } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
+import { UserButton } from "@clerk/tanstack-react-start";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
   useBudget,
@@ -51,6 +52,7 @@ export function BudgetApp() {
     <BudgetWorkspace
       key={`${budget.household.id}:${budget.user.id}`}
       budget={budget}
+      account={<UserButton />}
     />
   );
 }
@@ -268,7 +270,13 @@ function listErrorFor(mutations: BudgetMutations, deleting: boolean) {
   );
 }
 
-function BudgetWorkspace({ budget }: { budget: BudgetController }) {
+export function BudgetWorkspace({
+  budget,
+  account,
+}: {
+  budget: BudgetController;
+  account?: ReactNode;
+}) {
   const mutations = useBudgetMutations();
   const search = useBudgetSearch();
   const dialogs = useWorkspaceDialogs();
@@ -309,6 +317,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       memberLabel={memberLabel}
       hidden={hidden}
       onToggleHidden={() => setHidden(!hidden)}
+      account={account}
       overlays={
         <>
           <TransactionFlows

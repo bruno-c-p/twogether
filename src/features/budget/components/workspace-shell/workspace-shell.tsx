@@ -1,5 +1,4 @@
 import { ThemeToggle } from "@/features/theme";
-import { UserButton } from "@clerk/tanstack-react-start";
 import { Eye, EyeOff, UsersRound } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import type { View } from "@/features/budget/domain/types";
@@ -19,6 +18,7 @@ export function WorkspaceShell({
   onToggleHidden,
   children,
   overlays,
+  account,
 }: {
   view?: View;
   title?: string;
@@ -27,6 +27,7 @@ export function WorkspaceShell({
   onToggleHidden?: () => void;
   children: ReactNode;
   overlays?: ReactNode;
+  account?: ReactNode;
 }) {
   return (
     <div className={styles.appShell}>
@@ -76,7 +77,7 @@ export function WorkspaceShell({
               <span className={styles.spaceButtonLabel}>Nosso espaço</span>
               <span className={styles.spaceMemberCount}>{memberLabel}</span>
             </Link>
-            <UserButton />
+            {account}
           </div>
         </header>
         <main id="main-content">{children}</main>

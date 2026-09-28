@@ -127,7 +127,7 @@ export default defineConfig({
       },
     },
     {
-      files: ["**/*.test.ts"],
+      files: ["**/*.test.ts", "**/*.test.tsx"],
       rules: {
         "typescript/await-thenable": "off",
         "typescript/require-await": "off",

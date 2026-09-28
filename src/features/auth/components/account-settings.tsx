@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState, type FormEvent } from "react";
 import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
-import { useUser } from "@clerk/tanstack-react-start";
+import { UserButton, useUser } from "@clerk/tanstack-react-start";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
@@ -145,7 +145,11 @@ export function AccountSettings() {
   }
 
   return (
-    <WorkspaceShell title="Sua conta" memberLabel={memberLabel}>
+    <WorkspaceShell
+      title="Sua conta"
+      memberLabel={memberLabel}
+      account={<UserButton />}
+    >
       <div className="max-w-[720px]">
         <h1>Sua conta</h1>
         <p className="text-text-muted mt-1.5">
