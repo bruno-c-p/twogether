@@ -10,6 +10,7 @@ import {
   signInClerk,
   uniqueEmail,
   waitForGate,
+  waitForInvite,
   waitForHydrated,
   withMobile,
   expectNoHorizontalOverflow,
@@ -73,7 +74,7 @@ test.describe("auth", () => {
       page.getByRole("button", { name: "Eu", exact: true }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
+      page.getByRole("link", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeVisible();
     expect(new URL(page.url()).searchParams.has("access")).toBe(false);
     const cookies = await page.context().cookies();
@@ -99,22 +100,20 @@ test.describe("auth", () => {
     );
   });
 
-  test("M3 invite survives clerk sign-in and stays on the gate", async ({
+  test("M3 legacy invite links land on the invite route and survive sign-in", async ({
     page,
   }) => {
     const convite = randomToken();
     await page.goto(`/?convite=${convite}`);
-    await waitForGate(page);
-    expect(new URL(page.url()).pathname).toBe("/entrar");
-    expect(new URL(page.url()).searchParams.get("convite")).toBe(convite);
+    await waitForInvite(page, convite);
+    expect(new URL(page.url()).pathname).toBe(`/convite/${convite}`);
     await expect(page.getByText("Seu par convidou você")).toBeVisible();
 
     const email = uniqueEmail("bia");
     await signInClerk(page, email);
     const after = new URL(page.url());
-    expect(after.pathname).toBe("/entrar");
+    expect(after.pathname).toBe(`/convite/${convite}`);
     expect(after.searchParams.has("access")).toBe(false);
-    expect(after.searchParams.get("convite")).toBe(convite);
     await setName(page, "Bia");
     await expect(
       page.getByText("Ao aceitar, vocês dois poderão ver"),
@@ -122,7 +121,16 @@ test.describe("auth", () => {
     await expect(
       page.getByRole("button", { name: "Aceitar convite" }),
     ).toBeVisible();
-    expect(new URL(page.url()).searchParams.get("convite")).toBe(convite);
+    expect(new URL(page.url()).pathname).toBe(`/convite/${convite}`);
+  });
+
+  test("M14 private routes send signed-out visitors to the gate", async ({
+    page,
+  }) => {
+    await page.goto("/conta");
+    await waitForGate(page);
+    await page.goto("/?month=2026-09");
+    await waitForGate(page);
   });
 
   test("M12 logout clears the session from the workspace and the gate", async ({
@@ -157,7 +165,7 @@ test("M1b gate keeps the signed-in person after a hydrated reload", async ({
   await waitForHydrated(page);
   await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
   await expect(
-    page.getByRole("button", { name: /Abrir nosso espaço/ }),
+    page.getByRole("link", { name: /Abrir nosso espaço/ }),
   ).toBeVisible();
   expect(email).toContain("+clerk_test@example.com");
 });

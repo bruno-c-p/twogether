@@ -28,8 +28,11 @@ async function addAccount(page: Page, name: string, first: boolean) {
 async function joinPartner(page: Page, browser: Browser) {
   await openCouple(page);
   await page.getByRole("button", { name: "Gerar convite" }).click();
-  const inviteUrl = await page.getByLabel("Link para seu par").inputValue();
-  await page.getByRole("button", { name: "Fechar nosso espaço" }).click();
+  const invite = page.getByLabel("Link para seu par");
+  await expect(invite).toHaveValue(/\/convite\/[0-9a-f]{64}$/);
+  const inviteUrl = await invite.inputValue();
+  await page.getByRole("link", { name: "twogether — início" }).click();
+  await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
   const context = await browser.newContext();
   const partner = await context.newPage();
   await partner.goto(inviteUrl);
@@ -47,7 +50,7 @@ function debtCard(page: Page) {
 }
 
 test.describe("split expenses", () => {
-  test("M13 partner settles a split rent with repayment entries", async ({
+  test("M15 partner settles a split rent with repayment entries", async ({
     page,
     browser,
   }) => {

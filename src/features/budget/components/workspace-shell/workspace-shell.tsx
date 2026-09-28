@@ -1,6 +1,7 @@
 import { ThemeToggle } from "@/features/theme";
 import { UserButton } from "@clerk/tanstack-react-start";
 import { Eye, EyeOff, UsersRound } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
@@ -12,18 +13,18 @@ import type { ReactNode } from "react";
 
 export function WorkspaceShell({
   view,
+  title,
   memberLabel,
   hidden,
   onToggleHidden,
-  onOpenCouple,
   children,
   overlays,
 }: {
-  view: View;
+  view?: View;
+  title?: string;
   memberLabel: string;
-  hidden: boolean;
-  onToggleHidden: () => void;
-  onOpenCouple: () => void;
+  hidden?: boolean;
+  onToggleHidden?: () => void;
   children: ReactNode;
   overlays?: ReactNode;
 }) {
@@ -41,7 +42,8 @@ export function WorkspaceShell({
         <header className={styles.topbar}>
           <div className={styles.breadcrumb}>
             <strong>
-              {WORKSPACE_NAVIGATION.find((item) => item.id === view)?.label}
+              {title ??
+                WORKSPACE_NAVIGATION.find((item) => item.id === view)?.label}
             </strong>
           </div>
           <Brand className={styles.mobileBrand} mark markClassName={styles.mobileMark}>
@@ -49,25 +51,27 @@ export function WorkspaceShell({
           </Brand>
           <div className={styles.topbarRight}>
             <ThemeToggle className={styles.topbarTheme} />
-            <Button
-              variant="icon"
-              className={styles.visibilityButton}
-              onClick={onToggleHidden}
-              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
-              title={hidden ? "Mostrar valores" : "Ocultar valores"}
-            >
-              {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-            </Button>
-            <button
+            {onToggleHidden && (
+              <Button
+                variant="icon"
+                className={styles.visibilityButton}
+                onClick={onToggleHidden}
+                aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+                title={hidden ? "Mostrar valores" : "Ocultar valores"}
+              >
+                {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
+              </Button>
+            )}
+            <Link
+              to="/conta"
               className={styles.spaceButton}
               aria-label={`Abrir nosso espaço: ${memberLabel}`}
               title={`Nosso espaço: ${memberLabel}`}
-              onClick={onOpenCouple}
             >
               <UsersRound size={17} strokeWidth={1.8} aria-hidden="true" />
               <span className={styles.spaceButtonLabel}>Nosso espaço</span>
               <span className={styles.spaceMemberCount}>{memberLabel}</span>
-            </button>
+            </Link>
             <UserButton />
           </div>
         </header>

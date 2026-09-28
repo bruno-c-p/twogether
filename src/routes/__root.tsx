@@ -1,9 +1,10 @@
 import { useUser, ClerkProvider } from "@clerk/tanstack-react-start";
 import { ptBR } from "@clerk/localizations";
 import { useEffect, useRef } from "react";
+import type { QueryClient } from "@tanstack/react-query";
 import { PostHogProvider, usePostHog } from "posthog-js/react";
 import {
-  createRootRoute,
+  createRootRouteWithContext,
   HeadContent,
   Outlet,
   Scripts,
@@ -12,20 +13,19 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
+import { parseClientEnv } from "@/lib/env";
+import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 
-const posthogApiKey = import.meta.env.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
-const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST;
+const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
+const posthogApiKey = clientEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+const posthogHost = clientEnv.VITE_PUBLIC_POSTHOG_HOST;
 
-if (import.meta.env.DEV && !posthogApiKey) {
-  throw new Error(
-    "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured",
-  );
-}
+function TimeZoneCookie() {
+  useEffect(() => {
+    rememberTimeZone(browserTimeZone());
+  }, []);
 
-if (import.meta.env.DEV && !posthogHost) {
-  throw new Error(
-    "VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_HOST is configured",
-  );
+  return null;
 }
 
 function PostHogIdentity() {
@@ -58,7 +58,9 @@ function PostHogIdentity() {
   return null;
 }
 
-export const Route = createRootRoute({
+export const Route = createRootRouteWithContext<{
+  queryClient: QueryClient;
+}>()({
   errorComponent: RouteError,
   head: () => ({
     meta: [
@@ -116,6 +118,7 @@ export const Route = createRootRoute({
             },
           }}
         >
+          <TimeZoneCookie />
           {posthogApiKey && posthogHost ? (
             <PostHogProvider
               apiKey={posthogApiKey}

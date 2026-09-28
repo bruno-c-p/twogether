@@ -5,7 +5,7 @@
   "packageManager": "bun@1.3.14",
   "scripts": {
     "dev": "NODE_ENV=development bun --bun vite --host 0.0.0.0 --port 3000",
-    "build": "vite build",
+    "build": "bun scripts/check-env.ts && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "fitness": "bun scripts/fitness.ts",
@@ -20,6 +20,7 @@
     "@libsql/client": "^0.18.0",
     "@tanstack/react-query": "5.103.1",
     "@tanstack/react-router": "1.170.36",
+    "@tanstack/react-router-ssr-query": "1.167.3",
     "@tanstack/react-start": "1.168.53",
     "lucide-react": "^0.577.0",
     "nitro": "^3.0.260903-beta",

@@ -21,6 +21,7 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   reporter: process.env.CI ? [["github"], ["list"]] : "list",
+  retries: process.env.CI ? 1 : 0,
   timeout: 60_000,
   expect: { timeout: 10_000 },
   use: {
@@ -47,14 +48,19 @@ export default defineConfig({
   ],
   webServer: {
     cwd: root,
-    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun --bun vite --host 127.0.0.1 --port ${port}`,
-    url: baseURL,
+    // The suite runs the production build, not `vite dev`: the dev SSR module
+    // runner races on server-function modules (undefined middleware, then a
+    // poisoned module graph) and has been failing CI intermittently. The build
+    // is the artifact we ship, so this both stabilizes the run and tests prod.
+    command: `rm -f "${databasePath}" "${databasePath}-wal" "${databasePath}-shm" && bun run build && NODE_ENV=production HOST=127.0.0.1 PORT=${port} node .output/server/index.mjs`,
+    // A static asset, not "/": the app root renders SSR, so a failing Clerk or
+    // database request would look like a server that never booted.
+    url: `${baseURL}/manifest.webmanifest`,
     reuseExistingServer: false,
-    timeout: 120_000,
+    timeout: 240_000,
     env: {
       ...env,
       BUDGET_DATABASE_PATH: databasePath,
-      NODE_ENV: "development",
     },
   },
 });

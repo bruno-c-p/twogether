@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useHydrated } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import {
@@ -129,7 +130,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const month = searchMonth ?? currentMonth();
-  const [coupleOpen, setCoupleOpen] = useState(false);
+  const today = useHydrated() ? currentMonth() : null;
   const [hidden, setHidden] = useState(false);
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
@@ -381,7 +382,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       memberLabel={memberLabel}
       hidden={hidden}
       onToggleHidden={() => setHidden(!hidden)}
-      onOpenCouple={() => setCoupleOpen(true)}
       overlays={
         <>
           <TransactionFlows
@@ -393,7 +393,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             deleting={deleting}
             following={following}
             editingPercentages={editingPercentages}
-            coupleOpen={coupleOpen}
             saveError={saveTx.error}
             accountError={saveAcc.error}
             deleteError={deleteTx.error}
@@ -414,7 +413,6 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
             onCloseAccount={() => setAccountDialog(null)}
             onCloseDeleting={() => setDeleting(null)}
             onClosePercentages={() => setEditingPercentages(null)}
-            onCloseCouple={() => setCoupleOpen(false)}
           />
           {notice && (
             <NoticeToast
@@ -477,10 +475,10 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               <ChevronRight size={17} />
             </Button>
           </div>
-          {month !== currentMonth() && (
+          {today && month !== today && (
             <button
               className={styles.todayButton}
-              onClick={() => setMonth(currentMonth())}
+              onClick={() => setMonth(today)}
             >
               Voltar para este mês
             </button>

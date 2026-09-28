@@ -6,7 +6,6 @@ import {
   type SettleInput,
 } from "@/features/budget/components/settle-dialog";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
-import { CoupleDialog } from "@/features/household/components/couple-dialog/couple-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
 import type {
@@ -24,7 +23,6 @@ export function TransactionFlows({
   deleting,
   following,
   editingPercentages,
-  coupleOpen,
   saveError,
   accountError,
   deleteError,
@@ -45,7 +43,6 @@ export function TransactionFlows({
   onCloseAccount,
   onCloseDeleting,
   onClosePercentages,
-  onCloseCouple,
 }: {
   budget: BudgetController;
   month: string;
@@ -55,7 +52,6 @@ export function TransactionFlows({
   deleting: Transaction | null;
   following: Transaction[];
   editingPercentages: number | null;
-  coupleOpen: boolean;
   saveError: string;
   accountError: string;
   deleteError: string;
@@ -76,7 +72,6 @@ export function TransactionFlows({
   onCloseAccount: () => void;
   onCloseDeleting: () => void;
   onClosePercentages: () => void;
-  onCloseCouple: () => void;
 }) {
   return (
     <>
@@ -132,7 +127,6 @@ export function TransactionFlows({
           onClose={onCloseSettle}
         />
       )}
-      {coupleOpen && <CoupleDialog budget={budget} onClose={onCloseCouple} />}
     </>
   );
 }

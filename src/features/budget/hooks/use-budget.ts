@@ -1,12 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { getRouteApi, isRedirect, useRouter } from "@tanstack/react-router";
-import { useEffect } from "react";
-import {
-  fetchWorkspace,
-  workspaceQueryKeyFor,
-} from "@/features/budget/workspace";
+import { getRouteApi, isRedirect } from "@tanstack/react-router";
+import { workspaceQueryOptions } from "@/features/budget/workspace";
 
-const workspaceRoute = getRouteApi("/");
+const workspaceRoute = getRouteApi("/_authenticated/");
 
 function syncMessage(error: unknown) {
   if (error instanceof Error && !(error instanceof TypeError)) {
@@ -16,22 +12,10 @@ function syncMessage(error: unknown) {
 }
 
 export function useBudget() {
-  const router = useRouter();
   const initial = workspaceRoute.useLoaderData();
-  const query = useQuery({
-    queryKey: workspaceQueryKeyFor(initial.user.id),
-    queryFn: fetchWorkspace,
-    initialData: initial,
-  });
+  const query = useQuery(workspaceQueryOptions);
 
-  useEffect(() => {
-    if (!query.error) return;
-    if (isRedirect(query.error)) {
-      void router.navigate(router.resolveRedirect(query.error).options);
-    }
-  }, [query.error, router]);
-
-  const snapshot = query.data;
+  const snapshot = query.data ?? initial;
   const syncError =
     query.error && !isRedirect(query.error) ? syncMessage(query.error) : "";
 

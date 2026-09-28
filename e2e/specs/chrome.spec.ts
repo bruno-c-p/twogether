@@ -125,6 +125,60 @@ test.describe("chrome", () => {
     });
   });
 
+  test("M13 month default follows the browser time zone", async ({ page }) => {
+    await onboard(page, "Ana");
+    await expect(
+      page.getByRole("heading", { name: "Visão geral" }),
+    ).toBeVisible();
+
+    const stored = (await page.context().cookies()).find(
+      (cookie) => cookie.name === "twogether.tz.v1",
+    );
+    expect(decodeURIComponent(stored?.value ?? "")).toBe("America/Sao_Paulo");
+
+    const browserMonth = await page.evaluate(() => {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    });
+
+    await page.context().clearCookies({ name: "twogether.tz.v1" });
+    await page.goto("/");
+    await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
+    expect(new URL(page.url()).searchParams.get("month")).toBe(browserMonth);
+    await expect(page.getByLabel("Selecionar mês e ano")).toHaveValue(
+      browserMonth,
+    );
+
+    await expect
+      .poll(async () =>
+        (await page.context().cookies()).some(
+          (cookie) => cookie.name === "twogether.tz.v1",
+        ),
+      )
+      .toBe(true);
+
+    const redirected = await page.context().request.get("/", {
+      maxRedirects: 0,
+    });
+    expect(redirected.status()).toBe(307);
+    expect(redirected.headers()["location"] ?? "").toContain(
+      `month=${browserMonth}`,
+    );
+
+    await page.context().clearCookies({ name: "twogether.tz.v1" });
+    const fallback = await page.context().request.get("/", { maxRedirects: 0 });
+    expect(fallback.status()).toBe(200);
+    expect(await fallback.text()).toContain("Carregando orçamento…");
+
+    const oldMonth = "2026-01";
+    const serverHtml = await page.context().request.get(`/?month=${oldMonth}`);
+    expect(await serverHtml.text()).not.toContain("Voltar para este mês");
+    await page.goto(`/?month=${oldMonth}`);
+    await expect(
+      page.getByRole("button", { name: "Voltar para este mês" }),
+    ).toBeVisible();
+  });
+
   test("desktop header does not repeat the brand", async ({ page }) => {
     await onboard(page, "Ana");
     const headerBrand = page

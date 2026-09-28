@@ -33,6 +33,10 @@ export const authMiddleware = createMiddleware({ type: "function" }).server(
   },
 );
 
+export const optionalAuthMiddleware = createMiddleware({
+  type: "function",
+}).server(async ({ next }) => next({ context: { user: await currentUser() } }));
+
 export const householdMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
