@@ -10,6 +10,12 @@ export interface BankAccount {
   revision?: number;
 }
 
+export interface TransactionSplit {
+  paidAt?: string;
+  paidBy?: string;
+  entryIds?: string[];
+}
+
 export interface Transaction {
   id: string;
   description: string;
@@ -26,6 +32,8 @@ export interface Transaction {
   createdBy?: string;
   updatedBy?: string;
   updatedAt?: string;
+  split?: TransactionSplit;
+  settlementOf?: string;
 }
 
 export type GoalPercentages = Record<GoalId, number>;
