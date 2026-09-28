@@ -1,4 +1,4 @@
-.theme-toggle {
+.themeToggle {
   display: inline-flex;
   gap: 3px;
   padding: 4px;
@@ -8,7 +8,7 @@
   flex-shrink: 0;
 }
 
-.theme-toggle button {
+.themeToggle button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -23,11 +23,11 @@
   font-size: 11px;
 }
 
-.theme-toggle button:hover {
+.themeToggle button:hover {
   background: var(--surface-soft);
 }
 
-.theme-toggle button[aria-pressed="true"] {
+.themeToggle button[aria-pressed="true"] {
   background: var(--surface-soft);
   color: var(--accent);
   box-shadow: inset 0 0 0 1px var(--border);

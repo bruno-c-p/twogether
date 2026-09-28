@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { firstIssueMessage } from "@/features/budget/domain/schemas";
 
-export function invalid(message = "Requisição inválida."): never {
+function invalid(message = "Requisição inválida."): never {
   throw new Error(message);
 }
 

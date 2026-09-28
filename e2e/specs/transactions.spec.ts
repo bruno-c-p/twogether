@@ -194,7 +194,7 @@ test.describe("transactions", () => {
     await expectToast(page, "Transação adicionada.");
 
     const summary = page.getByRole("region", { name: "Resumo mensal" });
-    await expect(summary.locator('[class*="balance-amount"]')).toHaveText(
+    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
       /R\$\s*154,10/,
     );
     await expect(
@@ -211,7 +211,7 @@ test.describe("transactions", () => {
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toHaveCount(0);
-    await expect(summary.locator('[class*="balance-amount"]')).toHaveText(
+    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
       /R\$\s*200,00/,
     );
 
@@ -220,7 +220,7 @@ test.describe("transactions", () => {
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toBeVisible();
-    await expect(summary.locator('[class*="balance-amount"]')).toHaveText(
+    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
       /R\$\s*154,10/,
     );
   });

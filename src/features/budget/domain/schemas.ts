@@ -67,35 +67,35 @@ export const goalIdSchema = z.enum(
   { error: "Meta inválida." },
 );
 
-export const centsSchema = z
+const centsSchema = z
   .int({ error: "Digite um valor válido, como 45,90." })
   .min(1, { error: "Digite um valor válido, como 45,90." })
   .max(MONEY_MAX, { error: "Digite um valor válido, como 45,90." });
 
-export const balanceCentsSchema = z
+const balanceCentsSchema = z
   .int({ error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
   .min(0, { error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
   .max(MONEY_MAX, {
     error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
   });
 
-export const amountInputSchema = z
+const amountInputSchema = z
   .string({ error: "Digite um valor válido, como 45,90." })
   .transform((value) => parseAmount(value))
   .pipe(centsSchema);
 
-export const balanceInputSchema = z
+const balanceInputSchema = z
   .string({
     error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
   })
   .transform((value) => parseBalance(value))
   .pipe(balanceCentsSchema);
 
-export const tagSchema = z
+const tagSchema = z
   .string({ error: "Cada tag deve ter no máximo 24 caracteres." })
   .max(24, { error: "Cada tag deve ter no máximo 24 caracteres." });
 
-export const tagsSchema = z
+const tagsSchema = z
   .array(tagSchema, { error: "Use no máximo 8 tags." })
   .max(8, { error: "Use no máximo 8 tags." });
 

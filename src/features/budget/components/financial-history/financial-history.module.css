@@ -1,22 +1,22 @@
-.financial-history {
+.financialHistory {
   margin: 0 0 32px;
   min-width: 0;
 }
 
-.history-heading {
+.historyHeading {
   display: flex;
   justify-content: space-between;
   align-items: start;
   gap: 20px;
 }
 
-.history-periods {
+.historyPeriods {
   display: flex;
   gap: 8px;
   flex-shrink: 0;
 }
 
-.history-periods button {
+.historyPeriods button {
   padding: 9px 15px;
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -27,18 +27,18 @@
   cursor: pointer;
 }
 
-.history-periods button[aria-pressed="true"] {
+.historyPeriods button[aria-pressed="true"] {
   background: var(--accent);
   color: var(--surface);
   border-color: transparent;
 }
 
-.history-plot {
+.historyPlot {
   display: flex;
   margin-top: 36px;
 }
 
-.history-axis {
+.historyAxis {
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -50,7 +50,7 @@
   font-size: 11px;
 }
 
-.history-scroll {
+.historyScroll {
   min-width: 0;
   flex: 1;
   overflow-x: auto;
@@ -58,17 +58,17 @@
   margin-top: -8px;
 }
 
-.history-months {
+.historyMonths {
   display: flex;
 }
 
-.history-month {
+.historyMonth {
   flex: 1;
   min-width: 0;
   text-align: center;
 }
 
-.history-bars {
+.historyBars {
   height: 260px;
   display: flex;
   justify-content: center;
@@ -80,28 +80,28 @@
   background: var(--surface);
 }
 
-.history-bars > span {
+.historyBars > span {
   width: 32px;
   max-width: 42%;
   border-radius: 6px 6px 0 0;
 }
 
-.history-income {
+.historyIncome {
   background: var(--accent);
 }
 
-.history-expense {
+.historyExpense {
   background: var(--danger);
 }
 
-.history-month-label {
+.historyMonthLabel {
   display: block;
   padding: 12px 0;
   color: var(--muted);
   font-size: 12px;
 }
 
-.history-legend {
+.historyLegend {
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
@@ -111,19 +111,19 @@
   color: var(--muted);
 }
 
-.history-legend span {
+.historyLegend span {
   display: flex;
   align-items: center;
   gap: 7px;
 }
 
-.history-legend i {
+.historyLegend i {
   width: 10px;
   height: 10px;
   border-radius: 3px;
 }
 
-.history-message {
+.historyMessage {
   min-height: 180px;
   display: grid;
   place-items: center;
@@ -131,7 +131,7 @@
   text-align: center;
 }
 
-.history-tooltip {
+.historyTooltip {
   display: none;
   position: absolute;
   top: 12px;
@@ -146,33 +146,33 @@
   pointer-events: none;
 }
 
-.history-bars:hover .history-tooltip,
-.history-bars:focus .history-tooltip {
+.historyBars:hover .historyTooltip,
+.historyBars:focus .historyTooltip {
   display: grid;
   gap: 5px;
 }
 
-.history-month:first-child .history-tooltip {
+.historyMonth:first-child .historyTooltip {
   left: 0;
 }
 
-.history-month:last-child .history-tooltip {
+.historyMonth:last-child .historyTooltip {
   right: 0;
 }
 
 @media (max-width: 600px) {
-  .history-heading {
+  .historyHeading {
     flex-direction: column;
     gap: 16px;
   }
 
-  .history-axis {
+  .historyAxis {
     flex-basis: 58px;
     font-size: 10px;
     padding-right: 8px;
   }
 
-  .history-bars {
+  .historyBars {
     padding: 0 8px;
   }
 }

@@ -1,28 +1,28 @@
-.recurrence-panel {
+.recurrencePanel {
   margin: 0 0 24px;
   border: 1px solid var(--border);
   border-radius: 10px;
   background: var(--surface-soft);
 }
 
-.recurrence-heading {
+.recurrenceHeading {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px;
 }
 
-.recurrence-icon {
+.recurrenceIcon {
   display: flex;
   color: var(--text-muted);
 }
 
-.recurrence-copy {
+.recurrenceCopy {
   flex: 1;
   min-width: 0;
 }
 
-.recurrence-panel .recurrence-copy label {
+.recurrencePanel .recurrenceCopy label {
   display: block;
   font-size: 13px;
   font-weight: 500;
@@ -30,15 +30,15 @@
   cursor: pointer;
 }
 
-.recurrence-copy p,
-.recurrence-details p {
+.recurrenceCopy p,
+.recurrenceDetails p {
   margin: 0;
   color: var(--text-muted);
   font-size: 12px;
   line-height: 1.6;
 }
 
-.recurrence-switch {
+.recurrenceSwitch {
   appearance: none;
   flex: 0 0 38px;
   width: 38px;
@@ -50,7 +50,7 @@
   cursor: pointer;
 }
 
-.recurrence-switch::after {
+.recurrenceSwitch::after {
   content: "";
   position: absolute;
   top: 3px;
@@ -62,22 +62,22 @@
   transition: transform 0.15s;
 }
 
-.recurrence-switch:checked {
+.recurrenceSwitch:checked {
   background: var(--accent);
   border-color: var(--accent);
 }
 
-.recurrence-switch:checked::after {
+.recurrenceSwitch:checked::after {
   transform: translateX(16px);
   background: var(--on-brand);
 }
 
-.recurrence-details {
+.recurrenceDetails {
   padding: 16px;
   border-top: 1px solid var(--border);
 }
 
-.recurrence-count {
+.recurrenceCount {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -85,14 +85,14 @@
   margin-bottom: 10px;
 }
 
-.recurrence-panel .recurrence-count label {
+.recurrencePanel .recurrenceCount label {
   display: block;
   font-size: 12px;
   font-weight: 500;
   margin: 0;
 }
 
-.recurrence-number {
+.recurrenceNumber {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -100,7 +100,7 @@
   color: var(--text-muted);
 }
 
-.recurrence-number input {
+.recurrenceNumber input {
   width: 70px;
   height: 40px;
   padding: 8px;
@@ -113,22 +113,22 @@
 }
 
 @media (max-width: 620px) {
-  .recurrence-panel .recurrence-count label {
+  .recurrencePanel .recurrenceCount label {
     font-size: 13px;
   }
 }
 
 @media (max-width: 480px) {
-  .recurrence-heading,
-  .recurrence-details {
+  .recurrenceHeading,
+  .recurrenceDetails {
     padding: 14px;
   }
 
-  .recurrence-heading {
+  .recurrenceHeading {
     gap: 10px;
   }
 
-  .recurrence-icon {
+  .recurrenceIcon {
     display: none;
   }
 }

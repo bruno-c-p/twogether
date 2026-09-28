@@ -1,4 +1,4 @@
-.account-page {
+.accountPage {
   min-height: 100svh;
   width: 100%;
   max-width: none;
@@ -32,7 +32,7 @@
   font-weight: 500;
 }
 
-.account-card {
+.accountCard {
   width: 100%;
   max-width: 470px;
   padding: 36px;
@@ -41,7 +41,7 @@
   background: var(--surface);
 }
 
-.account-symbol {
+.accountSymbol {
   width: 58px;
   height: 58px;
   display: grid;
@@ -52,7 +52,7 @@
   margin-bottom: 22px;
 }
 
-.account-card h1 {
+.accountCard h1 {
   font-size: clamp(29px, 5vw, 38px);
   white-space: pre-line;
   line-height: 1.15;
@@ -61,7 +61,7 @@
   overflow-wrap: anywhere;
 }
 
-.account-intro {
+.accountIntro {
   color: var(--text-muted);
   line-height: 1.6;
   font-size: 14px;
@@ -109,7 +109,7 @@
 }
 
 @media (max-width: 620px) {
-  .account-page {
+  .accountPage {
     padding: 24px 16px;
   }
 
@@ -122,7 +122,7 @@
     padding: 24px 0;
   }
 
-  .account-card {
+  .accountCard {
     padding: 26px 22px;
     border-radius: 20px;
   }

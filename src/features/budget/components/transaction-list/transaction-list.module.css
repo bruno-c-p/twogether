@@ -1,8 +1,8 @@
-.see-all svg {
+.seeAll svg {
   color: var(--text-muted);
 }
 
-.sr-only {
+.srOnly {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -11,18 +11,18 @@
   white-space: nowrap;
 }
 
-.transaction-table {
+.transactionTable {
   min-width: 0;
 }
 
-.transaction-toolbar {
+.transactionToolbar {
   padding: 0 23px 17px;
   display: flex;
   justify-content: space-between;
   gap: 15px;
 }
 
-.search-field {
+.searchField {
   display: flex;
   align-items: center;
   border: 1px solid var(--border);
@@ -37,7 +37,7 @@
   background: var(--surface);
 }
 
-.search-field input {
+.searchField input {
   border: 0;
   outline: 0;
   background: transparent;
@@ -47,21 +47,21 @@
   color: var(--text);
 }
 
-.search-field input::placeholder {
+.searchField input::placeholder {
   color: var(--text-muted);
 }
 
-.search-field:focus-within {
+.searchField:focus-within {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.filter-selects {
+.filterSelects {
   display: flex;
   gap: 8px;
 }
 
-.filter-selects select {
+.filterSelects select {
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);
@@ -71,8 +71,8 @@
   max-width: 180px;
 }
 
-.table-head,
-.transaction-row {
+.tableHead,
+.transactionRow {
   display: grid;
   grid-template-columns:
     minmax(170px, 2.3fr) minmax(120px, 1.35fr) minmax(65px, 0.65fr)
@@ -82,7 +82,7 @@
   padding: 0 23px;
 }
 
-.table-head {
+.tableHead {
   background: var(--surface-soft);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -92,24 +92,24 @@
   color: var(--text-muted);
 }
 
-.table-head > span:nth-child(4) {
+.tableHead > span:nth-child(4) {
   text-align: right;
 }
 
-.transaction-row {
+.transactionRow {
   min-height: 70px;
   border-bottom: 1px solid var(--border);
 }
 
-.transaction-row:hover {
+.transactionRow:hover {
   background: var(--surface-soft);
 }
 
-.transaction-row {
+.transactionRow {
   min-height: 76px;
 }
 
-.table-footer {
+.tableFooter {
   height: 40px;
   padding: 0 23px;
   display: flex;
@@ -119,7 +119,7 @@
   font-size: 9px;
 }
 
-.active-tag-filter {
+.activeTagFilter {
   padding: 0 23px 15px;
   display: flex;
   align-items: center;
@@ -128,38 +128,38 @@
   color: var(--text-muted);
 }
 
-.search-field input,
-.filter-selects select {
+.searchField input,
+.filterSelects select {
   font-size: 12px;
 }
 
 @media (min-width: 1450px) {
-  .table-head {
+  .tableHead {
     font-size: 10px;
     height: 38px;
   }
 
-  .transaction-row {
+  .transactionRow {
     min-height: 76px;
   }
 
-  .table-footer {
+  .tableFooter {
     font-size: 11px;
   }
 
-  .search-field {
+  .searchField {
     height: 40px;
   }
 
-  .search-field input,
-  .filter-selects select {
+  .searchField input,
+  .filterSelects select {
     font-size: 12px;
   }
 }
 
 @media (max-width: 1190px) {
-  .table-head,
-  .transaction-row {
+  .tableHead,
+  .transactionRow {
     grid-template-columns:
       minmax(160px, 2fr) minmax(100px, 1.3fr)
       55px 105px 25px;
@@ -168,26 +168,26 @@
     padding-right: 18px;
   }
 
-  .transaction-toolbar {
+  .transactionToolbar {
     padding-left: 18px;
     padding-right: 18px;
   }
 }
 
 @media (max-width: 800px) {
-  .table-head,
-  .transaction-row {
+  .tableHead,
+  .transactionRow {
     grid-template-columns: minmax(130px, 1.8fr) minmax(100px, 1.15fr) 85px 25px;
     gap: 7px;
     padding-left: 15px;
     padding-right: 15px;
   }
 
-  .table-head > span:nth-child(3) {
+  .tableHead > span:nth-child(3) {
     display: none;
   }
 
-  .filter-selects select {
+  .filterSelects select {
     padding-left: 7px;
     padding-right: 7px;
     max-width: 135px;
@@ -195,27 +195,27 @@
 }
 
 @media (max-width: 620px) {
-  .transaction-toolbar {
+  .transactionToolbar {
     flex-wrap: wrap;
     padding: 0 16px 14px;
     gap: 9px;
   }
 
-  .search-field {
+  .searchField {
     max-width: none;
     flex-basis: 100%;
     height: 39px;
   }
 
-  .search-field input {
+  .searchField input {
     font-size: 12px;
   }
 
-  .filter-selects {
+  .filterSelects {
     width: 100%;
   }
 
-  .filter-selects select {
+  .filterSelects select {
     font-size: 11px;
     height: 34px;
     padding: 7px;
@@ -224,11 +224,11 @@
     width: 50%;
   }
 
-  .table-head {
+  .tableHead {
     display: none;
   }
 
-  .transaction-row {
+  .transactionRow {
     grid-template-columns: minmax(0, 1fr) auto 25px;
     gap: 7px;
     min-height: 86px;
@@ -238,13 +238,13 @@
     position: relative;
   }
 
-  .table-footer {
+  .tableFooter {
     padding: 0 14px;
     font-size: 8px;
     border-top: 1px solid var(--border);
   }
 
-  .transaction-row {
+  .transactionRow {
     min-height: 100px;
     padding-bottom: 22px;
   }

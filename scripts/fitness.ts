@@ -76,42 +76,50 @@ function assertComponentModuleLayout() {
   }
 }
 
-function assertNoBudgetCommandBus() {
-  const files = tracked([]);
+const retiredCommandBusMarkers: [RegExp, string][] = [
+  [/\bmutateBudget\b/, "still has mutateBudget"],
+  [/\bparseBudgetCommand\b/, "still has parseBudgetCommand"],
+  [/\bBudgetCommand\b/, "still has BudgetCommand"],
+  [/\bCommandResult\b/, "still has CommandResult"],
+];
 
-  for (const file of files) {
+function isServerFunctionSource(file: string) {
+  if (file.endsWith(".functions.ts")) return true;
+
+  return (
+    file.includes("/actions/") &&
+    file.endsWith(".ts") &&
+    !file.endsWith(".test.ts")
+  );
+}
+
+function assertNoApiRouteFiles() {
+  for (const file of tracked([])) {
     if (file.endsWith("api.server.ts")) fail(`tracked ${file}`);
 
     if (file === "src/routes/api" || file.startsWith("src/routes/api/"))
       fail(`tracked API route ${file}`);
   }
+}
 
-  for (const file of sourceFiles()) {
-    const text = readFileSync(file, "utf8");
+function assertNoCommandBusSource(file: string, text: string) {
+  if (text.includes(apiBudget)) fail(`${file} mentions ${apiBudget}`);
 
-    if (text.includes(apiBudget)) fail(`${file} mentions ${apiBudget}`);
+  if (text.includes("createAPIFileRoute"))
+    fail(`${file} mentions createAPIFileRoute`);
 
-    if (text.includes("createAPIFileRoute"))
-      fail(`${file} mentions createAPIFileRoute`);
+  for (const [marker, message] of retiredCommandBusMarkers)
+    if (marker.test(text)) fail(`${file} ${message}`);
 
-    if (/\bmutateBudget\b/.test(text)) fail(`${file} still has mutateBudget`);
+  if (isServerFunctionSource(file) && /action:\s*["']/.test(text))
+    fail(`${file} still uses an action discriminator in a server fn`);
+}
 
-    if (/\bparseBudgetCommand\b/.test(text))
-      fail(`${file} still has parseBudgetCommand`);
+function assertNoBudgetCommandBus() {
+  assertNoApiRouteFiles();
 
-    if (/\bBudgetCommand\b/.test(text)) fail(`${file} still has BudgetCommand`);
-
-    if (/\bCommandResult\b/.test(text)) fail(`${file} still has CommandResult`);
-
-    if (
-      (file.endsWith(".functions.ts") ||
-        (file.includes("/actions/") &&
-          file.endsWith(".ts") &&
-          !file.endsWith(".test.ts"))) &&
-      /action:\s*["']/.test(text)
-    )
-      fail(`${file} still uses an action discriminator in a server fn`);
-  }
+  for (const file of sourceFiles())
+    assertNoCommandBusSource(file, readFileSync(file, "utf8"));
 }
 
 function assertCacheControlSource() {

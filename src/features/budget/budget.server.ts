@@ -34,7 +34,6 @@ import {
   one,
   revision,
   text,
-  type AccountRow,
   type DatabaseExecutor,
   type DatabaseTransaction,
   accountRowSchema,
@@ -257,7 +256,7 @@ export async function snapshot(
   });
 }
 
-export async function saveTransaction(
+async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
   homeRow: HouseholdRow,
@@ -382,7 +381,7 @@ export async function saveTransaction(
   });
 }
 
-export async function deleteTransaction(
+async function deleteTransaction(
   ctx: StoreContext,
   user: UserRow,
   homeRow: HouseholdRow,
@@ -481,7 +480,7 @@ export async function deleteTransaction(
   });
 }
 
-export async function restoreTransaction(
+async function restoreTransaction(
   ctx: StoreContext,
   user: UserRow,
   homeRow: HouseholdRow,
@@ -551,7 +550,7 @@ async function writeSplit(
   transaction: DatabaseTransaction,
   homeRow: HouseholdRow,
   user: UserRow,
-  source: { id: string; row: TransactionRow; stored: Transaction },
+  source: { id: string; row: { revision: number }; stored: Transaction },
   split: Transaction["split"],
 ) {
   const result = await execute(
@@ -675,7 +674,7 @@ export async function unsettleSplit(
   });
 }
 
-export async function saveAccount(
+async function saveAccount(
   ctx: StoreContext,
   _user: UserRow,
   homeRow: HouseholdRow,
@@ -704,7 +703,7 @@ export async function saveAccount(
   });
 }
 
-export async function deleteAccount(
+async function deleteAccount(
   ctx: StoreContext,
   _user: UserRow,
   homeRow: HouseholdRow,
@@ -745,7 +744,7 @@ export async function deleteAccount(
   });
 }
 
-export async function savePercentages(
+async function savePercentages(
   ctx: StoreContext,
   user: UserRow,
   _home: HouseholdRow,

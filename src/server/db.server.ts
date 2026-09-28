@@ -44,16 +44,12 @@ export const transactionRowSchema = z.object({
   deleted: z.number(),
 });
 
-export type TransactionRow = z.infer<typeof transactionRowSchema>;
-
 export const accountRowSchema = z.object({
   id: z.string(),
   payload: z.string(),
   revision: z.number(),
   deleted: z.number(),
 });
-
-export type AccountRow = z.infer<typeof accountRowSchema>;
 
 const schema = [
   `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0)`,

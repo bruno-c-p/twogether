@@ -28,7 +28,7 @@ export function transaction(
   };
 }
 
-export function clerkId(name: string) {
+function clerkId(name: string) {
   return `user_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 

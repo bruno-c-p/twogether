@@ -20,3 +20,4 @@ data/
 # clerk deploy DNS zone artifacts
 *.zone
 .env.local
+.fallow/

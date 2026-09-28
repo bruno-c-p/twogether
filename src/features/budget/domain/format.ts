@@ -3,11 +3,6 @@ const moneyFormatter = new Intl.NumberFormat("pt-BR", {
   currency: "BRL",
 });
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "long",
-  year: "numeric",
-});
-
 export const money = (cents: number) => moneyFormatter.format(cents / 100);
 
 export function formText(form: FormData, name: string): string {
@@ -39,14 +34,6 @@ export function shiftMonth(month: string, offset: number) {
   const [year, number] = month.split("-").map(Number);
 
   return localDate(new Date(year, number - 1 + offset, 1)).slice(0, 7);
-}
-
-export function monthLabel(month: string) {
-  const [year, number] = month.split("-").map(Number);
-
-  return monthFormatter
-    .format(new Date(year, number - 1, 1))
-    .replace(" de ", " ");
 }
 
 function parseCents(value: string, min: number): number | null {

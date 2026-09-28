@@ -3,19 +3,17 @@ import { getBudgetStore } from "@/features/budget/budget.server";
 import { idSchema, revisionSchema } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const unsettleSplitSchema = inputSchema({
   id: idSchema,
   revision: revisionSchema,
 });
 
-export function parseUnsettleSplit(input: unknown): {
+export const parseUnsettleSplit = actionInput<{
   id: string;
   revision: number;
-} {
-  return parseInput(unsettleSplitSchema, input);
-}
+}>(unsettleSplitSchema);
 
 export const unsettleSplit = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

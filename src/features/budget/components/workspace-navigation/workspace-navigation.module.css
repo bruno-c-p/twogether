@@ -1,11 +1,11 @@
-.desktop-navigation {
+.desktopNavigation {
   display: flex;
   flex-direction: column;
   gap: 7px;
   margin-top: 44px;
 }
 
-.nav-item {
+.navItem {
   border: 0;
   background: transparent;
   display: flex;
@@ -20,17 +20,17 @@
   cursor: pointer;
 }
 
-.nav-item:hover {
+.navItem:hover {
   background: var(--surface-soft);
 }
 
-.nav-item.active {
+.navItem.active {
   background: var(--surface-soft);
   color: var(--text);
   font-weight: 600;
 }
 
-.nav-active-dot {
+.navActiveDot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
@@ -38,26 +38,26 @@
   margin-left: auto;
 }
 
-.mobile-navigation {
+.mobileNavigation {
   display: none;
 }
 
-.nav-item {
+.navItem {
   font-size: 14px;
 }
 
 @media (max-width: 1000px) {
-  .nav-item > span {
+  .navItem > span {
     display: none;
   }
 
-  .desktop-navigation {
+  .desktopNavigation {
     margin-top: 56px;
     width: 100%;
     gap: 12px;
   }
 
-  .nav-item {
+  .navItem {
     padding: 14px;
     justify-content: center;
     border-radius: 10px;
@@ -65,7 +65,7 @@
 }
 
 @media (max-width: 620px) {
-  .mobile-navigation {
+  .mobileNavigation {
     display: flex;
     position: fixed;
     bottom: 0;
@@ -80,7 +80,7 @@
     height: calc(68px + env(safe-area-inset-bottom));
   }
 
-  .mobile-navigation a {
+  .mobileNavigation a {
     border: 0;
     background: none;
     display: flex;
@@ -93,15 +93,15 @@
     cursor: pointer;
   }
 
-  .mobile-navigation a span {
+  .mobileNavigation a span {
     font-size: 10px;
   }
 
-  .mobile-navigation a.active {
+  .mobileNavigation a.active {
     color: var(--green);
   }
 
-  .mobile-navigation a.active svg {
+  .mobileNavigation a.active svg {
     background: var(--surface-soft);
     box-shadow: 0 0 0 5px var(--surface-soft);
     border-radius: 4px;
@@ -109,7 +109,7 @@
 }
 
 @media (max-width: 360px) {
-  .mobile-navigation a span {
+  .mobileNavigation a span {
     font-size: 9px;
   }
 }

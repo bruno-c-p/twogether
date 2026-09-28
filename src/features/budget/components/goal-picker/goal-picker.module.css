@@ -1,23 +1,23 @@
-.goal-field {
+.goalField {
   padding: 0;
   border: 0;
   margin: 0 0 23px;
 }
 
-.goal-field legend {
+.goalField legend {
   font-size: 12px;
   font-weight: 500;
   display: block;
   margin-bottom: 12px;
 }
 
-.goal-options {
+.goalOptions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.goal-option {
+.goalOption {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -30,26 +30,26 @@
   font-size: 11px;
 }
 
-.goal-option svg {
+.goalOption svg {
   color: var(--goal-color);
 }
 
-.goal-option:hover {
+.goalOption:hover {
   background: var(--goal-bg);
 }
 
-.goal-option.selected {
+.goalOption.selected {
   border-color: var(--goal-color);
   background: var(--goal-bg);
   color: var(--goal-color);
 }
 
 @media (max-width: 620px) {
-  .goal-field legend {
+  .goalField legend {
     font-size: 13px;
   }
 
-  .goal-option {
+  .goalOption {
     font-size: 11px;
     padding: 10px 8px;
     min-height: 44px;

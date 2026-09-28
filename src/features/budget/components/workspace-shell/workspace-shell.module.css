@@ -1,4 +1,4 @@
-.app-shell {
+.appShell {
   min-height: 100dvh;
 }
 
@@ -14,7 +14,7 @@
   z-index: 20;
 }
 
-.main-shell {
+.mainShell {
   margin-left: 226px;
 }
 
@@ -39,21 +39,21 @@
   font-weight: 500;
 }
 
-.topbar-right {
+.topbarRight {
   display: flex;
   align-items: center;
   gap: 20px;
 }
 
-.visibility-button {
+.visibilityButton {
   color: var(--text-muted);
 }
 
-.topbar .mobile-brand {
+.topbar .mobileBrand {
   display: none;
 }
 
-.space-button {
+.spaceButton {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -68,17 +68,17 @@
   cursor: pointer;
 }
 
-.space-button:hover {
+.spaceButton:hover {
   background: var(--surface-soft);
   color: var(--text);
 }
 
-.space-button > svg {
+.spaceButton > svg {
   color: var(--text-muted);
   flex-shrink: 0;
 }
 
-.space-member-count {
+.spaceMemberCount {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -97,7 +97,7 @@
     padding-left: 15px;
     padding-right: 15px;
   }
-  .main-shell {
+  .mainShell {
     margin-left: 200px;
   }
   .topbar {
@@ -121,7 +121,7 @@
   .sidebarBrand > span:last-child {
     display: none;
   }
-  .main-shell {
+  .mainShell {
     margin-left: 76px;
   }
   .topbar {
@@ -133,7 +133,7 @@
   .topbar {
     padding: 0 22px;
   }
-  .topbar-right {
+  .topbarRight {
     gap: 13px;
   }
 }
@@ -142,7 +142,7 @@
   .sidebar {
     display: none;
   }
-  .main-shell {
+  .mainShell {
     margin-left: 0;
   }
   .topbar {
@@ -158,7 +158,7 @@
   .breadcrumb {
     display: none;
   }
-  .topbar .mobile-brand {
+  .topbar .mobileBrand {
     display: flex;
     font-size: 23px;
   }
@@ -166,27 +166,27 @@
     scale: 0.8;
     width: 23px;
   }
-  .visibility-button {
+  .visibilityButton {
     width: 40px;
     height: 40px;
   }
-  .topbar-right {
+  .topbarRight {
     gap: 8px;
   }
-  .space-button {
+  .spaceButton {
     gap: 5px;
     padding: 6px 4px;
   }
-  .space-button-label {
+  .spaceButtonLabel {
     display: none;
   }
-  .topbar-right {
+  .topbarRight {
     gap: 4px;
   }
-  .topbar .space-member-count {
+  .topbar .spaceMemberCount {
     display: none;
   }
-  .topbar .mobile-brand {
+  .topbar .mobileBrand {
     font-size: 21px;
     gap: 6px;
   }
@@ -210,7 +210,7 @@
   .topbar {
     padding: 0 12px;
   }
-  .topbar-right {
+  .topbarRight {
     gap: 0;
   }
   .topbarTheme {
@@ -220,14 +220,14 @@
     min-width: 26px;
     padding: 5px;
   }
-  .visibility-button {
+  .visibilityButton {
     width: 34px;
     height: 34px;
   }
-  .space-button {
+  .spaceButton {
     padding: 6px 2px;
   }
-  .topbar .mobile-brand {
+  .topbar .mobileBrand {
     font-size: 19px;
   }
   .mobileMark {

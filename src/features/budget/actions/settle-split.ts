@@ -7,7 +7,7 @@ import {
 } from "@/features/budget/domain/schemas";
 import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
-import { inputSchema, parseInput } from "@/server/action-input";
+import { actionInput, inputSchema } from "@/server/action-input";
 
 const settleSplitSchema = inputSchema({
   id: idSchema,
@@ -17,15 +17,13 @@ const settleSplitSchema = inputSchema({
   partnerAccountId: idSchema,
 });
 
-export function parseSettleSplit(input: unknown): {
+export const parseSettleSplit = actionInput<{
   id: string;
   revision: number;
   date: string;
   payerAccountId: string;
   partnerAccountId: string;
-} {
-  return parseInput(settleSplitSchema, input);
-}
+}>(settleSplitSchema);
 
 export const settleSplit = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
