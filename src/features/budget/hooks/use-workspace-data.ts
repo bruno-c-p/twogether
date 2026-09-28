@@ -12,7 +12,7 @@ function viewFor(transactions: Transaction[], memberFilter: string) {
   return transactions.filter((t) => t.memberId === memberFilter);
 }
 
-export function laterOccurrences(
+function laterOccurrences(
   transactions: Transaction[],
   deleting: Transaction | null,
 ) {

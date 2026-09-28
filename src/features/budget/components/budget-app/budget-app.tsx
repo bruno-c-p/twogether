@@ -228,14 +228,7 @@ function BudgetViews({
           userId={budget.user.id}
           busy={busy}
           hidden={hidden}
-          query={search.query}
-          goalFilter={search.goalFilter}
-          tagFilter={search.tagFilter}
-          kindFilter={search.kindFilter}
-          onQuery={search.setQuery}
-          onGoal={search.setGoalFilter}
-          onTag={search.setTag}
-          onKind={search.setKindFilter}
+          filters={search}
           onEdit={(transaction) => actions.openTransaction(transaction)}
           onDelete={(transaction) => void actions.remove(transaction)}
           onAdd={() => actions.openTransaction(null)}

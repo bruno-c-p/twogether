@@ -26,7 +26,7 @@ function cachedWorkspace(
   return { key: entry[0], previous: entry[1] };
 }
 
-function failureMessage(cause: unknown) {
+export function failureMessage(cause: unknown) {
   return cause instanceof Error && !(cause instanceof TypeError)
     ? cause.message
     : OFFLINE_MESSAGE;

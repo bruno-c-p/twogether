@@ -3,6 +3,10 @@
   "blocking": "warning",
   "ignore": {
     "files": [
+      ".output/**",
+      ".tanstack/**",
+      ".vercel/**",
+      "dist/**",
       ".agents/**",
       ".claude/**",
       ".factory/**",

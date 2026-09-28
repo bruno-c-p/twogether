@@ -16,6 +16,107 @@ const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
   month: "short",
 });
 
+type Goal = (typeof GOALS)[number];
+
+function dayLabel(date: string) {
+  return dayFormatter
+    .format(new Date(`${date}T12:00:00`))
+    .replace(" de ", " ")
+    .replace(".", "");
+}
+
+function amountLabel(transaction: Transaction, hidden: boolean) {
+  if (hidden) return "R$ ••••";
+
+  return `${transaction.kind === "income" ? "+" : "−"} ${money(transaction.amount)}`;
+}
+
+function splitLabel(t: Transaction, userId: string) {
+  if (t.settlementOf) return t.kind === "income" ? "Reembolso" : "Parte paga";
+
+  if (!t.split) return "";
+
+  if (t.split.paidAt) return "Dividida · paga";
+
+  return t.memberId === userId ? "Dividida · a receber" : "Dividida · a pagar";
+}
+
+const REPAYMENT_LOCK = "reembolso: desmarque o pagamento na transação original";
+
+// Repayments are edited through the original split; a paid split must be
+// unmarked before it can be deleted.
+function deleteLock(t: Transaction) {
+  if (t.settlementOf) return REPAYMENT_LOCK;
+
+  return t.split?.paidAt ? "desmarque o pagamento antes" : "";
+}
+
+function withLock(label: string, lock: string) {
+  return lock ? `${label} (${lock})` : label;
+}
+
+function TransactionIcon({
+  kind,
+  goal,
+}: {
+  kind: Transaction["kind"];
+  goal: Goal | undefined;
+}) {
+  const income = kind === "income";
+
+  return (
+    <span
+      className={`${styles.transactionIcon} ${income ? styles.incomeIcon : ""}`}
+      style={
+        goal ? { background: goal.background, color: goal.color } : undefined
+      }
+    >
+      {income && <ArrowDownLeft size={20} />}
+      {!income && goal && <GoalIcon goal={goal.id} />}
+      {!income && !goal && <ArrowUpRight size={20} />}
+    </span>
+  );
+}
+
+function TransactionTags({
+  tags,
+  onTag,
+}: {
+  tags: string[];
+  onTag: (tag: string) => void;
+}) {
+  if (!tags.length)
+    return (
+      <div className={styles.rowTags}>
+        <span>Sem tags</span>
+      </div>
+    );
+
+  return (
+    <div className={styles.rowTags}>
+      {tags.map((tag) => (
+        <button key={tag} onClick={() => onTag(tag)}>
+          #{tag}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function GoalBadge({ goal }: { goal: Goal | undefined }) {
+  if (!goal) return <span className={styles.incomeLabel}>Receita</span>;
+
+  return (
+    <span
+      className={styles.goalBadge}
+      style={{ background: goal.background, color: goal.color }}
+    >
+      <ColorDot className={styles.goalDot} style={{ background: goal.color }} />
+      {goal.name}
+    </span>
+  );
+}
+
 export function TransactionRow({
   transaction,
   members,
@@ -41,116 +142,61 @@ export function TransactionRow({
 }) {
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
-  const date = new Date(`${t.date}T12:00:00`);
-  const repayment = Boolean(t.settlementOf);
-  const paidSplit = Boolean(t.split?.paidAt);
 
-  const splitLabel = repayment
-    ? t.kind === "income"
-      ? "Reembolso"
-      : "Parte paga"
-    : t.split
-      ? paidSplit
-        ? "Dividida · paga"
-        : t.memberId === userId
-          ? "Dividida · a receber"
-          : "Dividida · a pagar"
-      : "";
+  const person =
+    members.find((member) => member.id === t.memberId)?.name ??
+    "Pessoa do casal";
 
-  const lockedLabel = repayment
-    ? "reembolso: desmarque o pagamento na transação original"
-    : "";
+  const account =
+    accounts.find((item) => item.id === t.accountId)?.name ?? "Sem conta";
+
+  const tone = t.kind === "income" ? styles.positive : styles.negative;
+  const label = splitLabel(t, userId);
+  const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
+  const removeLock = deleteLock(t);
 
   return (
     <div className={className ? `${styles.row} ${className}` : styles.row}>
       <div className={styles.transactionDescription}>
-        <span
-          className={`${styles.transactionIcon} ${t.kind === "income" ? styles.incomeIcon : ""}`}
-          style={
-            goal
-              ? { background: goal.background, color: goal.color }
-              : undefined
-          }
-        >
-          {t.kind === "income" ? (
-            <ArrowDownLeft size={20} />
-          ) : goal ? (
-            <GoalIcon goal={goal.id} />
-          ) : (
-            <ArrowUpRight size={20} />
-          )}
-        </span>
+        <TransactionIcon kind={t.kind} goal={goal} />
         <div>
           <button
             className={styles.transactionName}
-            disabled={busy || repayment}
-            title={lockedLabel || undefined}
+            disabled={busy || Boolean(editLock)}
+            title={editLock || undefined}
             onClick={() => onEdit(t)}
           >
             {t.description}
           </button>
           <div className={styles.transactionPerson}>
-            {members.find((member) => member.id === t.memberId)?.name ??
-              "Pessoa do casal"}
+            {person}
             {" · "}
-            {accounts.find((account) => account.id === t.accountId)?.name ??
-              "Sem conta"}
-            {splitLabel && (
+            {account}
+            {label && (
               <>
                 {" · "}
-                <span className="text-text-muted">{splitLabel}</span>
+                <span className="text-text-muted">{label}</span>
               </>
             )}
           </div>
-          <div className={styles.rowTags}>
-            {t.tags.length ? (
-              t.tags.map((tag) => (
-                <button key={tag} onClick={() => onTag(tag)}>
-                  #{tag}
-                </button>
-              ))
-            ) : (
-              <span>Sem tags</span>
-            )}
-          </div>
+          <TransactionTags tags={t.tags} onTag={onTag} />
         </div>
       </div>
       <div className={styles.transactionGoal}>
-        {goal ? (
-          <span
-            className={styles.goalBadge}
-            style={{ background: goal.background, color: goal.color }}
-          >
-            <ColorDot
-              className={styles.goalDot}
-              style={{ background: goal.color }}
-            />
-            {goal.name}
-          </span>
-        ) : (
-          <span className={styles.incomeLabel}>Receita</span>
-        )}
+        <GoalBadge goal={goal} />
       </div>
       <time className={styles.transactionDate} dateTime={t.date}>
-        {dayFormatter.format(date).replace(" de ", " ").replace(".", "")}
+        {dayLabel(t.date)}
       </time>
-      <span
-        className={`${styles.transactionValue} ${t.kind === "income" ? styles.positive : styles.negative}`}
-      >
-        {hidden
-          ? "R$ ••••"
-          : `${t.kind === "income" ? "+" : "−"} ${money(t.amount)}`}
+      <span className={`${styles.transactionValue} ${tone}`}>
+        {amountLabel(t, hidden)}
       </span>
       <div className={styles.rowActions}>
         <Button
           variant="icon"
           className={styles.actionButton}
-          disabled={busy || repayment}
-          aria-label={
-            lockedLabel
-              ? `Editar ${t.description} (${lockedLabel})`
-              : `Editar ${t.description}`
-          }
+          disabled={busy || Boolean(editLock)}
+          aria-label={withLock(`Editar ${t.description}`, editLock)}
           onClick={() => onEdit(t)}
         >
           <Pencil size={15} />
@@ -158,14 +204,8 @@ export function TransactionRow({
         <Button
           variant="icon"
           className={`${styles.actionButton} ${styles.deleteButton}`}
-          disabled={busy || repayment || paidSplit}
-          aria-label={
-            lockedLabel
-              ? `Excluir ${t.description} (${lockedLabel})`
-              : paidSplit
-                ? `Excluir ${t.description} (desmarque o pagamento antes)`
-                : `Excluir ${t.description}`
-          }
+          disabled={busy || Boolean(removeLock)}
+          aria-label={withLock(`Excluir ${t.description}`, removeLock)}
           onClick={() => onDelete(t)}
         >
           <Trash2 size={15} />

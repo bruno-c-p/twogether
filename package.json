@@ -13,7 +13,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
     "e2e": "playwright test --config e2e/playwright.config.ts",
-    "doctor": "react-doctor --yes --verbose --blocking warning"
+    "doctor": "react-doctor --yes --verbose --blocking warning",
+    "fallow": "fallow --format compact"
   },
   "dependencies": {
     "@clerk/localizations": "^4.17.1",

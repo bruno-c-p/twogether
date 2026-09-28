@@ -256,6 +256,137 @@ export async function snapshot(
   });
 }
 
+function parseOccurrences(value: number) {
+  const parsed = occurrencesSchema.safeParse(value);
+
+  if (!parsed.success) throw new RequestError(firstIssueMessage(parsed.error));
+
+  return parsed.data;
+}
+
+async function requireAccount(
+  transaction: DatabaseTransaction,
+  homeRow: HouseholdRow,
+  accountId: Transaction["accountId"],
+) {
+  const account = await one(
+    transaction,
+    accountRowSchema.pick({ id: true }),
+    "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
+    [homeRow.id, accountId],
+  );
+
+  if (!account) throw new RequestError("Escolha uma conta bancária.");
+}
+
+// A create retried after a lost response carries no revision; accept it when
+// the stored row already matches the submission.
+function isRetriedCreate(stored: Transaction, t: Transaction, userId: string) {
+  return (
+    stored.description === t.description &&
+    stored.amount === t.amount &&
+    stored.date === t.date &&
+    stored.kind === t.kind &&
+    stored.goal === t.goal &&
+    stored.accountId === t.accountId &&
+    Boolean(stored.split) === Boolean(t.split) &&
+    stored.memberId === userId &&
+    stored.tags.length === t.tags.length &&
+    stored.tags.every((tag, index) => tag === t.tags[index])
+  );
+}
+
+// Repayments and paid splits are locked; a new split needs both partners.
+// Editing an existing split keeps its stored settlement state.
+async function assertSplitEditable(
+  transaction: DatabaseTransaction,
+  homeRow: HouseholdRow,
+  t: Transaction,
+  previous: Transaction | undefined,
+) {
+  if (previous?.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+
+  const paidChange =
+    !t.split || t.amount !== previous?.amount || t.kind !== previous.kind;
+
+  if (previous?.split?.paidAt && paidChange)
+    throw new RequestError(PAID_LOCKED);
+
+  const newSplit = t.split && !previous?.split;
+
+  if (newSplit && (await memberCount(transaction, homeRow.id)) < 2)
+    throw new RequestError(
+      "Convide a outra pessoa do casal antes de dividir despesas.",
+    );
+
+  if (t.split && previous?.split) t.split = previous.split;
+}
+
+function assertRevision(
+  old: { deleted: number; revision: number } | undefined,
+  given: number | undefined,
+) {
+  const stale = old
+    ? old.deleted || old.revision !== given
+    : given !== undefined;
+
+  if (stale) throw conflict();
+}
+
+function occurrenceDate(date: string, index: number) {
+  const [year, month, day] = date.split("-").map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + index, 1));
+
+  if (target.getUTCFullYear() > 9999)
+    throw new RequestError("A recorrência ultrapassa a data máxima permitida.");
+
+  const lastDay = new Date(
+    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
+  ).getUTCDate();
+
+  target.setUTCDate(Math.min(day, lastDay));
+
+  return target.toISOString().slice(0, 10);
+}
+
+async function insertLaterOccurrences(
+  transaction: DatabaseTransaction,
+  homeRow: HouseholdRow,
+  first: Transaction,
+  occurrences: number,
+) {
+  for (let index = 1; index < occurrences; index++) {
+    const occurrence = {
+      ...first,
+      id: randomUUID(),
+      recurrenceIndex: index,
+      date: occurrenceDate(first.date, index),
+    };
+
+    await execute(
+      transaction,
+      "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
+      [occurrence.id, homeRow.id, JSON.stringify(occurrence)],
+    );
+  }
+}
+
+function firstOccurrence(
+  t: Transaction,
+  previous: Transaction | undefined,
+  recurring: boolean,
+  userId: string,
+): Transaction {
+  return {
+    ...t,
+    recurrenceId:
+      previous?.recurrenceId ?? (recurring ? randomUUID() : undefined),
+    recurrenceIndex: previous?.recurrenceIndex ?? (recurring ? 0 : undefined),
+    memberId: previous?.memberId ?? previous?.createdBy ?? userId,
+    createdBy: previous?.createdBy ?? userId,
+  };
+}
+
 async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
@@ -264,21 +395,10 @@ async function saveTransaction(
 ) {
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
-    const occurrences = input.occurrences ?? 1;
-    const parsedOccurrences = occurrencesSchema.safeParse(occurrences);
-
-    if (!parsedOccurrences.success)
-      throw new RequestError(firstIssueMessage(parsedOccurrences.error));
+    const occurrences = parseOccurrences(input.occurrences ?? 1);
     const t = canonical(input.transaction, user);
 
-    const account = await one(
-      transaction,
-      accountRowSchema.pick({ id: true }),
-      "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
-      [homeRow.id, t.accountId],
-    );
-
-    if (!account) throw new RequestError("Escolha uma conta bancária.");
+    await requireAccount(transaction, homeRow, t.accountId);
 
     const old = await one(
       transaction,
@@ -288,96 +408,28 @@ async function saveTransaction(
     );
 
     const given = input.transaction.revision;
+    const retry = old && !old.deleted && given === undefined;
 
-    if (old && !old.deleted && given === undefined) {
-      // A create retried after a lost response carries no revision;
-      // accept it when the stored row already matches the submission.
-      const stored = storedTransaction(old.payload);
+    if (retry && isRetriedCreate(storedTransaction(old.payload), t, user.id))
+      return;
 
-      const same =
-        stored.description === t.description &&
-        stored.amount === t.amount &&
-        stored.date === t.date &&
-        stored.kind === t.kind &&
-        stored.goal === t.goal &&
-        stored.accountId === t.accountId &&
-        Boolean(stored.split) === Boolean(t.split) &&
-        stored.memberId === user.id &&
-        stored.tags.length === t.tags.length &&
-        stored.tags.every((tag, index) => tag === t.tags[index]);
-
-      if (same) return;
-    }
-
-    if (old ? old.deleted || old.revision !== given : given !== undefined)
-      throw conflict();
+    assertRevision(old, given);
 
     if (old && occurrences !== 1)
       throw new RequestError("Edite cada ocorrência individualmente.");
+
     const previous = old ? storedTransaction(old.payload) : undefined;
 
-    if (previous?.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+    await assertSplitEditable(transaction, homeRow, t, previous);
 
-    if (
-      previous?.split?.paidAt &&
-      (!t.split || t.amount !== previous.amount || t.kind !== previous.kind)
-    )
-      throw new RequestError(PAID_LOCKED);
+    const first = firstOccurrence(t, previous, occurrences > 1, user.id);
 
-    if (
-      t.split &&
-      !previous?.split &&
-      (await memberCount(transaction, homeRow.id)) < 2
-    )
-      throw new RequestError(
-        "Convide a outra pessoa do casal antes de dividir despesas.",
-      );
-
-    if (t.split && previous?.split) t.split = previous.split;
-    const createdBy = previous?.createdBy ?? user.id;
-
-    const memberId = previous?.memberId ?? previous?.createdBy ?? user.id;
-
-    t.recurrenceId =
-      previous?.recurrenceId ?? (occurrences > 1 ? randomUUID() : undefined);
-    t.recurrenceIndex =
-      previous?.recurrenceIndex ?? (occurrences > 1 ? 0 : undefined);
     await execute(
       transaction,
       "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
-      [t.id, homeRow.id, JSON.stringify({ ...t, memberId, createdBy })],
+      [t.id, homeRow.id, JSON.stringify(first)],
     );
-    const [year, month, day] = t.date.split("-").map(Number);
-
-    for (let index = 1; index < occurrences; index++) {
-      const target = new Date(Date.UTC(year, month - 1 + index, 1));
-
-      if (target.getUTCFullYear() > 9999)
-        throw new RequestError(
-          "A recorrência ultrapassa a data máxima permitida.",
-        );
-
-      const lastDay = new Date(
-        Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-      ).getUTCDate();
-
-      target.setUTCDate(Math.min(day, lastDay));
-
-      const occurrence = {
-        ...t,
-        id: randomUUID(),
-        recurrenceIndex: index,
-        date: target.toISOString().slice(0, 10),
-        memberId,
-        createdBy,
-      };
-
-      await execute(
-        transaction,
-        "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
-        [occurrence.id, homeRow.id, JSON.stringify(occurrence)],
-      );
-    }
+    await insertLaterOccurrences(transaction, homeRow, first, occurrences);
   });
 }
 
