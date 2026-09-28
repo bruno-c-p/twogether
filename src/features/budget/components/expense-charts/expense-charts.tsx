@@ -12,12 +12,15 @@ const compactMoney = new Intl.NumberFormat("pt-BR", {
   notation: "compact",
   maximumFractionDigits: 1,
 });
+
 const TAG_PALETTE_SIZE = 8;
 
 function tagColor(name: string) {
   let hash = 0;
+
   for (let index = 0; index < name.length; index++)
     hash = (hash * 31 + name.charCodeAt(index)) | 0;
+
   return `var(--tag-${(Math.abs(hash) % TAG_PALETTE_SIZE) + 1})`;
 }
 
@@ -34,22 +37,25 @@ export function ExpenseCharts({
     transactions,
     month,
   );
+
   const max = Math.max(...days, 1);
   const activeDays = days.filter((amount) => amount > 0).length;
+
   const monthLabel = new Date(`${month}-01T12:00:00`).toLocaleDateString(
     "pt-BR",
     { month: "long", year: "numeric" },
   );
+
   const display = (amount: number) => (hidden ? "R$ ••••" : money(amount));
+
   const segments = donutSegments(tags, (tag) => tag.amount).map((segment) => ({
     ...segment.item,
     share: segment.share,
     start: segment.start,
     color:
-      segment.item.name === null
-        ? "var(--muted)"
-        : tagColor(segment.item.name),
+      segment.item.name === null ? "var(--muted)" : tagColor(segment.item.name),
   }));
+
   return (
     <OverviewGrid
       className={styles.expenseCharts}
@@ -172,7 +178,9 @@ export function ExpenseCharts({
         {transactions.some(
           (t) => t.kind === "expense" && t.tags.length > 1,
         ) && (
-          <p className={`${styles.expenseChartCaption} ${styles.expenseTagNote}`}>
+          <p
+            className={`${styles.expenseChartCaption} ${styles.expenseTagNote}`}
+          >
             Despesas com várias tags têm o valor dividido entre elas.
           </p>
         )}

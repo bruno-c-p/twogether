@@ -21,6 +21,7 @@ import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 const requestTimeZone = createIsomorphicFn()
   .server(() => {
     const timeZone = getCookie(TIME_ZONE_COOKIE);
+
     return isValidTimeZone(timeZone) ? timeZone : undefined;
   })
   .client(() => browserTimeZone());
@@ -35,6 +36,7 @@ export const Route = createFileRoute("/_authenticated/")({
   beforeLoad: ({ search }) => {
     if (!missingWorkspaceMonth(search)) return;
     const timeZone = requestTimeZone();
+
     if (!timeZone) return;
     throw redirect({
       to: "/",
@@ -63,5 +65,6 @@ function BudgetRoute() {
   }, [missing, navigate]);
 
   if (missing) return <BudgetPending />;
+
   return <BudgetApp />;
 }

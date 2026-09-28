@@ -44,6 +44,7 @@ export function TransactionRow({
   const date = new Date(`${t.date}T12:00:00`);
   const repayment = Boolean(t.settlementOf);
   const paidSplit = Boolean(t.split?.paidAt);
+
   const splitLabel = repayment
     ? t.kind === "income"
       ? "Reembolso"
@@ -55,9 +56,11 @@ export function TransactionRow({
           ? "Dividida · a receber"
           : "Dividida · a pagar"
       : "";
+
   const lockedLabel = repayment
     ? "reembolso: desmarque o pagamento na transação original"
     : "";
+
   return (
     <div className={className ? `${styles.row} ${className}` : styles.row}>
       <div className={styles.transactionDescription}>

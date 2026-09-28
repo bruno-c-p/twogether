@@ -29,8 +29,10 @@ export function GoalList({
           planned: 0,
           percentage: null,
         };
+
         const overBudget = goal.amount > plan.planned;
         const overage = goal.amount - plan.planned;
+
         return (
           <button
             key={goal.id}

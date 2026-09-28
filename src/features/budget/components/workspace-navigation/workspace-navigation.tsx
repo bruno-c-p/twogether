@@ -30,6 +30,7 @@ export function WorkspaceNavigation({
       </nav>
     );
   }
+
   return (
     <nav className={styles.desktopNavigation} aria-label="Navegação principal">
       {WORKSPACE_NAVIGATION.map((item) => (

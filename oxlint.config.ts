@@ -49,6 +49,28 @@ const typescriptRecommended: DummyRuleMap = {
   "typescript/triple-slash-reference": "error",
 };
 
+const antiSlop: DummyRuleMap = {
+  "oxc/no-accumulating-spread": "error",
+  "anti-slop/no-array-filter-map": "error",
+  "anti-slop/no-reduce-accumulator-copy": "error",
+  "anti-slop/no-chained-type-assertions": "error",
+  "anti-slop/no-conditional-empty-object-spread": "error",
+  "anti-slop/no-known-value-widening": "error",
+  "anti-slop/no-module-mocking": "error",
+  "anti-slop/no-object-parameters": "error",
+  "anti-slop/no-reflect-apply": "error",
+  "anti-slop/no-reflect-get": "error",
+  "anti-slop/no-runtime-typeof": "error",
+  "anti-slop/no-shape-in-symbol-names": "error",
+  "anti-slop/no-unknown-parameters": "error",
+  "anti-slop/no-unknown-returns": "error",
+  "anti-slop/no-unknown-type-aliases": "error",
+  "anti-slop/no-unsafe-dictionary-type": "error",
+  "anti-slop/no-widen-then-assert": "error",
+  "anti-slop/require-readable-spacing": "error",
+  "anti-slop/require-safety-comment-for-type-assertion": "error",
+};
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "oxc"],
   categories: { correctness: "error" },
@@ -60,6 +82,23 @@ export default defineConfig({
     ".vercel/**",
     ".output/**",
     "src/routeTree.gen.ts",
+    ".agent/**",
+    ".agents/**",
+    ".claude/**",
+    ".codex/**",
+    ".commandcode/**",
+    ".continue/**",
+    ".cursor/**",
+    ".gemini/**",
+    ".intent/**",
+    ".opencode/**",
+    ".pi/**",
+    ".roo/**",
+    ".windsurf/**",
+    "tools/oxlint/anti-slop/**",
+  ],
+  jsPlugins: [
+    { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
   ],
   rules: {
     "no-unused-vars": "error",
@@ -67,6 +106,7 @@ export default defineConfig({
     "react/rules-of-hooks": "error",
     "react/exhaustive-deps": "warn",
     ...typescriptRecommended,
+    ...antiSlop,
   },
   overrides: [
     {

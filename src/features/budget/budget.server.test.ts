@@ -62,9 +62,7 @@ describe("budget store", () => {
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...transaction(b.snapshot.user!.id), id: "second" },
     });
-    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
-      2,
-    );
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(2);
     expect(
       (await store.snapshot(a.user)).budget.transactions.find(
         (row) => row.id === old.id,
@@ -79,9 +77,7 @@ describe("budget store", () => {
     const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, { transaction: t });
     await store.saveTransaction(ana.user, ana.household, { transaction: t });
-    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
-      1,
-    );
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(1);
     await expect(
       store.saveTransaction(ana.user, ana.household, {
         transaction: { ...t, amount: 999 },
@@ -134,9 +130,7 @@ describe("budget store", () => {
     expect(
       (await store.snapshot(a.user)).budget.transactions[0]?.memberId,
     ).toBe(a.snapshot.user!.id);
-    expect((await store.snapshot(c.user)).budget.transactions).toHaveLength(
-      0,
-    );
+    expect((await store.snapshot(c.user)).budget.transactions).toHaveLength(0);
     const cris = await withHousehold(store, c.user);
     await expect(
       store.deleteTransaction(cris.user, cris.household, {
@@ -196,24 +190,29 @@ describe("budget store", () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-test-"));
     const file = join(dir, "test.sqlite");
     let disk = createBudgetStore(file);
+
     try {
       const user = await disk.ensureUser("user_disk");
       await disk.setName(user, "Ana");
       await disk.createHousehold(await disk.ensureUser("user_disk"));
+
       const actor = {
         user: await disk.ensureUser("user_disk"),
         household: (await disk.householdFor(
           await disk.ensureUser("user_disk"),
         ))!,
       };
+
       await disk.saveAccount(actor.user, actor.household, account());
       await disk.saveTransaction(actor.user, actor.household, {
         transaction: transaction(user.id),
       });
       disk.close();
       disk = createBudgetStore(file);
+
       const reopened = (await disk.snapshot(await disk.ensureUser("user_disk")))
         .budget.transactions;
+
       expect(reopened).toHaveLength(1);
       expect(reopened[0]?.id).toBe("transaction-1");
       expect(reopened[0]?.amount).toBe(10000);
@@ -229,27 +228,29 @@ describe("monthly recurring transactions", () => {
   test("clamps month ends, persists for both members and edits only one occurrence", async () => {
     const { store } = ctx;
     const { a, b } = await householdReady(store);
+
     const original = {
       ...transaction(a.snapshot.user!.id),
       date: "2028-01-31",
     };
+
     const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.household, {
       transaction: original,
       occurrences: 3,
     });
+
     const rows = (await store.snapshot(a.user)).budget.transactions.sort(
       (left, right) => left.date.localeCompare(right.date),
     );
+
     expect(rows.map((row) => row.date)).toEqual([
       "2028-01-31",
       "2028-02-29",
       "2028-03-31",
     ]);
     expect(new Set(rows.map((row) => row.id)).size).toBe(3);
-    expect((await store.snapshot(b.user)).budget.transactions).toHaveLength(
-      3,
-    );
+    expect((await store.snapshot(b.user)).budget.transactions).toHaveLength(3);
     const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.household, {
       transaction: { ...rows[1], amount: 20000 },
@@ -263,18 +264,14 @@ describe("monthly recurring transactions", () => {
       transaction: original,
       occurrences: 3,
     });
-    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
-      3,
-    );
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(3);
     await expect(
       store.saveTransaction(ana.user, ana.household, {
         transaction: rows[0],
         occurrences: 3,
       }),
     ).rejects.toThrow("individualmente");
-    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
-      3,
-    );
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(3);
   });
 
   test("rejects invalid counts and rolls back dates beyond supported range", async () => {
@@ -282,6 +279,7 @@ describe("monthly recurring transactions", () => {
     const { a } = await householdReady(store);
     const original = transaction(a.snapshot.user!.id);
     const ana = await withHousehold(store, a.user);
+
     for (const occurrences of [0, -1, 1.5, 121]) {
       await expect(
         store.saveTransaction(ana.user, ana.household, {
@@ -290,15 +288,14 @@ describe("monthly recurring transactions", () => {
         }),
       ).rejects.toThrow();
     }
+
     await expect(
       store.saveTransaction(ana.user, ana.household, {
         transaction: { ...original, date: "9999-12-31" },
         occurrences: 2,
       }),
     ).rejects.toThrow();
-    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(
-      0,
-    );
+    expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(0);
   });
 });
 
@@ -317,6 +314,7 @@ test("deletes only the selected series from its original occurrence onward and r
     occurrences: 4,
   });
   const snapshot = await store.snapshot(a.user);
+
   const series = snapshot.budget.transactions
     .filter(
       (item) =>
@@ -325,9 +323,11 @@ test("deletes only the selected series from its original occurrence onward and r
           .recurrenceId,
     )
     .sort((left, right) => left.recurrenceIndex! - right.recurrenceIndex!);
+
   await store.saveTransaction(bia.user, bia.household, {
     transaction: { ...series[2], date: "2020-01-01" },
   });
+
   const remove = (following: Transaction[]) =>
     store.deleteTransaction(ana.user, ana.household, {
       id: series[1].id,
@@ -337,6 +337,7 @@ test("deletes only the selected series from its original occurrence onward and r
         revision: item.revision ?? 0,
       })),
     });
+
   await expect(remove(series.slice(2))).rejects.toThrow();
   expect((await store.snapshot(a.user)).budget.transactions).toHaveLength(8);
   const current = (await store.snapshot(a.user)).budget.transactions;
@@ -482,6 +483,7 @@ describe("legacy database", () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-legacy-"));
     const path = join(dir, "legacy.sqlite");
     const legacy = createClient({ url: `file:${path}`, intMode: "number" });
+
     try {
       await legacy.batch(
         [
@@ -510,6 +512,7 @@ describe("legacy database", () => {
     }
 
     const store = createBudgetStore(path);
+
     try {
       const user = await store.ensureUser("user_clerk_new");
       await store.setName(user, "Bia");

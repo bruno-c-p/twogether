@@ -32,7 +32,9 @@ async function joinPartner(page: Page, browser: Browser) {
   await expect(invite).toHaveValue(/\/convite\/[0-9a-f]{64}$/);
   const inviteUrl = await invite.inputValue();
   await page.getByRole("link", { name: "twogether — início" }).click();
-  await expect(page.getByRole("heading", { name: "Visão geral" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Visão geral" }),
+  ).toBeVisible();
   const context = await browser.newContext();
   const partner = await context.newPage();
   await partner.goto(inviteUrl);
@@ -42,6 +44,7 @@ async function joinPartner(page: Page, browser: Browser) {
   await expect(
     partner.getByRole("heading", { name: "Visão geral" }),
   ).toBeVisible();
+
   return { context, partner };
 }
 
@@ -57,7 +60,9 @@ test.describe("split expenses", () => {
     await onboard(page, "Ana");
     await addAccount(page, "Nubank", true);
     await addAccount(page, "Itaú", false);
-    await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Visão geral" })
+      .click();
     const { context, partner } = await joinPartner(page, browser);
     await reloadApp(page);
     await setMonth(page, "2026-09");
@@ -68,13 +73,19 @@ test.describe("split expenses", () => {
     await dialog.getByLabel("Descrição").fill("Aluguel");
     await dialog.getByLabel("Data").fill("2026-09-05");
     await dialog.getByLabel("Conta").selectOption({ label: "Nubank" });
-    await dialog.getByRole("button", { name: "Custo fixo", exact: true }).click();
+    await dialog
+      .getByRole("button", { name: "Custo fixo", exact: true })
+      .click();
     await dialog.getByRole("switch", { name: /Dividir com Bia/ }).check();
-    await expect(dialog.getByText("Bia deve R$ 1.000,00 a você.")).toBeVisible();
+    await expect(
+      dialog.getByText("Bia deve R$ 1.000,00 a você."),
+    ).toBeVisible();
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    await expect(debtCard(page).getByText("Bia te deve R$ 1.000,00")).toBeVisible();
+    await expect(
+      debtCard(page).getByText("Bia te deve R$ 1.000,00"),
+    ).toBeVisible();
     await expect(debtCard(page).getByText("Aguardando Bia")).toBeVisible();
     await expect(
       debtCard(page).getByRole("button", { name: "Marcar como pago" }),
@@ -88,15 +99,21 @@ test.describe("split expenses", () => {
     await card.getByRole("button", { name: "Marcar como pago" }).click();
     const settle = partner.getByRole("dialog", { name: "Marcar como pago" });
     await settle.getByLabel("Data do pagamento").fill("2026-09-10");
-    await settle.getByLabel("Conta de onde você pagou").selectOption({ label: "Itaú" });
-    await settle.getByLabel("Conta onde Ana recebeu").selectOption({ label: "Nubank" });
+    await settle
+      .getByLabel("Conta de onde você pagou")
+      .selectOption({ label: "Itaú" });
+    await settle
+      .getByLabel("Conta onde Ana recebeu")
+      .selectOption({ label: "Nubank" });
     await settle.getByRole("button", { name: "Confirmar pagamento" }).click();
     await expectToast(partner, "Pagamento registrado.");
     await expect(card.getByText("Nada pendente entre vocês")).toBeVisible();
 
     await reloadApp(partner);
     await expect(partner.getByText("Nosso saldo do mês")).toBeVisible();
-    await expect(partner.getByText(/-\s?R\$\s*2\.000,00/).first()).toBeVisible();
+    await expect(
+      partner.getByText(/-\s?R\$\s*2\.000,00/).first(),
+    ).toBeVisible();
     await expect(
       partner.getByRole("button", { name: "Reembolso: Aluguel", exact: true }),
     ).toHaveCount(0);
@@ -104,7 +121,9 @@ test.describe("split expenses", () => {
     await expect(
       partner.getByRole("button", { name: "Aluguel (sua parte)", exact: true }),
     ).toBeVisible();
-    await expect(partner.getByText(/-\s?R\$\s*1\.000,00/).first()).toBeVisible();
+    await expect(
+      partner.getByText(/-\s?R\$\s*1\.000,00/).first(),
+    ).toBeVisible();
 
     await reloadApp(page);
     await person(page, "Eu").click();

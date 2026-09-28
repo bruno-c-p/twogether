@@ -34,7 +34,9 @@ async function seedMoney(page: Page) {
   await expense.getByLabel("Valor").fill("45,90");
   await expense.getByLabel("Descrição").fill("Mercado");
   await expense.getByLabel("Data").fill("2026-09-14");
-  await expense.getByRole("button", { name: "Custo fixo", exact: true }).click();
+  await expense
+    .getByRole("button", { name: "Custo fixo", exact: true })
+    .click();
   await expense.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
 }
@@ -46,15 +48,20 @@ test.describe("chrome", () => {
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
     await expect(page.getByText("••").first()).toBeVisible();
     await expect(page.getByText("Valores ocultos").first()).toBeVisible();
-    await expect(page.getByRole("img", { name: /oculta/ }).first()).toBeVisible();
+    await expect(
+      page.getByRole("img", { name: /oculta/ }).first(),
+    ).toBeVisible();
+
     const barWidth = await page
       .getByRole("button", { name: /Custo fixo:/ })
       .evaluate((card) => {
         const fill = [...card.querySelectorAll("span")].find((span) =>
           span.getAttribute("style")?.includes("width"),
         );
+
         return fill?.style.width ?? "";
       });
+
     expect(barWidth).toBe("0%");
     expect(new URL(page.url()).search).not.toMatch(/hidden/);
 
@@ -63,7 +70,9 @@ test.describe("chrome", () => {
     await expect(page.getByText("Valores ocultos")).toHaveCount(0);
 
     await withMobile(page, async () => {
-      await expect(page.getByRole("button", { name: "Ocultar valores" })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Ocultar valores" }),
+      ).toBeVisible();
       await page.getByRole("button", { name: "Ocultar valores" }).click();
       await expect(page.getByText("R$ ••••").first()).toBeVisible();
       await expectNoHorizontalOverflow(page);
@@ -85,9 +94,9 @@ test.describe("chrome", () => {
       "data-theme-preference",
       "dark",
     );
-    expect(await page.evaluate(() => localStorage.getItem("twogether.theme.v1"))).toBe(
-      "dark",
-    );
+    expect(
+      await page.evaluate(() => localStorage.getItem("twogether.theme.v1")),
+    ).toBe("dark");
     await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
@@ -95,21 +104,24 @@ test.describe("chrome", () => {
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
-    expect(await page.evaluate(() => localStorage.getItem("twogether.theme.v1"))).toBe(
-      "light",
-    );
+    expect(
+      await page.evaluate(() => localStorage.getItem("twogether.theme.v1")),
+    ).toBe("light");
 
     await page.getByRole("button", { name: "Tema sistema" }).click();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme-preference",
       "system",
     );
+
     const readable = await page.evaluate(() => {
       const styles = getComputedStyle(document.documentElement);
       const text = styles.getPropertyValue("--text").trim();
       const surface = styles.getPropertyValue("--surface").trim();
+
       return { text, surface, body: getComputedStyle(document.body).color };
     });
+
     expect(readable.text).toBeTruthy();
     expect(readable.surface).toBeTruthy();
     expect(readable.text).not.toBe(readable.surface);
@@ -119,9 +131,15 @@ test.describe("chrome", () => {
     await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
 
     await withMobile(page, async () => {
-      await expect(page.getByRole("button", { name: "Tema escuro" })).toBeEnabled();
-      await expect(page.getByRole("button", { name: "Tema claro" })).toBeEnabled();
-      await expect(page.getByRole("button", { name: "Tema sistema" })).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Tema escuro" }),
+      ).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Tema claro" }),
+      ).toBeEnabled();
+      await expect(
+        page.getByRole("button", { name: "Tema sistema" }),
+      ).toBeEnabled();
     });
   });
 
@@ -134,10 +152,12 @@ test.describe("chrome", () => {
     const stored = (await page.context().cookies()).find(
       (cookie) => cookie.name === "twogether.tz.v1",
     );
+
     expect(decodeURIComponent(stored?.value ?? "")).toBe("America/Sao_Paulo");
 
     const browserMonth = await page.evaluate(() => {
       const now = new Date();
+
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     });
 
@@ -160,6 +180,7 @@ test.describe("chrome", () => {
     const redirected = await page.context().request.get("/", {
       maxRedirects: 0,
     });
+
     expect(redirected.status()).toBe(307);
     expect(redirected.headers()["location"] ?? "").toContain(
       `month=${browserMonth}`,
@@ -181,9 +202,11 @@ test.describe("chrome", () => {
 
   test("desktop header does not repeat the brand", async ({ page }) => {
     await onboard(page, "Ana");
+
     const headerBrand = page
       .locator("header")
       .getByRole("link", { name: "twogether." });
+
     await expect(headerBrand).toBeHidden();
     await expect(
       page.getByRole("link", { name: "twogether — início" }),

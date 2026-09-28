@@ -17,6 +17,7 @@ describe("household store", () => {
     const invite = await store.createInvite(ana.user, ana.household);
     const b = await signup(store, "Bia");
     const c = await signup(store, "Cris");
+
     const results = await Promise.allSettled(
       [b, c].map(async (person) =>
         store.joinHousehold(
@@ -25,19 +26,15 @@ describe("household store", () => {
         ),
       ),
     );
+
     expect(results.filter((r) => r.status === "fulfilled")).toHaveLength(1);
-    expect((await store.snapshot(a.user)).household?.members).toHaveLength(
-      2,
-    );
+    expect((await store.snapshot(a.user)).household?.members).toHaveLength(2);
     const full = await withHousehold(store, a.user);
     await expect(store.createInvite(full.user, full.household)).rejects.toThrow(
       "duas pessoas",
     );
     await expect(
-      store.joinHousehold(
-        await requireUser(store, a.user),
-        invite.inviteToken,
-      ),
+      store.joinHousehold(await requireUser(store, a.user), invite.inviteToken),
     ).rejects.toThrow("já faz parte");
   });
 
@@ -54,10 +51,7 @@ describe("household store", () => {
     ).rejects.toThrow("expirado");
     await store.revokeInvite(first.user, first.household);
     await expect(
-      store.joinHousehold(
-        await requireUser(store, b.user),
-        next.inviteToken,
-      ),
+      store.joinHousehold(await requireUser(store, b.user), next.inviteToken),
     ).rejects.toThrow("expirado");
   });
 
@@ -70,6 +64,7 @@ describe("household store", () => {
     const invite = await store.createInvite(ana.user, ana.household);
     const now = Date.now;
     const time = now();
+
     try {
       Date.now = () => time + 49 * 3600_000;
       await expect(

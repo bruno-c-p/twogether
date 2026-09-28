@@ -4,7 +4,11 @@ import {
   openView,
   type BudgetFilters,
 } from "@/features/budget/search";
-import type { GoalId, TransactionKind, View } from "@/features/budget/domain/types";
+import type {
+  GoalId,
+  TransactionKind,
+  View,
+} from "@/features/budget/domain/types";
 
 const workspaceRoute = getRouteApi("/_authenticated/");
 

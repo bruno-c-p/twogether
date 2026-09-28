@@ -202,9 +202,11 @@ test.describe("transactions", () => {
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Excluir Mercado" }).click();
+
     const toast = page
       .getByRole("status")
       .filter({ hasText: "Transação excluída." });
+
     await expect(toast).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),

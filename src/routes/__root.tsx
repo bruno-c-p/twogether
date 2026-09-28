@@ -17,7 +17,9 @@ import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 
 const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
+
 const posthogApiKey = clientEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
+
 const posthogHost = clientEnv.VITE_PUBLIC_POSTHOG_HOST;
 
 function TimeZoneCookie() {
@@ -41,6 +43,7 @@ function PostHogIdentity() {
 
     if (!userId) {
       identifiedUserId.current = null;
+
       return;
     }
 

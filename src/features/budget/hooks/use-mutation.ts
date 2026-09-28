@@ -30,43 +30,57 @@ export function useMutation<TArgs extends unknown[], TResult>(
       inFlight.current = true;
       setPending(true);
       setError("");
+
       const cached = queryClient.getQueriesData<WorkspaceSnapshot>({
         queryKey: workspaceQueryKey,
       })[0];
+
       const previous = cached?.[1];
       const applyOptimistic = optimisticRef.current;
+
       if (applyOptimistic && previous && cached) {
         await queryClient.cancelQueries({ queryKey: cached[0] });
         queryClient.setQueryData(cached[0], applyOptimistic(previous, ...args));
       }
+
       try {
         const result = await fnRef.current(...args);
+
         if (isMutationFailure(result)) {
           if (cached && previous) {
             queryClient.setQueryData(cached[0], previous);
           }
+
           setError(result.message);
+
           return null;
         }
+
         const refresh = queryClient.invalidateQueries({
           queryKey: workspaceQueryKey,
         });
+
         if (applyOptimistic) void refresh;
         else await refresh;
+
         return result;
       } catch (error) {
         if (cached && previous && applyOptimistic) {
           queryClient.setQueryData(cached[0], previous);
         }
+
         if (isRedirect(error)) {
           await router.navigate(router.resolveRedirect(error).options);
+
           return null;
         }
+
         setError(
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
             : "Sem conexão. Confira o orçamento antes de tentar novamente.",
         );
+
         return null;
       } finally {
         inFlight.current = false;

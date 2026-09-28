@@ -4,8 +4,10 @@ const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
 export function isValidTimeZone(value: unknown): value is string {
   if (typeof value !== "string" || value.length === 0) return false;
+
   try {
     new Intl.DateTimeFormat("en-CA", { timeZone: value }).format();
+
     return true;
   } catch {
     return false;
@@ -23,8 +25,10 @@ export function monthIn(timeZone: string, date = new Date()): string {
     month: "2-digit",
     day: "2-digit",
   }).formatToParts(date);
+
   const year = parts.find((part) => part.type === "year")?.value ?? "";
   const month = parts.find((part) => part.type === "month")?.value ?? "";
+
   return `${year}-${month}`;
 }
 

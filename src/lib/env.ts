@@ -3,10 +3,13 @@ import { firstIssueMessage } from "@/features/budget/domain/schemas";
 
 const CLERK_MESSAGE =
   "VITE_CLERK_PUBLISHABLE_KEY variable required by Clerk is missing or un-configured.";
+
 const POSTHOG_TOKEN_MESSAGE =
   "VITE_PUBLIC_POSTHOG_PROJECT_TOKEN variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_PROJECT_TOKEN is configured";
+
 const POSTHOG_HOST_MESSAGE =
   "VITE_PUBLIC_POSTHOG_HOST variable required by PostHog is missing or un-configured, this causes events to be silently missed. This error stops appearing once VITE_PUBLIC_POSTHOG_HOST is configured";
+
 const INVALID_MESSAGE = "must be a non-empty string when configured.";
 
 const emptyAsUndefined = (value: unknown) => (value === "" ? undefined : value);
@@ -45,6 +48,7 @@ export function parseClientEnv(
             message: POSTHOG_TOKEN_MESSAGE,
             path: ["VITE_PUBLIC_POSTHOG_PROJECT_TOKEN"],
           });
+
         if (!env.VITE_PUBLIC_POSTHOG_HOST)
           ctx.addIssue({
             code: "custom",
@@ -53,7 +57,10 @@ export function parseClientEnv(
           });
       })
     : clientEnvSchema;
+
   const result = schema.safeParse(values);
+
   if (!result.success) throw new Error(firstIssueMessage(result.error));
+
   return result.data;
 }

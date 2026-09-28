@@ -43,6 +43,7 @@ export function SplitPanel({
   const saved = Boolean(transaction?.split);
   const share = amount >= 2 ? partnerShare(amount) : 0;
   const id = useId();
+
   return (
     <section
       aria-label="Divisão"

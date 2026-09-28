@@ -138,89 +138,89 @@
 }
 
 @media (min-width: 1450px) {
-.balance-card {
+  .balance-card {
     padding: 28px 32px;
-}
-.balance-amount {
+  }
+  .balance-amount {
     font-size: 46px;
-}
-.balance-divider {
+  }
+  .balance-divider {
     margin-top: 25px;
-}
-.balance-bottom strong {
+  }
+  .balance-bottom strong {
     font-size: 21px;
-}
+  }
 }
 
 @media (max-width: 1190px) {
-.balance-card {
+  .balance-card {
     padding: 21px 23px;
-}
-.balance-amount {
+  }
+  .balance-amount {
     font-size: 35px;
-}
-.balance-bottom {
+  }
+  .balance-bottom {
     gap: 25px;
-}
+  }
 }
 
 @media (max-width: 1000px) {
-.balance-decoration {
+  .balance-decoration {
     opacity: 0.2;
-}
+  }
 }
 
 @media (max-width: 800px) {
-.balance-card {
+  .balance-card {
     padding: 20px;
-      min-height: 230px;
-}
-.balance-amount {
+    min-height: 230px;
+  }
+  .balance-amount {
     font-size: 31px;
-}
-.balance-caption {
+  }
+  .balance-caption {
     font-size: 9px;
-}
-.balance-bottom {
+  }
+  .balance-bottom {
     gap: 20px;
-}
-.balance-bottom strong {
+  }
+  .balance-bottom strong {
     font-size: 15px;
-}
+  }
 }
 
 @media (max-width: 620px) {
-.balance-card {
+  .balance-card {
     padding: 23px 24px;
-      min-height: 233px;
-      border-radius: 11px;
-}
-.balance-top {
+    min-height: 233px;
+    border-radius: 11px;
+  }
+  .balance-top {
     font-size: 12px;
-}
-.balance-amount {
+  }
+  .balance-amount {
     font-size: 39px;
-      margin-top: 2px;
-}
-.balance-caption {
+    margin-top: 2px;
+  }
+  .balance-caption {
     font-size: 10px;
-}
-.balance-divider {
+  }
+  .balance-divider {
     margin: 22px 0 18px;
-}
-.balance-bottom {
+  }
+  .balance-bottom {
     gap: 43px;
-}
-.balance-bottom strong {
+  }
+  .balance-bottom strong {
     font-size: 19px;
-}
-.balance-decoration {
+  }
+  .balance-decoration {
     opacity: 0.35;
-}
+  }
 }
 
 @media (max-width: 360px) {
-.balance-bottom strong {
+  .balance-bottom strong {
     font-size: 15px;
-}
+  }
 }

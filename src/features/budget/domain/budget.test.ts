@@ -198,11 +198,13 @@ describe("conta bancária", () => {
     expect(parseBalance("0,00")).toBe(0);
     expect(parseBalance("1.250,50")).toBe(125050);
     expect(parseBalance("abc")).toBeNull();
+
     const account = {
       id: "account-1",
       name: "Nubank",
       openingBalance: 100000,
     };
+
     expect(
       accountBalance(account, [
         { ...transactions[0], accountId: "account-1" },
@@ -243,6 +245,7 @@ describe("newId", () => {
     const original = crypto.randomUUID.bind(crypto);
     // @ts-expect-error — HTTP origins do not expose randomUUID
     crypto.randomUUID = undefined;
+
     try {
       expect(newId()).toMatch(uuid);
     } finally {
@@ -266,6 +269,7 @@ describe("individual goal planning", () => {
       percentages: { ...DEFAULT_PERCENTAGES, fixed: 35, targets: 10 },
     },
   ];
+
   const income = (memberId: string, amount: number): Transaction => ({
     id: memberId,
     memberId,
@@ -277,6 +281,7 @@ describe("individual goal planning", () => {
     tags: [],
     accountId: "account-1",
   });
+
   const monthly = [income("a", 500000), income("b", 300000)];
   it("sums each person's plan and weights the combined percentage by income", () => {
     expect(
@@ -307,6 +312,7 @@ describe("individual goal planning", () => {
       kind: "expense",
       goal: "targets",
     };
+
     expect(
       planGoals([income("a", 3), income("b", 5), expense], members).find(
         (goal) => goal.id === "targets",

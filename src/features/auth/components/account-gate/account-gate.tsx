@@ -2,11 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { ComponentProps, ReactNode } from "react";
 import { isRedirect, useNavigate, useRouter } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
-import {
-  SignIn,
-  useAuth,
-  useUser,
-} from "@clerk/tanstack-react-start";
+import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
 import { setName } from "@/features/auth/actions";
@@ -42,30 +38,40 @@ function useGate(session: SessionState) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const inFlight = useRef(false);
+
   const run = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
       setBusy(true);
       setError("");
+
       try {
         const result = await fn();
+
         if (isMutationFailure(result)) {
           setError(result.message);
+
           return null;
         }
+
         await router.invalidate();
+
         return result;
       } catch (error) {
         if (isRedirect(error)) {
           await router.navigate(router.resolveRedirect(error).options);
+
           return null;
         }
+
         const message =
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
             : "Sem conexão. Confira o orçamento antes de tentar novamente.";
+
         setError(message);
+
         return null;
       } finally {
         inFlight.current = false;
@@ -74,6 +80,7 @@ function useGate(session: SessionState) {
     },
     [router],
   );
+
   return {
     user: session.user,
     error,
@@ -102,37 +109,50 @@ export function AccountGate({
   useEffect(() => {
     if (!isSignedIn || user) return;
     void router.invalidate();
+
     const timer = setInterval(
       () => void router.invalidate(),
       SESSION_SYNC_INTERVAL_MS,
     );
+
     return () => clearInterval(timer);
   }, [isSignedIn, router, user]);
+
   function clearInvitation() {
     void navigate({ to: "/entrar" });
   }
+
   async function acceptInvitation() {
     const result = await run(() =>
       joinHousehold({ data: { token: invitation } }),
     );
+
     if (result) posthog.capture("household_joined");
   }
+
   async function submitName(name: string) {
     const result = await run(() => setName({ data: { name } }));
+
     if (result) posthog.capture("profile_name_completed");
   }
+
   async function joinWithInvite(invite: string) {
     const result = await run(() => joinHousehold({ data: { token: invite } }));
+
     if (result) posthog.capture("household_joined");
   }
+
   async function startHousehold() {
     const result = await run(() => createHousehold());
+
     if (result) posthog.capture("household_created");
   }
+
   async function leave() {
     posthog.reset();
     await signOut();
   }
+
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />

@@ -54,6 +54,7 @@ import { Button } from "@/components/ui/button";
 
 export function BudgetApp() {
   const budget = useBudget();
+
   return (
     <BudgetWorkspace
       key={`${budget.household.id}:${budget.user.id}`}
@@ -64,11 +65,13 @@ export function BudgetApp() {
 
 function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   const posthog = usePostHog();
+
   const saveTx = useMutation(
     (data: { transaction: Transaction; occurrences?: number }) =>
       saveTransaction({ data }),
     optimisticSave,
   );
+
   const deleteTx = useMutation(
     (data: {
       id: string;
@@ -77,31 +80,39 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     }) => deleteTransaction({ data }),
     optimisticDelete,
   );
+
   const restoreTx = useMutation(
     (data: { id: string; revision: number; transaction: Transaction }) =>
       restoreTransaction({ data: { id: data.id, revision: data.revision } }),
     (snapshot, data) => optimisticRestore(snapshot, data.transaction),
   );
+
   const saveAcc = useMutation((account: BankAccount) =>
     saveAccount({ data: { account } }),
   );
+
   const deleteAcc = useMutation((data: { id: string; revision: number }) =>
     deleteAccount({ data }),
   );
+
   const savePct = useMutation(
     (data: { percentages: GoalPercentages; revision: number }) =>
       savePercentages({ data }),
   );
+
   const settleTx = useMutation(
     (data: SettleInput & { id: string; revision: number }) =>
       settleSplit({ data }),
     optimisticSettle,
   );
+
   const unsettleTx = useMutation(
     (data: { id: string; revision: number }) => unsettleSplit({ data }),
     optimisticUnsettle,
   );
+
   const splitBusy = settleTx.pending || unsettleTx.pending;
+
   const busy =
     splitBusy ||
     saveTx.pending ||
@@ -110,6 +121,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     saveAcc.pending ||
     deleteAcc.pending ||
     savePct.pending;
+
   const {
     view,
     month: searchMonth,
@@ -127,23 +139,30 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     setView,
     filterGoal,
   } = useBudgetSearch();
+
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const month = searchMonth ?? currentMonth();
   const today = useHydrated() ? currentMonth() : null;
   const [hidden, setHidden] = useState(false);
+
   const [dialog, setDialog] = useState<{
     transaction: Transaction | null;
   } | null>(null);
+
   const [accountDialog, setAccountDialog] = useState<{
     account: BankAccount | null;
   } | null>(null);
+
   const { notice, setNotice } = useNotice();
+
   const [editingPercentages, setEditingPercentages] = useState<number | null>(
     null,
   );
+
   const [deleting, setDeleting] = useState<Transaction | null>(null);
   const [settling, setSettling] = useState<Transaction | null>(null);
+
   const listError =
     deleteAcc.error ||
     restoreTx.error ||
@@ -151,10 +170,12 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
     (!deleting ? deleteTx.error : "");
 
   const members = budget.household.members;
+
   const partner =
     members.length === 2
       ? members.find((member) => member.id !== budget.user.id)
       : undefined;
+
   const viewTransactions = useMemo(
     () =>
       memberFilter === "all"
@@ -162,16 +183,20 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         : budget.state.transactions.filter((t) => t.memberId === memberFilter),
     [budget.state.transactions, memberFilter],
   );
+
   const monthly = useMemo(
     () => viewTransactions.filter((t) => t.date.startsWith(month)),
     [viewTransactions, month],
   );
+
   const debt = useMemo(
     () => splitDebt(budget.state.transactions, budget.user.id),
     [budget.state.transactions, budget.user.id],
   );
+
   const summary = useMemo(() => summarize(monthly), [monthly]);
   const ownMember = members.find((member) => member.id === budget.user.id);
+
   const plans = useMemo(
     () =>
       planGoals(
@@ -182,6 +207,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       ),
     [monthly, members, memberFilter],
   );
+
   const allTags = useMemo(
     () =>
       [...new Set(budget.state.transactions.flatMap((t) => t.tags))].sort(
@@ -189,7 +215,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       ),
     [budget.state.transactions],
   );
+
   const historyTransactions = viewTransactions;
+
   const following = useMemo(
     () =>
       deleting
@@ -203,7 +231,9 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         : [],
     [budget.state.transactions, deleting],
   );
+
   const displayMoney = (value: number) => (hidden ? "R$ ••••" : money(value));
+
   const filterExplanation =
     view === "accounts"
       ? memberFilter === "all"
@@ -215,6 +245,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
 
   async function save(transaction: Transaction, occurrences = 1) {
     const isUpdate = Boolean(dialog?.transaction);
+
     if (!(await saveTx.run({ transaction, occurrences }))) return false;
     posthog.capture(isUpdate ? "transaction_updated" : "transaction_created", {
       transaction_kind: transaction.kind,
@@ -230,14 +261,17 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
           ? `${occurrences} transações mensais adicionadas.`
           : "Transação adicionada.",
     });
+
     return true;
   }
 
   async function remove(transaction: Transaction) {
     if (transaction.recurrenceId) {
       setDeleting(transaction);
+
       return;
     }
+
     if (
       await deleteTx.run({
         id: transaction.id,
@@ -255,18 +289,22 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
         message: "Cadastre uma conta para lançar transações.",
       });
       setView("accounts");
+
       return;
     }
+
     setDialog({ transaction });
   }
 
   async function saveAccountRecord(account: BankAccount) {
     const isUpdate = Boolean(accountDialog?.account);
+
     if (!(await saveAcc.run(account))) return false;
     posthog.capture(isUpdate ? "account_updated" : "account_created");
     setNotice({
       message: isUpdate ? "Conta atualizada." : "Conta adicionada.",
     });
+
     return true;
   }
 
@@ -290,6 +328,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
   async function confirmSettle(input: SettleInput) {
     if (!settling) return false;
     const source = settling;
+
     if (
       !(await settleTx.run({
         ...input,
@@ -303,6 +342,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       message: "Pagamento registrado.",
       undoSettle: { ...source, revision: (source.revision ?? 0) + 1 },
     });
+
     return true;
   }
 
@@ -316,14 +356,17 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       return false;
     posthog.capture("split_unsettled");
     setNotice({ message: "Pagamento desmarcado." });
+
     return true;
   }
 
   async function undoNotice() {
     if (notice?.undoSettle) {
       await unsettle(notice.undoSettle);
+
       return;
     }
+
     if (
       notice?.undo &&
       (await restoreTx.run({
@@ -337,6 +380,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
 
   async function saveGoalPercentages(values: GoalPercentages) {
     if (editingPercentages === null) return false;
+
     if (
       !(await savePct.run({
         percentages: values,
@@ -346,11 +390,13 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
       return false;
     posthog.capture("goal_percentages_saved");
     setNotice({ message: "Percentuais atualizados." });
+
     return true;
   }
 
   async function deleteRecurring(includeFollowing: boolean) {
     if (!deleting) return;
+
     if (
       await deleteTx.run({
         id: deleting.id,
@@ -462,6 +508,7 @@ function BudgetWorkspace({ budget }: { budget: BudgetController }) {
               required
               onChange={(event) => {
                 const next = event.currentTarget.value;
+
                 if (monthSchema.safeParse(next).success) setMonth(next);
               }}
             />

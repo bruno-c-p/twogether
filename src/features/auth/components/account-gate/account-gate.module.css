@@ -112,7 +112,7 @@
   .account-page {
     padding: 24px 16px;
   }
-  
+
   .pageBrand {
     margin-bottom: 24px;
   }
@@ -121,9 +121,9 @@
     align-items: center;
     padding: 24px 0;
   }
-  
+
   .account-card {
     padding: 26px 22px;
-      border-radius: 20px;
+    border-radius: 20px;
   }
 }

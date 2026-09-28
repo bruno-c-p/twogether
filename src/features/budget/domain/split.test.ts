@@ -33,6 +33,7 @@ describe("split helpers", () => {
       { ...base, id: "plain" },
       { ...base, id: "repay", settlementOf: "old", split: {} },
     ];
+
     const ana = splitDebt(transactions, "ana");
     expect(ana.net).toBe(100000 - 15000);
     expect(ana.unpaid.map((t) => t.id).sort()).toEqual(["market", "rent"]);
@@ -45,6 +46,7 @@ describe("split helpers", () => {
       base,
       { ...base, id: "income", kind: "income", goal: null, settlementOf: "t" },
     ];
+
     expect(usTransactions(list).map((t) => t.id)).toEqual(["t"]);
   });
 });

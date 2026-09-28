@@ -8,6 +8,7 @@ import styles from "@/components/route-error/route-error.module.css";
 export function RouteError({ error, reset }: ErrorComponentProps) {
   const router = useRouter();
   const posthog = usePostHog();
+
   const description =
     import.meta.env.DEV && error instanceof Error
       ? error.message

@@ -14,6 +14,7 @@ export function Distribution({
 }) {
   const { goals, expenses } = summarize(transactions);
   const segments = donutSegments(goals, (goal) => goal.amount);
+
   return (
     <div className={styles.distribution}>
       <div className={styles.distributionHeading}>

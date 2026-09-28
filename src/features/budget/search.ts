@@ -12,12 +12,16 @@ const drop = <Schema extends z.ZodType>(schema: Schema) =>
 const viewSchema = z.enum(["overview", "transactions", "accounts", "goals"], {
   error: "Visão inválida.",
 });
+
 const memberSchema = z.string({ error: "Pessoa inválida." }).min(1).max(64);
+
 const querySchema = z
   .string({ error: "Busca inválida." })
   .refine((value) => value.trim().length > 0)
   .transform((value) => value.slice(0, 200));
+
 const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
+
 const kindSchema = z.enum(["expense", "income"], {
   error: "Tipo inválido.",
 });

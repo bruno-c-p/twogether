@@ -1,6 +1,8 @@
 export type GoalId =
   "fixed" | "pleasure" | "comfort" | "targets" | "knowledge" | "freedom";
+
 export type TransactionKind = "expense" | "income";
+
 export type View = "overview" | "transactions" | "goals" | "accounts";
 
 export interface BankAccount {
@@ -56,20 +58,25 @@ export interface Member {
   id: string;
   name: string;
 }
+
 export interface MemberBudget extends Member {
   percentages: GoalPercentages;
   percentagesRevision: number;
 }
+
 export type WorkspaceUser = Member;
+
 export interface WorkspaceHousehold {
   id: string;
   members: MemberBudget[];
 }
+
 export interface SharedSnapshot {
   user: WorkspaceUser | null;
   household: WorkspaceHousehold | null;
   budget: BudgetState;
 }
+
 export interface WorkspaceSnapshot {
   user: WorkspaceUser;
   household: WorkspaceHousehold;

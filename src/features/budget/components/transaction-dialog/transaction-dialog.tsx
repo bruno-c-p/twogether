@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import {
   formatAmountInput,
@@ -75,15 +70,19 @@ export function TransactionDialog({
   onClose,
 }: Props) {
   const amountInput = useRef<HTMLInputElement>(null);
+
   const [kind, setKind] = useState<TransactionKind>(
     transaction?.kind ?? "expense",
   );
+
   const [goal, setGoal] = useState(transaction?.goal ?? null);
   const [tags, setTags] = useState(transaction?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
+
   const [amountValue, setAmountValue] = useState(
     transaction ? formatAmountInput(String(transaction.amount)) : "",
   );
+
   const [recurring, setRecurring] = useState(false);
   const [occurrences, setOccurrences] = useState(12);
   const [saving, setSaving] = useState(false);
@@ -92,8 +91,10 @@ export function TransactionDialog({
   const paid = Boolean(transaction?.split?.paidAt);
   const payer = members.find((member) => member.id === memberId);
   const debtor = members.find((member) => member.id !== memberId);
+
   const canSplit =
     kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -102,25 +103,30 @@ export function TransactionDialog({
 
   useEffect(() => {
     const input = amountInput.current;
+
     if (!input) return;
     input.setSelectionRange(input.value.length, input.value.length);
   }, [amountValue]);
 
   function addTag(value: string) {
     const tag = normalizeTag(value);
+
     if (tag && !tags.includes(tag) && tags.length < 8) setTags([...tags, tag]);
     setTagInput("");
   }
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (saving) return;
     const form = new FormData(event.currentTarget);
     const pendingTag = normalizeTag(tagInput);
+
     const completeTags =
       pendingTag && !tags.includes(pendingTag)
         ? [...tags, pendingTag].slice(0, 8)
         : tags;
+
     const parsed = transactionFormSchema(accounts).safeParse({
       amount: formText(form, "amount"),
       description: formText(form, "description"),
@@ -131,12 +137,16 @@ export function TransactionDialog({
       occurrences: recurring && !transaction ? occurrences : 1,
       split: canSplit && split,
     });
+
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
+
       return;
     }
+
     setErrors({});
     setSaving(true);
+
     try {
       if (
         await onSave(
@@ -184,6 +194,7 @@ export function TransactionDialog({
               disabled={paid}
               onChange={(next) => {
                 setKind(next);
+
                 if (next === "income") setGoal(null);
               }}
             />
@@ -250,7 +261,9 @@ export function TransactionDialog({
                   (accounts.length === 1 ? accounts[0].id : "")
                 }
                 required
-                aria-describedby={errors.accountId ? "account-error" : undefined}
+                aria-describedby={
+                  errors.accountId ? "account-error" : undefined
+                }
                 aria-invalid={errors.accountId ? true : undefined}
               >
                 {accounts.length !== 1 && (

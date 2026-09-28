@@ -46,7 +46,11 @@ export function WorkspaceShell({
                 WORKSPACE_NAVIGATION.find((item) => item.id === view)?.label}
             </strong>
           </div>
-          <Brand className={styles.mobileBrand} mark markClassName={styles.mobileMark}>
+          <Brand
+            className={styles.mobileBrand}
+            mark
+            markClassName={styles.mobileMark}
+          >
             twogether.
           </Brand>
           <div className={styles.topbarRight}>

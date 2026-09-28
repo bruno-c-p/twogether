@@ -18,5 +18,6 @@ export const Route = createFileRoute("/convite/$token")({
 function InviteRoute() {
   const session = Route.useLoaderData();
   const { token } = Route.useParams();
+
   return <AccountGate session={session} invite={token} />;
 }

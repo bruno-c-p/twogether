@@ -20,6 +20,7 @@ export function TagPicker({
 }) {
   const full = tags.length >= 8;
   const suggestions = existingTags.filter((tag) => !tags.includes(tag));
+
   return (
     <>
       <label htmlFor="tag-input">

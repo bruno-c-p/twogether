@@ -68,9 +68,12 @@ export function TransactionList({
         (kindFilter === "all" || t.kind === kindFilter),
     )
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+
   const shown = compact ? filtered.slice(0, 5) : filtered;
+
   const activeFilters =
     !!query || goalFilter !== "all" || !!tagFilter || kindFilter !== "all";
+
   return (
     <Panel aria-labelledby="transactions-title">
       <SectionHeading

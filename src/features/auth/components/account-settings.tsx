@@ -38,30 +38,39 @@ export function AccountSettings() {
   const [copied, setCopied] = useState(false);
   const [copyStatus, setCopyStatus] = useState("");
   const inFlight = useRef(false);
+
   const run = useCallback(
     async <T,>(fn: () => Promise<T>): Promise<T | null> => {
       if (inFlight.current) return null;
       inFlight.current = true;
       setBusy(true);
       setError("");
+
       try {
         const result = await fn();
+
         if (isMutationFailure(result)) {
           setError(result.message);
+
           return null;
         }
+
         await router.invalidate();
+
         return result;
       } catch (error) {
         if (isRedirect(error)) {
           await router.navigate(router.resolveRedirect(error).options);
+
           return null;
         }
+
         setError(
           error instanceof Error && !(error instanceof TypeError)
             ? error.message
             : "Sem conexão. Tente novamente.",
         );
+
         return null;
       } finally {
         inFlight.current = false;
@@ -70,31 +79,41 @@ export function AccountSettings() {
     },
     [router],
   );
+
   const members = household.members;
   const memberCount = members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
   const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
+
   async function submitName(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     const parsed = nameFormSchema.safeParse({
       name: formText(new FormData(event.currentTarget), "name"),
     });
+
     if (!parsed.success) {
       setNameErrors(fieldErrors(parsed.error));
+
       return;
     }
+
     setNameErrors({});
     setNotice("");
+
     const result = await run(() =>
       setName({ data: { name: parsed.data.name } }),
     );
+
     if (result?.ok) {
       posthog.capture("profile_name_completed");
       setNotice("Nome atualizado.");
     }
   }
+
   async function makeInvite() {
     const result = await run(() => createInvite());
+
     if (result?.ok) {
       posthog.capture("household_invite_generated");
       setLink(`${window.location.origin}/convite/${result.inviteToken}`);
@@ -102,6 +121,7 @@ export function AccountSettings() {
       setCopyStatus("");
     }
   }
+
   async function copyInvite() {
     try {
       await navigator.clipboard.writeText(link);
@@ -111,16 +131,19 @@ export function AccountSettings() {
       setCopyStatus("Selecione e copie o link acima.");
     }
   }
+
   async function cancelInvites() {
     if (await run(() => revokeInvite())) {
       setLink("");
       setCopyStatus("Convites anteriores cancelados.");
     }
   }
+
   async function leave() {
     posthog.reset();
     await signOut();
   }
+
   return (
     <WorkspaceShell title="Sua conta" memberLabel={memberLabel}>
       <div className="max-w-[720px]">

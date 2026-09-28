@@ -9,6 +9,7 @@ describe("parseServerEnv", () => {
       ...clerk,
       BUDGET_DATABASE_PATH: "./data/twogether.sqlite",
     });
+
     expect(env.BUDGET_DATABASE_PATH).toBe("./data/twogether.sqlite");
     expect(env.TURSO_AUTH_TOKEN).toBeUndefined();
   });
@@ -25,6 +26,7 @@ describe("parseServerEnv", () => {
       TURSO_AUTH_TOKEN: "",
       BUDGET_DATABASE_PATH: "",
     });
+
     expect(env.TURSO_DATABASE_URL).toBeUndefined();
     expect(env.TURSO_AUTH_TOKEN).toBeUndefined();
     expect(env.BUDGET_DATABASE_PATH).toBeUndefined();
@@ -49,6 +51,7 @@ describe("parseServerEnv", () => {
       TURSO_DATABASE_URL: "libsql://example.turso.io",
       TURSO_AUTH_TOKEN: "token",
     });
+
     expect(env.TURSO_DATABASE_URL).toBe("libsql://example.turso.io");
   });
 

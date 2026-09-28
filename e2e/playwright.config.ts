@@ -5,13 +5,18 @@ import { defineConfig } from "@playwright/test";
 process.env.CLERK_PUBLISHABLE_KEY ||= process.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
+
 const databasePath =
   process.env.BUDGET_DATABASE_PATH ?? "/tmp/twogether-e2e.sqlite";
+
 const port = process.env.E2E_PORT ?? "3400";
+
 const baseURL = `http://127.0.0.1:${port}`;
 
 const env = { ...process.env };
+
 delete env.TURSO_DATABASE_URL;
+
 delete env.TURSO_AUTH_TOKEN;
 
 export default defineConfig({

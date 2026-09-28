@@ -14,6 +14,8 @@ export function parseInput<Schema extends z.ZodType>(
   input: unknown,
 ): z.output<Schema> {
   const result = schema.safeParse(input);
+
   if (!result.success) invalid(firstIssueMessage(result.error));
+
   return result.data;
 }

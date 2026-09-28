@@ -33,9 +33,11 @@ export function AccountList({
       : transactions.filter(
           (transaction) => transaction.memberId === memberFilter,
         );
+
   const sorted = [...accounts].sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR"),
   );
+
   return (
     <Panel aria-labelledby="accounts-title">
       <SectionHeading

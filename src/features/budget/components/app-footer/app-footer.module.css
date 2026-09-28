@@ -20,13 +20,13 @@
 @media (max-width: 1190px) {
   .site-footer {
     padding-left: 28px;
-      padding-right: 28px;
+    padding-right: 28px;
   }
 }
 
 @media (max-width: 800px) {
   .site-footer {
     padding-left: 22px;
-      padding-right: 22px;
+    padding-right: 22px;
   }
 }

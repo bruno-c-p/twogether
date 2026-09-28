@@ -4,6 +4,7 @@ import { parseAmount, parseBalance } from "@/features/budget/domain/format";
 import type { BankAccount, GoalId } from "@/features/budget/domain/types";
 
 const HEX64 = /^[0-9a-f]{64}$/;
+
 const MONEY_MAX = 99999999999;
 
 export const budgetTokenSchema = z
@@ -48,6 +49,7 @@ export const dateSchema = z
   .refine(
     (value) => {
       const date = new Date(`${value}T12:00:00`);
+
       return (
         !Number.isNaN(date.getTime()) &&
         `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` ===
@@ -152,9 +154,7 @@ export const transactionSchema = z
       .min(1, { error: "Escolha uma conta bancária." })
       .max(100, { error: "Escolha uma conta bancária." }),
     recurrenceId: optionalText,
-    recurrenceIndex: z
-      .int({ error: "Recorrência inválida." })
-      .optional(),
+    recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
     memberId: optionalText,
     revision: revisionSchema.optional(),
     createdBy: optionalText,
@@ -201,9 +201,12 @@ const percentageValueSchema = z
   .refine((value) => Number.isFinite(value), {
     error: "Informe um percentual entre 0 e 100.",
   })
-  .refine((value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001, {
-    error: "Use no máximo duas casas decimais.",
-  });
+  .refine(
+    (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001,
+    {
+      error: "Use no máximo duas casas decimais.",
+    },
+  );
 
 export const goalPercentagesSchema = z
   .looseObject({
@@ -216,9 +219,8 @@ export const goalPercentagesSchema = z
   } satisfies Record<GoalId, typeof percentageValueSchema>)
   .refine(
     (values) =>
-      Math.round(
-        GOALS.reduce((sum, { id }) => sum + values[id] * 100, 0),
-      ) === 10000,
+      Math.round(GOALS.reduce((sum, { id }) => sum + values[id] * 100, 0)) ===
+      10000,
     { error: "Os percentuais devem somar 100%." },
   );
 
@@ -226,6 +228,7 @@ export function transactionFormSchema(accounts: BankAccount[]) {
   const accountError = accounts.length
     ? "Escolha uma conta bancária."
     : "Cadastre uma conta na aba Contas antes de lançar transações.";
+
   return z
     .object({
       amount: amountInputSchema,
@@ -237,10 +240,9 @@ export function transactionFormSchema(accounts: BankAccount[]) {
       date: dateSchema,
       accountId: z
         .string({ error: accountError })
-        .refine(
-          (value) => accounts.some((account) => account.id === value),
-          { error: accountError },
-        ),
+        .refine((value) => accounts.some((account) => account.id === value), {
+          error: accountError,
+        }),
       goal: goalIdSchema.nullable(),
       kind: z.enum(["expense", "income"], {
         error: "Tipo da transação inválido.",
@@ -281,9 +283,12 @@ export function firstIssueMessage(error: z.ZodError): string {
 
 export function fieldErrors(error: z.ZodError): Record<string, string> {
   const errors: Record<string, string> = {};
+
   for (const issue of error.issues) {
     const field = String(issue.path[0] ?? "");
+
     if (field && !errors[field]) errors[field] = issue.message;
   }
+
   return errors;
 }

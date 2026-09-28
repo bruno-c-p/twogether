@@ -27,6 +27,7 @@ export function splitDebt(transactions: Transaction[], userId: string) {
   const unpaid = unpaidSplits(transactions).sort((a, b) =>
     a.date.localeCompare(b.date),
   );
+
   const net = unpaid.reduce(
     (sum, transaction) =>
       sum +
@@ -34,5 +35,6 @@ export function splitDebt(transactions: Transaction[], userId: string) {
         partnerShare(transaction.amount),
     0,
   );
+
   return { net, unpaid };
 }

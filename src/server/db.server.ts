@@ -7,18 +7,17 @@ import {
 import { createHash, randomBytes } from "node:crypto";
 import { mkdirSync, chmodSync } from "node:fs";
 import { dirname } from "node:path";
-import {
-  revisionSchema,
-  textSchema,
-} from "@/features/budget/domain/schemas";
+import { revisionSchema, textSchema } from "@/features/budget/domain/schemas";
 import { tursoAuthToken } from "@/server/env.server";
 import { RequestError } from "@/server/request-error";
 
 export type { DatabaseTransaction };
+
 export type DatabaseExecutor = Client | DatabaseTransaction;
 
 export const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
+
 export const token = () => randomBytes(32).toString("hex");
 
 export interface UserRow {
@@ -28,16 +27,19 @@ export interface UserRow {
   percentages: string;
   revision: number;
 }
+
 export interface HouseholdRow {
   id: string;
   percentages: string;
   revision: number;
 }
+
 export interface TransactionRow {
   payload: string;
   revision: number;
   deleted: number;
 }
+
 export interface AccountRow {
   id: string;
   payload: string;
@@ -97,14 +99,17 @@ async function resetLegacySchema(database: Client) {
     database,
     "PRAGMA table_info(users)",
   );
+
   const households = await all<{ name: string }>(
     database,
     "PRAGMA table_info(households)",
   );
+
   const isLegacy =
     (users.length > 0 &&
       !users.some((column) => column.name === "percentages")) ||
     households.some((column) => column.name === "percentages");
+
   if (!isLegacy) return;
   await database.batch(
     LEGACY_TABLES.map((table) => ({
@@ -124,12 +129,15 @@ async function initializeDatabase(database: Client, local: boolean) {
 export function createStoreContext(filename: string) {
   const remote = /^(?:https?|libsql|wss?):/i.test(filename);
   const local = !remote;
+
   const localPath =
     local && filename !== ":memory:" && !filename.startsWith("file:")
       ? filename
       : undefined;
+
   if (localPath && !filename.startsWith("file:"))
     mkdirSync(dirname(filename), { recursive: true, mode: 0o700 });
+
   const url = local
     ? filename === ":memory:"
       ? "file::memory:"
@@ -137,6 +145,7 @@ export function createStoreContext(filename: string) {
         ? filename
         : `file:${filename}`
     : filename;
+
   const db = createClient({
     url,
     authToken: local ? undefined : tursoAuthToken(),
@@ -144,18 +153,22 @@ export function createStoreContext(filename: string) {
     readYourWrites: true,
     timeout: 5000,
   });
+
   const ready = initializeDatabase(db, local).then(() => {
     if (localPath) chmodSync(localPath, 0o600);
   });
+
   async function inTransaction<T>(
     mode: "read" | "write",
     fn: (transaction: DatabaseTransaction) => Promise<T>,
   ) {
     await ready;
     const transaction = await db.transaction(mode);
+
     try {
       const result = await fn(transaction);
       await transaction.commit();
+
       return result;
     } catch (error) {
       try {
@@ -163,15 +176,19 @@ export function createStoreContext(filename: string) {
       } catch {
         transaction.close();
       }
+
       throw error;
     } finally {
       transaction.close();
     }
   }
+
   const atomic = <T>(fn: (transaction: DatabaseTransaction) => Promise<T>) =>
     inTransaction("write", fn);
+
   const readOnly = <T>(fn: (transaction: DatabaseTransaction) => Promise<T>) =>
     inTransaction("read", fn);
+
   return {
     db,
     ready,
@@ -185,14 +202,17 @@ export type StoreContext = ReturnType<typeof createStoreContext>;
 
 export function text(value: unknown, max: number) {
   const result = textSchema(max).safeParse(value);
-  if (!result.success)
-    throw new RequestError("Confira os campos informados.");
+
+  if (!result.success) throw new RequestError("Confira os campos informados.");
+
   return result.data;
 }
 
 export function revision(value: unknown) {
   const result = revisionSchema.safeParse(value);
+
   if (!result.success)
     throw new RequestError("Versão inválida. Atualize a página.");
+
   return result.data;
 }

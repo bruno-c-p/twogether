@@ -57,6 +57,7 @@ async function onboardCouple(page: Page, browser: Browser) {
   await expect(
     page.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
   ).toBeVisible();
+
   return { bia, biaPage };
 }
 
@@ -115,10 +116,13 @@ test.describe("overview and goals", () => {
     await page.getByRole("button", { name: "Próximo mês" }).click();
     expect(new URL(page.url()).searchParams.get("month")).toBe("2026-10");
     await expect(page.getByText("Nenhuma transação neste mês.")).toBeVisible();
+
     const currentMonth = await page.evaluate(() => {
       const now = new Date();
+
       return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     });
+
     if (currentMonth !== "2026-10") {
       await expect(
         page.getByRole("button", { name: "Voltar para este mês" }),
@@ -187,6 +191,7 @@ test.describe("overview and goals", () => {
       await expect(
         nav(page, "desktop").getByRole("link", { name: item.name }),
       ).toHaveAttribute("aria-current", "page");
+
       if (item.view) {
         expect(new URL(page.url()).searchParams.get("view")).toBe(item.view);
       }
@@ -236,6 +241,7 @@ test.describe("overview and goals", () => {
     await withMobile(page, async () => {
       await expect(nav(page, "desktop")).toBeHidden();
       await expect(nav(page, "mobile")).toBeVisible();
+
       for (const item of views) {
         await nav(page, "mobile")
           .getByRole("link", { name: item.name })
@@ -245,9 +251,11 @@ test.describe("overview and goals", () => {
           nav(page, "mobile").getByRole("link", { name: item.name }),
         ).toHaveAttribute("aria-current", "page");
       }
+
       const padding = await page
         .locator("#main-content")
         .evaluate((el) => getComputedStyle(el).paddingBottom);
+
       expect(Number.parseFloat(padding)).toBeGreaterThanOrEqual(68);
       await expectNoHorizontalOverflow(page);
     });

@@ -15,7 +15,11 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import { formatAmountInput, formText, newId } from "@/features/budget/domain/format";
+import {
+  formatAmountInput,
+  formText,
+  newId,
+} from "@/features/budget/domain/format";
 import {
   accountFormSchema,
   fieldErrors,
@@ -38,29 +42,37 @@ export function AccountDialog({
   const amountInput = useRef<HTMLInputElement>(null);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+
   const [openingValue, setOpeningValue] = useState(
     account ? formatAmountInput(String(account.openingBalance)) : "",
   );
 
   useEffect(() => {
     const input = amountInput.current;
+
     if (!input) return;
     input.setSelectionRange(input.value.length, input.value.length);
   }, [openingValue]);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     if (saving) return;
+
     const parsed = accountFormSchema.safeParse({
       name: formText(new FormData(event.currentTarget), "name"),
       openingBalance: openingValue,
     });
+
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
+
       return;
     }
+
     setErrors({});
     setSaving(true);
+
     try {
       if (
         await onSave({
@@ -97,7 +109,9 @@ export function AccountDialog({
                 maxLength={50}
                 defaultValue={account?.name}
                 required
-                aria-describedby={errors.name ? "account-name-error" : undefined}
+                aria-describedby={
+                  errors.name ? "account-name-error" : undefined
+                }
                 aria-invalid={errors.name ? true : undefined}
               />
               <FieldError id="account-name-error">{errors.name}</FieldError>

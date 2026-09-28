@@ -56,6 +56,7 @@ describe("optimisticSave", () => {
       tags: [],
       accountId: "account-1",
     };
+
     const next = optimisticSave(snapshot, { transaction: salary });
     expect(next.budget.transactions).toEqual([
       mercado,
@@ -74,6 +75,7 @@ describe("optimisticSave", () => {
     const next = optimisticSave(snapshot, {
       transaction: { ...mercado, description: "Feira", revision: 1 },
     });
+
     expect(next.budget.transactions).toEqual([
       { ...mercado, description: "Feira", revision: 2 },
     ]);
@@ -83,10 +85,12 @@ describe("optimisticSave", () => {
 describe("optimisticDelete", () => {
   it("removes the row and any following occurrences", () => {
     const later: Transaction = { ...mercado, id: "tx-2", recurrenceIndex: 1 };
+
     const withSeries: WorkspaceSnapshot = {
       ...snapshot,
       budget: { ...snapshot.budget, transactions: [mercado, later] },
     };
+
     expect(
       optimisticDelete(withSeries, {
         id: "tx-1",
@@ -102,6 +106,7 @@ describe("optimisticRestore", () => {
       ...snapshot,
       budget: { ...snapshot.budget, transactions: [] },
     };
+
     expect(optimisticRestore(empty, mercado).budget.transactions).toEqual([
       { ...mercado, revision: 3 },
     ]);

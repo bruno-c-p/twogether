@@ -56,19 +56,25 @@ function storedJson(payload: string): unknown {
 
 function storedTransaction(payload: string): Transaction {
   const result = transactionSchema.safeParse(storedJson(payload));
+
   if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+
   return result.data;
 }
 
 function storedAccount(payload: string): BankAccount {
   const result = bankAccountSchema.safeParse(storedJson(payload));
+
   if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+
   return result.data;
 }
 
 function storedPercentages(payload: string): GoalPercentages {
   const result = goalPercentagesSchema.safeParse(storedJson(payload));
+
   if (!result.success) throw new RequestError(STORED_MESSAGE, 500);
+
   return result.data;
 }
 
@@ -87,9 +93,10 @@ const conflict = () =>
 
 function canonical(value: Transaction, user: UserRow): Transaction {
   const result = transactionSchema.safeParse(value);
-  if (!result.success)
-    throw new RequestError(firstIssueMessage(result.error));
+
+  if (!result.success) throw new RequestError(firstIssueMessage(result.error));
   const parsed = result.data;
+
   return {
     id: parsed.id,
     description: parsed.description,
@@ -107,28 +114,35 @@ function canonical(value: Transaction, user: UserRow): Transaction {
 
 const REPAYMENT_LOCKED =
   "Este lançamento é um reembolso. Desmarque o pagamento na transação original para alterá-lo.";
+
 const PAID_LOCKED =
   "Esta despesa dividida já foi paga. Desmarque o pagamento antes de alterar valor, tipo, divisão ou excluí-la.";
 
-async function memberCount(transaction: DatabaseTransaction, householdId: string) {
+async function memberCount(
+  transaction: DatabaseTransaction,
+  householdId: string,
+) {
   const row = await one<{ count: number }>(
     transaction,
     "SELECT count(*) AS count FROM users WHERE household_id = ?",
     [householdId],
   );
+
   return row?.count ?? 0;
 }
 
 function assertUnlocked(stored: Transaction) {
   if (stored.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+
   if (stored.split?.paidAt) throw new RequestError(PAID_LOCKED);
 }
 
 function canonicalAccount(value: BankAccount): BankAccount {
   const result = bankAccountSchema.safeParse(value);
-  if (!result.success)
-    throw new RequestError(firstIssueMessage(result.error));
+
+  if (!result.success) throw new RequestError(firstIssueMessage(result.error));
   const parsed = result.data;
+
   return {
     id: parsed.id,
     name: parsed.name,
@@ -151,6 +165,7 @@ async function memberBudgets(
        WHERE household_id = ? ORDER BY rowid`,
     [householdId],
   );
+
   return members.map((member) => ({
     id: member.id,
     name: member.name,
@@ -164,15 +179,21 @@ export async function householdSnapshot(
   user: UserRow,
 ): Promise<WorkspaceHousehold> {
   await ctx.ready;
+
   return ctx.readOnly(async (transaction) => {
     const fresh = await one<UserRow>(
       transaction,
       "SELECT * FROM users WHERE id = ?",
       [user.id],
     );
+
     if (!fresh) throw new RequestError("Cadastro não encontrado.", 404);
     const owned = await household(transaction, fresh);
-    return { id: owned.id, members: await memberBudgets(transaction, owned.id) };
+
+    return {
+      id: owned.id,
+      members: await memberBudgets(transaction, owned.id),
+    };
   });
 }
 
@@ -181,27 +202,33 @@ export async function snapshot(
   user: UserRow | null,
 ): Promise<SharedSnapshot> {
   if (!user) return { user: null, household: null, budget: emptyBudget() };
+
   return ctx.readOnly(async (transaction) => {
     const fresh = await one<UserRow>(
       transaction,
       "SELECT * FROM users WHERE id = ?",
       [user.id],
     );
+
     if (!fresh) return { user: null, household: null, budget: emptyBudget() };
     const identity = { id: fresh.id, name: fresh.name };
+
     if (!fresh.household_id)
       return { user: identity, household: null, budget: emptyBudget() };
     const owned = await household(transaction, fresh);
+
     const rows = await all<TransactionRow>(
       transaction,
       "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
       [owned.id],
     );
+
     const accountRows = await all<AccountRow>(
       transaction,
       "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
       [owned.id],
     );
+
     return {
       user: identity,
       household: {
@@ -234,25 +261,32 @@ export async function saveTransaction(
   await ctx.atomic(async (transaction) => {
     const occurrences = input.occurrences ?? 1;
     const parsedOccurrences = occurrencesSchema.safeParse(occurrences);
+
     if (!parsedOccurrences.success)
       throw new RequestError(firstIssueMessage(parsedOccurrences.error));
     const t = canonical(input.transaction, user);
+
     const account = await one<AccountRow>(
       transaction,
       "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
       [homeRow.id, t.accountId],
     );
+
     if (!account) throw new RequestError("Escolha uma conta bancária.");
+
     const old = await one<TransactionRow>(
       transaction,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, t.id],
     );
+
     const given = input.transaction.revision;
+
     if (old && !old.deleted && given === undefined) {
       // A create retried after a lost response carries no revision;
       // accept it when the stored row already matches the submission.
       const stored = storedTransaction(old.payload);
+
       const same =
         stored.description === t.description &&
         stored.amount === t.amount &&
@@ -264,31 +298,44 @@ export async function saveTransaction(
         stored.memberId === user.id &&
         stored.tags.length === t.tags.length &&
         stored.tags.every((tag, index) => tag === t.tags[index]);
+
       if (same) return;
     }
+
     if (old ? old.deleted || old.revision !== given : given !== undefined)
       throw conflict();
+
     if (old && occurrences !== 1)
       throw new RequestError("Edite cada ocorrência individualmente.");
     const previous = old ? storedTransaction(old.payload) : undefined;
+
     if (previous?.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+
     if (
       previous?.split?.paidAt &&
       (!t.split || t.amount !== previous.amount || t.kind !== previous.kind)
     )
       throw new RequestError(PAID_LOCKED);
-    if (t.split && !previous?.split && (await memberCount(transaction, homeRow.id)) < 2)
+
+    if (
+      t.split &&
+      !previous?.split &&
+      (await memberCount(transaction, homeRow.id)) < 2
+    )
       throw new RequestError(
         "Convide a outra pessoa do casal antes de dividir despesas.",
       );
+
     if (t.split && previous?.split) t.split = previous.split;
     const createdBy = previous?.createdBy ?? user.id;
+
     const memberId =
       typeof previous?.memberId === "string"
         ? previous.memberId
         : typeof previous?.createdBy === "string"
           ? previous.createdBy
           : user.id;
+
     t.recurrenceId =
       previous?.recurrenceId ?? (occurrences > 1 ? randomUUID() : undefined);
     t.recurrenceIndex =
@@ -299,16 +346,21 @@ export async function saveTransaction(
       [t.id, homeRow.id, JSON.stringify({ ...t, memberId, createdBy })],
     );
     const [year, month, day] = t.date.split("-").map(Number);
+
     for (let index = 1; index < occurrences; index++) {
       const target = new Date(Date.UTC(year, month - 1 + index, 1));
+
       if (target.getUTCFullYear() > 9999)
         throw new RequestError(
           "A recorrência ultrapassa a data máxima permitida.",
         );
+
       const lastDay = new Date(
         Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
       ).getUTCDate();
+
       target.setUTCDate(Math.min(day, lastDay));
+
       const occurrence = {
         ...t,
         id: randomUUID(),
@@ -317,6 +369,7 @@ export async function saveTransaction(
         memberId,
         createdBy,
       };
+
       await execute(
         transaction,
         "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
@@ -339,31 +392,41 @@ export async function deleteTransaction(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
+
     const previous = await one<TransactionRow>(
       transaction,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
+
     if (!previous) throw conflict();
+
     if (!previous.deleted) assertUnlocked(storedTransaction(previous.payload));
+
     if (input.following !== undefined) {
       const source = storedTransaction(previous.payload);
+
       if (!source.recurrenceId || source.recurrenceIndex === undefined)
         throw new RequestError("Recorrência inválida.");
+
       const candidates = await all<TransactionRow & { id: string }>(
         transaction,
         "SELECT id, payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
         [homeRow.id],
       );
+
       const following = candidates.filter((row) => {
         const item = storedTransaction(row.payload);
+
         return (
           item.recurrenceId === source.recurrenceId &&
           item.recurrenceIndex !== undefined &&
           item.recurrenceIndex > source.recurrenceIndex!
         );
       });
+
       const expected = input.following;
+
       if (
         expected.length !== following.length ||
         following.some(
@@ -374,7 +437,10 @@ export async function deleteTransaction(
         )
       )
         throw conflict();
-      for (const row of following) assertUnlocked(storedTransaction(row.payload));
+
+      for (const row of following)
+        assertUnlocked(storedTransaction(row.payload));
+
       for (const row of following) {
         await execute(
           transaction,
@@ -391,16 +457,19 @@ export async function deleteTransaction(
         );
       }
     }
+
     const payload = JSON.stringify({
       ...storedTransaction(previous.payload),
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     });
+
     const result = await execute(
       transaction,
       "UPDATE transactions SET deleted = ?, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = ?",
       [1, payload, homeRow.id, id, revision(input.revision), 0],
     );
+
     if (result.rowsAffected !== 1) throw conflict();
   });
 }
@@ -414,24 +483,30 @@ export async function restoreTransaction(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
+
     const previous = await one<TransactionRow>(
       transaction,
       "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
+
     if (!previous) throw conflict();
+
     if (storedTransaction(previous.payload).settlementOf)
       throw new RequestError(REPAYMENT_LOCKED);
+
     const payload = JSON.stringify({
       ...storedTransaction(previous.payload),
       updatedBy: user.id,
       updatedAt: new Date().toISOString(),
     });
+
     const result = await execute(
       transaction,
       "UPDATE transactions SET deleted = ?, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = ?",
       [0, payload, homeRow.id, id, revision(input.revision), 1],
     );
+
     if (result.rowsAffected !== 1) throw conflict();
   });
 }
@@ -443,21 +518,23 @@ async function splitSource(
   input: { id: string; revision: number },
 ) {
   const id = text(input.id, 100);
+
   const row = await one<TransactionRow>(
     transaction,
     "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
     [homeRow.id, id],
   );
+
   if (!row || row.deleted || row.revision !== revision(input.revision))
     throw conflict();
   const stored = storedTransaction(row.payload);
+
   if (!stored.split || stored.kind !== "expense" || stored.settlementOf)
     throw new RequestError("Esta transação não está dividida.");
+
   if (stored.memberId === user.id)
-    throw new RequestError(
-      "Só quem deve pode marcar este pagamento.",
-      403,
-    );
+    throw new RequestError("Só quem deve pode marcar este pagamento.", 403);
+
   return { id, row, stored };
 }
 
@@ -483,6 +560,7 @@ async function writeSplit(
       source.row.revision,
     ],
   );
+
   if (result.rowsAffected !== 1) throw conflict();
 }
 
@@ -501,19 +579,25 @@ export async function settleSplit(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, homeRow, input);
+
     if (source.stored.split?.paidAt) throw conflict();
     const date = dateSchema.safeParse(input.date);
+
     if (!date.success) throw new RequestError(firstIssueMessage(date.error));
+
     for (const accountId of [input.payerAccountId, input.partnerAccountId]) {
       const account = await one<AccountRow>(
         transaction,
         "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
         [homeRow.id, text(accountId, 100)],
       );
+
       if (!account) throw new RequestError("Escolha uma conta bancária.");
     }
+
     const now = new Date().toISOString();
     const { stored } = source;
+
     const common = {
       amount: partnerShare(stored.amount),
       date: date.data,
@@ -522,6 +606,7 @@ export async function settleSplit(
       updatedAt: now,
       settlementOf: source.id,
     };
+
     const income: Transaction = {
       ...common,
       id: randomUUID(),
@@ -532,6 +617,7 @@ export async function settleSplit(
       accountId: input.payerAccountId,
       memberId: stored.memberId,
     };
+
     const expense: Transaction = {
       ...common,
       id: randomUUID(),
@@ -542,6 +628,7 @@ export async function settleSplit(
       accountId: input.partnerAccountId,
       memberId: user.id,
     };
+
     for (const entry of [income, expense])
       await execute(
         transaction,
@@ -565,7 +652,9 @@ export async function unsettleSplit(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, homeRow, input);
+
     if (!source.stored.split?.paidAt) throw conflict();
+
     for (const entryId of source.stored.split.entryIds ?? [])
       await execute(
         transaction,
@@ -585,12 +674,15 @@ export async function saveAccount(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const account = canonicalAccount(accountInput);
+
     const old = await one<AccountRow>(
       transaction,
       "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
       [homeRow.id, account.id],
     );
+
     const given = accountInput.revision;
+
     if (old ? old.deleted || old.revision !== given : given !== undefined)
       throw conflict();
     await execute(
@@ -610,28 +702,32 @@ export async function deleteAccount(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const id = text(input.id, 100);
+
     const previous = await one<AccountRow>(
       transaction,
       "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
       [homeRow.id, id],
     );
+
     if (!previous || previous.deleted) throw conflict();
+
     const rows = await all<TransactionRow>(
       transaction,
       "SELECT payload FROM transactions WHERE household_id = ? AND deleted = 0",
       [homeRow.id],
     );
-    if (
-      rows.some((row) => storedTransaction(row.payload).accountId === id)
-    )
+
+    if (rows.some((row) => storedTransaction(row.payload).accountId === id))
       throw new RequestError(
         "Exclua ou mova as transações desta conta antes de apagá-la.",
       );
+
     const result = await execute(
       transaction,
       "UPDATE accounts SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
       [homeRow.id, id, revision(input.revision)],
     );
+
     if (result.rowsAffected !== 1) throw conflict();
   });
 }
@@ -645,19 +741,23 @@ export async function savePercentages(
   await ctx.ready;
   await ctx.atomic(async (transaction) => {
     const parsed = goalPercentagesSchema.safeParse(input.percentages);
+
     if (!parsed.success)
       throw new RequestError(firstIssueMessage(parsed.error));
+
     const result = await execute(
       transaction,
       "UPDATE users SET percentages = ?, revision = revision + 1 WHERE id = ? AND revision = ?",
       [JSON.stringify(parsed.data), user.id, revision(input.revision)],
     );
+
     if (result.rowsAffected !== 1) throw conflict();
   });
 }
 
 export function createBudgetStore(filename: string) {
   const ctx = createStoreContext(filename);
+
   return {
     snapshot: (user: UserRow | null) => snapshot(ctx, user),
     householdSnapshot: (user: UserRow) => householdSnapshot(ctx, user),

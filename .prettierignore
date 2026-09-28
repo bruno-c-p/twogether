@@ -10,3 +10,4 @@ bun.lock
 src/routeTree.gen.ts
 playwright-report
 test-results
+tools/oxlint/anti-slop

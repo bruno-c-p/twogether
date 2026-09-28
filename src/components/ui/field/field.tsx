@@ -106,6 +106,7 @@ export function FieldError({
   ...props
 }: ComponentPropsWithoutRef<"span">) {
   if (!children) return null;
+
   return (
     <span
       role="alert"

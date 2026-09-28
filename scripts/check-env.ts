@@ -4,6 +4,7 @@ import { parseClientEnv } from "@/lib/env";
 const env: Record<string, string | undefined> = {
   ...loadEnv("production", process.cwd(), "VITE_"),
 };
+
 for (const [key, value] of Object.entries(process.env)) {
   if (key.startsWith("VITE_")) env[key] = value;
 }

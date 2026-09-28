@@ -103,70 +103,70 @@
 }
 
 @media (min-width: 1450px) {
-.page-heading h1 {
+  .page-heading h1 {
     font-size: 35px;
-}
-.page-heading p {
+  }
+  .page-heading p {
     font-size: 15px;
-}
+  }
 }
 
 @media (max-width: 800px) {
-.page-heading h1 {
+  .page-heading h1 {
     font-size: 24px;
-}
-.page-heading p {
+  }
+  .page-heading p {
     font-size: 11px;
-}
+  }
 }
 
 @media (max-width: 620px) {
-.page-heading {
+  .page-heading {
     align-items: flex-start;
-      gap: 17px;
-      flex-wrap: wrap;
-}
-.page-heading h1 {
+    gap: 17px;
+    flex-wrap: wrap;
+  }
+  .page-heading h1 {
     font-size: 27px;
-      letter-spacing: -1.25px;
-}
-.page-heading p {
+    letter-spacing: -1.25px;
+  }
+  .page-heading p {
     font-size: 12px;
-      line-height: 1.65;
-      margin-top: 7px;
-}
-.add-transaction {
+    line-height: 1.65;
+    margin-top: 7px;
+  }
+  .add-transaction {
     margin: 0;
-      padding: 11px 14px;
-      min-height: 41px;
-      font-size: 12px;
-      width: 100%;
-}
-.month-row {
-    margin: 21px 0 17px;
-      gap: 8px;
-      flex-wrap: wrap;
-}
-.month-picker {
-    gap: 6px;
-}
-.month-picker .month-input {
+    padding: 11px 14px;
+    min-height: 41px;
     font-size: 12px;
-      min-width: 100px;
-}
-.monthIcon {
+    width: 100%;
+  }
+  .month-row {
+    margin: 21px 0 17px;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .month-picker {
+    gap: 6px;
+  }
+  .month-picker .month-input {
+    font-size: 12px;
+    min-width: 100px;
+  }
+  .monthIcon {
     width: 28px;
     height: 30px;
-}
-.today-button {
+  }
+  .today-button {
     font-size: 10px;
-      order: 3;
-      width: 100%;
-      text-align: left;
-      padding-left: 0;
-}
-.couple-toolbar {
+    order: 3;
+    width: 100%;
+    text-align: left;
+    padding-left: 0;
+  }
+  .couple-toolbar {
     gap: 12px;
-      margin-bottom: 20px;
-}
+    margin-bottom: 20px;
+  }
 }

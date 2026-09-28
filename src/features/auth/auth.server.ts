@@ -14,11 +14,13 @@ export async function ensureUser(
 ): Promise<UserRow> {
   await ctx.ready;
   const id = text(clerkUserId, 64);
+
   const existing = await one<UserRow>(
     ctx.db,
     "SELECT * FROM users WHERE id = ?",
     [id],
   );
+
   if (existing) return existing;
   await ctx.atomic(async (transaction) => {
     await execute(
@@ -27,10 +29,13 @@ export async function ensureUser(
       [id, "", JSON.stringify(DEFAULT_PERCENTAGES)],
     );
   });
+
   const user = await one<UserRow>(ctx.db, "SELECT * FROM users WHERE id = ?", [
     id,
   ]);
+
   if (!user) throw new RequestError("Não foi possível criar a conta.");
+
   return user;
 }
 

@@ -13,8 +13,10 @@ export function useNotice() {
   useEffect(() => {
     if (!notice) return;
     const timer = window.setTimeout(() => setNotice(null), 8000);
+
     return () => window.clearTimeout(timer);
   }, [notice]);
+
   return { notice, setNotice };
 }
 

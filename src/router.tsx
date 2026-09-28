@@ -7,7 +7,9 @@ import { reportError } from "@/lib/errors";
 
 function parseSearch(searchStr: string): Record<string, string> {
   const query: Record<string, string> = {};
+
   for (const [key, value] of new URLSearchParams(searchStr)) query[key] = value;
+
   return query;
 }
 
@@ -22,6 +24,7 @@ export function getRouter() {
       },
     },
   });
+
   const router = createRouter({
     routeTree,
     context: { queryClient },
@@ -37,7 +40,9 @@ export function getRouter() {
       });
     },
   });
+
   setupRouterSsrQueryIntegration({ router, queryClient });
+
   return router;
 }
 

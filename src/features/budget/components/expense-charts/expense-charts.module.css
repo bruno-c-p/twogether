@@ -150,16 +150,16 @@
   .expense-chart-card {
     padding: 16px;
   }
-  
+
   .expense-calendar {
     gap: 3px;
   }
-  
+
   .expense-day {
     padding: 5px 3px;
-      min-height: 58px;
+    min-height: 58px;
   }
-  
+
   .expense-day strong {
     font-size: 9px;
   }
