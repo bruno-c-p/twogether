@@ -34,7 +34,7 @@ const GateSignIn = SignIn as (
   props: ComponentProps<typeof SignIn> & { fallback?: ReactNode },
 ) => ReactNode;
 
-function useGate(session: SessionState) {
+export function useGateRun() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -77,15 +77,10 @@ function useGate(session: SessionState) {
     [router],
   );
 
-  return {
-    user: session.user,
-    error,
-    busy,
-    run,
-  };
+  return { error, busy, run };
 }
 
-type GateUser = ReturnType<typeof useGate>["user"];
+type GateUser = SessionState["user"];
 
 const SIGNED_OUT_HEADLINE = "A vida a dois.\nAs contas também.";
 
@@ -101,42 +96,46 @@ function gateIntro(user: GateUser) {
     : "Seu e-mail é a única chave. Sem senha: enviamos um código de acesso.";
 }
 
-function afterAuth(invitation: string) {
-  return invitation ? `/convite/${invitation}` : "/entrar";
-}
-
 function SignInStep({
   invitation,
   isSignedIn,
+  signIn,
 }: {
   invitation: string;
   isSignedIn: boolean | undefined;
+  signIn: ReactNode;
 }) {
   return (
     <>
       {invitation && (
         <Note>Seu par convidou você. Entre para compartilhar o orçamento.</Note>
       )}
-      {isSignedIn ? (
-        <LoadingState>Carregando…</LoadingState>
-      ) : (
-        <GateSignIn
-          routing="hash"
-          withSignUp
-          fallback={<SignInSkeleton />}
-          forceRedirectUrl={afterAuth(invitation)}
-          signUpForceRedirectUrl={afterAuth(invitation)}
-          appearance={{
-            elements: {
-              rootBox: styles.clerkRoot,
-              cardBox: styles.clerkCardBox,
-              card: styles.clerkCard,
-              header: styles.clerkHeader,
-            },
-          }}
-        />
-      )}
+      {isSignedIn ? <LoadingState>Carregando…</LoadingState> : signIn}
     </>
+  );
+}
+
+function afterAuth(invitation: string) {
+  return invitation ? `/convite/${invitation}` : "/entrar";
+}
+
+function ClerkSignIn({ invitation }: { invitation: string }) {
+  return (
+    <GateSignIn
+      routing="hash"
+      withSignUp
+      fallback={<SignInSkeleton />}
+      forceRedirectUrl={afterAuth(invitation)}
+      signUpForceRedirectUrl={afterAuth(invitation)}
+      appearance={{
+        elements: {
+          rootBox: styles.clerkRoot,
+          cardBox: styles.clerkCardBox,
+          card: styles.clerkCard,
+          header: styles.clerkHeader,
+        },
+      }}
+    />
   );
 }
 
@@ -185,7 +184,7 @@ function StartChoice({
 }
 
 function useGateActions(
-  run: ReturnType<typeof useGate>["run"],
+  run: ReturnType<typeof useGateRun>["run"],
   invitation: string,
 ) {
   const posthog = usePostHog();
@@ -223,38 +222,36 @@ function useGateActions(
   };
 }
 
-export function AccountGate({
-  session,
-  invite = "",
+type GateActions = ReturnType<typeof useGateActions>;
+
+export function AccountGateView({
+  user,
+  invitation,
+  isSignedIn,
+  email,
+  busy,
+  error,
+  actions,
+  onClearInvitation,
+  signIn,
 }: {
-  session: SessionState;
-  invite?: string;
+  user: GateUser;
+  invitation: string;
+  isSignedIn: boolean | undefined;
+  email: string;
+  busy: boolean;
+  error: string;
+  actions: Pick<
+    GateActions,
+    | "acceptInvitation"
+    | "joinWithInvite"
+    | "submitName"
+    | "startHousehold"
+    | "leave"
+  >;
+  onClearInvitation: () => void;
+  signIn: ReactNode;
 }) {
-  const { user, error, busy, run } = useGate(session);
-  const router = useRouter();
-  const navigate = useNavigate();
-  const { isSignedIn } = useAuth();
-  const { user: clerkUser } = useUser();
-  const invitation = invite;
-  const email = clerkUser?.primaryEmailAddress?.emailAddress ?? "";
-  const actions = useGateActions(run, invitation);
-
-  // Clerk signs in before the server session exists; poll until it does.
-  useEffect(() => {
-    if (!isSignedIn || user) return;
-
-    void router.invalidate();
-
-    const timer = setInterval(
-      () => void router.invalidate(),
-      SESSION_SYNC_INTERVAL_MS,
-    );
-
-    return () => clearInterval(timer);
-  }, [isSignedIn, router, user]);
-
-  const clearInvitation = () => void navigate({ to: "/entrar" });
-
   return (
     <main className={styles.accountPage}>
       <ThemeToggle className={styles.pageTheme} />
@@ -267,7 +264,11 @@ export function AccountGate({
         <h1>{gateHeadline(user)}</h1>
         <p className={styles.accountIntro}>{gateIntro(user)}</p>
         {!user && (
-          <SignInStep invitation={invitation} isSignedIn={isSignedIn} />
+          <SignInStep
+            invitation={invitation}
+            isSignedIn={isSignedIn}
+            signIn={signIn}
+          />
         )}
         {user && !user.name && (
           <NameForm busy={busy} onSubmit={actions.submitName} />
@@ -278,7 +279,7 @@ export function AccountGate({
               <InvitationChoice
                 busy={busy}
                 onAccept={() => void actions.acceptInvitation()}
-                onClear={clearInvitation}
+                onClear={onClearInvitation}
               />
             ) : (
               <StartChoice
@@ -301,5 +302,50 @@ export function AccountGate({
       </section>
       <AppFooter className={styles.pageFooter} />
     </main>
+  );
+}
+
+export function AccountGate({
+  session,
+  invite = "",
+}: {
+  session: SessionState;
+  invite?: string;
+}) {
+  const { error, busy, run } = useGateRun();
+  const user = session.user;
+  const router = useRouter();
+  const navigate = useNavigate();
+  const { isSignedIn } = useAuth();
+  const { user: clerkUser } = useUser();
+  const invitation = invite;
+  const actions = useGateActions(run, invitation);
+
+  // Clerk signs in before the server session exists; poll until it does.
+  useEffect(() => {
+    if (!isSignedIn || user) return;
+
+    void router.invalidate();
+
+    const timer = setInterval(
+      () => void router.invalidate(),
+      SESSION_SYNC_INTERVAL_MS,
+    );
+
+    return () => clearInterval(timer);
+  }, [isSignedIn, router, user]);
+
+  return (
+    <AccountGateView
+      user={user}
+      invitation={invitation}
+      isSignedIn={isSignedIn}
+      email={clerkUser?.primaryEmailAddress?.emailAddress ?? ""}
+      busy={busy}
+      error={error}
+      actions={actions}
+      onClearInvitation={() => void navigate({ to: "/entrar" })}
+      signIn={<ClerkSignIn invitation={invitation} />}
+    />
   );
 }

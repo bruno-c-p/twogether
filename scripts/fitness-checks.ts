@@ -19,7 +19,12 @@ const BANNED_CSS_DEPS = ["tailwindcss", "shadcn"];
 
 const CACHE_CONTROL_FILES = ["src/start.ts"];
 
-const SELF = ["scripts/fitness.ts", "scripts/fitness-checks.ts"];
+// The checks and their tests necessarily spell out the banned patterns.
+const SELF = [
+  "scripts/fitness.ts",
+  "scripts/fitness-checks.ts",
+  "scripts/fitness-checks.test.ts",
+];
 
 const MEDIA = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;
 
