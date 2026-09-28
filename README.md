@@ -37,6 +37,7 @@ Clerk owns credentials, sessions, and e-mail delivery; the instance enables e-ma
 - Six fixed goals with editable percentages that add up to 100%: fixed costs 30%, pleasures 10%, comfort 15%, goals 15%, financial freedom 25%, and knowledge 5%. The split applies to every month.
 - Editing, deleting, and undoing per transaction, plus search and filters by goal, type, and tag. Amounts in whole cents.
 - Original authorship and the last person to edit are preserved.
+- Split expenses: turn on **Dividir com …** on an expense and the other person owes half (rounded down). The payer keeps the full expense. Only the person who owes can mark it paid, picking the date and both accounts; that records an income for the payer and an expense for the partner. Those repayment entries count in individual views and account balances but not in **Us**, and undoing the payment removes them. A paid split locks its amount, type, split, and deletion until it is unmarked.
 - Each change is a validated `createServerFn`. The workspace seeds TanStack Query from the loader snapshot; saving, deleting, or undoing a transaction updates that cache immediately, then reconciles with the server. Focus, visibility, and reconnect refetch the snapshot so you see your partner's changes. Concurrent edits to the same entry or to the percentages are rejected with guidance to review the current version; independent additions do not overwrite each other. The month lives in the URL (`?month=YYYY-MM`); the first visit without it redirects to the current month.
 
 ## Persistence and deployment

@@ -9,6 +9,7 @@ import {
   formatAmountInput,
   formText,
   newId,
+  parseAmount,
   normalizeTag,
 } from "@/features/budget/domain/format";
 import {
@@ -23,6 +24,7 @@ import type {
 } from "@/features/budget/domain/types";
 import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker";
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
+import { SplitPanel } from "@/features/budget/components/split-panel";
 import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
 import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
 import { Button } from "@/components/ui/button";
@@ -51,7 +53,10 @@ interface Props {
   accounts: BankAccount[];
   currentUserId: string;
   serverError: string;
+  splitBusy: boolean;
   onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
+  onSettle: (transaction: Transaction) => void;
+  onUnsettle: (transaction: Transaction) => Promise<boolean>;
   onClose: () => void;
 }
 
@@ -63,7 +68,10 @@ export function TransactionDialog({
   accounts,
   currentUserId,
   serverError,
+  splitBusy,
   onSave,
+  onSettle,
+  onUnsettle,
   onClose,
 }: Props) {
   const amountInput = useRef<HTMLInputElement>(null);
@@ -80,6 +88,12 @@ export function TransactionDialog({
   const [occurrences, setOccurrences] = useState(12);
   const [saving, setSaving] = useState(false);
   const memberId = transaction?.memberId ?? currentUserId;
+  const [split, setSplit] = useState(Boolean(transaction?.split));
+  const paid = Boolean(transaction?.split?.paidAt);
+  const payer = members.find((member) => member.id === memberId);
+  const debtor = members.find((member) => member.id !== memberId);
+  const canSplit =
+    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -115,6 +129,7 @@ export function TransactionDialog({
       goal,
       kind,
       occurrences: recurring && !transaction ? occurrences : 1,
+      split: canSplit && split,
     });
     if (!parsed.success) {
       setErrors(fieldErrors(parsed.error));
@@ -136,6 +151,7 @@ export function TransactionDialog({
             accountId: parsed.data.accountId,
             memberId,
             revision: transaction?.revision,
+            ...(canSplit && split ? { split: transaction?.split ?? {} } : {}),
           },
           parsed.data.occurrences,
         )
@@ -165,6 +181,7 @@ export function TransactionDialog({
           <Fieldset disabled={saving}>
             <KindToggle
               kind={kind}
+              disabled={paid}
               onChange={(next) => {
                 setKind(next);
                 if (next === "income") setGoal(null);
@@ -181,6 +198,7 @@ export function TransactionDialog({
                 placeholder="0,00"
                 maxLength={14}
                 required
+                readOnly={paid}
                 value={amountValue}
                 onChange={(event) =>
                   setAmountValue(formatAmountInput(event.currentTarget.value))
@@ -260,6 +278,30 @@ export function TransactionDialog({
                 <GoalPicker value={goal} onChange={setGoal} />
                 <FieldError id="goal-error">{errors.goal}</FieldError>
               </>
+            )}
+            {canSplit && debtor && (
+              <SplitPanel
+                checked={split}
+                amount={parseAmount(amountValue) ?? 0}
+                transaction={transaction}
+                title={
+                  debtor.id === currentUserId
+                    ? `Dividir entre ${payer?.name ?? "a outra pessoa"} e você`
+                    : `Dividir com ${debtor.name}`
+                }
+                payerName={
+                  payer?.id === currentUserId ? "você" : (payer?.name ?? "")
+                }
+                debtorName={debtor.id === currentUserId ? "você" : debtor.name}
+                userIsDebtor={debtor.id === currentUserId}
+                busy={splitBusy}
+                onChange={setSplit}
+                onSettle={() => transaction && onSettle(transaction)}
+                onUnsettle={() => {
+                  if (transaction)
+                    void onUnsettle(transaction).then((ok) => ok && onClose());
+                }}
+              />
             )}
             <TagPicker
               tags={tags}

@@ -3,11 +3,13 @@ import { ensureUser, setName } from "@/features/auth/auth.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   bankAccountSchema,
+  dateSchema,
   firstIssueMessage,
   goalPercentagesSchema,
   occurrencesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
+import { partnerShare } from "@/features/budget/domain/split";
 import type {
   BankAccount,
   BudgetState,
@@ -33,6 +35,7 @@ import {
   text,
   type AccountRow,
   type DatabaseExecutor,
+  type DatabaseTransaction,
   type HouseholdRow,
   type StoreContext,
   type TransactionRow,
@@ -96,9 +99,29 @@ function canonical(value: Transaction, user: UserRow): Transaction {
     goal: parsed.goal,
     tags: [...new Set(parsed.tags)],
     accountId: parsed.accountId,
+    split: parsed.split ? {} : undefined,
     updatedBy: user.id,
     updatedAt: new Date().toISOString(),
   };
+}
+
+const REPAYMENT_LOCKED =
+  "Este lançamento é um reembolso. Desmarque o pagamento na transação original para alterá-lo.";
+const PAID_LOCKED =
+  "Esta despesa dividida já foi paga. Desmarque o pagamento antes de alterar valor, tipo, divisão ou excluí-la.";
+
+async function memberCount(transaction: DatabaseTransaction, householdId: string) {
+  const row = await one<{ count: number }>(
+    transaction,
+    "SELECT count(*) AS count FROM users WHERE household_id = ?",
+    [householdId],
+  );
+  return row?.count ?? 0;
+}
+
+function assertUnlocked(stored: Transaction) {
+  if (stored.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+  if (stored.split?.paidAt) throw new RequestError(PAID_LOCKED);
 }
 
 function canonicalAccount(value: BankAccount): BankAccount {
@@ -237,6 +260,7 @@ export async function saveTransaction(
         stored.kind === t.kind &&
         stored.goal === t.goal &&
         stored.accountId === t.accountId &&
+        Boolean(stored.split) === Boolean(t.split) &&
         stored.memberId === user.id &&
         stored.tags.length === t.tags.length &&
         stored.tags.every((tag, index) => tag === t.tags[index]);
@@ -247,6 +271,17 @@ export async function saveTransaction(
     if (old && occurrences !== 1)
       throw new RequestError("Edite cada ocorrência individualmente.");
     const previous = old ? storedTransaction(old.payload) : undefined;
+    if (previous?.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+    if (
+      previous?.split?.paidAt &&
+      (!t.split || t.amount !== previous.amount || t.kind !== previous.kind)
+    )
+      throw new RequestError(PAID_LOCKED);
+    if (t.split && !previous?.split && (await memberCount(transaction, homeRow.id)) < 2)
+      throw new RequestError(
+        "Convide a outra pessoa do casal antes de dividir despesas.",
+      );
+    if (t.split && previous?.split) t.split = previous.split;
     const createdBy = previous?.createdBy ?? user.id;
     const memberId =
       typeof previous?.memberId === "string"
@@ -310,6 +345,7 @@ export async function deleteTransaction(
       [homeRow.id, id],
     );
     if (!previous) throw conflict();
+    if (!previous.deleted) assertUnlocked(storedTransaction(previous.payload));
     if (input.following !== undefined) {
       const source = storedTransaction(previous.payload);
       if (!source.recurrenceId || source.recurrenceIndex === undefined)
@@ -338,6 +374,7 @@ export async function deleteTransaction(
         )
       )
         throw conflict();
+      for (const row of following) assertUnlocked(storedTransaction(row.payload));
       for (const row of following) {
         await execute(
           transaction,
@@ -383,6 +420,8 @@ export async function restoreTransaction(
       [homeRow.id, id],
     );
     if (!previous) throw conflict();
+    if (storedTransaction(previous.payload).settlementOf)
+      throw new RequestError(REPAYMENT_LOCKED);
     const payload = JSON.stringify({
       ...storedTransaction(previous.payload),
       updatedBy: user.id,
@@ -394,6 +433,146 @@ export async function restoreTransaction(
       [0, payload, homeRow.id, id, revision(input.revision), 1],
     );
     if (result.rowsAffected !== 1) throw conflict();
+  });
+}
+
+async function splitSource(
+  transaction: DatabaseTransaction,
+  user: UserRow,
+  homeRow: HouseholdRow,
+  input: { id: string; revision: number },
+) {
+  const id = text(input.id, 100);
+  const row = await one<TransactionRow>(
+    transaction,
+    "SELECT * FROM transactions WHERE household_id = ? AND id = ?",
+    [homeRow.id, id],
+  );
+  if (!row || row.deleted || row.revision !== revision(input.revision))
+    throw conflict();
+  const stored = storedTransaction(row.payload);
+  if (!stored.split || stored.kind !== "expense" || stored.settlementOf)
+    throw new RequestError("Esta transação não está dividida.");
+  if (stored.memberId === user.id)
+    throw new RequestError(
+      "Só quem deve pode marcar este pagamento.",
+      403,
+    );
+  return { id, row, stored };
+}
+
+async function writeSplit(
+  transaction: DatabaseTransaction,
+  homeRow: HouseholdRow,
+  user: UserRow,
+  source: { id: string; row: TransactionRow; stored: Transaction },
+  split: Transaction["split"],
+) {
+  const result = await execute(
+    transaction,
+    "UPDATE transactions SET payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
+    [
+      JSON.stringify({
+        ...source.stored,
+        split,
+        updatedBy: user.id,
+        updatedAt: new Date().toISOString(),
+      }),
+      homeRow.id,
+      source.id,
+      source.row.revision,
+    ],
+  );
+  if (result.rowsAffected !== 1) throw conflict();
+}
+
+export async function settleSplit(
+  ctx: StoreContext,
+  user: UserRow,
+  homeRow: HouseholdRow,
+  input: {
+    id: string;
+    revision: number;
+    date: string;
+    payerAccountId: string;
+    partnerAccountId: string;
+  },
+) {
+  await ctx.ready;
+  await ctx.atomic(async (transaction) => {
+    const source = await splitSource(transaction, user, homeRow, input);
+    if (source.stored.split?.paidAt) throw conflict();
+    const date = dateSchema.safeParse(input.date);
+    if (!date.success) throw new RequestError(firstIssueMessage(date.error));
+    for (const accountId of [input.payerAccountId, input.partnerAccountId]) {
+      const account = await one<AccountRow>(
+        transaction,
+        "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
+        [homeRow.id, text(accountId, 100)],
+      );
+      if (!account) throw new RequestError("Escolha uma conta bancária.");
+    }
+    const now = new Date().toISOString();
+    const { stored } = source;
+    const common = {
+      amount: partnerShare(stored.amount),
+      date: date.data,
+      createdBy: user.id,
+      updatedBy: user.id,
+      updatedAt: now,
+      settlementOf: source.id,
+    };
+    const income: Transaction = {
+      ...common,
+      id: randomUUID(),
+      description: `Reembolso: ${stored.description}`.slice(0, 80),
+      kind: "income",
+      goal: null,
+      tags: [],
+      accountId: input.payerAccountId,
+      memberId: stored.memberId,
+    };
+    const expense: Transaction = {
+      ...common,
+      id: randomUUID(),
+      description: `${stored.description} (sua parte)`.slice(0, 80),
+      kind: "expense",
+      goal: stored.goal,
+      tags: stored.tags,
+      accountId: input.partnerAccountId,
+      memberId: user.id,
+    };
+    for (const entry of [income, expense])
+      await execute(
+        transaction,
+        "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1)",
+        [entry.id, homeRow.id, JSON.stringify(entry)],
+      );
+    await writeSplit(transaction, homeRow, user, source, {
+      paidAt: now,
+      paidBy: user.id,
+      entryIds: [income.id, expense.id],
+    });
+  });
+}
+
+export async function unsettleSplit(
+  ctx: StoreContext,
+  user: UserRow,
+  homeRow: HouseholdRow,
+  input: { id: string; revision: number },
+) {
+  await ctx.ready;
+  await ctx.atomic(async (transaction) => {
+    const source = await splitSource(transaction, user, homeRow, input);
+    if (!source.stored.split?.paidAt) throw conflict();
+    for (const entryId of source.stored.split.entryIds ?? [])
+      await execute(
+        transaction,
+        "UPDATE transactions SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND deleted = 0",
+        [homeRow.id, entryId],
+      );
+    await writeSplit(transaction, homeRow, user, source, {});
   });
 }
 
@@ -511,6 +690,22 @@ export function createBudgetStore(filename: string) {
       householdRow: HouseholdRow,
       input: { id: string; revision: number },
     ) => restoreTransaction(ctx, user, householdRow, input),
+    settleSplit: (
+      user: UserRow,
+      householdRow: HouseholdRow,
+      input: {
+        id: string;
+        revision: number;
+        date: string;
+        payerAccountId: string;
+        partnerAccountId: string;
+      },
+    ) => settleSplit(ctx, user, householdRow, input),
+    unsettleSplit: (
+      user: UserRow,
+      householdRow: HouseholdRow,
+      input: { id: string; revision: number },
+    ) => unsettleSplit(ctx, user, householdRow, input),
     saveAccount: (
       user: UserRow,
       householdRow: HouseholdRow,

@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { Distribution } from "@/features/budget/components/distribution/distribution";
 import { ExpenseCharts } from "@/features/budget/components/expense-charts/expense-charts";
@@ -15,6 +16,7 @@ export function Overview({
   hidden,
   displayMoney,
   summary,
+  debtCard,
 }: {
   monthly: Transaction[];
   historyTransactions: Transaction[];
@@ -23,6 +25,7 @@ export function Overview({
   hidden: boolean;
   displayMoney: (value: number) => string;
   summary: ReturnType<typeof summarize>;
+  debtCard?: ReactNode;
 }) {
   return (
     <>
@@ -77,6 +80,7 @@ export function Overview({
         </div>
         <Distribution transactions={monthly} hidden={hidden} />
       </OverviewGrid>
+      {debtCard}
       {month && (
         <ExpenseCharts
           transactions={monthly}

@@ -4,15 +4,18 @@ import styles from "@/features/budget/components/kind-toggle/kind-toggle.module.
 
 export function KindToggle({
   kind,
+  disabled,
   onChange,
 }: {
   kind: TransactionKind;
+  disabled?: boolean;
   onChange: (kind: TransactionKind) => void;
 }) {
   return (
     <div className={styles.kindToggle} aria-label="Tipo da transação">
       <button
         type="button"
+        disabled={disabled}
         className={kind === "expense" ? styles.active : ""}
         aria-pressed={kind === "expense"}
         onClick={() => onChange("expense")}
@@ -21,6 +24,7 @@ export function KindToggle({
       </button>
       <button
         type="button"
+        disabled={disabled}
         className={kind === "income" ? styles.active : ""}
         aria-pressed={kind === "income"}
         onClick={() => onChange("income")}

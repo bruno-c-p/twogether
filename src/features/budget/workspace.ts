@@ -76,3 +76,51 @@ export function optimisticRestore(
     },
   };
 }
+
+function replaceTransaction(
+  snapshot: WorkspaceSnapshot,
+  id: string,
+  update: (transaction: Transaction) => Transaction,
+  drop: string[] = [],
+): WorkspaceSnapshot {
+  return {
+    ...snapshot,
+    budget: {
+      ...snapshot.budget,
+      transactions: snapshot.budget.transactions
+        .filter((item) => !drop.includes(item.id))
+        .map((item) => (item.id === id ? update(item) : item)),
+    },
+  };
+}
+
+export function optimisticSettle(
+  snapshot: WorkspaceSnapshot,
+  input: { id: string },
+): WorkspaceSnapshot {
+  // ponytail: the repayment rows wait for refetch; the server mints their UUIDs
+  return replaceTransaction(snapshot, input.id, (item) => ({
+    ...item,
+    split: { paidAt: new Date().toISOString(), paidBy: snapshot.user.id },
+    revision: (item.revision ?? 0) + 1,
+  }));
+}
+
+export function optimisticUnsettle(
+  snapshot: WorkspaceSnapshot,
+  input: { id: string },
+): WorkspaceSnapshot {
+  const source = snapshot.budget.transactions.find(
+    (item) => item.id === input.id,
+  );
+  const drop = snapshot.budget.transactions
+    .filter((item) => item.settlementOf === input.id)
+    .map((item) => item.id)
+    .concat(source?.split?.entryIds ?? []);
+  return replaceTransaction(
+    snapshot,
+    input.id,
+    (item) => ({ ...item, split: {}, revision: (item.revision ?? 0) + 1 }),
+    drop,
+  );
+}

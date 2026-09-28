@@ -115,6 +115,18 @@ const optionalText = z
   .string({ error: "Confira os dados da transação." })
   .optional();
 
+const splitSchema = z.looseObject(
+  {
+    paidAt: optionalText,
+    paidBy: optionalText,
+    entryIds: z
+      .array(idSchema, { error: "Divisão inválida." })
+      .length(2, { error: "Divisão inválida." })
+      .optional(),
+  },
+  { error: "Divisão inválida." },
+);
+
 export const transactionSchema = z
   .looseObject({
     id: z
@@ -148,6 +160,8 @@ export const transactionSchema = z
     createdBy: optionalText,
     updatedBy: optionalText,
     updatedAt: optionalText,
+    split: splitSchema.optional(),
+    settlementOf: optionalText,
   })
   .refine((value) => !(value.kind === "expense" && value.goal === null), {
     error: "Escolha uma das seis metas para esta despesa.",
@@ -156,6 +170,14 @@ export const transactionSchema = z
   .refine((value) => !(value.kind === "income" && value.goal !== null), {
     error: "Receitas não podem ter meta.",
     path: ["goal"],
+  })
+  .refine((value) => !(value.split && value.kind !== "expense"), {
+    error: "Só despesas podem ser divididas.",
+    path: ["split"],
+  })
+  .refine((value) => !(value.split && value.amount < 2), {
+    error: "Use um valor de pelo menos R$ 0,02 para dividir.",
+    path: ["split"],
   });
 
 export const bankAccountSchema = z.looseObject({
@@ -224,6 +246,11 @@ export function transactionFormSchema(accounts: BankAccount[]) {
         error: "Tipo da transação inválido.",
       }),
       occurrences: occurrencesSchema,
+      split: z.boolean(),
+    })
+    .refine((value) => !(value.split && value.amount < 2), {
+      error: "Use um valor de pelo menos R$ 0,02 para dividir.",
+      path: ["amount"],
     })
     .refine((value) => !(value.kind === "expense" && value.goal === null), {
       error: "Escolha uma das seis metas para esta despesa.",

@@ -5,6 +5,7 @@ import type { Transaction } from "@/features/budget/domain/types";
 export type Notice = {
   message: string;
   undo?: Transaction;
+  undoSettle?: Transaction;
 };
 
 export function useNotice() {
@@ -46,7 +47,7 @@ export function NoticeToast({
       <span className="max-bp620:max-w-[210px] max-bp620:leading-[1.5]">
         {notice.message}
       </span>
-      {notice.undo && (
+      {(notice.undo || notice.undoSettle) && (
         <button
           className="bg-transparent border-0 underline underline-offset-[3px] p-[4px] text-on-toast-soft"
           onClick={onUndo}
