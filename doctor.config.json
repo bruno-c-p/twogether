@@ -1,0 +1,43 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "blocking": "warning",
+  "ignore": {
+    "files": [
+      ".agents/**",
+      ".claude/**",
+      ".factory/**",
+      ".goose/**",
+      ".kiro/**",
+      ".qwen/**",
+      "tools/**"
+    ],
+    "overrides": [
+      {
+        // The native <dialog> closes on Escape through onCancel. The backdrop
+        // click is a pointer-only shortcut for the same action, and the
+        // element is a modal dialog, not static content.
+        "files": ["src/components/ui/dialog/dialog.tsx"],
+        "rules": [
+          "react-doctor/click-events-have-key-events",
+          "react-doctor/no-noninteractive-element-interactions"
+        ]
+      },
+      {
+        // These inputs live inside modal dialogs opened by the user. HTML
+        // recommends `autofocus` to pick a dialog's initial focus; without it
+        // showModal() focuses the close button instead of the first field.
+        "files": [
+          "src/features/budget/components/account-dialog.tsx",
+          "src/features/budget/components/transaction-dialog/transaction-dialog.tsx"
+        ],
+        "rules": ["react-doctor/no-autofocus"]
+      },
+      {
+        // The test harness replays a user story against a single in-memory
+        // SQLite connection, so its steps run in order on purpose.
+        "files": ["src/features/budget/services/store-test-harness.ts"],
+        "rules": ["react-doctor/server-sequential-independent-await"]
+      }
+    ]
+  }
+}

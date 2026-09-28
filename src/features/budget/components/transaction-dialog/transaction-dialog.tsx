@@ -252,10 +252,12 @@ export function TransactionDialog({
                 <FieldError id="date-error">{errors.date}</FieldError>
               </label>
             </FieldRow>
-            <Field>
+            <Field htmlFor="transaction-account">
               Conta
               <select
+                id="transaction-account"
                 name="accountId"
+                aria-label="Conta"
                 defaultValue={
                   transaction?.accountId ??
                   (accounts.length === 1 ? accounts[0].id : "")

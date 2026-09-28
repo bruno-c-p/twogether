@@ -80,10 +80,6 @@ export function ListRowActions({
   );
 }
 
-export const listRowAction = styles.actionButton;
-
-export const listRowDelete = styles.deleteButton;
-
 function valueTone(tone: "positive" | "negative") {
   switch (tone) {
     case "positive":

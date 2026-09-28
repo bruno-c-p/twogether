@@ -42,8 +42,15 @@ export function GoalPercentagesDialog({
     if (!valid || saving) return;
     setSaving(true);
 
-    if (await onSave(values)) onClose();
-    setSaving(false);
+    let saved = false;
+
+    try {
+      saved = await onSave(values);
+    } finally {
+      setSaving(false);
+    }
+
+    if (saved) onClose();
   }
 
   return (

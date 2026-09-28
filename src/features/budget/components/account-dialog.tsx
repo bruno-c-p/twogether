@@ -100,9 +100,10 @@ export function AccountDialog({
         </DialogHeader>
         <form onSubmit={(event) => void submit(event)}>
           <Fieldset disabled={saving}>
-            <Field>
+            <Field htmlFor="account-name">
               Nome da conta
               <input
+                id="account-name"
                 name="name"
                 autoFocus
                 placeholder="Ex.: Nubank, Itaú, carteira"

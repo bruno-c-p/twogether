@@ -12,7 +12,8 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
-    "e2e": "playwright test --config e2e/playwright.config.ts"
+    "e2e": "playwright test --config e2e/playwright.config.ts",
+    "doctor": "react-doctor --yes --verbose --blocking warning"
   },
   "dependencies": {
     "@clerk/localizations": "^4.17.1",
@@ -41,6 +42,7 @@
     "oxlint": "1.85.0",
     "oxlint-tsgolint": "7.0.2003",
     "prettier": "^3.9.6",
+    "react-doctor": "^0.9.14",
     "typescript": "^5.9.0",
     "unocss": "^66.10.5",
     "vite": "^7.3.0",

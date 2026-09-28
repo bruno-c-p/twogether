@@ -220,19 +220,20 @@ export async function snapshot(
       return { user: identity, household: null, budget: emptyBudget() };
     const owned = await household(transaction, fresh);
 
-    const rows = await all(
-      transaction,
-      transactionRowSchema,
-      "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
-      [owned.id],
-    );
-
-    const accountRows = await all(
-      transaction,
-      accountRowSchema.pick({ payload: true, revision: true }),
-      "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
-      [owned.id],
-    );
+    const [rows, accountRows] = await Promise.all([
+      all(
+        transaction,
+        transactionRowSchema,
+        "SELECT payload, revision, deleted FROM transactions WHERE household_id = ? AND deleted = 0",
+        [owned.id],
+      ),
+      all(
+        transaction,
+        accountRowSchema.pick({ payload: true, revision: true }),
+        "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
+        [owned.id],
+      ),
+    ]);
 
     return {
       user: identity,
