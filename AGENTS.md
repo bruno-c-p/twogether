@@ -19,9 +19,18 @@
 - Inspect console errors and failed requests. Fix problems introduced by the
   change and repeat the validation of the fixed flow.
 - Run `bun run typecheck`, `bun run lint`, `bun run fitness`,
-  `bun run test`, `bun run build`, `bun run e2e`, and `git diff --check`.
+  `bun run doctor`, `bun run fallow`, `bun run test`, `bun run build`,
+  `bun run e2e`, and `git diff --check`.
   If dependencies are missing, run `bun install --frozen-lockfile` before
   the checks. Playwright Chromium: `bunx playwright install chromium`.
+- `lint` runs oxlint (config in `oxlint.config.ts`) with the vendored
+  anti-slop rules in `tools/oxlint/anti-slop/`. Fix findings instead of
+  disabling rules or adding casts; a type assertion needs a `SAFETY:` comment
+  that states the invariant. Update the vendored copy only through its
+  `install-anti-slop` skill and record the commit in `UPSTREAM.md`.
+- `doctor` (React Doctor, `doctor.config.json`) and `fallow`
+  (`.fallowrc.json`) fail on any finding. Suppress one only when it is a
+  proven false positive, with the reason written next to the suppression.
 - `e2e` runs on its own port (3400) against a throwaway SQLite file and
   never reuses a running dev server, so a `bun run dev` on 3000 is safe.
   Do not point it back at 3000 or at `data/twogether.sqlite`.

@@ -27,9 +27,9 @@
         ]
       },
       {
-        // These inputs live inside modal dialogs opened by the user. HTML
-        // recommends `autofocus` to pick a dialog's initial focus; without it
-        // showModal() focuses the close button instead of the first field.
+        // These inputs live inside modal dialogs the user just opened, and
+        // HTML recommends `autofocus` to choose a dialog's initial focus.
+        // Moving focus into a modal is required, not a surprise jump.
         "files": [
           "src/features/budget/components/account-dialog.tsx",
           "src/features/budget/components/transaction-dialog/transaction-dialog.tsx"

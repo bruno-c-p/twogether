@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: 22.12.0
+          node-version: 22.18.0
           package-manager-cache: false
 
       - name: Set up Bun
@@ -38,6 +38,12 @@ jobs:
 
       - name: Lint
         run: bun run lint
+
+      - name: React Doctor
+        run: bun run doctor
+
+      - name: Fallow
+        run: bun run fallow
 
       - name: Fitness
         run: bun run fitness

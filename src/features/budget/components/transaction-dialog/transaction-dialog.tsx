@@ -4,6 +4,7 @@ import {
   useState,
   type FormEvent,
   type ReactNode,
+  type RefObject,
 } from "react";
 import { Check } from "lucide-react";
 import {
@@ -249,20 +250,20 @@ type TransactionForm = Extract<
   { success: true }
 >["data"];
 
-function AmountInput({ form }: { form: TransactionFormState }) {
-  const amountInput = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    amountInput.current?.focus();
-  }, []);
-
+function AmountInput({
+  form,
+  amountInput,
+}: {
+  form: TransactionFormState;
+  amountInput: RefObject<HTMLInputElement | null>;
+}) {
   useEffect(() => {
     const input = amountInput.current;
 
     if (!input) return;
 
     input.setSelectionRange(input.value.length, input.value.length);
-  }, [form.amountValue]);
+  }, [amountInput, form.amountValue]);
 
   return (
     <>
@@ -495,6 +496,14 @@ export function TransactionDialog({
     onClose,
   });
 
+  const amountInput = useRef<HTMLInputElement>(null);
+
+  // Runs after <Dialog> calls showModal(), which would otherwise move focus
+  // to the close button.
+  useEffect(() => {
+    amountInput.current?.focus();
+  }, []);
+
   return (
     <Dialog
       className={styles.dialog}
@@ -517,7 +526,7 @@ export function TransactionDialog({
               disabled={form.paid}
               onChange={form.changeKind}
             />
-            <AmountInput form={form} />
+            <AmountInput form={form} amountInput={amountInput} />
             <DescriptionAndDate
               transaction={transaction}
               defaultDate={defaultDate}
