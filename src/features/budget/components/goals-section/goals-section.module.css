@@ -1,9 +1,0 @@
-.goalsSection {
-  margin-top: 32px;
-}
-
-@media (max-width: 620px) {
-  .goalsSection {
-    margin-top: 29px;
-  }
-}

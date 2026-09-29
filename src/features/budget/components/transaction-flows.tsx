@@ -2,12 +2,14 @@ import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recu
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { SettleDialog } from "@/features/budget/components/settle-dialog";
+import { RegisterSheet } from "@/features/budget/components/register-sheet";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import type { WorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
+import type { RegisterImpactData } from "@/features/budget/domain/register-impact";
 import type { Transaction } from "@/features/budget/domain/types";
 
 type FlowProps = {
@@ -71,13 +73,36 @@ export function TransactionFlows({
   month,
   allTags,
   following,
+  summary,
+  plans,
   ...flow
-}: FlowProps & { month: string; allTags: string[]; following: Transaction[] }) {
+}: FlowProps & {
+  month: string;
+  allTags: string[];
+  following: Transaction[];
+  summary: RegisterImpactData["summary"];
+  plans: RegisterImpactData["plans"];
+}) {
   const { budget, dialogs, mutations, actions } = flow;
 
   return (
     <>
       <EditorDialogs {...flow} month={month} allTags={allTags} />
+      {dialogs.register && (
+        <RegisterSheet
+          initialDraft={dialogs.register.draft}
+          month={month}
+          accounts={budget.state.accounts}
+          members={budget.household.members}
+          currentUserId={budget.user.id}
+          summary={summary}
+          plans={plans}
+          serverError={mutations.saveTx.error}
+          onSave={actions.save}
+          onManual={actions.openManual}
+          onClose={() => dialogs.setRegister(null)}
+        />
+      )}
       {dialogs.deleting && (
         <DeleteRecurrenceDialog
           transaction={dialogs.deleting}

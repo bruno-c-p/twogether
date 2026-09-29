@@ -1,21 +1,35 @@
 import { expect, test, type Page } from "@playwright/test";
 import {
   expectToast,
-  nav,
   onboard,
+  openNewTransaction,
+  openView,
   reloadApp,
   setMonth,
   withMobile,
 } from "../fixtures/app";
 
 async function addNubank(page: Page) {
-  await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
+  await openView(page, "Contas");
   await page.getByRole("button", { name: "Adicionar primeira conta" }).click();
   await page.getByLabel("Nome da conta").fill("Nubank");
   await page.getByLabel("Saldo inicial").fill("1.250,00");
   await page.getByRole("button", { name: "Adicionar conta" }).click();
   await expectToast(page, "Conta adicionada.");
-  await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
+}
+
+function summary(page: Page) {
+  return page.getByRole("region", { name: "Resumo mensal" });
+}
+
+function balance(page: Page) {
+  return summary(page).locator("p").nth(1);
+}
+
+function expenses(page: Page) {
+  return summary(page)
+    .locator("div")
+    .filter({ hasText: /^Saídas/ });
 }
 
 test.describe("transactions", () => {
@@ -26,8 +40,7 @@ test.describe("transactions", () => {
     await addNubank(page);
     await setMonth(page, "2026-09");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const dialog = page.getByRole("dialog", { name: "Nova transação" });
+    const dialog = await openNewTransaction(page);
     await expect(
       dialog.getByRole("heading", { name: "Nova transação" }),
     ).toBeVisible();
@@ -40,8 +53,7 @@ test.describe("transactions", () => {
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const expense = page.getByRole("dialog", { name: "Nova transação" });
+    const expense = await openNewTransaction(page);
     await expense.getByRole("button", { name: "Despesa" }).click();
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
@@ -59,18 +71,30 @@ test.describe("transactions", () => {
     await expense.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    await expect(page.getByText("Nosso saldo do mês")).toBeVisible();
-    await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Salário", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("Ana · Nubank").first()).toBeVisible();
-    await expect(page.getByText("Custo fixo").first()).toBeVisible();
+    const list = page.getByRole("region", { name: "Transações do mês" });
+    await expect(list.getByText("Nubank").first()).toBeVisible();
+    await expect(list.getByTitle("Ana").first()).toBeVisible();
+    await expect(
+      list.locator("span").getByText("Custo fixo", { exact: true }),
+    ).toBeVisible();
     await expect(page.getByRole("button", { name: "#casa" })).toBeVisible();
-    await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();
+
+    await openView(page, "Visão geral");
+    await expect(summary(page).getByText(/^Sobra de /)).toBeVisible();
+    await expect(balance(page)).toHaveText(/R\$\s*4\.954,10/);
+    await expect(
+      page.getByRole("button", { name: "Editar Salário", exact: true }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Editar Mercado", exact: true }),
+    ).toBeVisible();
+    await openView(page, "Transações");
 
     await withMobile(page, async () => {
       await page.getByRole("button", { name: "Nova transação" }).click();
@@ -101,8 +125,7 @@ test.describe("transactions", () => {
     await addNubank(page);
     await setMonth(page, "2026-09");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const dialog = page.getByRole("dialog", { name: "Nova transação" });
+    const dialog = await openNewTransaction(page);
     await dialog.getByRole("button", { name: "Despesa" }).click();
     await dialog.getByLabel("Valor").fill("100,00");
     await dialog.getByLabel("Descrição").fill("Aluguel");
@@ -118,19 +141,22 @@ test.describe("transactions", () => {
     await reloadApp(page);
     await setMonth(page, "2026-09");
 
-    const summary = page.getByRole("region", { name: "Resumo mensal" });
-    await expect(summary.getByText(/-R\$\s*100,00/)).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Aluguel", exact: true }),
     ).toBeVisible();
     await expect(page.locator("time[datetime='2026-09-14']")).toBeVisible();
+    await openView(page, "Visão geral");
+    await expect(expenses(page)).toContainText(/R\$\s*100,00/);
+    await openView(page, "Transações");
 
     await setMonth(page, "2026-10");
     await expect(
       page.getByRole("button", { name: "Aluguel", exact: true }),
     ).toBeVisible();
     await expect(page.locator("time[datetime='2026-10-14']")).toBeVisible();
-    await expect(summary.getByText(/-R\$\s*100,00/)).toBeVisible();
+    await openView(page, "Visão geral");
+    await expect(expenses(page)).toContainText(/R\$\s*100,00/);
+    await openView(page, "Transações");
 
     await setMonth(page, "2026-11");
     await expect(
@@ -160,7 +186,8 @@ test.describe("transactions", () => {
     await expect(
       page.getByRole("button", { name: "Aluguel", exact: true }),
     ).toBeVisible();
-    await expect(summary.getByText(/-R\$\s*100,00/)).toBeVisible();
+    await openView(page, "Visão geral");
+    await expect(expenses(page)).toContainText(/R\$\s*100,00/);
   });
 
   test("delete and undo restore the month balance to the cent", async ({
@@ -170,8 +197,7 @@ test.describe("transactions", () => {
     await addNubank(page);
     await setMonth(page, "2026-09");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const income = page.getByRole("dialog", { name: "Nova transação" });
+    const income = await openNewTransaction(page);
     await income.getByRole("button", { name: "Receita" }).click();
     await income.getByLabel("Valor").fill("200,00");
     await income.getByLabel("Descrição").fill("Salário");
@@ -180,8 +206,7 @@ test.describe("transactions", () => {
     await income.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const expense = page.getByRole("dialog", { name: "Nova transação" });
+    const expense = await openNewTransaction(page);
     await expense.getByRole("button", { name: "Despesa" }).click();
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
@@ -193,10 +218,9 @@ test.describe("transactions", () => {
     await expense.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    const summary = page.getByRole("region", { name: "Resumo mensal" });
-    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
-      /R\$\s*154,10/,
-    );
+    await openView(page, "Visão geral");
+    await expect(balance(page)).toHaveText(/R\$\s*154,10/);
+    await openView(page, "Transações");
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toBeVisible();
@@ -211,17 +235,15 @@ test.describe("transactions", () => {
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toHaveCount(0);
-    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
-      /R\$\s*200,00/,
-    );
+    await openView(page, "Visão geral");
+    await expect(balance(page)).toHaveText(/R\$\s*200,00/);
 
     await toast.getByRole("button", { name: "Desfazer" }).click();
     await expectToast(page, "Alteração desfeita.");
+    await expect(balance(page)).toHaveText(/R\$\s*154,10/);
+    await openView(page, "Transações");
     await expect(
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toBeVisible();
-    await expect(summary.locator('[class*="balanceAmount"]')).toHaveText(
-      /R\$\s*154,10/,
-    );
   });
 });

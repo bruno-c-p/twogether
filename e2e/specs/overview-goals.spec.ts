@@ -6,6 +6,8 @@ import {
   nav,
   onboard,
   openCouple,
+  openNewTransaction,
+  openView,
   setMonth,
   setName,
   uniqueEmail,
@@ -15,7 +17,7 @@ import {
 } from "../fixtures/app";
 
 async function addAccount(page: Page, name = "Nubank") {
-  await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
+  await openView(page, "Contas");
   await page.getByRole("button", { name: "Adicionar primeira conta" }).click();
   await page.getByLabel("Nome da conta").fill(name);
   await page.getByLabel("Saldo inicial").fill("0,00");
@@ -24,8 +26,7 @@ async function addAccount(page: Page, name = "Nubank") {
 }
 
 async function addExpense(page: Page, description: string, date: string) {
-  await page.getByRole("button", { name: "Nova transação" }).click();
-  const dialog = page.getByRole("dialog", { name: "Nova transação" });
+  const dialog = await openNewTransaction(page);
   await dialog.getByRole("button", { name: "Despesa" }).click();
   await dialog.getByLabel("Valor").fill("10,00");
   await dialog.getByLabel("Descrição").fill(description);
@@ -68,9 +69,6 @@ test.describe("overview and goals", () => {
   }) => {
     const { bia, biaPage } = await onboardCouple(page, browser);
     await addAccount(page);
-    await nav(page, "desktop")
-      .getByRole("link", { name: "Visão geral" })
-      .click();
     await setMonth(page, "2026-09");
     await addExpense(page, "Ana mercado", "2026-09-10");
 
@@ -81,23 +79,26 @@ test.describe("overview and goals", () => {
     await reloadApp(page);
     await setMonth(page, "2026-09");
     await expect(
-      page.getByText("O planejado soma as metas individuais de cada pessoa."),
-    ).toBeVisible();
-    await expect(
       page.getByRole("button", { name: "Ana mercado", exact: true }),
     ).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Bia café", exact: true }),
+    ).toBeVisible();
+    await openView(page, "Orçamento");
+    await expect(
+      page.getByText("O planejado soma as metas de cada pessoa."),
     ).toBeVisible();
 
     await person(page, "Eu").click();
     const eu = new URL(page.url());
     const member = eu.searchParams.get("member");
     expect(member).toBeTruthy();
-    await expect(page.getByText("Saldo desta pessoa")).toBeVisible();
     await expect(
       page.getByText("Renda, gastos e metas da pessoa selecionada."),
     ).toBeVisible();
+    await openView(page, "Visão geral");
+    await expect(page.getByText(/^Sobra desta pessoa em /)).toBeVisible();
+    await openView(page, "Transações");
     await expect(
       page.getByRole("button", { name: "Ana mercado", exact: true }),
     ).toBeVisible();
@@ -129,11 +130,11 @@ test.describe("overview and goals", () => {
       ).toBeVisible();
     }
 
-    await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
+    await openView(page, "Contas");
     await expect(
-      page.getByText(
-        "O saldo de cada conta considera só as transações da pessoa selecionada.",
-      ),
+      page.getByText("Considera só as transações da pessoa selecionada.", {
+        exact: false,
+      }),
     ).toBeVisible();
 
     const memberId = new URL(page.url()).searchParams.get("member");
@@ -172,9 +173,6 @@ test.describe("overview and goals", () => {
   test("M11 four views, desktop and mobile nav", async ({ page, browser }) => {
     const { bia } = await onboardCouple(page, browser);
     await addAccount(page);
-    await nav(page, "desktop")
-      .getByRole("link", { name: "Visão geral" })
-      .click();
     await setMonth(page, "2026-09");
     await addExpense(page, "Farmácia", "2026-09-02");
 
@@ -182,7 +180,7 @@ test.describe("overview and goals", () => {
       { name: "Visão geral", heading: "Visão geral", view: undefined },
       { name: "Transações", heading: "Transações", view: "transactions" },
       { name: "Contas", heading: "Contas", view: "accounts" },
-      { name: "Metas", heading: "Metas", view: "goals" },
+      { name: "Orçamento", heading: "Orçamento", view: "goals" },
     ] as const;
 
     for (const item of views) {
@@ -204,14 +202,23 @@ test.describe("overview and goals", () => {
       page.getByRole("region", { name: "Resumo mensal" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("region", { name: "Gráficos de despesas do mês" }),
+      page.getByRole("region", { name: "Acerto entre vocês" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Histórico financeiro" }),
+      page.getByRole("heading", { name: "Orçamento do mês" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Últimas transações" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Editar Farmácia" }),
     ).toBeVisible();
     await expect(page.getByRole("button", { name: /Ver todas/ })).toBeVisible();
 
-    await nav(page, "desktop").getByRole("link", { name: "Metas" }).click();
+    await openView(page, "Orçamento");
+    await expect(
+      page.getByRole("heading", { name: "Distribuição da renda" }),
+    ).toBeVisible();
     await expect(
       page.getByText("Despesas essenciais do dia a dia."),
     ).toBeVisible();
@@ -235,12 +242,19 @@ test.describe("overview and goals", () => {
       page.getByRole("button", { name: "Editar meus percentuais" }),
     ).toBeHidden();
 
-    await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
-    await expect(page.getByLabel("Selecionar mês e ano")).toHaveCount(0);
+    await openView(page, "Contas");
+    await expect(page.getByLabel("Selecionar mês e ano")).toBeVisible();
+    await expect(person(page, "Nós")).toBeVisible();
 
     await withMobile(page, async () => {
       await expect(nav(page, "desktop")).toBeHidden();
       await expect(nav(page, "mobile")).toBeVisible();
+
+      await expect(
+        nav(page, "mobile").getByRole("button", {
+          name: "Registrar transação",
+        }),
+      ).toBeVisible();
 
       for (const item of views) {
         await nav(page, "mobile")
@@ -268,13 +282,9 @@ test.describe("overview and goals", () => {
   }) => {
     await onboard(page, "Ana");
     await addAccount(page);
-    await nav(page, "desktop")
-      .getByRole("link", { name: "Visão geral" })
-      .click();
     await setMonth(page, "2026-09");
 
-    await page.getByRole("button", { name: "Nova transação" }).click();
-    const income = page.getByRole("dialog", { name: "Nova transação" });
+    const income = await openNewTransaction(page);
     await income.getByRole("button", { name: "Receita" }).click();
     await income.getByLabel("Valor").fill("5000,00");
     await income.getByLabel("Descrição").fill("Salário");
@@ -282,7 +292,7 @@ test.describe("overview and goals", () => {
     await income.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
-    await nav(page, "desktop").getByRole("link", { name: "Metas" }).click();
+    await openView(page, "Orçamento");
     await expect(
       page.getByRole("button", {
         name: /Custo fixo: R\$\s*0,00 de R\$\s*1\.500,00 planejados/,

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import {
   commandBus,
+  nav,
   createHousehold,
   onboard,
   openCouple,
@@ -64,9 +65,11 @@ test.describe("auth", () => {
       page.getByRole("heading", { name: "Visão geral" }),
     ).toBeVisible();
     await expect(
-      page.getByText("Saldo, entradas, despesas e metas do mês."),
+      nav(page, "desktop").getByRole("link", { name: "Visão geral" }),
+    ).toHaveAttribute("aria-current", "page");
+    await expect(
+      page.getByRole("textbox", { name: "Registrar com uma frase" }),
     ).toBeVisible();
-    await expect(page.locator("header").getByText("Visão geral")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "Nós", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
@@ -83,9 +86,10 @@ test.describe("auth", () => {
     );
     const cookie = await sessionCookie(page);
     expect(cookie?.value).toBeTruthy();
-    await expect(
-      page.getByText("Nenhuma entrada registrada neste mês."),
-    ).toBeVisible();
+    const summary = page.getByRole("region", { name: "Resumo mensal" });
+    await expect(summary.getByText(/^Sobra de /)).toBeVisible();
+    await expect(summary.getByText("Entradas")).toBeVisible();
+    await expect(summary.getByText("Saídas")).toBeVisible();
     await expect(page.getByText("Nenhuma transação neste mês.")).toBeVisible();
     await expect(page.getByText("30%").first()).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);

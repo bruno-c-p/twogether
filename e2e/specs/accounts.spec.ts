@@ -11,6 +11,9 @@ import {
 test.describe("accounts", () => {
   test("M6 cannot launch a transação without a conta", async ({ page }) => {
     await onboard(page, "Ana");
+    await nav(page, "desktop")
+      .getByRole("link", { name: "Transações" })
+      .click();
     await page.getByRole("button", { name: "Nova transação" }).click();
     await expectToast(page, "Cadastre uma conta para lançar transações.");
     expect(new URL(page.url()).searchParams.get("view")).toBe("accounts");
@@ -28,11 +31,9 @@ test.describe("accounts", () => {
     await expect(
       page.getByRole("heading", { name: "Contas", exact: true }),
     ).toBeVisible();
-    await expect(page.getByLabel("Selecionar mês e ano")).toHaveCount(0);
+    await expect(page.getByLabel("Selecionar mês e ano")).toBeVisible();
     await expect(
-      page.getByText(
-        "O saldo de cada conta inclui as transações de todo o casal.",
-      ),
+      page.getByText("Inclui as transações do casal.", { exact: false }),
     ).toBeVisible();
     await expect(page.getByText("Nenhuma conta cadastrada.")).toBeVisible();
     await page
@@ -46,27 +47,26 @@ test.describe("accounts", () => {
     await page.getByRole("button", { name: "Adicionar conta" }).click();
     await expectToast(page, "Conta adicionada.");
     await expect(
-      page.getByRole("button", { name: "Nubank", exact: true }),
+      page.getByRole("heading", { name: "Nubank", exact: true }),
     ).toBeVisible();
-    await expect(page.getByText("Nenhuma transação nesta conta")).toBeVisible();
-    await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
+    await expect(page.getByText("Total nas contas")).toBeVisible();
+    await expect(page.getByText(/R\$\s*1\.250,00/).first()).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: /Contas cadastradas/ }),
-    ).toContainText("1");
+      page.getByRole("button", { name: "Editar Nubank" }),
+    ).toBeVisible();
     await expect(page.getByRole("heading", { name: "Nova conta" })).toHaveCount(
       0,
     );
 
     await withMobile(page, async () => {
       await dismissToast(page);
-      const fab = page.getByRole("button", { name: "Nova conta" });
-      await expect(fab).toBeVisible();
-      const box = await fab.boundingBox();
-      expect(box?.width ?? 0).toBeGreaterThan(240);
       await expect(
-        page.getByRole("button", { name: "Nubank", exact: true }),
+        page.getByRole("button", { name: "Nova conta" }),
       ).toBeVisible();
-      await expect(page.getByText(/R\$\s*1\.250,00/)).toBeVisible();
+      await expect(
+        page.getByRole("heading", { name: "Nubank", exact: true }),
+      ).toBeVisible();
+      await expect(page.getByText(/R\$\s*1\.250,00/).first()).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });
   });

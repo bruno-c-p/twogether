@@ -1,37 +1,19 @@
-.pageHeading {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 20px;
-}
-
-.pageHeading p {
-  font-size: 13px;
-  color: var(--text-muted);
-  margin-top: 9px;
-}
-
-.addTransaction {
-  align-self: center;
-  margin-top: 14px;
-}
-
 .monthRow {
   display: flex;
   align-items: center;
   gap: 14px;
-  margin: 29px 0 20px;
-  min-height: 36px;
+  margin: 0;
+  min-height: 0;
 }
 
 .monthPicker {
   display: flex;
   align-items: center;
-  gap: 9px;
+  gap: 6px;
 }
 
 .monthPicker .monthInput {
-  width: 180px;
+  width: 152px;
   min-height: 32px;
   padding: 4px 8px;
   border: 1px solid var(--border);
@@ -78,84 +60,17 @@
   margin: 15px 0;
 }
 
-.pageHeading p {
-  color: var(--text-muted);
-}
-
-.coupleToolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin: -4px 0 24px;
-  flex-wrap: wrap;
-}
-
-.pageHeading + .coupleToolbar {
-  margin-top: 25px;
-}
-
-.filterExplanation {
-  color: var(--text-muted);
-  font-size: 12px;
-  line-height: 1.5;
-  margin: -12px 0 22px;
-}
-
-@media (min-width: 1450px) {
-  .pageHeading h1 {
-    font-size: 35px;
-  }
-  .pageHeading p {
-    font-size: 15px;
-  }
-}
-
-@media (max-width: 800px) {
-  .pageHeading h1 {
-    font-size: 24px;
-  }
-  .pageHeading p {
-    font-size: 11px;
-  }
-}
-
 @media (max-width: 620px) {
-  .pageHeading {
-    align-items: flex-start;
-    gap: 17px;
-    flex-wrap: wrap;
-  }
-  .pageHeading h1 {
-    font-size: 27px;
-    letter-spacing: -1.25px;
-  }
-  .pageHeading p {
-    font-size: 12px;
-    line-height: 1.65;
-    margin-top: 7px;
-  }
-  .addTransaction {
-    margin: 0;
-    padding: 11px 14px;
-    min-height: 41px;
-    font-size: 12px;
-    width: 100%;
-  }
   .monthRow {
-    margin: 21px 0 17px;
     gap: 8px;
     flex-wrap: wrap;
-  }
-  .monthPicker {
-    gap: 6px;
   }
   .monthPicker .monthInput {
     font-size: 12px;
     min-width: 100px;
+    width: 132px;
   }
   .monthIcon {
-    width: 28px;
     height: 30px;
   }
   .todayButton {
@@ -164,9 +79,5 @@
     width: 100%;
     text-align: left;
     padding-left: 0;
-  }
-  .coupleToolbar {
-    gap: 12px;
-    margin-bottom: 20px;
   }
 }

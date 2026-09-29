@@ -41,15 +41,3 @@ export function SectionHeading({
     </div>
   );
 }
-
-export function OverviewGrid({
-  className,
-  ...props
-}: ComponentPropsWithoutRef<"section">) {
-  return (
-    <section
-      className={className ? `${styles.grid} ${className}` : styles.grid}
-      {...props}
-    />
-  );
-}

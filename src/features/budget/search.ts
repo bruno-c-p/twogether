@@ -22,7 +22,7 @@ const querySchema = z
 
 const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
 
-const kindSchema = z.enum(["expense", "income"], {
+const kindSchema = z.enum(["expense", "income", "split"], {
   error: "Tipo inválido.",
 });
 
@@ -36,6 +36,8 @@ const budgetFiltersSchema = z.object({
   kind: drop(kindSchema),
 });
 
+export type KindFilter = TransactionKind | "split";
+
 export interface BudgetFilters {
   view?: View;
   month?: string;
@@ -43,7 +45,7 @@ export interface BudgetFilters {
   query?: string;
   goal?: GoalId;
   tag?: string;
-  kind?: TransactionKind;
+  kind?: KindFilter;
 }
 
 export function withView(search: BudgetFilters, view: View): BudgetFilters {

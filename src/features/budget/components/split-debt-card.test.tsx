@@ -32,8 +32,11 @@ describe("SplitDebtCard", () => {
     ]);
 
     expect(screen.getByText(/Bia te deve R\$\s25,00/)).toBeTruthy();
-    expect(screen.getByText(/Bia deve R\$\s25,00/)).toBeTruthy();
+    expect(screen.getByText("Mercado", { exact: false })).toBeTruthy();
     expect(screen.getByText("Aguardando Bia")).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Marcar como pago" }),
+    ).toBeNull();
   });
 
   test("lets the person who owes mark a split as paid", async () => {

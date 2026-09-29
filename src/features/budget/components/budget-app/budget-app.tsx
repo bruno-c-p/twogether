@@ -1,7 +1,7 @@
 import { useHydrated } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { UserButton } from "@clerk/tanstack-react-start";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useBudget,
   type BudgetController,
@@ -11,39 +11,26 @@ import {
   type BudgetMutations,
 } from "@/features/budget/hooks/use-budget-mutations";
 import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
-import {
-  useWorkspaceActions,
-  type WorkspaceActions,
-} from "@/features/budget/hooks/use-workspace-actions";
-import {
-  useWorkspaceData,
-  type WorkspaceData,
-} from "@/features/budget/hooks/use-workspace-data";
-import {
-  useWorkspaceDialogs,
-  type WorkspaceDialogs,
-} from "@/features/budget/hooks/use-workspace-dialogs";
+import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
+import { useWorkspaceData } from "@/features/budget/hooks/use-workspace-data";
+import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
 import {
   currentMonth,
   money,
   shiftMonth,
 } from "@/features/budget/domain/format";
 import { monthSchema } from "@/features/budget/domain/schemas";
-import type { View } from "@/features/budget/domain/types";
-import { WORKSPACE_TITLES } from "@/features/budget/constants";
-import { AccountList } from "@/features/budget/components/account-list";
-import { GoalsSection } from "@/features/budget/components/goals-section/goals-section";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { NoticeToast, useNotice } from "@/features/budget/components/notice";
-import { Overview } from "@/features/budget/components/overview/overview";
-import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
+import { AccountsScreen } from "@/features/budget/components/screens/accounts-screen";
+import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
+import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
+import type { ScreenProps } from "@/features/budget/components/screens/screen-props";
+import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
-import { TransactionList } from "@/features/budget/components/transaction-list/transaction-list";
-import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
+import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 import { Button } from "@/components/ui/button";
-
-type BudgetSearchState = ReturnType<typeof useBudgetSearch>;
 
 export function BudgetApp() {
   const budget = useBudget();
@@ -54,50 +41,6 @@ export function BudgetApp() {
       budget={budget}
       account={<UserButton />}
     />
-  );
-}
-
-const FILTER_EXPLANATIONS = {
-  accounts: {
-    all: "O saldo de cada conta inclui as transações de todo o casal.",
-    member:
-      "O saldo de cada conta considera só as transações da pessoa selecionada.",
-  },
-  budget: {
-    all: "O planejado soma as metas individuais de cada pessoa.",
-    member: "Renda, gastos e metas da pessoa selecionada.",
-  },
-};
-
-function filterExplanation(view: View, memberFilter: string) {
-  const texts =
-    view === "accounts"
-      ? FILTER_EXPLANATIONS.accounts
-      : FILTER_EXPLANATIONS.budget;
-
-  return memberFilter === "all" ? texts.all : texts.member;
-}
-
-function WorkspaceHeading({
-  view,
-  busy,
-  onAdd,
-}: {
-  view: View;
-  busy: boolean;
-  onAdd: () => void;
-}) {
-  return (
-    <div className={styles.pageHeading}>
-      <div>
-        <h1>{WORKSPACE_TITLES[view].title}</h1>
-        <p>{WORKSPACE_TITLES[view].subtitle}</p>
-      </div>
-      <Button className={styles.addTransaction} disabled={busy} onClick={onAdd}>
-        <Plus size={19} />{" "}
-        {view === "accounts" ? "Nova conta" : "Nova transação"}
-      </Button>
-    </div>
   );
 }
 
@@ -153,112 +96,17 @@ function MonthNavigator({
   );
 }
 
-type ViewProps = {
-  budget: BudgetController;
-  search: BudgetSearchState;
-  data: WorkspaceData;
-  month: string;
-  busy: boolean;
-  hidden: boolean;
-  displayMoney: (value: number) => string;
-  dialogs: WorkspaceDialogs;
-  actions: WorkspaceActions;
-};
-
-function BudgetViews({
-  budget,
-  search,
-  data,
-  month,
-  busy,
-  hidden,
-  displayMoney,
-  dialogs,
-  actions,
-}: ViewProps) {
-  const { view, memberFilter } = search;
-  const members = budget.household.members;
-  const ownMember = members.find((member) => member.id === budget.user.id);
-
-  return (
-    <>
-      {view === "overview" && (
-        <Overview
-          monthly={data.monthly}
-          historyTransactions={data.historyTransactions}
-          month={month}
-          memberFilter={memberFilter}
-          hidden={hidden}
-          displayMoney={displayMoney}
-          summary={data.summary}
-          debtCard={
-            data.partner && (
-              <SplitDebtCard
-                net={data.debt.net}
-                unpaid={data.debt.unpaid}
-                userId={budget.user.id}
-                partner={data.partner}
-                busy={busy}
-                displayMoney={displayMoney}
-                onSettle={actions.openSettle}
-              />
-            )
-          }
-        />
-      )}
-      {(view === "overview" || view === "goals") && (
-        <GoalsSection
-          view={view}
-          summary={data.summary}
-          plans={data.plans}
-          hidden={hidden}
-          displayMoney={displayMoney}
-          memberFilter={memberFilter}
-          userId={budget.user.id}
-          busy={busy}
-          onEditPercentages={() =>
-            dialogs.setPercentagesRevision(ownMember?.percentagesRevision ?? 0)
-          }
-          onFilterGoal={search.filterGoal}
-        />
-      )}
-      {(view === "overview" || view === "transactions") && (
-        <TransactionList
-          transactions={data.monthly}
-          members={members}
-          accounts={budget.state.accounts}
-          userId={budget.user.id}
-          busy={busy}
-          hidden={hidden}
-          filters={search}
-          onEdit={(transaction) => actions.openTransaction(transaction)}
-          onDelete={(transaction) => void actions.remove(transaction)}
-          onAdd={() => actions.openTransaction(null)}
-          compact={view === "overview"}
-          onViewAll={() => search.setView("transactions")}
-        />
-      )}
-    </>
-  );
-}
-
-function WorkspaceViews(props: ViewProps) {
-  const { budget, search, busy, hidden, dialogs, actions } = props;
-
-  if (search.view !== "accounts") return <BudgetViews {...props} />;
-
-  return (
-    <AccountList
-      accounts={budget.state.accounts}
-      transactions={budget.state.transactions}
-      memberFilter={search.memberFilter}
-      busy={busy}
-      hidden={hidden}
-      onAdd={() => dialogs.setAccount({ account: null })}
-      onEdit={(account) => dialogs.setAccount({ account })}
-      onDelete={(account) => void actions.removeAccount(account)}
-    />
-  );
+function Screen(props: ScreenProps) {
+  switch (props.search.view) {
+    case "transactions":
+      return <TransactionsScreen {...props} />;
+    case "accounts":
+      return <AccountsScreen {...props} />;
+    case "goals":
+      return <BudgetScreen {...props} />;
+    default:
+      return <OverviewScreen {...props} />;
+  }
 }
 
 function listErrorFor(mutations: BudgetMutations, deleting: boolean) {
@@ -302,7 +150,6 @@ export function BudgetWorkspace({
     setView: search.setView,
   });
 
-  const { view } = search;
   const memberCount = budget.household.members.length;
   const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
 
@@ -313,11 +160,24 @@ export function BudgetWorkspace({
 
   return (
     <WorkspaceShell
-      view={view}
+      view={search.view}
+      members={budget.household.members}
       memberLabel={memberLabel}
       hidden={hidden}
       onToggleHidden={() => setHidden(!hidden)}
       account={account}
+      onRegister={actions.openRegister}
+      controls={
+        <>
+          <MonthNavigator month={month} setMonth={search.setMonth} />
+          <MemberFilter
+            members={budget.household.members}
+            userId={budget.user.id}
+            value={search.memberFilter}
+            onChange={search.setMemberFilter}
+          />
+        </>
+      }
       overlays={
         <>
           <TransactionFlows
@@ -328,6 +188,8 @@ export function BudgetWorkspace({
             month={month}
             allTags={data.allTags}
             following={data.following}
+            summary={data.summary}
+            plans={data.plans}
           />
           {notice && (
             <NoticeToast
@@ -339,35 +201,12 @@ export function BudgetWorkspace({
         </>
       }
     >
-      <WorkspaceHeading
-        view={view}
-        busy={mutations.busy}
-        onAdd={() =>
-          view === "accounts"
-            ? dialogs.setAccount({ account: null })
-            : actions.openTransaction(null)
-        }
-      />
-      {view !== "accounts" && (
-        <MonthNavigator month={month} setMonth={search.setMonth} />
-      )}
-      <div className={styles.coupleToolbar}>
-        <MemberFilter
-          members={budget.household.members}
-          userId={budget.user.id}
-          value={search.memberFilter}
-          onChange={search.setMemberFilter}
-        />
-      </div>
-      <p className={styles.filterExplanation}>
-        {filterExplanation(view, search.memberFilter)}
-      </p>
       {alert && (
         <div role="alert" className={styles.storageError}>
           {alert}
         </div>
       )}
-      <WorkspaceViews
+      <Screen
         budget={budget}
         search={search}
         data={data}

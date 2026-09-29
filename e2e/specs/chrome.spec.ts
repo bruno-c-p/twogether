@@ -4,6 +4,8 @@ import {
   expectToast,
   nav,
   onboard,
+  openNewTransaction,
+  openView,
   setMonth,
   waitForGate,
   reloadApp,
@@ -12,23 +14,21 @@ import {
 
 async function seedMoney(page: Page) {
   await onboard(page, "Ana");
-  await nav(page, "desktop").getByRole("link", { name: "Contas" }).click();
+  await openView(page, "Contas");
   await page.getByRole("button", { name: "Adicionar primeira conta" }).click();
   await page.getByLabel("Nome da conta").fill("Nubank");
   await page.getByLabel("Saldo inicial").fill("0,00");
   await page.getByRole("button", { name: "Adicionar conta" }).click();
   await expectToast(page, "Conta adicionada.");
-  await nav(page, "desktop").getByRole("link", { name: "Visão geral" }).click();
   await setMonth(page, "2026-09");
-  await page.getByRole("button", { name: "Nova transação" }).click();
-  const dialog = page.getByRole("dialog", { name: "Nova transação" });
+  const dialog = await openNewTransaction(page);
   await dialog.getByRole("button", { name: "Receita" }).click();
   await dialog.getByLabel("Valor").fill("5000,00");
   await dialog.getByLabel("Descrição").fill("Salário");
   await dialog.getByLabel("Data").fill("2026-09-01");
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
-  await page.getByRole("button", { name: "Nova transação" }).click();
+  await openNewTransaction(page);
   const expense = page.getByRole("dialog", { name: "Nova transação" });
   await expense.getByRole("button", { name: "Despesa" }).click();
   await expense.getByLabel("Valor").fill("45,90");
@@ -39,6 +39,7 @@ async function seedMoney(page: Page) {
     .click();
   await expense.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
+  await openView(page, "Visão geral");
 }
 
 test.describe("chrome", () => {
@@ -46,11 +47,6 @@ test.describe("chrome", () => {
     await seedMoney(page);
     await page.getByRole("button", { name: "Ocultar valores" }).click();
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
-    await expect(page.getByText("••").first()).toBeVisible();
-    await expect(page.getByText("Valores ocultos").first()).toBeVisible();
-    await expect(
-      page.getByRole("img", { name: /oculta/ }).first(),
-    ).toBeVisible();
 
     const barWidth = await page
       .getByRole("button", { name: /Custo fixo:/ })
@@ -67,7 +63,7 @@ test.describe("chrome", () => {
 
     await page.getByRole("button", { name: "Mostrar valores" }).click();
     await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();
-    await expect(page.getByText("Valores ocultos")).toHaveCount(0);
+    await expect(page.getByText("R$ ••••")).toHaveCount(0);
 
     await withMobile(page, async () => {
       await expect(
@@ -200,23 +196,23 @@ test.describe("chrome", () => {
     ).toBeVisible();
   });
 
-  test("desktop header does not repeat the brand", async ({ page }) => {
+  test("header shows the brand once on desktop and mobile", async ({
+    page,
+  }) => {
     await onboard(page, "Ana");
 
-    const headerBrand = page
-      .locator("header")
-      .getByRole("link", { name: "twogether." });
+    const brand = page.getByRole("link", { name: "twogether — início" });
 
-    await expect(headerBrand).toBeHidden();
-    await expect(
-      page.getByRole("link", { name: "twogether — início" }),
-    ).toBeVisible();
+    await expect(brand).toHaveCount(1);
+    await expect(brand).toContainText("twogether.");
+    await expect(brand).toBeVisible();
+    await expect(nav(page, "desktop")).toBeVisible();
 
     await withMobile(page, async () => {
-      await expect(headerBrand).toBeVisible();
-      await expect(
-        page.getByRole("link", { name: "twogether — início" }),
-      ).toBeHidden();
+      await expect(brand).toHaveCount(1);
+      await expect(brand).toBeVisible();
+      await expect(nav(page, "desktop")).toBeHidden();
+      await expect(nav(page, "mobile")).toBeVisible();
     });
   });
 });

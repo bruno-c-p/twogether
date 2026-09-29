@@ -70,33 +70,11 @@ export const DEFAULT_PERCENTAGES: GoalPercentages = {
   knowledge: 5,
 };
 
-export const WORKSPACE_TITLES: Record<
-  View,
-  { title: string; subtitle: string }
-> = {
-  overview: {
-    title: "Visão geral",
-    subtitle: "Saldo, entradas, despesas e metas do mês.",
-  },
-  transactions: {
-    title: "Transações",
-    subtitle: "Registre e acompanhe as entradas e despesas do mês.",
-  },
-  accounts: {
-    title: "Contas",
-    subtitle: "Cadastre as contas e acompanhe o saldo de cada uma.",
-  },
-  goals: {
-    title: "Metas",
-    subtitle: "Divida sua renda por meta e compare gasto e planejado.",
-  },
-};
-
 export const WORKSPACE_NAVIGATION = [
   { id: "overview", label: "Visão geral", icon: LayoutGrid },
   { id: "transactions", label: "Transações", icon: ReceiptText },
   { id: "accounts", label: "Contas", icon: Landmark },
-  { id: "goals", label: "Metas", icon: Target },
+  { id: "goals", label: "Orçamento", icon: Target },
 ] as const satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
 
 export const GOAL_ICONS: Record<GoalId, typeof House> = {
@@ -107,5 +85,3 @@ export const GOAL_ICONS: Record<GoalId, typeof House> = {
   knowledge: BookOpen,
   freedom: Sprout,
 };
-
-export const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
