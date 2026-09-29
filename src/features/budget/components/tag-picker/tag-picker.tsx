@@ -24,7 +24,7 @@ export function TagPicker({
 
   return (
     <>
-      <label htmlFor="tag-input">
+      <label className={styles.tagLabel} htmlFor="tag-input">
         Tags <Optional>opcional · até 8</Optional>
       </label>
       <div className={styles.tagInputWrapper}>

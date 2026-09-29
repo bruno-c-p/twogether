@@ -52,8 +52,8 @@
   padding-top: 20px;
 }
 
-.footer > button:first-of-type {
-  font-size: 13px;
+.footer button {
+  font-size: 14px;
 }
 
 .dialog .footer {
@@ -76,14 +76,15 @@
   }
 
   .header h2 {
-    font-size: 23px;
+    font-size: 21px;
   }
 
   .footer {
     gap: 20px;
   }
 
-  .dialog input:not(#amount),
+  /* Money fields are display-sized and keep their own scale. */
+  .dialog input:not([inputmode="numeric"]),
   .dialog select {
     font-size: 16px;
   }
