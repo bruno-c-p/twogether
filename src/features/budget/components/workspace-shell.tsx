@@ -67,7 +67,7 @@ export function WorkspaceShell({
         </div>
       </header>
       <main id="main-content">{children}</main>
-      <div className="max-bp1000:pb-[62px]">
+      <div className="max-bp1000:pb-[77px]">
         <AppFooter />
       </div>
       <MobileNavigation view={view} onRegister={onRegister} />

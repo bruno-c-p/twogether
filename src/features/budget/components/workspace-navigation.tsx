@@ -76,7 +76,7 @@ export function MobileNavigation({
       className={cx(
         "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
-        "px-[8px] pt-[8px] pb-[max(8px,env(safe-area-inset-bottom))]",
+        "px-[8px] pt-[8px] pb-[max(20px,env(safe-area-inset-bottom))]",
       )}
     >
       <MobileLink item={first} view={view} />

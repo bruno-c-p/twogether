@@ -222,6 +222,18 @@ test.describe("chrome", () => {
       await expect(brand).toBeVisible();
       await expect(nav(page, "desktop")).toBeHidden();
       await expect(nav(page, "mobile")).toBeVisible();
+
+      const clearance = await nav(page, "mobile").evaluate((element) => {
+        const controls = [...element.querySelectorAll("a, button")];
+
+        const lowest = Math.max(
+          ...controls.map((control) => control.getBoundingClientRect().bottom),
+        );
+
+        return Math.round(window.innerHeight - lowest);
+      });
+
+      expect(clearance).toBeGreaterThanOrEqual(20);
     });
   });
 });
