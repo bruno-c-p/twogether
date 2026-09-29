@@ -139,8 +139,7 @@ export async function onboard(
 }
 
 export async function openCouple(page: Page) {
-  await page.getByRole("link", { name: /Abrir nosso espaço/ }).click();
-  await expect(page).toHaveURL(/\/conta$/);
+  await page.getByRole("button", { name: /Abrir nosso espaço/ }).click();
   await expect(
     page.getByRole("heading", { name: "Nosso espaço" }),
   ).toBeVisible();
@@ -180,7 +179,38 @@ export async function withMobile(page: Page, run: () => Promise<void>) {
 }
 
 export async function setMonth(page: Page, month: string) {
-  await page.getByLabel("Selecionar mês e ano").fill(month);
+  const year = Number(month.slice(0, 4));
+
+  await monthTrigger(page).click();
+
+  const shown = page.getByRole("dialog").locator("strong[aria-live]");
+
+  while (Number(await shown.textContent()) !== year)
+    await page
+      .getByRole("button", {
+        name:
+          Number(await shown.textContent()) < year
+            ? "Próximo ano"
+            : "Ano anterior",
+      })
+      .click();
+  await page
+    .getByRole("button", { name: monthText(month), exact: true })
+    .click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(monthTrigger(page)).toHaveAccessibleName(
+    `Selecionar mês e ano: ${monthText(month)}`,
+  );
+}
+
+export function monthText(month: string) {
+  const [year, number] = month.split("-").map(Number);
+
+  return `${new Date(year, number - 1, 1).toLocaleDateString("pt-BR", { month: "long" })} ${year}`;
+}
+
+export function monthTrigger(page: Page) {
+  return page.getByRole("button", { name: /^Selecionar mês e ano/ });
 }
 
 export async function sessionCookie(page: Page) {
@@ -195,10 +225,29 @@ export function nav(page: Page, kind: "desktop" | "mobile") {
   return page.getByRole("navigation", { name: label });
 }
 
-export function person(page: Page, name: string) {
-  return page
-    .getByLabel("Filtrar por pessoa")
-    .getByRole("button", { name, exact: true });
+export function personFilter(page: Page) {
+  return page.getByRole("button", { name: /^Filtrar por pessoa/ });
+}
+
+export async function choosePerson(page: Page, name: string) {
+  await personFilter(page).click();
+  await page.getByRole("radio", { name, exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}
+
+export async function expectPersonOptions(page: Page, names: string[]) {
+  await personFilter(page).click();
+
+  for (const name of names)
+    await expect(page.getByRole("radio", { name, exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+}
+
+export async function expectPerson(page: Page, name: string) {
+  await expect(personFilter(page)).toHaveAccessibleName(
+    `Filtrar por pessoa: ${name}`,
+  );
 }
 
 export async function openView(page: Page, name: string) {

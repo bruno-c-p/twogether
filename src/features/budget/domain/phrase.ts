@@ -20,13 +20,6 @@ export interface PhraseDraft {
 
 export type PhraseResult = { draft: PhraseDraft } | { error: string };
 
-export const PHRASE_EXAMPLES = [
-  "Gastei 300 reais de condomínio",
-  "Jantar de 180 no Itaú, dividi com a Bia",
-  "Recebi 1.200 de freela",
-  "Uber 32,50 ontem",
-];
-
 const AMOUNT_ERROR =
   'Não encontrei o valor. Tente: "Gastei 300 reais de condomínio".';
 

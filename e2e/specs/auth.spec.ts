@@ -15,6 +15,10 @@ import {
   waitForHydrated,
   withMobile,
   expectNoHorizontalOverflow,
+  expectPerson,
+  expectPersonOptions,
+  monthText,
+  monthTrigger,
 } from "../fixtures/app";
 
 test.describe("auth", () => {
@@ -70,14 +74,10 @@ test.describe("auth", () => {
     await expect(
       page.getByRole("textbox", { name: "Registrar com uma frase" }),
     ).toBeVisible();
+    await expectPerson(page, "Nós");
+    await expectPersonOptions(page, ["Nós", "Eu"]);
     await expect(
-      page.getByRole("button", { name: "Nós", exact: true }),
-    ).toHaveAttribute("aria-pressed", "true");
-    await expect(
-      page.getByRole("button", { name: "Eu", exact: true }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("link", { name: "Abrir nosso espaço: 1 pessoa" }),
+      page.getByRole("button", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeVisible();
     expect(new URL(page.url()).searchParams.has("access")).toBe(false);
     const cookies = await page.context().cookies();
@@ -99,8 +99,8 @@ test.describe("auth", () => {
     expect(new URL(page.url()).searchParams.get("month")).toMatch(
       /^\d{4}-(0[1-9]|1[0-2])$/,
     );
-    await expect(page.getByLabel("Selecionar mês e ano")).toHaveValue(
-      new URL(page.url()).searchParams.get("month") ?? "",
+    await expect(monthTrigger(page)).toHaveAccessibleName(
+      `Selecionar mês e ano: ${monthText(new URL(page.url()).searchParams.get("month") ?? "")}`,
     );
   });
 
@@ -131,8 +131,6 @@ test.describe("auth", () => {
   test("M14 private routes send signed-out visitors to the gate", async ({
     page,
   }) => {
-    await page.goto("/conta");
-    await waitForGate(page);
     await page.goto("/?month=2026-09");
     await waitForGate(page);
   });
@@ -171,7 +169,7 @@ test("M1b gate keeps the signed-in person after a hydrated reload", async ({
     page.getByRole("heading", { name: "Visão geral" }),
   ).toBeVisible();
   await expect(
-    page.getByRole("link", { name: /Abrir nosso espaço/ }),
+    page.getByRole("button", { name: /Abrir nosso espaço/ }),
   ).toBeVisible();
   expect(email).toContain("+clerk_test@example.com");
 });

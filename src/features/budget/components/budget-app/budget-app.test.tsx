@@ -48,9 +48,6 @@ describe("BudgetWorkspace", () => {
       screen.getByRole("heading", { level: 1, name: "Visão geral" }),
     ).toBeTruthy();
     expect(screen.getByText(/Sobra de\s+setembro/)).toBeTruthy();
-    expect(
-      screen.getByRole("link", { name: "Abrir nosso espaço: 1 pessoa" }),
-    ).toBeTruthy();
     expect(screen.getByText("conta")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Editar Mercado" })).toBeTruthy();
   });
@@ -58,14 +55,34 @@ describe("BudgetWorkspace", () => {
   test("moves between months through the URL", async () => {
     const { screen, user, router } = await renderWorkspace();
 
-    await user.click(screen.getByRole("button", { name: "Próximo mês" }));
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "outubro 2026" }),
+    );
     expect(router.state.location.search).toMatchObject({ month: "2026-10" });
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
     await user.click(
       await screen.findByRole("button", { name: "Voltar para este mês" }),
     );
     expect(router.state.location.search).not.toMatchObject({
       month: "2026-10",
     });
+  });
+
+  test("shows the month in Portuguese on the drawer trigger", async () => {
+    const { screen } = await renderWorkspace();
+
+    expect(screen.getByText("setembro 2026")).toBeTruthy();
+    expect(screen.getByText("set 2026")).toBeTruthy();
+    expect(
+      screen.getByRole("button", {
+        name: "Selecionar mês e ano: setembro 2026",
+      }),
+    ).toBeTruthy();
   });
 
   test("hides values from the top bar", async () => {
@@ -167,10 +184,13 @@ describe("BudgetWorkspace", () => {
     );
 
     expect(screen.getByRole("alert").textContent).toBe("Sem conexão.");
-    await user.click(screen.getByRole("button", { name: "Eu" }));
+    await user.click(
+      screen.getByRole("button", { name: "Filtrar por pessoa: Nós" }),
+    );
+    await user.click(await screen.findByRole("radio", { name: "Eu" }));
     expect(
-      screen.getByRole("button", { name: "Eu" }).getAttribute("aria-pressed"),
-    ).toBe("true");
+      screen.getByRole("button", { name: "Filtrar por pessoa: Eu" }),
+    ).toBeTruthy();
   });
 
   test("the transactions list links from the overview to the full view", async () => {

@@ -1,3 +1,4 @@
+import { Eye, EyeOff } from "lucide-react";
 import { currentMonth } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
@@ -31,12 +32,16 @@ export function BalanceCard({
   month,
   memberFilter,
   displayMoney,
+  hidden,
+  onToggleHidden,
   className,
 }: {
   summary: ReturnType<typeof summarize>;
   month: string;
   memberFilter: string;
   displayMoney: (value: number) => string;
+  hidden: boolean;
+  onToggleHidden: () => void;
   className?: string;
 }) {
   const days = daysLeft(month);
@@ -66,11 +71,26 @@ export function BalanceCard({
             {displayMoney(summary.balance)}
           </p>
         </div>
-        {days !== null && (
-          <span className="rounded-full px-[14px] py-[6px] text-[12px] bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)] text-on-balance-muted max-bp1000:hidden">
-            {closingLabel(days)}
-          </span>
-        )}
+        <div className="flex items-center gap-[10px]">
+          {days !== null && (
+            <span className="rounded-full px-[14px] py-[6px] text-[12px] bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)] text-on-balance-muted max-bp1000:hidden">
+              {closingLabel(days)}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={onToggleHidden}
+            aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+            title={hidden ? "Mostrar valores" : "Ocultar valores"}
+            className={cx(
+              "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
+              "border-0 bg-transparent p-0 rounded-[6px] text-on-balance-muted",
+              "hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
+            )}
+          >
+            {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
+          </button>
+        </div>
       </div>
       <dl
         className={cx(

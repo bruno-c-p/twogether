@@ -7,8 +7,8 @@ import {
   setName,
   uniqueEmail,
   withMobile,
-  person,
   reloadApp,
+  expectPersonOptions,
 } from "../fixtures/app";
 
 test.describe("household", () => {
@@ -30,7 +30,7 @@ test.describe("household", () => {
     const fallback = page.getByText("Selecione e copie o link acima.");
     await expect(copied.or(fallback)).toBeVisible();
     const inviteUrl = await invite.inputValue();
-    await page.getByRole("link", { name: "twogether — início" }).click();
+    await page.getByRole("button", { name: "Fechar", exact: true }).click();
     await expect(
       page.getByRole("heading", { name: "Visão geral" }),
     ).toBeVisible();
@@ -51,17 +51,15 @@ test.describe("household", () => {
     ).toBeVisible();
     expect(new URL(biaPage.url()).pathname).toBe("/");
     await expect(
-      biaPage.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
+      biaPage.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
-    await expect(person(biaPage, "Nós")).toBeVisible();
-    await expect(person(biaPage, "Eu")).toBeVisible();
-    await expect(person(biaPage, "Ana")).toBeVisible();
+    await expectPersonOptions(biaPage, ["Nós", "Eu", "Ana"]);
 
     await reloadApp(page);
     await expect(
-      page.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
+      page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
     ).toBeVisible();
-    await expect(person(page, "Bia")).toBeVisible();
+    await expectPersonOptions(page, ["Nós", "Eu", "Bia"]);
     await openCouple(page);
     await expect(
       page.getByText("Vocês dois já estão aqui. O espaço está completo."),

@@ -8,12 +8,14 @@ import {
   openCouple,
   openNewTransaction,
   openView,
-  setMonth,
   setName,
   uniqueEmail,
   withMobile,
-  person,
   reloadApp,
+  choosePerson,
+  personFilter,
+  monthTrigger,
+  setMonth,
 } from "../fixtures/app";
 
 async function addAccount(page: Page, name = "Nubank") {
@@ -41,7 +43,7 @@ async function onboardCouple(page: Page, browser: Browser) {
   await openCouple(page);
   await page.getByRole("button", { name: "Gerar convite" }).click();
   const inviteUrl = await page.getByLabel("Link para seu par").inputValue();
-  await page.getByRole("link", { name: "twogether — início" }).click();
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Visão geral" }),
   ).toBeVisible();
@@ -56,7 +58,7 @@ async function onboardCouple(page: Page, browser: Browser) {
   ).toBeVisible();
   await reloadApp(page);
   await expect(
-    page.getByRole("link", { name: "Abrir nosso espaço: 2 pessoas" }),
+    page.getByRole("button", { name: "Abrir nosso espaço: 2 pessoas" }),
   ).toBeVisible();
 
   return { bia, biaPage };
@@ -89,7 +91,7 @@ test.describe("overview and goals", () => {
       page.getByText("O planejado soma as metas de cada pessoa."),
     ).toBeVisible();
 
-    await person(page, "Eu").click();
+    await choosePerson(page, "Eu");
     const eu = new URL(page.url());
     const member = eu.searchParams.get("member");
     expect(member).toBeTruthy();
@@ -106,7 +108,7 @@ test.describe("overview and goals", () => {
       page.getByRole("button", { name: "Bia café", exact: true }),
     ).toHaveCount(0);
 
-    await person(page, "Bia").click();
+    await choosePerson(page, "Bia");
     await expect(
       page.getByRole("button", { name: "Bia café", exact: true }),
     ).toBeVisible();
@@ -114,7 +116,7 @@ test.describe("overview and goals", () => {
       page.getByRole("button", { name: "Ana mercado", exact: true }),
     ).toHaveCount(0);
 
-    await page.getByRole("button", { name: "Próximo mês" }).click();
+    await setMonth(page, "2026-10");
     expect(new URL(page.url()).searchParams.get("month")).toBe("2026-10");
     await expect(page.getByText("Nenhuma transação neste mês.")).toBeVisible();
 
@@ -125,9 +127,12 @@ test.describe("overview and goals", () => {
     });
 
     if (currentMonth !== "2026-10") {
+      await monthTrigger(page).click();
       await expect(
         page.getByRole("button", { name: "Voltar para este mês" }),
       ).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(page.getByRole("dialog")).toHaveCount(0);
     }
 
     await openView(page, "Contas");
@@ -156,14 +161,16 @@ test.describe("overview and goals", () => {
     await expect(
       page.getByRole("button", { name: "Bia café", exact: true }),
     ).toBeVisible();
+    await openView(page, "Visão geral");
     await page.getByRole("button", { name: "Ocultar valores" }).click();
+    await openView(page, "Transações");
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
     await reloadApp(page);
     await expect(page.getByText("R$ ••••")).toHaveCount(0);
     await expect(page.getByText(/R\$\s*10,00/).first()).toBeVisible();
 
     await withMobile(page, async () => {
-      await expect(person(page, "Nós")).toBeVisible();
+      await expect(personFilter(page)).toBeVisible();
       await expectNoHorizontalOverflow(page);
     });
 
@@ -229,22 +236,22 @@ test.describe("overview and goals", () => {
     ).toBeVisible();
     await expect(page.getByText("Cursos e desenvolvimento.")).toBeVisible();
     await expect(page.getByText("Reserva e investimentos.")).toBeVisible();
-    await person(page, "Nós").click();
+    await choosePerson(page, "Nós");
     await expect(
       page.getByRole("button", { name: "Editar meus percentuais" }),
     ).toBeVisible();
-    await person(page, "Eu").click();
+    await choosePerson(page, "Eu");
     await expect(
       page.getByRole("button", { name: "Editar meus percentuais" }),
     ).toBeVisible();
-    await person(page, "Bia").click();
+    await choosePerson(page, "Bia");
     await expect(
       page.getByRole("button", { name: "Editar meus percentuais" }),
     ).toBeHidden();
 
     await openView(page, "Contas");
-    await expect(page.getByLabel("Selecionar mês e ano")).toBeVisible();
-    await expect(person(page, "Nós")).toBeVisible();
+    await expect(monthTrigger(page)).toBeVisible();
+    await expect(personFilter(page)).toBeVisible();
 
     await withMobile(page, async () => {
       await expect(nav(page, "desktop")).toBeHidden();
@@ -266,11 +273,17 @@ test.describe("overview and goals", () => {
         ).toHaveAttribute("aria-current", "page");
       }
 
-      const padding = await page
-        .locator("#main-content")
-        .evaluate((el) => getComputedStyle(el).paddingBottom);
+      const clearance = await page
+        .locator("footer")
+        .evaluate(
+          (el) =>
+            Number.parseFloat(getComputedStyle(el).paddingBottom) +
+            Number.parseFloat(
+              getComputedStyle(el.parentElement ?? el).paddingBottom,
+            ),
+        );
 
-      expect(Number.parseFloat(padding)).toBeGreaterThanOrEqual(68);
+      expect(clearance).toBeGreaterThanOrEqual(68);
       await expectNoHorizontalOverflow(page);
     });
 

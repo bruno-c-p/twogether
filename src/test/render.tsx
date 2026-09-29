@@ -12,9 +12,9 @@ import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { validateBudgetFilters } from "@/features/budget/search";
 
-// Mirrors the app's route ids ("/_authenticated/", "/_authenticated/conta",
-// "/entrar") and workspace search validation, so components using
-// getRouteApi() work without loaders, Clerk or the server.
+// Mirrors the app's route ids ("/_authenticated/", "/entrar") and workspace
+// search validation, so components using getRouteApi() work without loaders,
+// Clerk or the server.
 export async function renderWithProviders(ui: ReactNode, path = "/") {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -34,11 +34,6 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
         getParentRoute: () => authenticated,
         path: "/",
         validateSearch: validateBudgetFilters,
-        component: () => ui,
-      }),
-      createRoute({
-        getParentRoute: () => authenticated,
-        path: "conta",
         component: () => ui,
       }),
     ]),

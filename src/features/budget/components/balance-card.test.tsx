@@ -21,6 +21,8 @@ function renderCard(month: string, memberFilter = "all", hidden = false) {
       month={month}
       memberFilter={memberFilter}
       displayMoney={(value) => (hidden ? "R$ ••••" : money(value))}
+      hidden={hidden}
+      onToggleHidden={() => undefined}
     />,
   );
 }

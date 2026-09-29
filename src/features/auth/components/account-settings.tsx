@@ -1,6 +1,6 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { getRouteApi } from "@tanstack/react-router";
-import { UserButton, useUser } from "@clerk/tanstack-react-start";
+import { useState, type FormEvent } from "react";
+import { useUser } from "@clerk/tanstack-react-start";
+import { useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
@@ -11,7 +11,7 @@ import {
 } from "@/features/auth/hooks/use-action-run";
 import { createInvite, revokeInvite } from "@/features/household/actions";
 import { MemberList } from "@/features/household/components/member-list/member-list";
-import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
+import { workspaceQueryKey } from "@/features/budget/workspace";
 import { formText } from "@/features/budget/domain/format";
 import { fieldErrors, nameFormSchema } from "@/features/budget/domain/schemas";
 import type { Member } from "@/features/budget/domain/types";
@@ -25,8 +25,6 @@ import {
   FormStack,
   Note,
 } from "@/components/ui/field/field";
-
-const contaRoute = getRouteApi("/_authenticated/conta");
 
 const OFFLINE_MESSAGE = "Sem conexão. Tente novamente.";
 
@@ -229,7 +227,7 @@ export function AccountSettingsView({
   name,
   invite,
   onLeave,
-  account,
+  onManage,
 }: {
   user: Member;
   members: Member[];
@@ -239,64 +237,67 @@ export function AccountSettingsView({
   name: NameFormState;
   invite: InviteLinkState;
   onLeave: () => void;
-  account?: ReactNode;
+  onManage: () => void;
 }) {
   const memberCount = members.length;
-  const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
 
   return (
-    <WorkspaceShell
-      members={members}
-      memberLabel={memberLabel}
-      account={account}
-    >
-      <div className="max-w-[720px]">
-        <h1>Sua conta</h1>
-        <p className="text-text-muted mt-1.5">
-          Seu nome, o espaço de vocês e a saída da conta.
-        </p>
-        <NameSection name={name} defaultName={user.name} busy={busy} />
-        <Panel aria-labelledby="account-space-title">
-          <SectionHeading
-            title="Nosso espaço"
-            titleId="account-space-title"
-            count={memberCount}
-            description="Tudo aqui é dos dois. Ambos podem ver e editar contas, transações, tags e percentuais."
-          />
-          <div className={PANEL_BODY}>
-            <MemberList members={members} currentUserId={user.id} />
-            {memberCount === 1 ? (
-              <InvitePanel invite={invite} busy={busy} />
-            ) : (
-              <Note>Vocês dois já estão aqui. O espaço está completo.</Note>
-            )}
-            {error && <FormError>{error}</FormError>}
-          </div>
-          <footer className="flex items-center justify-between gap-4 px-[23px] pb-[23px] max-bp620:px-4 max-bp620:pb-4 max-bp620:items-start max-bp620:flex-col">
-            <span className="text-text-muted text-[12px] break-all">
-              {email}
-            </span>
+    <>
+      <NameSection name={name} defaultName={user.name} busy={busy} />
+      <Panel aria-labelledby="account-space-title">
+        <SectionHeading
+          title="Nosso espaço"
+          titleId="account-space-title"
+          count={memberCount}
+          description="Tudo aqui é dos dois. Ambos podem ver e editar contas, transações, tags e percentuais."
+        />
+        <div className={PANEL_BODY}>
+          <MemberList members={members} currentUserId={user.id} />
+          {memberCount === 1 ? (
+            <InvitePanel invite={invite} busy={busy} />
+          ) : (
+            <Note>Vocês dois já estão aqui. O espaço está completo.</Note>
+          )}
+          {error && <FormError>{error}</FormError>}
+        </div>
+        <footer className="flex items-center justify-between gap-4 px-[23px] pb-[23px] max-bp620:px-4 max-bp620:pb-4 max-bp620:items-start max-bp620:flex-col">
+          <span className="text-text-muted text-[12px] break-all">{email}</span>
+          <div className="flex items-center gap-4">
+            <Button variant="text" onClick={onManage}>
+              Gerenciar conta
+            </Button>
             <Button variant="text" disabled={busy} onClick={onLeave}>
               Sair da conta
             </Button>
-          </footer>
-        </Panel>
-      </div>
-    </WorkspaceShell>
+          </div>
+        </footer>
+      </Panel>
+    </>
   );
 }
 
-export function AccountSettings() {
-  const { user, household } = contaRoute.useLoaderData();
+export function AccountSettings({
+  user,
+  members,
+  onManage,
+}: {
+  user: Member;
+  members: Member[];
+  onManage: () => void;
+}) {
   const signOut = useSignOut();
   const posthog = usePostHog();
+  const queryClient = useQueryClient();
   const { user: clerkUser } = useUser();
   const { run, busy, error } = useActionRun(OFFLINE_MESSAGE);
 
   const name = useNameForm({
     run,
     saveName: (value) => setName({ data: { name: value } }),
-    onSaved: () => posthog.capture("profile_name_completed"),
+    onSaved: () => {
+      posthog.capture("profile_name_completed");
+      void queryClient.invalidateQueries({ queryKey: workspaceQueryKey });
+    },
   });
 
   const invite = useInviteLink({
@@ -314,14 +315,14 @@ export function AccountSettings() {
   return (
     <AccountSettingsView
       user={user}
-      members={household.members}
+      members={members}
       email={clerkUser?.primaryEmailAddress?.emailAddress ?? ""}
       busy={busy}
       error={error}
       name={name}
       invite={invite}
       onLeave={() => void leave()}
-      account={<UserButton />}
+      onManage={onManage}
     />
   );
 }

@@ -6,6 +6,7 @@ import {
   nav,
   onboard,
   withMobile,
+  monthTrigger,
 } from "../fixtures/app";
 
 test.describe("accounts", () => {
@@ -31,7 +32,7 @@ test.describe("accounts", () => {
     await expect(
       page.getByRole("heading", { name: "Contas", exact: true }),
     ).toBeVisible();
-    await expect(page.getByLabel("Selecionar mês e ano")).toBeVisible();
+    await expect(monthTrigger(page)).toBeVisible();
     await expect(
       page.getByText("Inclui as transações do casal.", { exact: false }),
     ).toBeVisible();

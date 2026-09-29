@@ -6,11 +6,13 @@ export function Brand({
   className,
   mark = false,
   markClassName,
+  textClassName,
   children,
   ...props
 }: Omit<ComponentPropsWithoutRef<typeof Link>, "to" | "children"> & {
   mark?: boolean;
   markClassName?: string;
+  textClassName?: string;
   children?: ReactNode;
 }) {
   return (
@@ -36,7 +38,10 @@ export function Brand({
       ) : null}
       {children ?? (
         <>
-          twogether<span className="text-text-muted -ml-[9px]">.</span>
+          <span className={textClassName}>twogether</span>
+          <span className={cx("text-text-muted -ml-[9px]", textClassName)}>
+            .
+          </span>
         </>
       )}
     </Link>

@@ -11,6 +11,7 @@ export interface ScreenProps {
   month: string;
   busy: boolean;
   hidden: boolean;
+  onToggleHidden: () => void;
   displayMoney: (value: number) => string;
   dialogs: WorkspaceDialogs;
   actions: WorkspaceActions;
