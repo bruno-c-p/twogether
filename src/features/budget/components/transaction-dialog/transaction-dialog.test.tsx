@@ -1,18 +1,29 @@
 import { describe, expect, test, vi } from "vitest";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
+import { parsePhrase, type PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { ana, nubank, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
 const itau: BankAccount = { id: "itau", name: "Itaú", openingBalance: 0 };
 
+function draftFor(text: string, accounts: BankAccount[]): PhraseDraft {
+  const result = parsePhrase(text, accounts, new Date(2026, 8, 28));
+
+  if ("error" in result) throw new Error(result.error);
+
+  return result.draft;
+}
+
 function setup({
   editing = null,
+  draft,
   accounts = [nubank],
   saved = true,
   currentUserId = "ana",
 }: {
   editing?: Transaction | null;
+  draft?: PhraseDraft;
   accounts?: BankAccount[];
   saved?: boolean;
   currentUserId?: string;
@@ -29,6 +40,7 @@ function setup({
   const view = renderPlain(
     <TransactionDialog
       transaction={editing}
+      draft={draft}
       defaultDate="2026-09-15"
       existingTags={["casa", "mercado"]}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
@@ -169,6 +181,59 @@ describe("TransactionDialog", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ tags: ["mercado"] }),
       1,
+    );
+  });
+
+  test("a parsed phrase prefills every field and stays editable", async () => {
+    const accounts = [nubank, itau];
+
+    const { screen, user, onSave } = setup({
+      accounts,
+      draft: draftFor(
+        "Gastei 300 de condomínio no itaú dividido todo mês #casa",
+        accounts,
+      ),
+    });
+
+    expect(
+      screen.getByRole("heading", { name: "Nova transação" }),
+    ).toBeTruthy();
+    expect(screen.getByLabelText("Valor")).toHaveProperty("value", "300,00");
+    expect(screen.getByLabelText("Descrição")).toHaveProperty(
+      "value",
+      "Condomínio",
+    );
+    expect(screen.getByLabelText("Data")).toHaveProperty("value", "2026-09-28");
+    expect(screen.getByRole("combobox", { name: "Conta" })).toHaveProperty(
+      "value",
+      "itau",
+    );
+    expect(
+      screen.getByRole("switch", { name: "Dividir com Bia" }),
+    ).toHaveProperty("checked", true);
+    expect(
+      screen.getByRole("switch", { name: "Repetir mensalmente" }),
+    ).toHaveProperty("checked", true);
+
+    await user.clear(screen.getByLabelText("Por quantos meses?"));
+    await user.type(screen.getByLabelText("Por quantos meses?"), "6");
+    await user.type(screen.getByLabelText(/Tags/), "fixo");
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar transação" }),
+    );
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 30000,
+        description: "Condomínio",
+        date: "2026-09-28",
+        kind: "expense",
+        goal: "fixed",
+        accountId: "itau",
+        tags: ["casa", "fixo"],
+        split: {},
+      }),
+      6,
     );
   });
 

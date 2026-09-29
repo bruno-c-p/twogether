@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { looksRecurring, parsePhrase } from "@/features/budget/domain/phrase";
+import { parsePhrase } from "@/features/budget/domain/phrase";
 
 const accounts = [
   { id: "itau", name: "Itaú", openingBalance: 0 },
@@ -113,11 +113,5 @@ describe("parsePhrase", () => {
   it("rejects empty input and a zero amount", () => {
     expect(parsePhrase("", accounts, today)).toHaveProperty("error");
     expect(parsePhrase("Gastei 0", accounts, today)).toHaveProperty("error");
-  });
-
-  it("recognises known monthly bills", () => {
-    expect(looksRecurring("Condomínio")).toBe(true);
-    expect(looksRecurring("Conta de luz")).toBe(true);
-    expect(looksRecurring("Jantar")).toBe(false);
   });
 });
