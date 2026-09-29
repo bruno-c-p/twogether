@@ -20,7 +20,7 @@ async function addNubank(page: Page) {
 }
 
 test.describe("phrase", () => {
-  test("a sentence opens the confirm sheet and saves the transaction", async ({
+  test("a sentence opens the transaction form prefilled and saves it", async ({
     page,
   }) => {
     await onboard(page, "Ana");
@@ -28,19 +28,26 @@ test.describe("phrase", () => {
 
     await page
       .getByRole("textbox", { name: "Registrar com uma frase" })
-      .fill("Gastei 300 reais de condomínio");
+      .fill("Gastei 300 reais de condomínio todo mês #casa");
     await page.getByRole("button", { name: "Registrar", exact: true }).click();
 
-    const sheet = page.getByRole("dialog", { name: "Registrar transação" });
-    await expect(sheet.getByLabel("Valor")).toHaveValue("300,00");
-    await expect(sheet.getByLabel("Descrição")).toHaveValue("Condomínio");
+    const dialog = page.getByRole("dialog", { name: "Nova transação" });
+    await expect(dialog.getByLabel("Valor")).toHaveValue("300,00");
+    await expect(dialog.getByLabel("Descrição")).toHaveValue("Condomínio");
     await expect(
-      sheet.getByRole("button", { name: "Custo fixo", exact: true }),
+      dialog.getByRole("button", { name: "Custo fixo", exact: true }),
     ).toHaveAttribute("aria-pressed", "true");
-    await expect(sheet.getByRole("status")).not.toBeEmpty();
-    await sheet.getByRole("button", { name: "Confirmar R$ 300,00" }).click();
-    await expectToast(page, "Transação adicionada.");
-    await expect(sheet).toHaveCount(0);
+    await expect(
+      dialog.getByRole("switch", { name: "Repetir mensalmente" }),
+    ).toBeChecked();
+    await expect(
+      dialog.getByRole("button", { name: "Remover tag casa" }),
+    ).toBeVisible();
+
+    await dialog.getByLabel("Por quantos meses?").fill("3");
+    await dialog.getByRole("button", { name: "Adicionar transação" }).click();
+    await expectToast(page, "3 transações mensais adicionadas.");
+    await expect(dialog).toHaveCount(0);
 
     await openView(page, "Transações");
     await reloadApp(page);
@@ -49,7 +56,7 @@ test.describe("phrase", () => {
     ).toBeVisible();
   });
 
-  test("an expense sentence without a goal needs one before confirming", async ({
+  test("an expense sentence without a goal needs one before saving", async ({
     page,
   }) => {
     await onboard(page, "Ana");
@@ -60,19 +67,19 @@ test.describe("phrase", () => {
       .fill("Gastei 42 reais de padaria");
     await page.getByRole("button", { name: "Registrar", exact: true }).click();
 
-    const sheet = page.getByRole("dialog", { name: "Registrar transação" });
-    const confirm = sheet.getByRole("button", { name: "Confirmar R$ 42,00" });
-    await expect(sheet.getByLabel("Descrição")).toHaveValue("Padaria");
+    const dialog = page.getByRole("dialog", { name: "Nova transação" });
+    const save = dialog.getByRole("button", { name: "Adicionar transação" });
+    await expect(dialog.getByLabel("Descrição")).toHaveValue("Padaria");
     await expect(
-      sheet.getByRole("button", { name: "Custo fixo", exact: true }),
+      dialog.getByRole("button", { name: "Custo fixo", exact: true }),
     ).toHaveAttribute("aria-pressed", "false");
-    await expect(confirm).toBeDisabled();
+    await save.click();
+    await expect(dialog.getByText("Escolha uma das seis metas")).toBeVisible();
 
-    await sheet
+    await dialog
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
-    await expect(confirm).toBeEnabled();
-    await confirm.click();
+    await save.click();
     await expectToast(page, "Transação adicionada.");
   });
 
@@ -113,11 +120,14 @@ test.describe("phrase", () => {
         .getByRole("textbox", { name: "Descreva o que aconteceu" })
         .fill("Gastei 300 reais de condomínio");
       await sheet.getByRole("button", { name: "Enviar frase" }).click();
-      await expect(sheet.getByLabel("Valor")).toHaveValue("300,00");
-      await expectNoHorizontalOverflow(page);
-      await sheet.getByRole("button", { name: "Confirmar R$ 300,00" }).click();
-      await expectToast(page, "Transação adicionada.");
       await expect(sheet).toHaveCount(0);
+
+      const dialog = page.getByRole("dialog", { name: "Nova transação" });
+      await expect(dialog.getByLabel("Valor")).toHaveValue("300,00");
+      await expectNoHorizontalOverflow(page);
+      await dialog.getByRole("button", { name: "Adicionar transação" }).click();
+      await expectToast(page, "Transação adicionada.");
+      await expect(dialog).toHaveCount(0);
 
       await nav(page, "mobile")
         .getByRole("link", { name: "Transações" })

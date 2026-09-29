@@ -5,12 +5,11 @@ import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 export function useWorkspaceDialogs() {
   const [transaction, setTransaction] = useState<{
     transaction: Transaction | null;
+    draft?: PhraseDraft;
   } | null>(null);
 
-  // Phrase register sheet: a parsed draft, or none for the input-first state.
-  const [register, setRegister] = useState<{ draft?: PhraseDraft } | null>(
-    null,
-  );
+  // Phrase input sheet opened from the mobile "+" button.
+  const [register, setRegister] = useState(false);
 
   const [account, setAccount] = useState<{
     account: BankAccount | null;

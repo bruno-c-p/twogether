@@ -97,13 +97,8 @@ export function useWorkspaceActions({
       return;
     }
 
-    if (draft) {
-      dialogs.setRegister({ draft });
-
-      return;
-    }
-
-    dialogs.setTransaction({ transaction });
+    dialogs.setRegister(false);
+    dialogs.setTransaction({ transaction, draft });
   }
 
   function openRegister() {
@@ -113,12 +108,7 @@ export function useWorkspaceActions({
       return;
     }
 
-    dialogs.setRegister({});
-  }
-
-  function openManual() {
-    dialogs.setRegister(null);
-    openTransaction(null);
+    dialogs.setRegister(true);
   }
 
   async function saveAccountRecord(account: BankAccount) {
@@ -237,7 +227,6 @@ export function useWorkspaceActions({
     remove,
     openTransaction,
     openRegister,
-    openManual,
     saveAccountRecord,
     removeAccount,
     undoNotice,

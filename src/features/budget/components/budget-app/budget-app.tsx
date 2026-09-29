@@ -124,8 +124,6 @@ export function BudgetWorkspace({
             month={month}
             allTags={data.allTags}
             following={data.following}
-            summary={data.summary}
-            plans={data.plans}
           />
           {notice && (
             <NoticeToast

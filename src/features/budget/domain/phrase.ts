@@ -62,14 +62,6 @@ const KEYWORDS: [RegExp, string, GoalId][] = [
   [/invest|reserva|poupanca/, "Reserva", "freedom"],
 ];
 
-const RECURRING_BILLS =
-  /condominio|aluguel|\bluz\b|energia|\bagua\b|internet|netflix|spotify|academia|terapia/;
-
-// Descriptions that usually repeat every month, so the sheet can hint at it.
-export function looksRecurring(description: string) {
-  return RECURRING_BILLS.test(plain(description));
-}
-
 function plain(text: string) {
   return text.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
