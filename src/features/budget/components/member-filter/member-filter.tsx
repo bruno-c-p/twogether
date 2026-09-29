@@ -1,5 +1,9 @@
+import { useState } from "react";
+import { chipTrigger } from "@/components/ui/chip-trigger";
+import { Check, ChevronDown } from "lucide-react";
+import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
 import type { Member } from "@/features/budget/domain/types";
-import styles from "@/features/budget/components/member-filter/member-filter.module.css";
+import { cx } from "@/lib/cx";
 
 export function MemberFilter({
   members,
@@ -12,27 +16,60 @@ export function MemberFilter({
   value: string;
   onChange: (memberId: string) => void;
 }) {
+  const [open, setOpen] = useState(false);
+
+  const options = [
+    { id: "all", label: "Nós" },
+    ...[...members]
+      .sort((a, b) => Number(b.id === userId) - Number(a.id === userId))
+      .map((member) => ({
+        id: member.id,
+        label: member.id === userId ? "Eu" : member.name,
+      })),
+  ];
+
+  const current = options.find((option) => option.id === value) ?? options[0];
+
   return (
-    <div className={styles.personFilter} aria-label="Filtrar por pessoa">
-      <button
-        aria-pressed={value === "all"}
-        className={value === "all" ? styles.active : ""}
-        onClick={() => onChange("all")}
-      >
-        Nós
-      </button>
-      {[...members]
-        .sort((a, b) => Number(b.id === userId) - Number(a.id === userId))
-        .map((member) => (
+    <Sheet
+      open={open}
+      onOpenChange={setOpen}
+      narrow
+      trigger={
+        <SheetTrigger
+          aria-label={`Filtrar por pessoa: ${current.label}`}
+          className={chipTrigger}
+        >
+          <span className="truncate max-w-[135px]">{current.label}</span>
+          <ChevronDown size={14} aria-hidden="true" className="shrink-0" />
+        </SheetTrigger>
+      }
+    >
+      <SheetHeader title="Filtrar por pessoa" />
+      <div role="radiogroup" aria-label="Pessoa" className="grid gap-[6px]">
+        {options.map((option) => (
           <button
-            key={member.id}
-            aria-pressed={value === member.id}
-            className={value === member.id ? styles.active : ""}
-            onClick={() => onChange(member.id)}
+            key={option.id}
+            type="button"
+            role="radio"
+            aria-checked={option.id === current.id}
+            onClick={() => {
+              onChange(option.id);
+              setOpen(false);
+            }}
+            className={cx(
+              "flex items-center justify-between gap-[10px] cursor-pointer",
+              "border border-solid rounded-[10px] px-[14px] py-[12px] text-[15px] text-text",
+              option.id === current.id
+                ? "border-green bg-surface-soft font-600"
+                : "border-border bg-surface",
+            )}
           >
-            {member.id === userId ? "Eu" : member.name}
+            <span className="truncate">{option.label}</span>
+            {option.id === current.id && <Check size={16} aria-hidden="true" />}
           </button>
         ))}
-    </div>
+      </div>
+    </Sheet>
   );
 }

@@ -5,12 +5,12 @@ import {
   openCouple,
   openNewTransaction,
   openView,
-  person,
   reloadApp,
   setMonth,
   setName,
   signInClerk,
   uniqueEmail,
+  choosePerson,
 } from "../fixtures/app";
 
 async function addAccount(page: Page, name: string, first: boolean) {
@@ -32,6 +32,7 @@ async function joinPartner(page: Page, browser: Browser) {
   const invite = page.getByLabel("Link para seu par");
   await expect(invite).toHaveValue(/\/convite\/[0-9a-f]{64}$/);
   const inviteUrl = await invite.inputValue();
+  await page.getByRole("button", { name: "Fechar", exact: true }).click();
   await page.getByRole("link", { name: "twogether — início" }).click();
   await expect(
     page.getByRole("heading", { name: "Visão geral" }),
@@ -116,7 +117,7 @@ test.describe("split expenses", () => {
     await expect(
       partner.getByRole("button", { name: "Reembolso: Aluguel", exact: true }),
     ).toHaveCount(0);
-    await person(partner, "Eu").click();
+    await choosePerson(partner, "Eu");
     await expect(
       partner.getByRole("button", { name: "Aluguel (sua parte)", exact: true }),
     ).toBeVisible();
@@ -126,7 +127,7 @@ test.describe("split expenses", () => {
 
     await reloadApp(page);
     await openView(page, "Transações");
-    await person(page, "Eu").click();
+    await choosePerson(page, "Eu");
     await expect(
       page.getByRole("button", { name: "Reembolso: Aluguel", exact: true }),
     ).toBeVisible();
@@ -135,7 +136,7 @@ test.describe("split expenses", () => {
     ).toBeDisabled();
     await expect(page.getByText("dividida · paga").first()).toBeVisible();
 
-    await person(partner, "Nós").click();
+    await choosePerson(partner, "Nós");
     await partner.getByRole("button", { name: "Aluguel", exact: true }).click();
     const edit = partner.getByRole("dialog", { name: "Editar transação" });
     await expect(edit.getByText(/Pago por você em/)).toBeVisible();
@@ -144,7 +145,7 @@ test.describe("split expenses", () => {
     await reloadApp(partner);
     await openView(partner, "Visão geral");
     await expect(card.getByText("Você deve R$ 1.000,00 a Ana")).toBeVisible();
-    await person(partner, "Eu").click();
+    await choosePerson(partner, "Eu");
     await openView(partner, "Transações");
     await expect(
       partner.getByRole("button", { name: "Aluguel (sua parte)", exact: true }),

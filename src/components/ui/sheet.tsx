@@ -1,0 +1,122 @@
+import { useSyncExternalStore, type ReactNode } from "react";
+import { Drawer } from "@base-ui/react/drawer";
+import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cx } from "@/lib/cx";
+
+const PHONE_QUERY = "(max-width: 619.9px)";
+
+function subscribePhone(onChange: () => void) {
+  const media = window.matchMedia(PHONE_QUERY);
+
+  media.addEventListener("change", onChange);
+
+  return () => media.removeEventListener("change", onChange);
+}
+
+function usePhone() {
+  return useSyncExternalStore(
+    subscribePhone,
+    () => window.matchMedia(PHONE_QUERY).matches,
+    () => false,
+  );
+}
+
+/** Side panel on wide screens, bottom sheet on phones. */
+export function Sheet({
+  open,
+  onOpenChange,
+  trigger,
+  narrow = false,
+  children,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  trigger: ReactNode;
+  narrow?: boolean;
+  children: ReactNode;
+}) {
+  const phone = usePhone();
+
+  return (
+    <Drawer.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      swipeDirection={phone ? "down" : "right"}
+    >
+      {trigger}
+      <Drawer.Portal>
+        <Drawer.Backdrop
+          className={cx(
+            "fixed inset-0 z-40 bg-dialog-backdrop backdrop-blur-[5px]",
+            "[opacity:calc(1-var(--drawer-swipe-progress))]",
+            "transition-opacity duration-300",
+            "data-[starting-style]:opacity-0 data-[ending-style]:opacity-0",
+            "data-[swiping]:duration-0",
+          )}
+        />
+        <Drawer.Viewport
+          className={cx(
+            "fixed inset-0 z-50 flex justify-end",
+            "max-bp620:items-end",
+          )}
+        >
+          <Drawer.Popup
+            className={cx(
+              "flex flex-col bg-surface text-text outline-0 overflow-y-auto overscroll-contain",
+              "border-0 border-solid border-border",
+              narrow ? "w-[360px]" : "w-[440px]",
+              "h-full max-w-full border-l",
+              "max-bp620:h-auto max-bp620:w-full max-bp620:max-h-[88dvh]",
+              "max-bp620:border-l-0 max-bp620:border-t max-bp620:rounded-t-[16px]",
+              "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+              "data-[swipe-direction=right]:[transform:translateX(var(--drawer-swipe-movement-x))]",
+              "data-[swipe-direction=down]:[transform:translateY(var(--drawer-swipe-movement-y))]",
+              "data-[swiping]:duration-0",
+              "data-[swipe-direction=right]:data-[starting-style]:translate-x-full",
+              "data-[swipe-direction=right]:data-[ending-style]:translate-x-full",
+              "data-[swipe-direction=down]:data-[starting-style]:translate-y-full",
+              "data-[swipe-direction=down]:data-[ending-style]:translate-y-full",
+            )}
+          >
+            <div
+              aria-hidden="true"
+              className="hidden max-bp620:block shrink-0 mx-auto mt-[10px] h-[5px] w-[44px] rounded-full bg-text-muted/40"
+            />
+            <Drawer.Content className="p-[24px] max-bp620:p-[16px] max-bp620:pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
+              {children}
+            </Drawer.Content>
+          </Drawer.Popup>
+        </Drawer.Viewport>
+      </Drawer.Portal>
+    </Drawer.Root>
+  );
+}
+
+export function SheetHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-4 mb-[16px]">
+      <div>
+        <Drawer.Title className="m-0 text-[24px] font-heading font-600">
+          {title}
+        </Drawer.Title>
+        {description && (
+          <Drawer.Description className="text-text-muted mt-1.5 mb-0">
+            {description}
+          </Drawer.Description>
+        )}
+      </div>
+      <Drawer.Close render={<Button variant="icon" aria-label="Fechar" />}>
+        <X size={18} />
+      </Drawer.Close>
+    </div>
+  );
+}
+
+export const SheetTrigger = Drawer.Trigger;

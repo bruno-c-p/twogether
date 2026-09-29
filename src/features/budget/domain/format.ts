@@ -36,6 +36,24 @@ export function shiftMonth(month: string, offset: number) {
   return localDate(new Date(year, number - 1 + offset, 1)).slice(0, 7);
 }
 
+export function monthName(number: number) {
+  return new Date(2000, number - 1, 1)
+    .toLocaleDateString("pt-BR", { month: "short" })
+    .replace(".", "");
+}
+
+export function monthLabel(month: string, short = false) {
+  const [year, number] = month.split("-").map(Number);
+
+  if (!year || !number) return "Mês";
+
+  const name = new Date(year, number - 1, 1).toLocaleDateString("pt-BR", {
+    month: short ? "short" : "long",
+  });
+
+  return `${name.replace(".", "")} ${year}`;
+}
+
 function parseCents(value: string, min: number): number | null {
   const normalized = value.trim().replace(/^R\$\s*/, "");
 

@@ -36,12 +36,14 @@ function Page({
   onSaved,
   onCreated,
   onLeave,
+  onManage,
 }: {
   calls: Calls;
   members: Member[];
   onSaved: () => void;
   onCreated: () => void;
   onLeave: () => void;
+  onManage: () => void;
 }) {
   const { run, busy, error } = useActionRun("Sem conexão. Tente novamente.");
   const name = useNameForm({ run, saveName: calls.saveName, onSaved });
@@ -63,6 +65,7 @@ function Page({
       name={name}
       invite={invite}
       onLeave={onLeave}
+      onManage={onManage}
     />
   );
 }
@@ -71,11 +74,15 @@ async function renderPage({
   calls = fakeCalls(),
   members = [ana],
 }: { calls?: Calls; members?: Member[] } = {}) {
-  const spies = { onSaved: vi.fn(), onCreated: vi.fn(), onLeave: vi.fn() };
+  const spies = {
+    onSaved: vi.fn(),
+    onCreated: vi.fn(),
+    onLeave: vi.fn(),
+    onManage: vi.fn(),
+  };
 
   const view = await renderWithProviders(
     <Page calls={calls} members={members} {...spies} />,
-    "/conta",
   );
 
   return { ...view, calls, ...spies };
@@ -199,5 +206,12 @@ describe("AccountSettings", () => {
     expect(screen.getByText("ana@example.com")).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Sair da conta" }));
     expect(onLeave).toHaveBeenCalled();
+  });
+
+  test("hands account management to Clerk", async () => {
+    const { screen, user, onManage } = await renderPage();
+
+    await user.click(screen.getByRole("button", { name: "Gerenciar conta" }));
+    expect(onManage).toHaveBeenCalled();
   });
 });

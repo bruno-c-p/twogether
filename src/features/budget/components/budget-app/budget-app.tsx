@@ -1,7 +1,4 @@
-import { useHydrated } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
-import { UserButton } from "@clerk/tanstack-react-start";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   useBudget,
   type BudgetController,
@@ -14,13 +11,10 @@ import { useBudgetSearch } from "@/features/budget/hooks/use-budget-search";
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import { useWorkspaceData } from "@/features/budget/hooks/use-workspace-data";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
-import {
-  currentMonth,
-  money,
-  shiftMonth,
-} from "@/features/budget/domain/format";
-import { monthSchema } from "@/features/budget/domain/schemas";
+import { currentMonth, money } from "@/features/budget/domain/format";
+import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
+import { MonthFilter } from "@/features/budget/components/month-filter";
 import { NoticeToast, useNotice } from "@/features/budget/components/notice";
 import { AccountsScreen } from "@/features/budget/components/screens/accounts-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
@@ -30,7 +24,6 @@ import { TransactionsScreen } from "@/features/budget/components/screens/transac
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
-import { Button } from "@/components/ui/button";
 
 export function BudgetApp() {
   const budget = useBudget();
@@ -39,60 +32,10 @@ export function BudgetApp() {
     <BudgetWorkspace
       key={`${budget.household.id}:${budget.user.id}`}
       budget={budget}
-      account={<UserButton />}
+      account={
+        <AccountDrawer user={budget.user} members={budget.household.members} />
+      }
     />
-  );
-}
-
-function MonthNavigator({
-  month,
-  setMonth,
-}: {
-  month: string;
-  setMonth: (month: string) => void;
-}) {
-  const today = useHydrated() ? currentMonth() : null;
-
-  return (
-    <div className={styles.monthRow}>
-      <div className={styles.monthPicker}>
-        <Button
-          variant="icon"
-          className={styles.monthIcon}
-          aria-label="Mês anterior"
-          disabled={!month}
-          onClick={() => setMonth(shiftMonth(month, -1))}
-        >
-          <ChevronLeft size={17} />
-        </Button>
-        <input
-          className={styles.monthInput}
-          type="month"
-          aria-label="Selecionar mês e ano"
-          value={month}
-          required
-          onChange={(event) => {
-            const next = event.currentTarget.value;
-
-            if (monthSchema.safeParse(next).success) setMonth(next);
-          }}
-        />
-        <Button
-          variant="icon"
-          className={styles.monthIcon}
-          aria-label="Próximo mês"
-          disabled={!month}
-          onClick={() => setMonth(shiftMonth(month, 1))}
-        >
-          <ChevronRight size={17} />
-        </Button>
-      </div>
-      {today && month !== today && (
-        <button className={styles.todayButton} onClick={() => setMonth(today)}>
-          Voltar para este mês
-        </button>
-      )}
-    </div>
   );
 }
 
@@ -150,9 +93,6 @@ export function BudgetWorkspace({
     setView: search.setView,
   });
 
-  const memberCount = budget.household.members.length;
-  const memberLabel = `${memberCount} ${memberCount === 1 ? "pessoa" : "pessoas"}`;
-
   const alert =
     budget.syncError || listErrorFor(mutations, Boolean(dialogs.deleting));
 
@@ -161,15 +101,11 @@ export function BudgetWorkspace({
   return (
     <WorkspaceShell
       view={search.view}
-      members={budget.household.members}
-      memberLabel={memberLabel}
-      hidden={hidden}
-      onToggleHidden={() => setHidden(!hidden)}
       account={account}
       onRegister={actions.openRegister}
       controls={
         <>
-          <MonthNavigator month={month} setMonth={search.setMonth} />
+          <MonthFilter month={month} setMonth={search.setMonth} />
           <MemberFilter
             members={budget.household.members}
             userId={budget.user.id}
@@ -213,6 +149,7 @@ export function BudgetWorkspace({
         month={month}
         busy={mutations.busy}
         hidden={hidden}
+        onToggleHidden={() => setHidden(!hidden)}
         displayMoney={displayMoney}
         dialogs={dialogs}
         actions={actions}

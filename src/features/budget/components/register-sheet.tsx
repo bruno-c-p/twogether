@@ -401,7 +401,7 @@ function AmountRow({ form }: { form: ParsedForm }) {
             form.setAmountValue(formatAmountInput(event.currentTarget.value))
           }
           style={{ width: `${Math.max(form.amountValue.length, 4) + 0.5}ch` }}
-          className="border-0 bg-transparent p-0 text-inherit font-inherit tracking-inherit outline-none"
+          className="border-0 bg-transparent p-0 text-inherit font-inherit tracking-inherit"
         />
       </div>
       <input
@@ -409,7 +409,7 @@ function AmountRow({ form }: { form: ParsedForm }) {
         maxLength={80}
         value={form.description}
         onChange={(event) => form.setDescription(event.currentTarget.value)}
-        className="flex-1 min-w-[120px] border-0 bg-transparent p-0 text-[16px] text-text-muted outline-none"
+        className="flex-1 min-w-[120px] border-0 bg-transparent p-0 text-[16px] text-text-muted"
       />
     </div>
   );

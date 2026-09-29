@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
-import { Route as AuthenticatedContaRouteImport } from './routes/_authenticated/conta'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
@@ -29,11 +28,6 @@ const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedContaRoute = AuthenticatedContaRouteImport.update({
-  id: '/conta',
-  path: '/conta',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
 const ConviteTokenRoute = ConviteTokenRouteImport.update({
   id: '/convite/$token',
   path: '/convite/$token',
@@ -43,12 +37,10 @@ const ConviteTokenRoute = ConviteTokenRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedIndexRoute
   '/entrar': typeof EntrarRoute
-  '/conta': typeof AuthenticatedContaRoute
   '/convite/$token': typeof ConviteTokenRoute
 }
 export interface FileRoutesByTo {
   '/entrar': typeof EntrarRoute
-  '/conta': typeof AuthenticatedContaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/': typeof AuthenticatedIndexRoute
 }
@@ -56,20 +48,18 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/entrar': typeof EntrarRoute
-  '/_authenticated/conta': typeof AuthenticatedContaRoute
   '/convite/$token': typeof ConviteTokenRoute
   '/_authenticated/': typeof AuthenticatedIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/entrar' | '/conta' | '/convite/$token'
+  fullPaths: '/' | '/entrar' | '/convite/$token'
   fileRoutesByTo: FileRoutesByTo
-  to: '/entrar' | '/conta' | '/convite/$token' | '/'
+  to: '/entrar' | '/convite/$token' | '/'
   id:
     | '__root__'
     | '/_authenticated'
     | '/entrar'
-    | '/_authenticated/conta'
     | '/convite/$token'
     | '/_authenticated/'
   fileRoutesById: FileRoutesById
@@ -103,13 +93,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/conta': {
-      id: '/_authenticated/conta'
-      path: '/conta'
-      fullPath: '/conta'
-      preLoaderRoute: typeof AuthenticatedContaRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/convite/$token': {
       id: '/convite/$token'
       path: '/convite/$token'
@@ -121,12 +104,10 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedContaRoute: typeof AuthenticatedContaRoute
   AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedContaRoute: AuthenticatedContaRoute,
   AuthenticatedIndexRoute: AuthenticatedIndexRoute,
 }
 

@@ -1,9 +1,5 @@
 import { useState, useSyncExternalStore, type FormEvent } from "react";
-import {
-  PHRASE_EXAMPLES,
-  parsePhrase,
-  type PhraseDraft,
-} from "@/features/budget/domain/phrase";
+import { parsePhrase, type PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
@@ -78,7 +74,7 @@ export function PhraseBar({
           className="flex-1 min-w-0 border-0 outline-none bg-transparent text-text text-[15px] h-[38px]"
           placeholder={
             narrow
-              ? "Ex.: Gastei 300 de condomínio"
+              ? "Ex.: Gastei 50 de pizza"
               : "Registrar com uma frase… ex.: Gastei 300 reais de condomínio"
           }
           maxLength={120}
@@ -108,25 +104,6 @@ export function PhraseBar({
         <p id="phrase-error" role="alert" className="text-danger mt-[8px]">
           {error}
         </p>
-      )}
-      {!text && !error && (
-        <div className="flex flex-wrap gap-[8px] mt-[12px]">
-          {PHRASE_EXAMPLES.map((example) => (
-            <button
-              key={example}
-              type="button"
-              disabled={disabled}
-              onClick={() => run(example)}
-              className={cx(
-                "border border-solid border-border rounded-full bg-surface cursor-pointer",
-                "px-[14px] py-[7px] text-[12px] text-text-muted",
-                "hover:border-green hover:text-text disabled:opacity-60",
-              )}
-            >
-              {example}
-            </button>
-          ))}
-        </div>
       )}
     </section>
   );

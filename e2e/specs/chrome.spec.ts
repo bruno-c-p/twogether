@@ -10,6 +10,8 @@ import {
   waitForGate,
   reloadApp,
   withMobile,
+  monthText,
+  monthTrigger,
 } from "../fixtures/app";
 
 async function seedMoney(page: Page) {
@@ -124,9 +126,15 @@ test.describe("chrome", () => {
     expect(readable.body).toBeTruthy();
 
     await onboard(page, "Ana");
-    await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
+    await expect(page.getByRole("group", { name: "Aparência" })).toBeHidden();
 
     await withMobile(page, async () => {
+      await page.getByRole("button", { name: /Abrir nosso espaço/ }).click();
+      await expect(
+        page.getByRole("group", { name: "Aparência" }),
+      ).toBeVisible();
+      await page.getByRole("button", { name: "Tema escuro" }).click();
+      await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
       await expect(
         page.getByRole("button", { name: "Tema escuro" }),
       ).toBeEnabled();
@@ -161,8 +169,8 @@ test.describe("chrome", () => {
     await page.goto("/");
     await expect(page).toHaveURL(/month=\d{4}-\d{2}/);
     expect(new URL(page.url()).searchParams.get("month")).toBe(browserMonth);
-    await expect(page.getByLabel("Selecionar mês e ano")).toHaveValue(
-      browserMonth,
+    await expect(monthTrigger(page)).toHaveAccessibleName(
+      `Selecionar mês e ano: ${monthText(browserMonth)}`,
     );
 
     await expect
@@ -191,6 +199,7 @@ test.describe("chrome", () => {
     const serverHtml = await page.context().request.get(`/?month=${oldMonth}`);
     expect(await serverHtml.text()).not.toContain("Voltar para este mês");
     await page.goto(`/?month=${oldMonth}`);
+    await monthTrigger(page).click();
     await expect(
       page.getByRole("button", { name: "Voltar para este mês" }),
     ).toBeVisible();

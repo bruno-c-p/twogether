@@ -14,6 +14,7 @@ export function OverviewScreen({
   busy,
   displayMoney,
   hidden,
+  onToggleHidden,
   dialogs,
   actions,
 }: ScreenProps) {
@@ -35,6 +36,8 @@ export function OverviewScreen({
           month={month}
           memberFilter={search.memberFilter}
           displayMoney={displayMoney}
+          hidden={hidden}
+          onToggleHidden={onToggleHidden}
           className={cx(!data.partner && "col-span-2 max-bp1000:col-span-1")}
         />
         {data.partner && (

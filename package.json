@@ -17,6 +17,7 @@
     "fallow": "vitest run --coverage --silent && fallow --format compact"
   },
   "dependencies": {
+    "@base-ui/react": "^1.8.0",
     "@clerk/localizations": "^4.17.1",
     "@clerk/tanstack-react-start": "^1.5.15",
     "@libsql/client": "^0.18.0",

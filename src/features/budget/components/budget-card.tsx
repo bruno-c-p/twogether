@@ -1,3 +1,4 @@
+import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
@@ -127,13 +128,14 @@ export function BudgetCard({
         </h2>
         {canEdit && (
           <Button
-            variant="text"
-            className="text-[13px]"
+            variant="icon"
+            className="text-text-muted hover:text-text"
             aria-label="Editar meus percentuais"
+            title="Editar meus percentuais"
             disabled={busy}
             onClick={onEditPercentages}
           >
-            Editar percentuais
+            <Pencil size={17} />
           </Button>
         )}
       </div>

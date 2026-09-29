@@ -51,17 +51,11 @@ function MobileLink({
       aria-current={active ? "page" : undefined}
       onClick={scrollTop}
       className={cx(
-        "flex flex-col items-center gap-[3px] flex-1 min-w-0 text-[10px]",
-        active ? "text-text font-600" : "text-text-muted",
+        "flex flex-col items-center gap-[4px] flex-1 min-w-0 py-[2px] text-[10.5px]",
+        active ? "text-green font-600" : "text-text-muted",
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cx(
-          "w-[6px] h-[6px] rounded-full",
-          active ? "bg-green" : "border border-solid border-text-muted",
-        )}
-      />
+      <item.icon aria-hidden="true" size={20} strokeWidth={active ? 2.2 : 1.8} />
       <span className="truncate max-w-full">{item.label}</span>
     </Link>
   );
@@ -80,9 +74,9 @@ export function MobileNavigation({
     <nav
       aria-label="Navegação mobile"
       className={cx(
-        "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-end",
-        "bg-mobile-nav backdrop-blur border-t border-solid border-border",
-        "px-[8px] pt-[10px] pb-[max(10px,env(safe-area-inset-bottom))]",
+        "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center",
+        "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
+        "px-[8px] pt-[8px] pb-[max(8px,env(safe-area-inset-bottom))]",
       )}
     >
       <MobileLink item={first} view={view} />
@@ -93,12 +87,12 @@ export function MobileNavigation({
           aria-label="Registrar transação"
           onClick={onRegister}
           className={cx(
-            "-mt-[34px] w-[56px] h-[56px] rounded-[18px] border-0",
+            "w-[48px] h-[48px] rounded-full border-0 cursor-pointer",
             "bg-green text-on-brand inline-flex items-center justify-center",
-            "shadow-[0_10px_20px_-8px_rgba(23,63,53,.55)]",
+            "shadow-[0_6px_14px_-6px_rgba(23,63,53,.55)]",
           )}
         >
-          <Plus size={24} />
+          <Plus size={22} />
         </button>
       </div>
       <MobileLink item={third} view={view} />
