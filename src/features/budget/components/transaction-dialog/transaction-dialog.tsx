@@ -46,7 +46,6 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/transaction-dialog/transaction-dialog.module.css";
 
 interface Props {
   transaction: Transaction | null;
@@ -550,12 +549,7 @@ export function TransactionDialog({
   }, []);
 
   return (
-    <Dialog
-      className={styles.dialog}
-      labelledBy="dialog-title"
-      onClose={onClose}
-      closeOnBackdrop
-    >
+    <Dialog labelledBy="dialog-title" onClose={onClose} closeOnBackdrop>
       <DialogContent>
         <DialogHeader onClose={onClose}>
           <div>

@@ -5,7 +5,7 @@
 }
 
 .goalField legend {
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   display: block;
   margin-bottom: 12px;
@@ -27,7 +27,7 @@
   background: var(--surface);
   padding: 10px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .goalOption svg {
@@ -45,12 +45,7 @@
 }
 
 @media (max-width: 620px) {
-  .goalField legend {
-    font-size: 13px;
-  }
-
   .goalOption {
-    font-size: 11px;
     padding: 10px 8px;
     min-height: 44px;
   }

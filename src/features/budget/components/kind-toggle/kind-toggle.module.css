@@ -19,7 +19,7 @@
   color: var(--text-muted);
   padding: 10px;
   border-radius: 5px;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .kindToggle button.active {

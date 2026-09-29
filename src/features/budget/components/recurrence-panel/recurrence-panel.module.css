@@ -87,7 +87,7 @@
 
 .recurrencePanel .recurrenceCount label {
   display: block;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
   margin: 0;
 }
@@ -109,13 +109,7 @@
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 16px;
-}
-
-@media (max-width: 620px) {
-  .recurrencePanel .recurrenceCount label {
-    font-size: 13px;
-  }
+  font-size: 14px;
 }
 
 @media (max-width: 480px) {
