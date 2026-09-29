@@ -47,9 +47,7 @@ describe("BudgetWorkspace", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Visão geral" }),
     ).toBeTruthy();
-    expect(
-      screen.getByText("O planejado soma as metas individuais de cada pessoa."),
-    ).toBeTruthy();
+    expect(screen.getByText(/Sobra de\s+setembro/)).toBeTruthy();
     expect(
       screen.getByRole("link", { name: "Abrir nosso espaço: 1 pessoa" }),
     ).toBeTruthy();
@@ -86,12 +84,7 @@ describe("BudgetWorkspace", () => {
       "/?month=2026-09&view=accounts",
     );
 
-    expect(
-      screen.getByText(
-        "O saldo de cada conta inclui as transações de todo o casal.",
-      ),
-    ).toBeTruthy();
-    expect(screen.queryByRole("button", { name: "Próximo mês" })).toBeNull();
+    expect(screen.getByText(/Inclui as transações do casal\./)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Nova conta" }));
     expect(
       await screen.findByRole("heading", { name: "Nova conta" }),
@@ -101,6 +94,7 @@ describe("BudgetWorkspace", () => {
   test("a new transaction without accounts sends the person to Contas", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget({ accounts: [] }),
+      "/?month=2026-09&view=transactions",
     );
 
     await user.click(screen.getByRole("button", { name: "Nova transação" }));
@@ -132,6 +126,7 @@ describe("BudgetWorkspace", () => {
 
     const { screen, user } = await renderWorkspace(
       budget({ transactions: series }),
+      "/?month=2026-09&view=transactions",
     );
 
     await user.click(screen.getByRole("button", { name: "Excluir Aluguel" }));
@@ -174,8 +169,8 @@ describe("BudgetWorkspace", () => {
     expect(screen.getByRole("alert").textContent).toBe("Sem conexão.");
     await user.click(screen.getByRole("button", { name: "Eu" }));
     expect(
-      await screen.findByText("Renda, gastos e metas da pessoa selecionada."),
-    ).toBeTruthy();
+      screen.getByRole("button", { name: "Eu" }).getAttribute("aria-pressed"),
+    ).toBe("true");
   });
 
   test("the transactions list links from the overview to the full view", async () => {

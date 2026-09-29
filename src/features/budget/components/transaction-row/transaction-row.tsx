@@ -1,4 +1,4 @@
-import { ArrowDownLeft, ArrowUpRight, Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import type {
@@ -6,24 +6,9 @@ import type {
   Member,
   Transaction,
 } from "@/features/budget/domain/types";
-import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
-import styles from "@/features/budget/components/transaction-row/transaction-row.module.css";
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
-
-type Goal = (typeof GOALS)[number];
-
-function dayLabel(date: string) {
-  return dayFormatter
-    .format(new Date(`${date}T12:00:00`))
-    .replace(" de ", " ")
-    .replace(".", "");
-}
+import { cx } from "@/lib/cx";
 
 function amountLabel(transaction: Transaction, hidden: boolean) {
   if (hidden) return "R$ ••••";
@@ -32,13 +17,13 @@ function amountLabel(transaction: Transaction, hidden: boolean) {
 }
 
 function splitLabel(t: Transaction, userId: string) {
-  if (t.settlementOf) return t.kind === "income" ? "Reembolso" : "Parte paga";
+  if (t.settlementOf) return t.kind === "income" ? "reembolso" : "parte paga";
 
   if (!t.split) return "";
 
-  if (t.split.paidAt) return "Dividida · paga";
+  if (t.split.paidAt) return "dividida · paga";
 
-  return t.memberId === userId ? "Dividida · a receber" : "Dividida · a pagar";
+  return t.memberId === userId ? "dividida · a receber" : "dividida · a pagar";
 }
 
 const REPAYMENT_LOCK = "reembolso: desmarque o pagamento na transação original";
@@ -55,101 +40,29 @@ function withLock(label: string, lock: string) {
   return lock ? `${label} (${lock})` : label;
 }
 
-function TransactionIcon({
-  kind,
-  goal,
-}: {
-  kind: Transaction["kind"];
-  goal: Goal | undefined;
-}) {
-  const income = kind === "income";
-
-  return (
-    <span
-      className={`${styles.transactionIcon} ${income ? styles.incomeIcon : ""}`}
-      style={
-        goal ? { background: goal.background, color: goal.color } : undefined
-      }
-    >
-      {income && <ArrowDownLeft size={20} />}
-      {!income && goal && <GoalIcon goal={goal.id} />}
-      {!income && !goal && <ArrowUpRight size={20} />}
-    </span>
-  );
-}
-
-function TransactionTags({
-  tags,
-  onTag,
-}: {
-  tags: string[];
-  onTag: (tag: string) => void;
-}) {
-  if (!tags.length)
-    return (
-      <div className={styles.rowTags}>
-        <span>Sem tags</span>
-      </div>
-    );
-
-  return (
-    <div className={styles.rowTags}>
-      {tags.map((tag) => (
-        <button key={tag} onClick={() => onTag(tag)}>
-          #{tag}
-        </button>
-      ))}
-    </div>
-  );
-}
-
-function GoalBadge({ goal }: { goal: Goal | undefined }) {
-  if (!goal) return <span className={styles.incomeLabel}>Receita</span>;
-
-  return (
-    <span
-      className={styles.goalBadge}
-      style={{ background: goal.background, color: goal.color }}
-    >
-      <ColorDot className={styles.goalDot} style={{ background: goal.color }} />
-      {goal.name}
-    </span>
-  );
-}
-
-function RowPerson({
-  transaction,
+function PayerAvatar({
   members,
-  accounts,
-  userId,
+  memberId,
 }: {
-  transaction: Transaction;
   members: Member[];
-  accounts: BankAccount[];
-  userId: string;
+  memberId: string | undefined;
 }) {
-  const person =
-    members.find((member) => member.id === transaction.memberId)?.name ??
-    "Pessoa do casal";
-
-  const account =
-    accounts.find((item) => item.id === transaction.accountId)?.name ??
-    "Sem conta";
-
-  const label = splitLabel(transaction, userId);
+  const index = members.findIndex((member) => member.id === memberId);
+  const name = members[index]?.name ?? "Pessoa do casal";
 
   return (
-    <div className={styles.transactionPerson}>
-      {person}
-      {" · "}
-      {account}
-      {label && (
-        <>
-          {" · "}
-          <span className="text-text-muted">{label}</span>
-        </>
+    <span
+      title={name}
+      className={cx(
+        "w-[26px] h-[26px] rounded-full inline-flex items-center justify-center",
+        "text-[11px] font-600 shrink-0 max-bp1000:row-span-2",
+        index === -1 && "bg-surface-soft text-text-muted",
+        index === 0 && "bg-green text-on-brand",
+        index > 0 && "bg-category-pleasure text-on-brand",
       )}
-    </div>
+    >
+      {index === -1 ? "?" : name.slice(0, 1).toLocaleUpperCase("pt-BR")}
+    </span>
   );
 }
 
@@ -160,7 +73,6 @@ export function TransactionRow({
   userId,
   busy,
   hidden,
-  className,
   onEdit,
   onDelete,
   onTag,
@@ -171,67 +83,100 @@ export function TransactionRow({
   userId: string;
   busy: boolean;
   hidden: boolean;
-  className?: string;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
   onTag: (tag: string) => void;
 }) {
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
-
-  const tone = t.kind === "income" ? styles.positive : styles.negative;
+  const account = accounts.find((item) => item.id === t.accountId)?.name;
+  const status = splitLabel(t, userId);
   const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
   const removeLock = deleteLock(t);
 
   return (
-    <div className={className ? `${styles.row} ${className}` : styles.row}>
-      <div className={styles.transactionDescription}>
-        <TransactionIcon kind={t.kind} goal={goal} />
-        <div>
+    <div
+      className={cx(
+        "grid items-center gap-x-[14px] px-[24px] py-[13px] border-0 border-t border-solid border-border",
+        "grid-cols-[26px_minmax(0,1fr)_210px_120px_130px_64px]",
+        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-[2px] max-bp1000:px-[16px]",
+      )}
+    >
+      <PayerAvatar members={members} memberId={t.memberId} />
+      <div className="min-w-0 flex items-baseline gap-[8px] flex-wrap">
+        <button
+          className="border-0 bg-transparent p-0 text-left text-[15px] text-text min-w-0 break-words disabled:cursor-default"
+          disabled={busy || Boolean(editLock)}
+          title={editLock || undefined}
+          onClick={() => onEdit(t)}
+        >
+          {t.description}
+        </button>
+        {t.tags.map((tag) => (
           <button
-            className={styles.transactionName}
-            disabled={busy || Boolean(editLock)}
-            title={editLock || undefined}
-            onClick={() => onEdit(t)}
+            key={tag}
+            className="border-0 bg-transparent p-0 text-[12px] text-text-muted hover:text-text"
+            onClick={() => onTag(tag)}
           >
-            {t.description}
+            #{tag}
           </button>
-          <RowPerson
-            transaction={t}
-            members={members}
-            accounts={accounts}
-            userId={userId}
-          />
-          <TransactionTags tags={t.tags} onTag={onTag} />
-        </div>
+        ))}
+        {status && (
+          <span className="text-[12px] text-text-muted">{status}</span>
+        )}
       </div>
-      <div className={styles.transactionGoal}>
-        <GoalBadge goal={goal} />
+      <div
+        className={cx(
+          "contents text-[13px] text-text-muted",
+          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-[6px] max-bp1000:min-w-0",
+        )}
+      >
+        {goal ? (
+          <span className="inline-flex items-center gap-[8px] min-w-0 text-text max-bp1000:text-text-muted">
+            <ColorDot
+              className="w-[7px] h-[7px]"
+              style={{ background: goal.color }}
+            />
+            <span className="break-words min-w-0">{goal.name}</span>
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-[8px] min-w-0 text-text max-bp1000:text-text-muted">
+            <ColorDot className="w-[7px] h-[7px] bg-green" />
+            Receita
+          </span>
+        )}
+        <span aria-hidden="true" className="bp1000:hidden">
+          ·
+        </span>
+        <span className="break-words min-w-0">{account ?? "Sem conta"}</span>
       </div>
-      <time className={styles.transactionDate} dateTime={t.date}>
-        {dayLabel(t.date)}
-      </time>
-      <span className={`${styles.transactionValue} ${tone}`}>
+      <span
+        className={cx(
+          "text-right text-[15px] font-600 whitespace-nowrap",
+          t.kind === "income" ? "text-green" : "text-text",
+          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-[14px]",
+        )}
+      >
         {amountLabel(t, hidden)}
       </span>
-      <div className={styles.rowActions}>
+      <div className="flex justify-end max-bp1000:col-start-3 max-bp1000:row-start-2">
         <Button
           variant="icon"
-          className={styles.actionButton}
+          className="w-[28px] h-[28px] text-text-muted max-bp1000:hidden"
           disabled={busy || Boolean(editLock)}
           aria-label={withLock(`Editar ${t.description}`, editLock)}
           onClick={() => onEdit(t)}
         >
-          <Pencil size={15} />
+          <Pencil size={14} />
         </Button>
         <Button
           variant="icon"
-          className={`${styles.actionButton} ${styles.deleteButton}`}
+          className="w-[28px] h-[28px] text-text-muted hover:text-danger"
           disabled={busy || Boolean(removeLock)}
           aria-label={withLock(`Excluir ${t.description}`, removeLock)}
           onClick={() => onDelete(t)}
         >
-          <Trash2 size={15} />
+          <Trash2 size={14} />
         </Button>
       </div>
     </div>

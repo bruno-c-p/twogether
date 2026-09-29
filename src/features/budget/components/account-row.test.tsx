@@ -1,6 +1,7 @@
 import { describe, expect, test, vi } from "vitest";
 import { AccountRow } from "@/features/budget/components/account-row";
-import { nubank } from "@/test/fixtures";
+import { money } from "@/features/budget/domain/format";
+import { nubank, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
 function setup(overrides: Partial<Parameters<typeof AccountRow>[0]> = {}) {
@@ -8,21 +9,32 @@ function setup(overrides: Partial<Parameters<typeof AccountRow>[0]> = {}) {
     account: nubank,
     used: false,
     balance: 100000,
+    entered: 0,
+    left: 0,
+    monthTransactions: [],
+    monthName: "setembro",
     busy: false,
-    hidden: false,
+    displayMoney: money,
     onEdit: vi.fn(),
     onDelete: vi.fn(),
     ...overrides,
   };
 
-  return { props, ...renderPlain(<AccountRow {...props} />) };
+  return {
+    props,
+    ...renderPlain(
+      <ul>
+        <AccountRow {...props} />
+      </ul>,
+    ),
+  };
 }
 
 describe("AccountRow", () => {
   test("shows the balance and lets an unused account be edited or deleted", async () => {
     const { screen, user, props } = setup();
 
-    expect(screen.getByText("Nenhuma transação nesta conta")).toBeTruthy();
+    expect(screen.getByText("0 transações em setembro")).toBeTruthy();
     expect(screen.getByText(/R\$\s1\.000,00/)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Editar Nubank" }));
     await user.click(screen.getByRole("button", { name: "Excluir Nubank" }));
@@ -34,14 +46,26 @@ describe("AccountRow", () => {
     const { screen } = setup({ used: true, balance: -500 });
     const remove = screen.getByRole("button", { name: "Excluir Nubank" });
 
-    expect(screen.getByText("Em uso nas transações")).toBeTruthy();
     expect(remove.hasAttribute("disabled")).toBe(true);
     expect(remove.getAttribute("title")).toMatch(/Exclua ou mova/);
   });
 
-  test("masks the balance when values are hidden", () => {
-    const { screen } = setup({ hidden: true });
+  test("lists the month's movement with signed amounts", () => {
+    const { screen } = setup({
+      entered: 5000,
+      left: 8000,
+      monthTransactions: [transaction()],
+    });
 
-    expect(screen.getByText("R$ ••••")).toBeTruthy();
+    expect(screen.getByText("1 transação em setembro")).toBeTruthy();
+    expect(screen.getByText("Mercado")).toBeTruthy();
+    expect(screen.getByText(/^-\sR\$\s45,90$/)).toBeTruthy();
+    expect(screen.getByText(/^\+\sR\$\s50,00$/)).toBeTruthy();
+  });
+
+  test("masks the balance when values are hidden", () => {
+    const { screen } = setup({ displayMoney: () => "R$ ••••" });
+
+    expect(screen.getAllByText("R$ ••••").length).toBeGreaterThan(0);
   });
 });

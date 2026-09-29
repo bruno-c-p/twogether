@@ -3,12 +3,9 @@ import {
   openGoalTransactions,
   openView,
   type BudgetFilters,
+  type KindFilter,
 } from "@/features/budget/search";
-import type {
-  GoalId,
-  TransactionKind,
-  View,
-} from "@/features/budget/domain/types";
+import type { GoalId, View } from "@/features/budget/domain/types";
 
 const workspaceRoute = getRouteApi("/_authenticated/");
 
@@ -28,7 +25,7 @@ export function useBudgetSearch() {
   const query = search.query ?? "";
   const goalFilter: GoalId | "all" = search.goal ?? "all";
   const tagFilter = search.tag ?? "";
-  const kindFilter: TransactionKind | "all" = search.kind ?? "all";
+  const kindFilter: KindFilter | "all" = search.kind ?? "all";
 
   return {
     search,
@@ -58,7 +55,7 @@ export function useBudgetSearch() {
         goal: goal === "all" ? undefined : goal,
       }));
     },
-    setKindFilter: (kind: TransactionKind | "all") => {
+    setKindFilter: (kind: KindFilter | "all") => {
       updateSearch((prev) => ({
         ...prev,
         kind: kind === "all" ? undefined : kind,

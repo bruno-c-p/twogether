@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { describe, expect, test, vi } from "vitest";
-import { TransactionList } from "@/features/budget/components/transaction-list/transaction-list";
-import type {
-  GoalId,
-  Transaction,
-  TransactionKind,
-} from "@/features/budget/domain/types";
+import {
+  TransactionList,
+  TransactionSearch,
+} from "@/features/budget/components/transaction-list/transaction-list";
+import type { GoalId, Transaction } from "@/features/budget/domain/types";
+import type { KindFilter } from "@/features/budget/search";
 import { ana, nubank, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
@@ -38,50 +38,47 @@ const month = [
 
 function List({
   transactions = month,
-  compact = false,
   hidden = false,
   onEdit = vi.fn(),
   onDelete = vi.fn(),
   onAdd = vi.fn(),
-  onViewAll = vi.fn(),
 }: {
   transactions?: Transaction[];
-  compact?: boolean;
   hidden?: boolean;
   onEdit?: (t: Transaction) => void;
   onDelete?: (t: Transaction) => void;
   onAdd?: () => void;
-  onViewAll?: () => void;
 }) {
   const [query, setQuery] = useState("");
   const [goalFilter, setGoalFilter] = useState<GoalId | "all">("all");
   const [tagFilter, setTag] = useState("");
-  const [kindFilter, setKindFilter] = useState<TransactionKind | "all">("all");
+  const [kindFilter, setKindFilter] = useState<KindFilter | "all">("all");
 
   return (
-    <TransactionList
-      transactions={transactions}
-      filters={{
-        query,
-        goalFilter,
-        tagFilter,
-        kindFilter,
-        setQuery,
-        setGoalFilter,
-        setTag,
-        setKindFilter,
-      }}
-      members={[ana]}
-      accounts={[nubank]}
-      userId="ana"
-      busy={false}
-      hidden={hidden}
-      compact={compact}
-      onEdit={onEdit}
-      onDelete={onDelete}
-      onAdd={onAdd}
-      onViewAll={onViewAll}
-    />
+    <>
+      <TransactionSearch query={query} setQuery={setQuery} />
+      <TransactionList
+        transactions={transactions}
+        filters={{
+          query,
+          goalFilter,
+          tagFilter,
+          kindFilter,
+          setQuery,
+          setGoalFilter,
+          setTag,
+          setKindFilter,
+        }}
+        members={[ana]}
+        accounts={[nubank]}
+        userId="ana"
+        busy={false}
+        hidden={hidden}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onAdd={onAdd}
+      />
+    </>
   );
 }
 
@@ -92,7 +89,7 @@ function rowNames(screen: ReturnType<typeof renderPlain>["screen"]) {
 }
 
 describe("TransactionList", () => {
-  test("lists newest first with person, account, goal and signed amounts", () => {
+  test("lists newest first grouped by day with account, goal and signed amounts", () => {
     const { screen } = renderPlain(<List />);
 
     expect(rowNames(screen)).toEqual([
@@ -100,12 +97,40 @@ describe("TransactionList", () => {
       "Editar Mercado",
       "Editar Salário",
     ]);
-    expect(screen.getByText("Pessoa do casal · Sem conta")).toBeTruthy();
-    expect(screen.getAllByText("Ana · Nubank")).toHaveLength(2);
+    expect(screen.getByText("12 set · sábado")).toBeTruthy();
+    expect(screen.getByText("10 set · quinta")).toBeTruthy();
+    expect(screen.getByText("05 set · sábado")).toBeTruthy();
+    expect(screen.getByText("Sem conta")).toBeTruthy();
+    expect(screen.getAllByText("Nubank")).toHaveLength(2);
     expect(screen.getByText("Receita")).toBeTruthy();
-    expect(screen.getByText(/\+\sR\$\s5\.000,00/)).toBeTruthy();
-    expect(screen.getAllByText(/−\sR\$\s45,90/)).toHaveLength(2);
-    expect(screen.getByText("3 transações neste mês")).toBeTruthy();
+    expect(screen.getAllByText(/\+\sR\$\s5\.000,00/)).toHaveLength(2);
+    expect(screen.getAllByText(/−\sR\$\s45,90/)).toHaveLength(4);
+  });
+
+  test("transactions on the same day share one header with the net total", () => {
+    const { screen } = renderPlain(
+      <List
+        transactions={[
+          transaction({
+            id: "a",
+            description: "Pão",
+            amount: 1000,
+            date: "2026-09-10",
+          }),
+          transaction({
+            id: "b",
+            description: "Freela",
+            kind: "income",
+            goal: null,
+            amount: 3000,
+            date: "2026-09-10",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByText("10 set · quinta")).toHaveLength(1);
+    expect(screen.getAllByText(/\+\sR\$\s20,00/)).toHaveLength(1);
   });
 
   test("search, goal, kind and tag filters narrow the rows", async () => {
@@ -115,12 +140,9 @@ describe("TransactionList", () => {
     expect(rowNames(screen)).toEqual(["Editar Cinema"]);
     await user.click(screen.getByRole("button", { name: "Limpar busca" }));
 
-    await user.selectOptions(
-      screen.getByLabelText("Filtrar por tipo"),
-      "income",
-    );
+    await user.click(screen.getByRole("button", { name: "Receitas" }));
     expect(rowNames(screen)).toEqual(["Editar Salário"]);
-    await user.selectOptions(screen.getByLabelText("Filtrar por tipo"), "all");
+    await user.click(screen.getByRole("button", { name: "Todas" }));
 
     await user.selectOptions(
       screen.getByLabelText("Filtrar por meta"),
@@ -132,7 +154,29 @@ describe("TransactionList", () => {
     await user.click(screen.getByRole("button", { name: "#casa" }));
     expect(screen.getByText("Filtrando por")).toBeTruthy();
     expect(rowNames(screen)).toEqual(["Editar Mercado"]);
-    expect(screen.getByText("1 transação neste mês")).toBeTruthy();
+  });
+
+  test("the split chip keeps only divided transactions", async () => {
+    const shared = transaction({
+      id: "s1",
+      description: "Aluguel",
+      date: "2026-09-05",
+      split: {},
+    });
+
+    const { screen, user } = renderPlain(
+      <List transactions={[shared, ...month]} />,
+    );
+
+    expect(rowNames(screen)).toHaveLength(4);
+    await user.click(screen.getByRole("button", { name: "Divididas" }));
+    expect(rowNames(screen)).toEqual(["Editar Aluguel"]);
+    expect(
+      screen
+        .getByRole("button", { name: "Divididas" })
+        .getAttribute("aria-pressed"),
+    ).toBe("true");
+    expect(screen.getByText("dividida · a receber")).toBeTruthy();
   });
 
   test("an over-filtered list offers to clear every filter", async () => {
@@ -158,27 +202,6 @@ describe("TransactionList", () => {
     expect(onAdd).toHaveBeenCalled();
   });
 
-  test("compact mode shows the latest five and links to the full list", async () => {
-    const many = Array.from({ length: 7 }, (_, index) =>
-      transaction({
-        id: `m${index}`,
-        description: `Item ${index}`,
-        date: `2026-09-0${index + 1}`,
-      }),
-    );
-
-    const onViewAll = vi.fn();
-
-    const { screen, user } = renderPlain(
-      <List transactions={many} compact onViewAll={onViewAll} />,
-    );
-
-    expect(rowNames(screen)).toHaveLength(5);
-    expect(screen.getByText("5 de 7 transações neste mês")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: /Ver todas/ }));
-    expect(onViewAll).toHaveBeenCalled();
-  });
-
   test("row actions edit and delete, and hidden values mask amounts", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
@@ -187,7 +210,7 @@ describe("TransactionList", () => {
       <List hidden onEdit={onEdit} onDelete={onDelete} />,
     );
 
-    expect(screen.getAllByText("R$ ••••")).toHaveLength(3);
+    expect(screen.getAllByText("R$ ••••")).toHaveLength(6);
     await user.click(screen.getByRole("button", { name: "Mercado" }));
     await user.click(screen.getByRole("button", { name: "Excluir Cinema" }));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "t1" }));

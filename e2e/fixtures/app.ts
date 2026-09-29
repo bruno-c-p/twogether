@@ -200,3 +200,14 @@ export function person(page: Page, name: string) {
     .getByLabel("Filtrar por pessoa")
     .getByRole("button", { name, exact: true });
 }
+
+export async function openView(page: Page, name: string) {
+  await nav(page, "desktop").getByRole("link", { name }).click();
+}
+
+export async function openNewTransaction(page: Page) {
+  await openView(page, "Transações");
+  await page.getByRole("button", { name: "Nova transação" }).click();
+
+  return page.getByRole("dialog", { name: "Nova transação" });
+}

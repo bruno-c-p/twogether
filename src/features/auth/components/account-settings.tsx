@@ -11,7 +11,7 @@ import {
 } from "@/features/auth/hooks/use-action-run";
 import { createInvite, revokeInvite } from "@/features/household/actions";
 import { MemberList } from "@/features/household/components/member-list/member-list";
-import { WorkspaceShell } from "@/features/budget/components/workspace-shell/workspace-shell";
+import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
 import { formText } from "@/features/budget/domain/format";
 import { fieldErrors, nameFormSchema } from "@/features/budget/domain/schemas";
 import type { Member } from "@/features/budget/domain/types";
@@ -246,7 +246,7 @@ export function AccountSettingsView({
 
   return (
     <WorkspaceShell
-      title="Sua conta"
+      members={members}
       memberLabel={memberLabel}
       account={account}
     >

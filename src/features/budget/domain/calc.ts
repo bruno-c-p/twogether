@@ -26,6 +26,29 @@ export function accountBalance(
   }, account.openingBalance ?? 0);
 }
 
+export function accountMonthActivity(
+  account: BankAccount,
+  transactions: Transaction[],
+  month: string,
+) {
+  const inMonth = transactions.filter(
+    (transaction) =>
+      transaction.accountId === account.id &&
+      transaction.date.startsWith(month),
+  );
+
+  const total = (kind: Transaction["kind"]) =>
+    inMonth
+      .filter((transaction) => transaction.kind === kind)
+      .reduce((sum, transaction) => sum + transaction.amount, 0);
+
+  return {
+    entered: total("income"),
+    left: total("expense"),
+    transactions: [...inMonth].sort((a, b) => b.date.localeCompare(a.date)),
+  };
+}
+
 export function summarize(transactions: Transaction[]) {
   const income = transactions
     .filter((t) => t.kind === "income")

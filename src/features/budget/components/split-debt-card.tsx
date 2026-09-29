@@ -1,6 +1,5 @@
-import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Panel, SectionHeading } from "@/components/ui/panel/panel";
+import { OverviewCard } from "@/features/budget/components/overview-card";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
@@ -8,8 +7,14 @@ import { cx } from "@/lib/cx";
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",
-  year: "numeric",
 });
+
+function dayLabel(date: string) {
+  return dayFormatter
+    .format(new Date(`${date}T12:00:00`))
+    .replaceAll(" de ", " ")
+    .replace(".", "");
+}
 
 export function SplitDebtCard({
   net,
@@ -37,80 +42,79 @@ export function SplitDebtCard({
           ? "Vocês estão quites"
           : "Nada pendente entre vocês";
 
-  return (
-    <Panel aria-labelledby="split-debt-title">
-      <SectionHeading
-        title="Despesas divididas"
-        titleId="split-debt-title"
-        count={unpaid.length}
-        description="Metade de cada despesa dividida fica com cada pessoa."
-      />
-      <div className="px-[23px] pb-[12px] max-bp620:px-[17px]">
-        <p
-          className={cx(
-            "font-heading text-[20px] font-600 mb-[14px]",
-            "max-bp620:text-[17px]",
-            net < 0 ? "text-danger" : "text-text",
-          )}
-        >
-          {headline}
-        </p>
-        {unpaid.length ? (
-          <ul className="list-none m-0 p-0 flex flex-col">
-            {unpaid.map((transaction) => {
-              const debtorIsUser = transaction.memberId !== userId;
+  // The oldest split the user owes; settling it exposes the next one.
+  const owed = unpaid.find((transaction) => transaction.memberId !== userId);
 
-              return (
-                <li
-                  key={transaction.id}
-                  className={cx(
-                    "flex items-center gap-[12px] py-[11px] flex-wrap",
-                    "[border-top:1px_solid_var(--border)]",
-                  )}
-                >
-                  <span className="w-[30px] h-[30px] rounded-[8px] bg-surface-soft grid place-items-center text-text-muted shrink-0">
-                    <Users size={15} />
-                  </span>
-                  <span className="flex-1 min-w-[140px]">
-                    <span className="block text-[12px] font-500 text-text truncate bp1450:text-[13px]">
-                      {transaction.description}
-                    </span>
-                    <span className="block text-[11px] text-text-muted mt-[3px]">
-                      {dayFormatter
-                        .format(new Date(`${transaction.date}T12:00:00`))
-                        .replaceAll(" de ", " ")
-                        .replace(".", "")}
-                      {" · "}
-                      {debtorIsUser
-                        ? `Você deve ${displayMoney(partnerShare(transaction.amount))}`
-                        : `${partner.name} deve ${displayMoney(partnerShare(transaction.amount))}`}
-                    </span>
-                  </span>
-                  {debtorIsUser ? (
-                    <Button
-                      variant="secondary"
-                      className="max-bp620:w-full"
-                      disabled={busy}
-                      onClick={() => onSettle(transaction)}
-                    >
-                      Marcar como pago
-                    </Button>
-                  ) : (
-                    <span className="text-[11px] text-text-muted">
-                      Aguardando {partner.name}
-                    </span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="text-[12px] text-text-muted m-0 pb-[11px]">
-            Ao lançar uma despesa, ative “Dividir com {partner.name}” para
-            registrar a parte de cada um.
-          </p>
+  return (
+    <OverviewCard
+      aria-labelledby="split-debt-title"
+      className={cx(
+        "grid gap-x-[16px] content-start",
+        "max-bp1000:grid-cols-[1fr_auto] max-bp1000:items-center",
+        "max-bp620:px-[16px] max-bp620:py-[14px]",
+      )}
+    >
+      <h2
+        id="split-debt-title"
+        className="font-body font-400 uppercase tracking-[1px] text-[12px] text-text-muted m-0 max-bp1000:normal-case max-bp1000:tracking-normal max-bp1000:text-[12px]"
+      >
+        Acerto entre vocês
+      </h2>
+      <p
+        className={cx(
+          "font-heading text-[28px] font-600 m-0 mt-[14px] tracking-[-0.5px]",
+          "max-bp1000:mt-[2px] max-bp1000:text-[17px] max-bp1000:tracking-normal",
+          net < 0 ? "text-danger" : "text-text",
         )}
-      </div>
-    </Panel>
+      >
+        {headline}
+      </p>
+      {unpaid.length ? (
+        <ul className="list-none m-0 mt-[18px] p-0 flex flex-col max-bp1000:hidden">
+          {unpaid.map((transaction) => (
+            <li
+              key={transaction.id}
+              className="flex items-baseline justify-between gap-[12px] py-[12px] text-[14px] [border-top:1px_solid_var(--border)]"
+            >
+              <span className="min-w-0 truncate">
+                {transaction.description}
+                <span className="text-text-muted text-[13px]">
+                  {" · "}
+                  {dayLabel(transaction.date)}
+                </span>
+              </span>
+              <span className="shrink-0">
+                {displayMoney(partnerShare(transaction.amount))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="text-[12px] text-text-muted m-0 mt-[14px] max-bp1000:hidden">
+          Ao lançar uma despesa, ative “Dividir com {partner.name}” para
+          registrar a parte de cada um.
+        </p>
+      )}
+      {owed ? (
+        <Button
+          variant="secondary"
+          className={cx(
+            "w-full mt-[10px] min-h-[44px] bg-transparent rounded-[10px]",
+            "border-text text-text font-500 text-[14px]",
+            "max-bp1000:mt-0 max-bp1000:w-auto max-bp1000:col-start-2 max-bp1000:row-start-1 max-bp1000:row-span-2 max-bp1000:whitespace-nowrap",
+          )}
+          disabled={busy}
+          onClick={() => onSettle(owed)}
+        >
+          Marcar como pago
+        </Button>
+      ) : (
+        unpaid.length > 0 && (
+          <p className="text-[12px] text-text-muted m-0 mt-[6px] max-bp1000:col-start-1">
+            Aguardando {partner.name}
+          </p>
+        )
+      )}
+    </OverviewCard>
   );
 }

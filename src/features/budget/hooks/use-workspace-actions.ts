@@ -6,6 +6,7 @@ import type {
   Transaction,
   View,
 } from "@/features/budget/domain/types";
+import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
@@ -85,7 +86,10 @@ export function useWorkspaceActions({
     setNotice({ message: "Transação excluída.", undo: transaction });
   }
 
-  function openTransaction(transaction: Transaction | null) {
+  function openTransaction(
+    transaction: Transaction | null,
+    draft?: PhraseDraft,
+  ) {
     if (!transaction && budget.state.accounts.length === 0) {
       setNotice({ message: "Cadastre uma conta para lançar transações." });
       setView("accounts");
@@ -93,7 +97,28 @@ export function useWorkspaceActions({
       return;
     }
 
+    if (draft) {
+      dialogs.setRegister({ draft });
+
+      return;
+    }
+
     dialogs.setTransaction({ transaction });
+  }
+
+  function openRegister() {
+    if (budget.state.accounts.length === 0) {
+      openTransaction(null);
+
+      return;
+    }
+
+    dialogs.setRegister({});
+  }
+
+  function openManual() {
+    dialogs.setRegister(null);
+    openTransaction(null);
   }
 
   async function saveAccountRecord(account: BankAccount) {
@@ -211,6 +236,8 @@ export function useWorkspaceActions({
     save,
     remove,
     openTransaction,
+    openRegister,
+    openManual,
     saveAccountRecord,
     removeAccount,
     undoNotice,
