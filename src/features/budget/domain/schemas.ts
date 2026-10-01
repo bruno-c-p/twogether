@@ -1,7 +1,9 @@
 import { z } from "zod";
-import { GOALS } from "@/features/budget/constants";
-import { parseAmount, parseBalance } from "@/features/budget/domain/format";
-import type { BankAccount, GoalId } from "@/features/budget/domain/types";
+import {
+  localDate,
+  parseAmount,
+  parseBalance,
+} from "@/features/budget/domain/format";
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
@@ -39,6 +41,7 @@ export const monthSchema = z
   .string({ error: "Escolha um mês válido." })
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/, { error: "Escolha um mês válido." });
 
+// A real calendar day: "2026-02-30" does not survive the round trip.
 export const dateSchema = z
   .string({ error: "Escolha uma data válida." })
   .regex(/^\d{4}-\d{2}-\d{2}$/, { error: "Escolha uma data válida." })
@@ -48,19 +51,32 @@ export const dateSchema = z
 
       return (
         !Number.isNaN(date.getTime()) &&
-        `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}` ===
-          value &&
+        localDate(date) === value &&
         value >= "1900-01-01"
       );
     },
     { error: "Escolha uma data válida." },
   );
 
-export const goalIdSchema = z.enum(
-  // SAFETY: GOALS is a non-empty constant list, so the mapped ids form a
-  // non-empty tuple of GoalId values.
-  GOALS.map((goal) => goal.id) as [GoalId, ...GoalId[]],
-  { error: "Meta inválida." },
+// Order matches GOALS in constants.ts.
+export const GOAL_IDS = [
+  "fixed",
+  "pleasure",
+  "comfort",
+  "targets",
+  "knowledge",
+  "freedom",
+] as const;
+
+export const goalIdSchema = z.enum(GOAL_IDS, { error: "Meta inválida." });
+
+export const transactionKindSchema = z.enum(["expense", "income"], {
+  error: "Tipo da transação inválido.",
+});
+
+export const viewSchema = z.enum(
+  ["overview", "transactions", "goals", "accounts"],
+  { error: "Visão inválida." },
 );
 
 const centsSchema = z
@@ -111,6 +127,43 @@ export const followingSchema = z.array(
   { error: "Recorrência inválida." },
 );
 
+const descriptionSchema = z
+  .string({ error: "Dê um nome para esta transação." })
+  .trim()
+  .min(1, { error: "Dê um nome para esta transação." })
+  .max(80, { error: "A descrição deve ter no máximo 80 caracteres." });
+
+const accountNameSchema = z
+  .string({ error: "Dê um nome para esta conta." })
+  .trim()
+  .min(1, { error: "Dê um nome para esta conta." })
+  .max(50, { error: "O nome da conta deve ter no máximo 50 caracteres." });
+
+// Expenses need one of the six goals; income never has one.
+function withGoalRules<
+  Schema extends z.ZodType<{
+    kind: z.infer<typeof transactionKindSchema>;
+    goal: string | null;
+  }>,
+>(schema: Schema) {
+  return schema
+    .refine((value) => !(value.kind === "expense" && value.goal === null), {
+      error: "Escolha uma das seis metas para esta despesa.",
+      path: ["goal"],
+    })
+    .refine((value) => !(value.kind === "income" && value.goal !== null), {
+      error: "Receitas não podem ter meta.",
+      path: ["goal"],
+    });
+}
+
+// One cent cannot be halved between two people.
+const SPLIT_MINIMUM_ERROR = "Use um valor de pelo menos R$ 0,02 para dividir.";
+
+function splitTooSmall(value: { amount: number; split?: boolean | object }) {
+  return Boolean(value.split) && value.amount < 2;
+}
+
 const optionalText = z
   .string({ error: "Confira os dados da transação." })
   .optional();
@@ -127,23 +180,15 @@ const splitSchema = z.looseObject(
   { error: "Divisão inválida." },
 );
 
-export const transactionSchema = z
-  .looseObject({
+export const transactionSchema = withGoalRules(
+  z.looseObject({
     id: z
       .string({ error: "Confira os dados da transação." })
       .min(1, { error: "Confira os dados da transação." })
       .max(100, { error: "Confira os dados da transação." }),
-    description: z
-      .string({ error: "Dê um nome para esta transação." })
-      .trim()
-      .min(1, { error: "Dê um nome para esta transação." })
-      .max(80, {
-        error: "A descrição deve ter no máximo 80 caracteres.",
-      }),
+    description: descriptionSchema,
     amount: centsSchema,
-    kind: z.enum(["expense", "income"], {
-      error: "Tipo da transação inválido.",
-    }),
+    kind: transactionKindSchema,
     date: dateSchema,
     goal: goalIdSchema.nullable(),
     tags: tagsSchema,
@@ -160,21 +205,14 @@ export const transactionSchema = z
     updatedAt: optionalText,
     split: splitSchema.optional(),
     settlementOf: optionalText,
-  })
-  .refine((value) => !(value.kind === "expense" && value.goal === null), {
-    error: "Escolha uma das seis metas para esta despesa.",
-    path: ["goal"],
-  })
-  .refine((value) => !(value.kind === "income" && value.goal !== null), {
-    error: "Receitas não podem ter meta.",
-    path: ["goal"],
-  })
+  }),
+)
   .refine((value) => !(value.split && value.kind !== "expense"), {
     error: "Só despesas podem ser divididas.",
     path: ["split"],
   })
-  .refine((value) => !(value.split && value.amount < 2), {
-    error: "Use um valor de pelo menos R$ 0,02 para dividir.",
+  .refine((value) => !splitTooSmall(value), {
+    error: SPLIT_MINIMUM_ERROR,
     path: ["split"],
   });
 
@@ -183,11 +221,7 @@ export const bankAccountSchema = z.looseObject({
     .string({ error: "Confira os dados da conta." })
     .min(1, { error: "Confira os dados da conta." })
     .max(100, { error: "Confira os dados da conta." }),
-  name: z
-    .string({ error: "Dê um nome para esta conta." })
-    .trim()
-    .min(1, { error: "Dê um nome para esta conta." })
-    .max(50, { error: "O nome da conta deve ter no máximo 50 caracteres." }),
+  name: accountNameSchema,
   openingBalance: balanceCentsSchema,
   revision: revisionSchema.optional(),
 });
@@ -196,9 +230,6 @@ const percentageValueSchema = z
   .number({ error: "Informe um percentual entre 0 e 100." })
   .min(0, { error: "Informe um percentual entre 0 e 100." })
   .max(100, { error: "Informe um percentual entre 0 e 100." })
-  .refine((value) => Number.isFinite(value), {
-    error: "Informe um percentual entre 0 e 100.",
-  })
   .refine(
     (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001,
     {
@@ -214,60 +245,47 @@ export const goalPercentagesSchema = z
     targets: percentageValueSchema,
     knowledge: percentageValueSchema,
     freedom: percentageValueSchema,
-  } satisfies Record<GoalId, typeof percentageValueSchema>)
+  } satisfies Record<
+    z.infer<typeof goalIdSchema>,
+    typeof percentageValueSchema
+  >)
   .refine(
     (values) =>
-      Math.round(GOALS.reduce((sum, { id }) => sum + values[id] * 100, 0)) ===
+      Math.round(GOAL_IDS.reduce((sum, id) => sum + values[id] * 100, 0)) ===
       10000,
     { error: "Os percentuais devem somar 100%." },
   );
 
-export function transactionFormSchema(accounts: BankAccount[]) {
+export function transactionFormSchema(accounts: { id: string }[]) {
   const accountError = accounts.length
     ? "Escolha uma conta bancária."
     : "Cadastre uma conta na aba Contas antes de lançar transações.";
 
-  return z
-    .object({
-      amount: amountInputSchema,
-      description: z
-        .string({ error: "Dê um nome para esta transação." })
-        .trim()
-        .min(1, { error: "Dê um nome para esta transação." })
-        .max(80, { error: "A descrição deve ter no máximo 80 caracteres." }),
-      date: dateSchema,
-      accountId: z
-        .string({ error: accountError })
-        .refine((value) => accounts.some((account) => account.id === value), {
-          error: accountError,
-        }),
-      goal: goalIdSchema.nullable(),
-      kind: z.enum(["expense", "income"], {
-        error: "Tipo da transação inválido.",
+  return withGoalRules(
+    z
+      .object({
+        amount: amountInputSchema,
+        description: descriptionSchema,
+        date: dateSchema,
+        accountId: z
+          .string({ error: accountError })
+          .refine((value) => accounts.some((account) => account.id === value), {
+            error: accountError,
+          }),
+        goal: goalIdSchema.nullable(),
+        kind: transactionKindSchema,
+        occurrences: occurrencesSchema,
+        split: z.boolean(),
+      })
+      .refine((value) => !splitTooSmall(value), {
+        error: SPLIT_MINIMUM_ERROR,
+        path: ["amount"],
       }),
-      occurrences: occurrencesSchema,
-      split: z.boolean(),
-    })
-    .refine((value) => !(value.split && value.amount < 2), {
-      error: "Use um valor de pelo menos R$ 0,02 para dividir.",
-      path: ["amount"],
-    })
-    .refine((value) => !(value.kind === "expense" && value.goal === null), {
-      error: "Escolha uma das seis metas para esta despesa.",
-      path: ["goal"],
-    })
-    .refine((value) => !(value.kind === "income" && value.goal !== null), {
-      error: "Receitas não podem ter meta.",
-      path: ["goal"],
-    });
+  );
 }
 
 export const accountFormSchema = z.object({
-  name: z
-    .string({ error: "Dê um nome para esta conta." })
-    .trim()
-    .min(1, { error: "Dê um nome para esta conta." })
-    .max(50, { error: "O nome da conta deve ter no máximo 50 caracteres." }),
+  name: accountNameSchema,
   openingBalance: balanceInputSchema,
 });
 
@@ -275,18 +293,6 @@ export const nameFormSchema = z.object({ name: nameSchema });
 
 export const inviteFormSchema = z.object({ invite: inviteTokenSchema });
 
-export function firstIssueMessage(error: z.ZodError): string {
-  return error.issues[0]?.message ?? "Requisição inválida.";
-}
-
-export function fieldErrors(error: z.ZodError) {
-  const errors: Record<string, string> = {};
-
-  for (const issue of error.issues) {
-    const field = String(issue.path[0] ?? "");
-
-    if (field && !errors[field]) errors[field] = issue.message;
-  }
-
-  return errors;
-}
+// budget.server.ts still imports this from here; the server-side change
+// that points it at @/lib/zod-errors lands separately.
+export { firstIssueMessage } from "@/lib/zod-errors";

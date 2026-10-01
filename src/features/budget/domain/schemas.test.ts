@@ -1,38 +1,65 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
+import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import {
-  fieldErrors,
-  firstIssueMessage,
+  dateSchema,
+  GOAL_IDS,
+  goalPercentagesSchema,
+  transactionFormSchema,
 } from "@/features/budget/domain/schemas";
+import { firstIssueMessage } from "@/lib/zod-errors";
 
-const form = z.object({
-  name: z
-    .string()
-    .min(2, { error: "Nome curto." })
-    .max(3, { error: "Nome longo." }),
-  amount: z.number({ error: "Valor inválido." }),
-});
+describe("schemas", () => {
+  test("goal ids follow the goal list", () => {
+    expect(GOAL_IDS).toEqual(GOALS.map((goal) => goal.id));
+  });
 
-describe("form error helpers", () => {
-  test("fieldErrors keeps the first message per field", () => {
-    const parsed = form.safeParse({ name: "", amount: "x" });
+  test("a date must exist on the calendar", () => {
+    expect(dateSchema.safeParse("2026-02-28").success).toBe(true);
+    expect(dateSchema.safeParse("2026-02-30").success).toBe(false);
+    expect(dateSchema.safeParse("1899-12-31").success).toBe(false);
+  });
+
+  test("zod rejects an infinite percentage with the range message", () => {
+    const parsed = goalPercentagesSchema.safeParse({
+      ...DEFAULT_PERCENTAGES,
+      fixed: Number.POSITIVE_INFINITY,
+    });
 
     expect(parsed.success).toBe(false);
 
     if (!parsed.success)
-      expect(fieldErrors(parsed.error)).toEqual({
-        name: "Nome curto.",
-        amount: "Valor inválido.",
-      });
+      expect(firstIssueMessage(parsed.error)).toBe(
+        "Informe um percentual entre 0 e 100.",
+      );
   });
 
-  test("fieldErrors skips issues that are not tied to a field", () => {
-    const parsed = z.string({ error: "Texto." }).safeParse(1);
+  test("the form keeps the split minimum and the goal rules", () => {
+    const form = transactionFormSchema([{ id: "nubank" }]);
 
-    if (!parsed.success) expect(fieldErrors(parsed.error)).toEqual({});
-  });
+    const base = {
+      amount: "0,01",
+      description: "Pão",
+      date: "2026-09-10",
+      accountId: "nubank",
+      goal: null,
+      kind: "expense" as const,
+      occurrences: 1,
+      split: true,
+    };
 
-  test("firstIssueMessage falls back to a generic message", () => {
-    expect(firstIssueMessage(new z.ZodError([]))).toBe("Requisição inválida.");
+    const parsed = form.safeParse(base);
+
+    expect(parsed.success).toBe(false);
+
+    if (!parsed.success)
+      expect(parsed.error.issues.map((issue) => issue.path[0])).toEqual([
+        "amount",
+        "goal",
+      ]);
+
+    expect(
+      form.safeParse({ ...base, kind: "income", goal: "fixed", split: false })
+        .success,
+    ).toBe(false);
   });
 });

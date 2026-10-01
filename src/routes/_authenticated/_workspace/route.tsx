@@ -9,9 +9,7 @@ import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { BudgetApp } from "@/features/budget";
 import {
-  missingWorkspaceMonth,
   validateWorkspaceSearch,
-  withDefaultMonth,
   withDefaultMonthHref,
 } from "@/features/budget/search";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
@@ -43,7 +41,7 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
   validateSearch: validateWorkspaceSearch,
   search: { middlewares: [retainSearchParams(["month", "member"])] },
   beforeLoad: ({ search, location }) => {
-    if (!missingWorkspaceMonth(search)) return;
+    if (search.month) return;
     const timeZone = requestTimeZone();
 
     if (!timeZone) return;
@@ -59,13 +57,15 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
 function WorkspaceRoute() {
   const search = Route.useSearch();
   const navigate = useNavigate();
-  const missing = missingWorkspaceMonth(search);
+  const missing = !search.month;
 
+  // Without a time zone cookie the server could not pick the month; the
+  // browser fills in its own current month.
   useEffect(() => {
     if (!missing) return;
     void navigate({
       to: ".",
-      search: (prev) => withDefaultMonth(prev, monthIn(browserTimeZone())),
+      search: (prev) => ({ ...prev, month: monthIn(browserTimeZone()) }),
       replace: true,
       resetScroll: false,
     });

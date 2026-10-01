@@ -1,9 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { formText } from "@/features/budget/domain/format";
-import {
-  fieldErrors,
-  inviteFormSchema,
-} from "@/features/budget/domain/schemas";
+import { inviteFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import { inviteToken } from "@/features/auth/invite-token";
 import { Button } from "@/components/ui/button";
 import { FieldError, Form } from "@/components/ui/field/field";

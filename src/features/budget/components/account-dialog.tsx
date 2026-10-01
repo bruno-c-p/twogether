@@ -20,10 +20,8 @@ import {
   formText,
   newId,
 } from "@/features/budget/domain/format";
-import {
-  accountFormSchema,
-  fieldErrors,
-} from "@/features/budget/domain/schemas";
+import { accountFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import type { BankAccount } from "@/features/budget/domain/types";
 
 interface Props {

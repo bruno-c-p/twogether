@@ -1,9 +1,15 @@
-export type GoalId =
-  "fixed" | "pleasure" | "comfort" | "targets" | "knowledge" | "freedom";
+import type { z } from "zod";
+import type {
+  goalIdSchema,
+  transactionKindSchema,
+  viewSchema,
+} from "@/features/budget/domain/schemas";
 
-export type TransactionKind = "expense" | "income";
+export type GoalId = z.infer<typeof goalIdSchema>;
 
-export type View = "overview" | "transactions" | "goals" | "accounts";
+export type TransactionKind = z.infer<typeof transactionKindSchema>;
+
+export type View = z.infer<typeof viewSchema>;
 
 export interface BankAccount {
   id: string;
@@ -64,21 +70,19 @@ export interface MemberBudget extends Member {
   percentagesRevision: number;
 }
 
-export type WorkspaceUser = Member;
-
 export interface WorkspaceHousehold {
   id: string;
   members: MemberBudget[];
 }
 
 export interface SharedSnapshot {
-  user: WorkspaceUser | null;
+  user: Member | null;
   household: WorkspaceHousehold | null;
   budget: BudgetState;
 }
 
 export interface WorkspaceSnapshot {
-  user: WorkspaceUser;
+  user: Member;
   household: WorkspaceHousehold;
   budget: BudgetState;
 }

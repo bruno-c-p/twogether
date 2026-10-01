@@ -1,7 +1,7 @@
 import { resolve } from "node:path";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { firstIssueMessage } from "@/features/budget/domain/schemas";
+import { firstIssueMessage } from "@/lib/zod-errors";
 
 const DATABASE_MESSAGE = "O caminho do banco de dados é inválido.";
 

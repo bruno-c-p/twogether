@@ -1,18 +1,13 @@
 import { z } from "zod";
 import { WORKSPACE_PATHS } from "@/features/budget/constants";
-import { goalIdSchema, monthSchema } from "@/features/budget/domain/schemas";
-import type {
-  GoalId,
-  TransactionKind,
-  View,
-} from "@/features/budget/domain/types";
+import {
+  goalIdSchema,
+  monthSchema,
+  viewSchema,
+} from "@/features/budget/domain/schemas";
 
 const drop = <Schema extends z.ZodType>(schema: Schema) =>
   schema.optional().catch(undefined);
-
-const viewSchema = z.enum(["overview", "transactions", "accounts", "goals"], {
-  error: "Visão inválida.",
-});
 
 const memberSchema = z.string({ error: "Pessoa inválida." }).min(1).max(64);
 
@@ -23,7 +18,8 @@ const querySchema = z
 
 const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
 
-const kindSchema = z.enum(["expense", "income", "split"], {
+// The list also filters by split expenses, which are not a stored kind.
+const kindFilterSchema = z.enum(["expense", "income", "split"], {
   error: "Tipo inválido.",
 });
 
@@ -38,33 +34,14 @@ const transactionFiltersSchema = z.object({
   query: drop(querySchema),
   goal: drop(goalIdSchema),
   tag: drop(tagSchema),
-  kind: drop(kindSchema),
+  kind: drop(kindFilterSchema),
 });
 
-export type KindFilter = TransactionKind | "split";
+export type KindFilter = z.infer<typeof kindFilterSchema>;
 
-export interface WorkspaceSearch {
-  month?: string;
-  member?: string;
-}
+export type WorkspaceSearch = z.infer<typeof workspaceSearchSchema>;
 
-export interface TransactionFilterSearch {
-  query?: string;
-  goal?: GoalId;
-  tag?: string;
-  kind?: KindFilter;
-}
-
-export function missingWorkspaceMonth(search: WorkspaceSearch): boolean {
-  return !search.month;
-}
-
-export function withDefaultMonth<Search extends WorkspaceSearch>(
-  search: Search,
-  month: string,
-): Search {
-  return { ...search, month };
-}
+export type TransactionFilterSearch = z.infer<typeof transactionFiltersSchema>;
 
 interface RequestLocation {
   pathname: string;
@@ -101,7 +78,7 @@ export function validateTransactionFilters<
 // Views used to live in /?view=<view>; old bookmarks still carry it.
 export function legacyViewHref(searchStr: string) {
   const params = new URLSearchParams(searchStr);
-  const view: View | undefined = drop(viewSchema).parse(params.get("view"));
+  const view = drop(viewSchema).parse(params.get("view"));
 
   if (!view) return undefined;
 

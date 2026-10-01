@@ -1,7 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { formText } from "@/features/budget/domain/format";
-import { fieldErrors, nameFormSchema } from "@/features/budget/domain/schemas";
+import { nameFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import { Button } from "@/components/ui/button";
 import { FieldError, Form } from "@/components/ui/field/field";
 

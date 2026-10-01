@@ -1,10 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   legacyViewHref,
-  missingWorkspaceMonth,
   validateTransactionFilters,
   validateWorkspaceSearch,
-  withDefaultMonth,
   withDefaultMonthHref,
 } from "@/features/budget/search";
 
@@ -41,20 +39,7 @@ describe("validateTransactionFilters", () => {
   });
 });
 
-describe("withDefaultMonth", () => {
-  it("fills the current month when the workspace URL has none", () => {
-    expect(missingWorkspaceMonth({})).toBe(true);
-    expect(withDefaultMonth({}, "2026-09")).toEqual({ month: "2026-09" });
-    expect(withDefaultMonth({ member: "ana" }, "2026-09")).toEqual({
-      member: "ana",
-      month: "2026-09",
-    });
-  });
-
-  it("keeps a month that is already in the URL", () => {
-    expect(missingWorkspaceMonth({ month: "2026-09" })).toBe(false);
-  });
-
+describe("withDefaultMonthHref", () => {
   it("builds a redirect to the same page with the month added", () => {
     expect(
       withDefaultMonthHref(

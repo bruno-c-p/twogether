@@ -14,10 +14,8 @@ import {
   normalizeTag,
   parseAmount,
 } from "@/features/budget/domain/format";
-import {
-  fieldErrors,
-  transactionFormSchema,
-} from "@/features/budget/domain/schemas";
+import { transactionFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type {
   BankAccount,
