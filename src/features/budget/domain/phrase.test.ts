@@ -101,6 +101,22 @@ describe("parsePhrase", () => {
     expect(draft("Comprei 40 de cafeitau").accountId).toBe("");
   });
 
+  it("matches account names with regex characters as plain text", () => {
+    const special = [
+      { id: "cpp", name: "C++", openingBalance: 0 },
+      { id: "pj", name: "Itaú (PJ)", openingBalance: 0 },
+      { id: "inter", name: "Inter+", openingBalance: 0 },
+      { id: "nu", name: "Nubank", openingBalance: 0 },
+    ];
+
+    expect(draft("Livro 40 no C++", special).accountId).toBe("cpp");
+    expect(draft("Mercado 90 no Itaú (PJ)", special).accountId).toBe("pj");
+    expect(draft("Mercado 90 no Itaú PJ", special).accountId).toBe("");
+    expect(draft("Mercado 90 no Inter+", special).accountId).toBe("inter");
+    expect(draft("Mercado 90 no Interrr", special).accountId).toBe("");
+    expect(draft("Mercado 90 no Nubank", special).accountId).toBe("nu");
+  });
+
   it("marks split for 'meio a meio' but never for income", () => {
     expect(draft("Mercado 200 meio a meio").split).toBe(true);
     expect(draft("Recebi 500 de reembolso dividido").split).toBe(false);
