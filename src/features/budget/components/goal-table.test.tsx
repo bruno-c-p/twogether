@@ -56,7 +56,7 @@ describe("GoalTable", () => {
   });
 
   test("without income nothing is planned, so spending fills the bar", async () => {
-    const { container } = await renderTable({ withIncome: false });
+    const { container, screen } = await renderTable({ withIncome: false });
 
     const widths = [
       ...container.querySelectorAll<HTMLElement>("a span[style]"),
@@ -64,6 +64,10 @@ describe("GoalTable", () => {
 
     expect(widths).toContain("100%");
     expect(widths).toContain("0%");
+    expect(container.textContent).not.toMatch(/null/);
+    expect(
+      screen.getByRole("link", { name: /^Prazeres:/ }).textContent,
+    ).toMatch(/restam R\$\s0,00$/);
   });
 
   test("hidden values keep the warning but not the amounts", async () => {

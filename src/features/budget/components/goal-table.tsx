@@ -37,13 +37,13 @@ function Progress({
 }) {
   const progress = goalProgress(goal.amount, planned);
   const over = progress.over > 0;
+  // Nothing planned means there is no share to show, only the amount.
+  const share = progress.percent === null ? "" : `${progress.percent}% · `;
   let text: string;
 
   if (hidden) text = over ? PROGRESS_HIDDEN : "";
-  else if (over)
-    text = `${progress.percent === null ? "" : `${progress.percent}% · `}${displayMoney(progress.over)} acima`;
-  else
-    text = `${progress.percent}% · restam ${displayMoney(progress.remaining)}`;
+  else if (over) text = `${share}${displayMoney(progress.over)} acima`;
+  else text = `${share}restam ${displayMoney(progress.remaining)}`;
 
   return (
     <span className="col-span-3 bp1000:col-span-1 flex flex-col gap-[6px]">
