@@ -1,20 +1,13 @@
-import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { loadSession } from "@/features/auth/actions";
-import { isWorkspaceReady, legacyInviteToken } from "@/features/auth/gate";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
+import { guardWorkspace } from "@/features/auth/gate";
+import { workspaceQueryKey } from "@/features/budget/workspace";
 
 export const Route = createFileRoute("/_authenticated")({
-  beforeLoad: async ({ location }) => {
-    const legacyInvite = legacyInviteToken(location.searchStr);
-
-    if (legacyInvite)
-      throw redirect({
-        to: "/convite/$token",
-        params: { token: legacyInvite },
-        replace: true,
-      });
-
-    if (!isWorkspaceReady(await loadSession()))
-      throw redirect({ to: "/entrar" });
-  },
+  beforeLoad: ({ location, context }) =>
+    guardWorkspace(
+      location.searchStr,
+      typeof window !== "undefined" &&
+        context.queryClient.getQueryData(workspaceQueryKey) != null,
+    ),
   component: Outlet,
 });
