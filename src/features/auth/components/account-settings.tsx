@@ -41,9 +41,7 @@ export function useNameForm({
   async function save(name: string) {
     setNotice("");
 
-    const result = await run(() => saveName(name));
-
-    if (!result?.ok) return;
+    if (!(await run(() => saveName(name)))) return;
 
     onSaved();
     setNotice("Nome atualizado.");
@@ -72,10 +70,10 @@ export function useInviteLink({
   async function makeInvite() {
     const result = await run(create);
 
-    if (!result?.ok) return;
+    if (!result) return;
 
     onCreated();
-    setLink(`${window.location.origin}/convite/${result.inviteToken}`);
+    setLink(`${window.location.origin}/convite/${result.data.inviteToken}`);
     setCopied(false);
     setStatus("");
   }

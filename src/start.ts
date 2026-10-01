@@ -4,7 +4,7 @@ import {
   createMiddleware,
   createStart,
 } from "@tanstack/react-start";
-import { rateLimitMiddleware } from "@/server/middleware";
+import { errorMiddleware, rateLimitMiddleware } from "@/server/middleware";
 import { retryAfterFor } from "@/server/rate-limit.server";
 
 const csrfMiddleware = createCsrfMiddleware({
@@ -57,7 +57,7 @@ const privateNoStoreMiddleware = createMiddleware().server(async ({ next }) => {
 });
 
 export const startInstance = createStart(() => ({
-  functionMiddleware: [rateLimitMiddleware],
+  functionMiddleware: [errorMiddleware, rateLimitMiddleware],
   requestMiddleware: [
     clerkMiddleware(),
     csrfMiddleware,

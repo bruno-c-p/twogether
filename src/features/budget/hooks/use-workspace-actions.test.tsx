@@ -11,7 +11,7 @@ import { ana, nubank, transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
 function fakeMutations(succeeds: boolean): BudgetMutations {
-  const ok = succeeds ? { ok: true as const } : null;
+  const ok = succeeds;
   const idle = { pending: false, error: "", reset: vi.fn() };
 
   return {

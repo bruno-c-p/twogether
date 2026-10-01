@@ -9,6 +9,18 @@ import {
 } from "@/server/rate-limit.server";
 import { RequestError, throwHttpError } from "@/server/request-error";
 
+// Global and outermost: store errors reach the client as HTTP errors with a
+// safe message, whatever middleware or handler threw them.
+export const errorMiddleware = createMiddleware({ type: "function" }).server(
+  async ({ next }) => {
+    try {
+      return await next();
+    } catch (cause) {
+      throwHttpError(cause);
+    }
+  },
+);
+
 export const rateLimitMiddleware = createMiddleware({
   type: "function",
 }).server(async ({ next, method }) => {
@@ -23,7 +35,6 @@ export const rateLimitMiddleware = createMiddleware({
       new RequestError(
         "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.",
         429,
-        "limited",
       ),
     );
   }

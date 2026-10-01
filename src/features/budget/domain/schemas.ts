@@ -29,14 +29,6 @@ export const idSchema = z
   .min(1, { error: "Informe um identificador válido." })
   .max(100, { error: "Informe um identificador válido." });
 
-export function textSchema(max: number) {
-  return z
-    .string({ error: "Confira os campos informados." })
-    .trim()
-    .min(1, { error: "Confira os campos informados." })
-    .max(max, { error: "Confira os campos informados." });
-}
-
 export const monthSchema = z
   .string({ error: "Escolha um mês válido." })
   .regex(/^\d{4}-(0[1-9]|1[0-2])$/, { error: "Escolha um mês válido." });
@@ -292,7 +284,3 @@ export const accountFormSchema = z.object({
 export const nameFormSchema = z.object({ name: nameSchema });
 
 export const inviteFormSchema = z.object({ invite: inviteTokenSchema });
-
-// budget.server.ts still imports this from here; the server-side change
-// that points it at @/lib/zod-errors lands separately.
-export { firstIssueMessage } from "@/lib/zod-errors";

@@ -36,7 +36,7 @@ function requireOpenSeat(user: UserRow) {
   if (!user.name)
     throw new RequestError("Conte como você quer aparecer no orçamento.");
 
-  if (user.household_id) throw new RequestError(ALREADY_MEMBER, 409, "full");
+  if (user.household_id) throw new RequestError(ALREADY_MEMBER, 409);
 }
 
 // The user row from the request can be stale, so the seat is claimed with a
@@ -52,8 +52,7 @@ async function claimSeat(
     [householdId, user.id],
   );
 
-  if (result.rowsAffected !== 1)
-    throw new RequestError(ALREADY_MEMBER, 409, "full");
+  if (result.rowsAffected !== 1) throw new RequestError(ALREADY_MEMBER, 409);
 }
 
 export async function createHousehold(ctx: StoreContext, user: UserRow) {
@@ -83,15 +82,10 @@ export async function joinHousehold(
       throw new RequestError(
         "Convite inválido ou expirado. Peça um novo link.",
         410,
-        "expired",
       );
 
     if ((await memberCount(transaction, invite.household_id)) >= 2)
-      throw new RequestError(
-        "Este orçamento já tem duas pessoas.",
-        409,
-        "full",
-      );
+      throw new RequestError("Este orçamento já tem duas pessoas.", 409);
     await claimSeat(transaction, user, invite.household_id);
     await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
       invite.household_id,
@@ -103,7 +97,7 @@ export async function createInvite(ctx: StoreContext, householdId: string) {
   const inviteToken = token();
   await ctx.atomic(async (transaction) => {
     if ((await memberCount(transaction, householdId)) >= 2)
-      throw new RequestError("Seu orçamento já tem duas pessoas.", 409, "full");
+      throw new RequestError("Seu orçamento já tem duas pessoas.", 409);
     await execute(
       transaction,
       "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",

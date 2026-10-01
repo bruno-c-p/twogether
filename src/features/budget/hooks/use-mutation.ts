@@ -7,7 +7,6 @@ import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { workspaceQueryKey } from "@/features/budget/workspace";
-import { isMutationFailure } from "@/server/mutation-result";
 
 const OFFLINE_MESSAGE =
   "Sem conexão. Confira o orçamento antes de tentar novamente.";
@@ -32,6 +31,8 @@ export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
     : offline;
 }
 
+// run() resolves to whether the server accepted the change; failures are
+// reported through `error`.
 export function useMutation<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
   optimistic?: (
@@ -52,8 +53,8 @@ export function useMutation<TArgs extends unknown[], TResult>(
   const inFlight = useRef(false);
 
   const run = useCallback(
-    async (...args: TArgs): Promise<TResult | null> => {
-      if (inFlight.current) return null;
+    async (...args: TArgs): Promise<boolean> => {
+      if (inFlight.current) return false;
       inFlight.current = true;
       setPending(true);
       setError("");
@@ -74,14 +75,7 @@ export function useMutation<TArgs extends unknown[], TResult>(
       }
 
       try {
-        const result = await fnRef.current(...args);
-
-        if (isMutationFailure(result)) {
-          restore();
-          setError(result.message);
-
-          return null;
-        }
+        await fnRef.current(...args);
 
         const refresh = queryClient.invalidateQueries({
           queryKey: workspaceQueryKey,
@@ -90,19 +84,19 @@ export function useMutation<TArgs extends unknown[], TResult>(
         if (applyOptimistic) void refresh;
         else await refresh;
 
-        return result;
+        return true;
       } catch (cause) {
         if (applyOptimistic) restore();
 
         if (isRedirect(cause)) {
           await router.navigate(router.resolveRedirect(cause).options);
 
-          return null;
+          return false;
         }
 
         setError(failureMessage(cause));
 
-        return null;
+        return false;
       } finally {
         inFlight.current = false;
         setPending(false);

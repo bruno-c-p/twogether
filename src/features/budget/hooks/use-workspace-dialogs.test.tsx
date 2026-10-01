@@ -7,7 +7,7 @@ import { renderWithProviders } from "@/test/render";
 
 function idle() {
   return {
-    run: vi.fn(() => Promise.resolve(null)),
+    run: vi.fn(() => Promise.resolve(false)),
     reset: vi.fn(),
     pending: false,
     error: "",

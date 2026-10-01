@@ -4,7 +4,6 @@ import {
   goalPercentagesSchema,
   revisionSchema,
 } from "@/features/budget/domain/schemas";
-import { runMutation } from "@/server/request-error";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
@@ -23,5 +22,5 @@ export const savePercentages = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSavePercentages)
   .handler(async ({ data, context }) =>
-    runMutation(() => getBudgetStore().savePercentages(context.user, data)),
+    getBudgetStore().savePercentages(context.user, data),
   );

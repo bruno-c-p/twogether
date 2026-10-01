@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getBudgetStore } from "@/features/budget/budget.server";
 import { idSchema, revisionSchema } from "@/features/budget/domain/schemas";
-import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -19,7 +18,5 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseDeleteAccount)
   .handler(async ({ data, context }) =>
-    runMutation(() =>
-      getBudgetStore().deleteAccount(context.householdId, data),
-    ),
+    getBudgetStore().deleteAccount(context.householdId, data),
   );

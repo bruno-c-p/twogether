@@ -72,7 +72,6 @@ const conflict = () =>
   new RequestError(
     "Esta informação mudou no outro dispositivo. Feche e abra novamente para conferir a versão atual antes de editar.",
     409,
-    "conflict",
   );
 
 // The action already validated the input; keep only the fields a client may

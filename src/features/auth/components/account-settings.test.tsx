@@ -6,7 +6,6 @@ import {
 } from "@/features/auth/components/account-settings";
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
 import type { Member } from "@/features/budget/domain/types";
-import type { MutationResult } from "@/server/mutation-result";
 import { renderWithProviders } from "@/test/render";
 
 const ana: Member = { id: "ana", name: "Ana" };
@@ -14,18 +13,18 @@ const ana: Member = { id: "ana", name: "Ana" };
 const bia: Member = { id: "bia", name: "Bia" };
 
 type Calls = {
-  saveName: (name: string) => Promise<MutationResult>;
-  create: () => Promise<MutationResult<{ inviteToken: string }>>;
-  revoke: () => Promise<MutationResult>;
+  saveName: (name: string) => Promise<void>;
+  create: () => Promise<{ inviteToken: string }>;
+  revoke: () => Promise<void>;
 };
 
 function fakeCalls(overrides: Partial<Calls> = {}): Calls {
   return {
-    saveName: vi.fn<Calls["saveName"]>(() => Promise.resolve({ ok: true })),
+    saveName: vi.fn<Calls["saveName"]>(() => Promise.resolve()),
     create: vi.fn<Calls["create"]>(() =>
-      Promise.resolve({ ok: true, inviteToken: "tok123" }),
+      Promise.resolve({ inviteToken: "tok123" }),
     ),
-    revoke: vi.fn<Calls["revoke"]>(() => Promise.resolve({ ok: true })),
+    revoke: vi.fn<Calls["revoke"]>(() => Promise.resolve()),
     ...overrides,
   };
 }
@@ -120,12 +119,7 @@ describe("AccountSettings", () => {
   test("shows the server's message when saving fails", async () => {
     const { screen, user, onSaved } = await renderPage({
       calls: fakeCalls({
-        saveName: () =>
-          Promise.resolve({
-            ok: false,
-            code: "invalid",
-            message: "Nome inválido.",
-          }),
+        saveName: () => Promise.reject(new Error("Nome inválido.")),
       }),
     });
 
@@ -180,12 +174,7 @@ describe("AccountSettings", () => {
   test("a failed invite shows the error and no link", async () => {
     const { screen, user, onCreated } = await renderPage({
       calls: fakeCalls({
-        create: () =>
-          Promise.resolve({
-            ok: false,
-            code: "limited",
-            message: "Muitos convites.",
-          }),
+        create: () => Promise.reject(new Error("Muitos convites.")),
       }),
     });
 
