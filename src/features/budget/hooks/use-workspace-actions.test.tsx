@@ -12,7 +12,7 @@ import { renderPlain } from "@/test/render";
 
 function fakeMutations(succeeds: boolean): BudgetMutations {
   const ok = succeeds ? { ok: true as const } : null;
-  const idle = { pending: false, error: "" };
+  const idle = { pending: false, error: "", reset: vi.fn() };
 
   return {
     saveTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
@@ -56,7 +56,7 @@ function Harness({
   mutations: BudgetMutations;
   initialNotice?: Notice | null;
 }) {
-  const dialogs = useWorkspaceDialogs();
+  const dialogs = useWorkspaceDialogs(mutations);
   const [notice, setNotice] = useState<Notice | null>(initialNotice);
 
   const actions = useWorkspaceActions({

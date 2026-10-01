@@ -211,6 +211,47 @@ describe("BudgetWorkspace", () => {
     ).toBeTruthy();
   });
 
+  test("month, person and filter changes keep the scroll; page links reset it", async () => {
+    const { screen, user, router } = await renderWorkspace(
+      budget(),
+      "/transacoes?month=2026-09",
+    );
+
+    const scrollTo = vi.mocked(window.scrollTo);
+
+    scrollTo.mockClear();
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "outubro 2026" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Filtrar por pessoa: Nós" }),
+    );
+    await user.click(await screen.findByRole("radio", { name: "Eu" }));
+    await user.type(screen.getByLabelText("Buscar transações"), "a");
+    await vi.waitFor(() =>
+      expect(router.state.location.search).toMatchObject({
+        month: "2026-10",
+        member: "ana",
+        query: "a",
+      }),
+    );
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    const nav = screen.getByRole("navigation", {
+      name: "Navegação principal",
+    });
+
+    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    await vi.waitFor(() =>
+      expect(scrollTo).toHaveBeenCalledWith(
+        expect.objectContaining({ top: 0 }),
+      ),
+    );
+  });
+
   test("page links keep month and person and drop transaction filters", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget(),

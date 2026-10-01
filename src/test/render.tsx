@@ -72,6 +72,7 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
   const router = createRouter({
     routeTree,
     history: createMemoryHistory({ initialEntries: [path] }),
+    scrollRestoration: true,
   });
 
   const user = userEvent.setup();

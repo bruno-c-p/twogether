@@ -59,7 +59,7 @@ export function BudgetWorkspace({
   const mutations = useBudgetMutations();
   const search = useWorkspaceSearch();
   const navigation = useWorkspaceNavigation();
-  const dialogs = useWorkspaceDialogs();
+  const dialogs = useWorkspaceDialogs(mutations);
   const { notice, setNotice } = useNotice();
   const [hidden, setHidden] = useState(false);
   const month = search.month ?? currentMonth();

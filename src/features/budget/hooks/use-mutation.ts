@@ -111,5 +111,9 @@ export function useMutation<TArgs extends unknown[], TResult>(
     [queryClient, router],
   );
 
-  return { run, pending, error };
+  // Dialogs call this when they open or close so an old failure never
+  // shows up on the next attempt.
+  const reset = useCallback(() => setError(""), []);
+
+  return { run, reset, pending, error };
 }

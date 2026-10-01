@@ -43,6 +43,7 @@ function Harness({
   return (
     <>
       <button onClick={() => void go()}>run</button>
+      <button onClick={mutation.reset}>reset</button>
       <p role="status">
         {mutation.pending ? "pending" : mutation.error || "idle"}
       </p>
@@ -122,6 +123,22 @@ describe("useMutation", () => {
     await user.click(screen.getByRole("button", { name: "run" }));
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledTimes(2));
     expect(screen.getByRole("status").textContent).toMatch(/^Sem conexão/);
+  });
+
+  test("reset clears the last error without running again", async () => {
+    const fn = vi.fn<Run>(() =>
+      Promise.resolve({ ok: false, code: "conflict", message: "Mudou." }),
+    );
+
+    const { screen, user, onResult } = await setup(fn);
+
+    await user.click(screen.getByRole("button", { name: "run" }));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
+    expect(screen.getByRole("status").textContent).toBe("Mudou.");
+
+    await user.click(screen.getByRole("button", { name: "reset" }));
+    expect(screen.getByRole("status").textContent).toBe("idle");
+    expect(fn).toHaveBeenCalledTimes(1);
   });
 
   test("a redirect navigates instead of showing an error", async () => {

@@ -67,6 +67,7 @@ function WorkspaceRoute() {
       to: ".",
       search: (prev) => withDefaultMonth(prev, monthIn(browserTimeZone())),
       replace: true,
+      resetScroll: false,
     });
   }, [missing, navigate]);
 

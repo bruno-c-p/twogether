@@ -16,6 +16,8 @@ export function useTransactionFilters() {
       to: ".",
       search: (prev) => ({ ...prev, ...next }),
       replace,
+      // Filters narrow the list in place; keep the reader where they are.
+      resetScroll: false,
     });
   }
 
