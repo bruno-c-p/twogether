@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import { createServerOnlyFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { isRemoteDatabase } from "@/lib/database-location";
 import { firstIssueMessage } from "@/lib/zod-errors";
 
 const DATABASE_MESSAGE = "O caminho do banco de dados é inválido.";
@@ -9,8 +10,6 @@ const CLERK_MESSAGE = "A variável de ambiente CLERK_SECRET_KEY é obrigatória.
 
 const TOKEN_MESSAGE =
   "A variável de ambiente TURSO_AUTH_TOKEN é obrigatória quando o banco remoto está configurado.";
-
-const remoteDatabase = /^(?:https?|libsql|wss?):/i;
 
 // Blank .env entries mean "not configured".
 function emptyAsUndefined<Value>(value: Value) {
@@ -24,7 +23,7 @@ const databaseUrlSchema = z
     (value) => {
       if (value === ":memory:" || value.startsWith("file:")) return true;
 
-      if (!remoteDatabase.test(value)) return true;
+      if (!isRemoteDatabase(value)) return true;
 
       try {
         new URL(value);
@@ -64,7 +63,7 @@ const serverEnvSchema = z
     (env) => {
       const url = env.TURSO_DATABASE_URL ?? env.BUDGET_DATABASE_PATH;
 
-      return !url || !remoteDatabase.test(url) || Boolean(env.TURSO_AUTH_TOKEN);
+      return !url || !isRemoteDatabase(url) || Boolean(env.TURSO_AUTH_TOKEN);
     },
     { error: TOKEN_MESSAGE, path: ["TURSO_AUTH_TOKEN"] },
   );

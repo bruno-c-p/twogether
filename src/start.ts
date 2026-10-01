@@ -5,21 +5,19 @@ import {
   createStart,
 } from "@tanstack/react-start";
 import { rateLimitMiddleware } from "@/server/middleware";
-import { RATE_LIMIT_WINDOW_SECONDS } from "@/server/rate-limit.server";
+import { retryAfterFor } from "@/server/rate-limit.server";
 
 const csrfMiddleware = createCsrfMiddleware({
   filter: (ctx) => ctx.handlerType === "serverFn",
 });
 
 const rateLimitHeadersMiddleware = createMiddleware().server(
-  async ({ next }) => {
+  async ({ next, request }) => {
     const result = await next();
+    const seconds = retryAfterFor(request);
 
-    if (result.response.status === 429)
-      result.response.headers.set(
-        "Retry-After",
-        String(RATE_LIMIT_WINDOW_SECONDS),
-      );
+    if (result.response.status === 429 && seconds !== undefined)
+      result.response.headers.set("Retry-After", String(seconds));
 
     return result;
   },

@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { consumeRateLimit } from "@/server/rate-limit.server";
+import {
+  consumeRateLimit,
+  rememberRetryAfter,
+  retryAfterFor,
+} from "@/server/rate-limit.server";
 
 describe("consumeRateLimit", () => {
   test("allows requests up to the limit", () => {
@@ -25,5 +29,16 @@ describe("consumeRateLimit", () => {
   test("resets once the window elapses", () => {
     expect(consumeRateLimit("user_window", 1, 0).ok).toBe(true);
     expect(consumeRateLimit("user_window", 1, 0).ok).toBe(true);
+  });
+});
+
+describe("retryAfterFor", () => {
+  test("returns the wait remembered for that request only", () => {
+    const limited = new Request("http://localhost/_serverFn/a");
+    rememberRetryAfter(limited, 42);
+    expect(retryAfterFor(limited)).toBe(42);
+    expect(retryAfterFor(new Request("http://localhost/_serverFn/b"))).toBe(
+      undefined,
+    );
   });
 });

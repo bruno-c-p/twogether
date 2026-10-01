@@ -1,5 +1,7 @@
 const REMOTE = /^(?:https?|libsql|wss?):/i;
 
+export const isRemoteDatabase = (url: string) => REMOTE.test(url);
+
 export type DatabaseLocation = {
   url: string;
   local: boolean;
@@ -8,7 +10,7 @@ export type DatabaseLocation = {
 };
 
 export function databaseLocation(filename: string): DatabaseLocation {
-  if (REMOTE.test(filename))
+  if (isRemoteDatabase(filename))
     return { url: filename, local: false, localPath: undefined };
 
   if (filename === ":memory:")
