@@ -1,25 +1,8 @@
-import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { parsePhrase, type PhraseDraft } from "@/features/budget/domain/phrase";
+import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount } from "@/features/budget/domain/types";
+import { usePhraseInput } from "@/features/budget/hooks/use-phrase-input";
 import { cx } from "@/lib/cx";
-
-const NARROW = "(max-width: 619.9px)";
-
-function subscribeNarrow(notify: () => void) {
-  const query = window.matchMedia(NARROW);
-
-  query.addEventListener("change", notify);
-
-  return () => query.removeEventListener("change", notify);
-}
-
-function useNarrow() {
-  return useSyncExternalStore(
-    subscribeNarrow,
-    () => window.matchMedia(NARROW).matches,
-    () => false,
-  );
-}
+import { usePhone } from "@/lib/use-phone";
 
 export function PhraseBar({
   accounts,
@@ -30,28 +13,8 @@ export function PhraseBar({
   disabled: boolean;
   onParsed: (draft: PhraseDraft) => void;
 }) {
-  const [text, setText] = useState("");
-  const [error, setError] = useState("");
-  const narrow = useNarrow();
-
-  function run(phrase: string) {
-    const result = parsePhrase(phrase, accounts);
-
-    if ("error" in result) {
-      setError(result.error);
-
-      return;
-    }
-
-    setError("");
-    setText("");
-    onParsed(result.draft);
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    run(text);
-  }
+  const { text, error, change, submit } = usePhraseInput(accounts, onParsed);
+  const phone = usePhone();
 
   return (
     <section aria-label="Registrar com uma frase" className="mb-[18px]">
@@ -73,17 +36,14 @@ export function PhraseBar({
           aria-describedby={error ? "phrase-error" : undefined}
           className="flex-1 min-w-0 border-0 outline-none bg-transparent text-text text-[15px] h-[38px]"
           placeholder={
-            narrow
+            phone
               ? "Ex.: Gastei 50 de pizza"
               : "Registrar com uma frase… ex.: Gastei 300 reais de condomínio"
           }
           maxLength={120}
           value={text}
           disabled={disabled}
-          onChange={(event) => {
-            setText(event.currentTarget.value);
-            setError("");
-          }}
+          onChange={(event) => change(event.currentTarget.value)}
         />
         <button
           type="submit"

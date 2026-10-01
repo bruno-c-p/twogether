@@ -1,71 +1,10 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useRef } from "react";
 import { ArrowUp } from "lucide-react";
-import { parsePhrase, type PhraseDraft } from "@/features/budget/domain/phrase";
+import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount } from "@/features/budget/domain/types";
+import { usePhraseInput } from "@/features/budget/hooks/use-phrase-input";
+import { Dialog } from "@/components/ui/dialog/dialog";
 import { cx } from "@/lib/cx";
-
-function SheetDialog({
-  children,
-  onClose,
-}: {
-  children: ReactNode;
-  onClose: () => void;
-}) {
-  const dialog = useRef<HTMLDialogElement>(null);
-
-  useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-    const overflow = document.body.style.overflow;
-
-    element?.showModal();
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
-
-  useEffect(() => {
-    const element = dialog.current;
-
-    function closeOnBackdrop(event: MouseEvent) {
-      if (event.target === element) onClose();
-    }
-
-    element?.addEventListener("click", closeOnBackdrop);
-
-    return () => element?.removeEventListener("click", closeOnBackdrop);
-  }, [onClose]);
-
-  return (
-    <dialog
-      ref={dialog}
-      aria-label="Registrar transação"
-      onCancel={onClose}
-      className={cx(
-        "m-auto p-0 w-[560px] max-w-[calc(100vw_-_28px)] max-h-[calc(100dvh_-_40px)]",
-        "bg-page text-text border border-solid border-border rounded-[20px] overflow-y-auto",
-        "shadow-[0_24px_60px_rgba(23,63,53,.22)]",
-        "backdrop:bg-dialog-backdrop backdrop:backdrop-blur-[5px]",
-        "max-bp1000:mx-0 max-bp1000:mb-0 max-bp1000:w-full max-bp1000:max-w-full",
-        "max-bp1000:max-h-[92dvh] max-bp1000:rounded-b-none max-bp1000:rounded-t-[22px]",
-        "max-bp1000:border-b-0",
-      )}
-    >
-      {children}
-    </dialog>
-  );
-}
 
 function PhraseInput({
   accounts,
@@ -76,29 +15,12 @@ function PhraseInput({
   onParsed: (draft: PhraseDraft) => void;
   onManual: () => void;
 }) {
-  const [text, setText] = useState("");
-  const [error, setError] = useState("");
+  const { text, error, change, submit } = usePhraseInput(accounts, onParsed);
   const input = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     input.current?.focus();
   }, []);
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const result = parsePhrase(text, accounts);
-
-    if ("error" in result) {
-      setError(result.error);
-
-      return;
-    }
-
-    setError("");
-    setText("");
-    onParsed(result.draft);
-  }
 
   return (
     <div className="grid gap-[8px]">
@@ -126,10 +48,7 @@ function PhraseInput({
           maxLength={120}
           placeholder="Gastei 300 reais de condomínio"
           value={text}
-          onChange={(event) => {
-            setText(event.currentTarget.value);
-            setError("");
-          }}
+          onChange={(event) => change(event.currentTarget.value)}
           className="flex-1 min-w-0 h-[38px] border-0 bg-transparent outline-none text-text text-[16px]"
         />
         <button
@@ -167,7 +86,21 @@ export function RegisterSheet({
   onClose: () => void;
 }) {
   return (
-    <SheetDialog onClose={onClose}>
+    <Dialog
+      unstyled
+      label="Registrar transação"
+      onClose={onClose}
+      closeOnBackdrop
+      className={cx(
+        "m-auto p-0 w-[560px] max-w-[calc(100vw_-_28px)] max-h-[calc(100dvh_-_40px)]",
+        "bg-page text-text border border-solid border-border rounded-[20px] overflow-y-auto",
+        "shadow-[0_24px_60px_rgba(23,63,53,.22)]",
+        "backdrop:bg-dialog-backdrop backdrop:backdrop-blur-[5px]",
+        "max-bp1000:mx-0 max-bp1000:mb-0 max-bp1000:w-full max-bp1000:max-w-full",
+        "max-bp1000:max-h-[92dvh] max-bp1000:rounded-b-none max-bp1000:rounded-t-[22px]",
+        "max-bp1000:border-b-0",
+      )}
+    >
       <div className="p-[22px] max-bp620:p-[16px] grid gap-[14px]">
         <div
           aria-hidden
@@ -182,6 +115,6 @@ export function RegisterSheet({
           onParsed={onParsed}
         />
       </div>
-    </SheetDialog>
+    </Dialog>
   );
 }

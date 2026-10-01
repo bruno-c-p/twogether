@@ -9,19 +9,28 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import styles from "@/components/ui/dialog/dialog.module.css";
 
+// A dialog is named by a visible heading (labelledBy) or, without one, by
+// a label.
+type DialogName =
+  { labelledBy: string; label?: never } | { label: string; labelledBy?: never };
+
 export function Dialog({
   children,
   className,
   narrow,
+  unstyled = false,
   labelledBy,
+  label,
   onClose,
   closeOnBackdrop = false,
   onCancel,
-}: {
+}: DialogName & {
   children: ReactNode;
   className?: string;
   narrow?: boolean;
-  labelledBy: string;
+  // Skips the module's box styles so className can lay the dialog out
+  // from scratch; the modal behavior stays the same.
+  unstyled?: boolean;
   onClose: () => void;
   closeOnBackdrop?: boolean;
   onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
@@ -42,7 +51,11 @@ export function Dialog({
     };
   }, []);
 
-  const classes = [styles.dialog, narrow ? styles.narrow : "", className]
+  const classes = [
+    unstyled ? "" : styles.dialog,
+    narrow && !unstyled ? styles.narrow : "",
+    className,
+  ]
     .filter(Boolean)
     .join(" ");
 
@@ -51,6 +64,7 @@ export function Dialog({
       ref={dialog}
       className={classes}
       aria-labelledby={labelledBy}
+      aria-label={label}
       onCancel={(event) => {
         if (onCancel) {
           onCancel(event);

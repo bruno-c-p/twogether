@@ -1,26 +1,9 @@
-import { useSyncExternalStore, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Drawer } from "@base-ui/react/drawer";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/lib/cx";
-
-const PHONE_QUERY = "(max-width: 619.9px)";
-
-function subscribePhone(onChange: () => void) {
-  const media = window.matchMedia(PHONE_QUERY);
-
-  media.addEventListener("change", onChange);
-
-  return () => media.removeEventListener("change", onChange);
-}
-
-function usePhone() {
-  return useSyncExternalStore(
-    subscribePhone,
-    () => window.matchMedia(PHONE_QUERY).matches,
-    () => false,
-  );
-}
+import { usePhone } from "@/lib/use-phone";
 
 /** Side panel on wide screens, bottom sheet on phones. */
 export function Sheet({
