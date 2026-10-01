@@ -23,7 +23,7 @@ export function DesktopNavigation() {
             "px-[13px] py-[8px] rounded-[9px] text-[13px]",
             "hover:bg-surface-soft",
           )}
-          activeProps={{ className: "bg-surface-soft text-text font-600" }}
+          activeProps={{ className: "bg-surface-soft text-text" }}
           inactiveProps={{ className: "text-text-muted" }}
         >
           {item.label}
@@ -41,7 +41,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
       className={cx(
         "flex flex-col items-center gap-[4px] flex-1 min-w-0 py-[2px] text-[10.5px]",
       )}
-      activeProps={{ className: "text-green font-600" }}
+      activeProps={{ className: "text-green" }}
       inactiveProps={{ className: "text-text-muted" }}
     >
       {({ isActive }) => (
