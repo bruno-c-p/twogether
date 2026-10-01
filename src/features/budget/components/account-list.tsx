@@ -3,6 +3,7 @@ import {
   accountBalance,
   accountMonthActivity,
 } from "@/features/budget/domain/calc";
+import { monthName } from "@/features/budget/domain/format";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { AccountRow } from "@/features/budget/components/account-row";
 import { Button } from "@/components/ui/button";
@@ -19,11 +20,6 @@ interface Props {
   onEdit: (account: BankAccount) => void;
   onDelete: (account: BankAccount) => void;
 }
-
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", {
-  month: "long",
-  timeZone: "UTC",
-});
 
 export function AccountList({
   accounts,
@@ -58,8 +54,6 @@ export function AccountList({
       : transactions.filter(
           (transaction) => transaction.memberId === memberFilter,
         );
-
-  const monthName = monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
 
   const sorted = [...accounts].sort((a, b) =>
     a.name.localeCompare(b.name, "pt-BR"),
@@ -106,7 +100,7 @@ export function AccountList({
               entered={activity.entered}
               left={activity.left}
               monthTransactions={activity.transactions}
-              monthName={monthName}
+              monthName={monthName(month)}
               busy={busy}
               displayMoney={displayMoney}
               onEdit={onEdit}

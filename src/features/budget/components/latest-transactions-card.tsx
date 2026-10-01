@@ -3,22 +3,11 @@ import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import { GOALS } from "@/features/budget/constants";
+import { shortDay } from "@/features/budget/domain/format";
 import type { Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
 const LATEST_COUNT = 5;
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
-
-function dayLabel(date: string) {
-  return dayFormatter
-    .format(new Date(`${date}T12:00:00`))
-    .replaceAll(" de ", " ")
-    .replace(".", "");
-}
 
 function Tile({ transaction }: { transaction: Transaction }) {
   const goal = GOALS.find((item) => item.id === transaction.goal);
@@ -93,7 +82,7 @@ export function LatestTransactionsCard({
                     <span className="block text-[12px] text-text-muted truncate">
                       {income ? "Entrada" : (goal?.name ?? "Sem meta")}
                       {" · "}
-                      {dayLabel(transaction.date)}
+                      {shortDay(transaction.date)}
                     </span>
                   </span>
                   <span

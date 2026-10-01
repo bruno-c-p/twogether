@@ -1,14 +1,8 @@
 import { Eye, EyeOff } from "lucide-react";
-import { currentMonth } from "@/features/budget/domain/format";
+import { currentMonth, monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
 import { cx } from "@/lib/cx";
-
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long" });
-
-function monthName(month: string) {
-  return monthFormatter.format(new Date(`${month}-15T12:00:00`));
-}
 
 function daysLeft(month: string, today = new Date()) {
   if (month !== currentMonth(today)) return null;

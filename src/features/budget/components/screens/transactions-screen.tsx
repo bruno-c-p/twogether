@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { longMonthName } from "@/features/budget/domain/format";
+import { monthName } from "@/features/budget/domain/format";
 import { PageHeading } from "@/features/budget/components/page-heading";
 import { PhraseBar } from "@/features/budget/components/phrase-bar";
 import {
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 function countNote(count: number, month: string) {
   const noun = count === 1 ? "transação" : "transações";
 
-  return `${count} ${noun} em ${longMonthName(month)}`;
+  return `${count} ${noun} em ${monthName(month)}`;
 }
 
 export function TransactionsScreen() {

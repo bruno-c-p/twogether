@@ -30,37 +30,52 @@ export function currentMonth(date = new Date()): string {
   return localDate(date).slice(0, 7);
 }
 
-export function shiftMonth(month: string, offset: number) {
-  const [year, number] = month.split("-").map(Number);
+// Calendar values carry no time zone, so they are read and formatted as
+// UTC: the day or month shown is always the one written, wherever this runs.
+const longMonthFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  timeZone: "UTC",
+});
 
-  return localDate(new Date(year, number - 1 + offset, 1)).slice(0, 7);
+const shortMonthFormatter = new Intl.DateTimeFormat("pt-BR", {
+  month: "short",
+  timeZone: "UTC",
+});
+
+const shortDayFormatter = new Intl.DateTimeFormat("pt-BR", {
+  day: "2-digit",
+  month: "short",
+  timeZone: "UTC",
+});
+
+const MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+// "2026-09" → "setembro", or "set" when short. Only the month part is read.
+export function monthName(month: string, short = false) {
+  const formatter = short ? shortMonthFormatter : longMonthFormatter;
+  const date = new Date(Date.UTC(2000, Number(month.slice(-2)) - 1, 1));
+
+  return formatter.format(date).replace(".", "");
 }
 
-export function monthName(number: number) {
-  return new Date(2000, number - 1, 1)
-    .toLocaleDateString("pt-BR", { month: "short" })
-    .replace(".", "");
-}
-
-function monthNameOf(year: number, number: number, short: boolean) {
-  return new Date(year, number - 1, 1)
-    .toLocaleDateString("pt-BR", { month: short ? "short" : "long" })
-    .replace(".", "");
-}
-
+// "2026-09" → "setembro 2026", or "set 2026" when short.
 export function monthLabel(month: string, short = false) {
-  const [year, number] = month.split("-").map(Number);
+  if (!MONTH.test(month)) return "Mês";
 
-  if (!year || !number) return "Mês";
-
-  return `${monthNameOf(year, number, short)} ${year}`;
+  return `${monthName(month, short)} ${month.slice(0, 4)}`;
 }
 
-// "2026-09" → "setembro".
-export function longMonthName(month: string) {
-  const [year, number] = month.split("-").map(Number);
+// "2026-09-17" → "17 set". An ISO instant (such as split.paidAt) shows the
+// local day it happened on.
+export function shortDay(value: string) {
+  const day = DATE_ONLY.test(value) ? value : localDate(new Date(value));
 
-  return monthNameOf(year, number, false);
+  return shortDayFormatter
+    .format(new Date(`${day}T00:00:00Z`))
+    .replace(" de ", " ")
+    .replace(".", "");
 }
 
 function parseCents(value: string, min: number): number | null {

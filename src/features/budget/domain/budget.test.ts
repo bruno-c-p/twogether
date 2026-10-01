@@ -11,14 +11,16 @@ import {
   newId,
   normalizeTag,
   parseAmount,
+  monthLabel,
+  monthName,
   parseBalance,
-  shiftMonth,
+  shortDay,
 } from "@/features/budget/domain/format";
 import {
-  isBankAccount,
-  isGoalPercentages,
-  isTransaction,
-} from "@/features/budget/domain/validate";
+  bankAccountSchema,
+  goalPercentagesSchema,
+  transactionSchema,
+} from "@/features/budget/domain/schemas";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
 
@@ -104,33 +106,36 @@ describe("divisão da renda", () => {
       freedom: 25,
       knowledge: 5,
     });
-    expect(isGoalPercentages(DEFAULT_PERCENTAGES)).toBe(true);
+    expect(goalPercentagesSchema.safeParse(DEFAULT_PERCENTAGES).success).toBe(
+      true,
+    );
     expect(
-      isGoalPercentages({
+      goalPercentagesSchema.safeParse({
         fixed: 33.33,
         pleasure: 33.33,
         comfort: 33.34,
         targets: 0,
         freedom: 0,
         knowledge: 0,
-      }),
+      }).success,
     ).toBe(true);
   });
 
   it("rejeita totais diferentes de 100,00 e um destino a 90% com o restante padrão", () => {
     expect(
-      isGoalPercentages({
+      goalPercentagesSchema.safeParse({
         fixed: 99.99,
         pleasure: 0,
         comfort: 0,
         targets: 0,
         freedom: 0,
         knowledge: 0,
-      }),
+      }).success,
     ).toBe(false);
-    expect(isGoalPercentages({ ...DEFAULT_PERCENTAGES, fixed: 90 })).toBe(
-      false,
-    );
+    expect(
+      goalPercentagesSchema.safeParse({ ...DEFAULT_PERCENTAGES, fixed: 90 })
+        .success,
+    ).toBe(false);
   });
 });
 
@@ -161,36 +166,56 @@ describe("resumo financeiro", () => {
 
 describe("tipo da transação", () => {
   it("não associa uma receita a uma meta", () => {
-    expect(isTransaction(transactions[0])).toBe(true);
-    expect(isTransaction({ ...transactions[0], goal: "fixed" })).toBe(false);
-    expect(isTransaction({ ...transactions[1], goal: null })).toBe(false);
+    expect(transactionSchema.safeParse(transactions[0]).success).toBe(true);
+    expect(
+      transactionSchema.safeParse({ ...transactions[0], goal: "fixed" })
+        .success,
+    ).toBe(false);
+    expect(
+      transactionSchema.safeParse({ ...transactions[1], goal: null }).success,
+    ).toBe(false);
   });
   it("exige uma conta bancária", () => {
-    expect(isTransaction({ ...transactions[0], accountId: "" })).toBe(false);
-    expect(isTransaction({ ...transactions[0], accountId: undefined })).toBe(
-      false,
-    );
+    expect(
+      transactionSchema.safeParse({ ...transactions[0], accountId: "" })
+        .success,
+    ).toBe(false);
+    expect(
+      transactionSchema.safeParse({ ...transactions[0], accountId: undefined })
+        .success,
+    ).toBe(false);
   });
 });
 
 describe("conta bancária", () => {
   it("exige identificador, nome e saldo inicial", () => {
     expect(
-      isBankAccount({ id: "account-1", name: "Nubank", openingBalance: 0 }),
+      bankAccountSchema.safeParse({
+        id: "account-1",
+        name: "Nubank",
+        openingBalance: 0,
+      }).success,
     ).toBe(true);
-    expect(isBankAccount({ id: "account-1", name: "Nubank" })).toBe(false);
-    expect(isBankAccount({ id: "", name: "Nubank", openingBalance: 0 })).toBe(
-      false,
-    );
     expect(
-      isBankAccount({ id: "account-1", name: "   ", openingBalance: 0 }),
+      bankAccountSchema.safeParse({ id: "account-1", name: "Nubank" }).success,
     ).toBe(false);
     expect(
-      isBankAccount({
+      bankAccountSchema.safeParse({ id: "", name: "Nubank", openingBalance: 0 })
+        .success,
+    ).toBe(false);
+    expect(
+      bankAccountSchema.safeParse({
+        id: "account-1",
+        name: "   ",
+        openingBalance: 0,
+      }).success,
+    ).toBe(false);
+    expect(
+      bankAccountSchema.safeParse({
         id: "account-1",
         name: "Nubank",
         openingBalance: -1,
-      }),
+      }).success,
     ).toBe(false);
   });
   it("aceita saldo inicial zero e soma receitas e despesas da conta", () => {
@@ -216,9 +241,19 @@ describe("conta bancária", () => {
 });
 
 describe("mês e tags", () => {
-  it("navega corretamente nas viradas de ano", () => {
-    expect(shiftMonth("2026-12", 1)).toBe("2027-01");
-    expect(shiftMonth("2026-01", -1)).toBe("2025-12");
+  it("escreve o nome do mês por extenso ou abreviado", () => {
+    expect(monthName("2026-09")).toBe("setembro");
+    expect(monthName("2026-05", true)).toBe("mai");
+    expect(monthLabel("2026-12")).toBe("dezembro 2026");
+    expect(monthLabel("2027-01", true)).toBe("jan 2027");
+    expect(monthLabel("2026-13")).toBe("Mês");
+  });
+  it("mostra o dia curto sem mudar de data entre fusos", () => {
+    expect(shortDay("2026-09-17")).toBe("17 set");
+    expect(shortDay("2026-01-01")).toBe("01 jan");
+    expect(shortDay(new Date(2026, 8, 17, 23, 30).toISOString())).toBe(
+      "17 set",
+    );
   });
   it("usa o calendário local para o mês atual", () => {
     expect(currentMonth(new Date(2026, 8, 17))).toBe("2026-09");

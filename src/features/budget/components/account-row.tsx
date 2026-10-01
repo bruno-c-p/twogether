@@ -1,17 +1,8 @@
 import { Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
+import { shortDay } from "@/features/budget/domain/format";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  timeZone: "UTC",
-});
-
-function shortDate(date: string) {
-  return dayFormatter.format(new Date(`${date}T00:00:00Z`)).replace(".", "");
-}
 
 function dotColor(transaction: Transaction) {
   if (transaction.kind === "income") return "var(--green)";
@@ -117,7 +108,7 @@ export function AccountRow({
               <span className="flex-1 min-w-0 truncate">
                 {transaction.description}{" "}
                 <span className="text-text-muted">
-                  · {shortDate(transaction.date)}
+                  · {shortDay(transaction.date)}
                 </span>
               </span>
               <span
