@@ -20,6 +20,6 @@ export const unsettleSplit = createServerFn({ method: "POST" })
   .validator(parseUnsettleSplit)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().unsettleSplit(context.user, context.household, data),
+      getBudgetStore().unsettleSplit(context.user, context.householdId, data),
     ),
   );

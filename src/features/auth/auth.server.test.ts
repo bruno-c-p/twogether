@@ -27,13 +27,4 @@ describe("clerk user provisioning", () => {
     await store.setName(ana, "Ana");
     expect((await store.ensureUser("user_bia")).name).toBe("");
   });
-
-  test("snapshot without a signed-in user returns an empty budget", async () => {
-    const { store } = ctx;
-    expect(await store.snapshot(null)).toMatchObject({
-      user: null,
-      household: null,
-      budget: { transactions: [], accounts: [] },
-    });
-  });
 });

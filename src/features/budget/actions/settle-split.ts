@@ -30,6 +30,6 @@ export const settleSplit = createServerFn({ method: "POST" })
   .validator(parseSettleSplit)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().settleSplit(context.user, context.household, data),
+      getBudgetStore().settleSplit(context.user, context.householdId, data),
     ),
   );

@@ -17,10 +17,6 @@ export const saveAccount = createServerFn({ method: "POST" })
   .validator(parseSaveAccount)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().saveAccount(
-        context.user,
-        context.household,
-        data.account,
-      ),
+      getBudgetStore().saveAccount(context.householdId, data.account),
     ),
   );

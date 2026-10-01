@@ -6,7 +6,5 @@ import { householdMiddleware } from "@/server/middleware";
 export const revokeInvite = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .handler(async ({ context }) =>
-    runMutation(() =>
-      getBudgetStore().revokeInvite(context.user, context.household),
-    ),
+    runMutation(() => getBudgetStore().revokeInvite(context.householdId)),
   );

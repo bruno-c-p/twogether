@@ -24,6 +24,6 @@ export const saveTransaction = createServerFn({ method: "POST" })
   .validator(parseSaveTransaction)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().saveTransaction(context.user, context.household, data),
+      getBudgetStore().saveTransaction(context.user, context.householdId, data),
     ),
   );

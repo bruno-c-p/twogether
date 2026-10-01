@@ -75,12 +75,6 @@ export interface WorkspaceHousehold {
   members: MemberBudget[];
 }
 
-export interface SharedSnapshot {
-  user: Member | null;
-  household: WorkspaceHousehold | null;
-  budget: BudgetState;
-}
-
 export interface WorkspaceSnapshot {
   user: Member;
   household: WorkspaceHousehold;

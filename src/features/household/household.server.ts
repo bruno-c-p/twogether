@@ -1,73 +1,67 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
-  digest,
   execute,
   one,
-  text,
-  token,
-  householdRowSchema,
   type DatabaseExecutor,
-  type HouseholdRow,
+  type DatabaseTransaction,
   type StoreContext,
   type UserRow,
 } from "@/server/db.server";
 import { z } from "zod";
 import { RequestError } from "@/server/request-error";
 
-const countRowSchema = z.object({ total: z.number() });
+const digest = (value: string) =>
+  createHash("sha256").update(value).digest("hex");
 
-export type { HouseholdRow };
+const token = () => randomBytes(32).toString("hex");
 
-export async function household(
+const ALREADY_MEMBER =
+  "Você já faz parte de um orçamento. Use a conta convidada para entrar em outro.";
+
+export async function memberCount(
   database: DatabaseExecutor,
-  user: UserRow,
-): Promise<HouseholdRow> {
-  if (!user.household_id)
-    throw new RequestError("Crie um orçamento ou aceite um convite.");
-
-  const home = await one(
+  householdId: string,
+) {
+  const row = await one(
     database,
-    householdRowSchema,
-    "SELECT * FROM households WHERE id = ?",
-    [user.household_id],
+    z.object({ total: z.number() }),
+    "SELECT count(*) AS total FROM users WHERE household_id = ?",
+    [householdId],
   );
 
-  if (!home) throw new RequestError("Orçamento não encontrado.", 404);
-
-  return home;
-}
-
-export async function householdFor(ctx: StoreContext, user: UserRow) {
-  await ctx.ready;
-
-  if (!user.household_id) return null;
-
-  return household(ctx.db, user);
+  return row?.total ?? 0;
 }
 
 function requireOpenSeat(user: UserRow) {
   if (!user.name)
     throw new RequestError("Conte como você quer aparecer no orçamento.");
 
-  if (user.household_id)
-    throw new RequestError(
-      "Você já faz parte de um orçamento. Use a conta convidada para entrar em outro.",
-      409,
-      "full",
-    );
+  if (user.household_id) throw new RequestError(ALREADY_MEMBER, 409, "full");
+}
+
+// The user row from the request can be stale, so the seat is claimed with a
+// conditional update that fails when another request already took it.
+async function claimSeat(
+  transaction: DatabaseTransaction,
+  user: UserRow,
+  householdId: string,
+) {
+  const result = await execute(
+    transaction,
+    "UPDATE users SET household_id = ? WHERE id = ? AND household_id IS NULL",
+    [householdId, user.id],
+  );
+
+  if (result.rowsAffected !== 1)
+    throw new RequestError(ALREADY_MEMBER, 409, "full");
 }
 
 export async function createHousehold(ctx: StoreContext, user: UserRow) {
-  await ctx.ready;
+  requireOpenSeat(user);
   await ctx.atomic(async (transaction) => {
-    requireOpenSeat(user);
     const id = randomUUID();
     await execute(transaction, "INSERT INTO households(id) VALUES (?)", [id]);
-    await execute(
-      transaction,
-      "UPDATE users SET household_id = ? WHERE id = ?",
-      [id, user.id],
-    );
+    await claimSeat(transaction, user, id);
   });
 }
 
@@ -76,15 +70,13 @@ export async function joinHousehold(
   user: UserRow,
   tokenValue: string,
 ) {
-  await ctx.ready;
+  requireOpenSeat(user);
   await ctx.atomic(async (transaction) => {
-    requireOpenSeat(user);
-
     const invite = await one(
       transaction,
       z.object({ household_id: z.string() }),
       "SELECT household_id FROM invites WHERE hash = ? AND expires > ?",
-      [digest(text(tokenValue, 128)), Date.now()],
+      [digest(tokenValue), Date.now()],
     );
 
     if (!invite)
@@ -94,67 +86,38 @@ export async function joinHousehold(
         "expired",
       );
 
-    const count = await one(
-      transaction,
-      countRowSchema,
-      "SELECT count(*) AS total FROM users WHERE household_id = ?",
-      [invite.household_id],
-    );
-
-    if ((count?.total ?? 0) >= 2)
+    if ((await memberCount(transaction, invite.household_id)) >= 2)
       throw new RequestError(
         "Este orçamento já tem duas pessoas.",
         409,
         "full",
       );
-    await execute(
-      transaction,
-      "UPDATE users SET household_id = ? WHERE id = ?",
-      [invite.household_id, user.id],
-    );
+    await claimSeat(transaction, user, invite.household_id);
     await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
       invite.household_id,
     ]);
   });
 }
 
-export async function createInvite(
-  ctx: StoreContext,
-  _user: UserRow,
-  home: HouseholdRow,
-) {
-  await ctx.ready;
-  let inviteToken = "";
+export async function createInvite(ctx: StoreContext, householdId: string) {
+  const inviteToken = token();
   await ctx.atomic(async (transaction) => {
-    const count = await one(
-      transaction,
-      countRowSchema,
-      "SELECT count(*) AS total FROM users WHERE household_id = ?",
-      [home.id],
-    );
-
-    if ((count?.total ?? 0) >= 2)
+    if ((await memberCount(transaction, householdId)) >= 2)
       throw new RequestError("Seu orçamento já tem duas pessoas.", 409, "full");
-    inviteToken = token();
     await execute(
       transaction,
       "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
-      [digest(inviteToken), home.id, Date.now() + 48 * 3600_000],
+      [digest(inviteToken), householdId, Date.now() + 48 * 3600_000],
     );
   });
 
   return { inviteToken };
 }
 
-export async function revokeInvite(
-  ctx: StoreContext,
-  _user: UserRow,
-  home: HouseholdRow,
-) {
-  await ctx.ready;
+export async function revokeInvite(ctx: StoreContext, householdId: string) {
   await ctx.atomic(async (transaction) => {
     await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
-      home.id,
+      householdId,
     ]);
   });
 }

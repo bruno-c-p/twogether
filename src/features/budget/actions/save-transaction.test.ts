@@ -22,9 +22,17 @@ describe("parseSaveTransaction", () => {
     expect(() =>
       parseSaveTransaction({ transaction: { ...transaction, amount: 0 } }),
     ).toThrow("Digite um valor válido, como 45,90.");
-    expect(() => parseSaveTransaction({ transaction, occurrences: 0 })).toThrow(
-      "Escolha entre 1 e 120 ocorrências.",
-    );
+
+    for (const occurrences of [0, -1, 1.5, 121])
+      expect(() => parseSaveTransaction({ transaction, occurrences })).toThrow(
+        "Escolha entre 1 e 120 ocorrências.",
+      );
+
+    expect(() =>
+      parseSaveTransaction({
+        transaction: { ...transaction, kind: "income", goal: null, split: {} },
+      }),
+    ).toThrow("Só despesas podem ser divididas.");
     expect(() =>
       // @ts-expect-error: the parser must reject untrusted request bodies
       parseSaveTransaction({ transaction, occurrences: "12" }),

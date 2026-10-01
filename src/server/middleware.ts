@@ -1,10 +1,12 @@
 import { redirect } from "@tanstack/react-router";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { createMiddleware } from "@tanstack/react-start";
-import { getRequestIP } from "@tanstack/react-start/server";
+import { getRequest, getRequestIP } from "@tanstack/react-start/server";
 import { currentUser } from "@/features/auth/current-user.server";
-import { getBudgetStore } from "@/features/budget/budget.server";
-import { consumeRateLimit } from "@/server/rate-limit.server";
+import {
+  consumeRateLimit,
+  rememberRetryAfter,
+} from "@/server/rate-limit.server";
 import { RequestError, throwHttpError } from "@/server/request-error";
 
 export const rateLimitMiddleware = createMiddleware({
@@ -15,7 +17,8 @@ export const rateLimitMiddleware = createMiddleware({
   const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
   const verdict = consumeRateLimit(key);
 
-  if (!verdict.ok)
+  if (!verdict.ok) {
+    rememberRetryAfter(getRequest(), verdict.retryAfterSeconds);
     throwHttpError(
       new RequestError(
         "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.",
@@ -23,6 +26,7 @@ export const rateLimitMiddleware = createMiddleware({
         "limited",
       ),
     );
+  }
 
   return next();
 });
@@ -44,14 +48,12 @@ export const optionalAuthMiddleware = createMiddleware({
 export const householdMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    try {
-      const household = await getBudgetStore().householdFor(context.user);
+    const householdId = context.user.household_id;
 
-      if (!household)
-        throw new RequestError("Crie um orçamento ou aceite um convite.");
+    if (!householdId)
+      throwHttpError(
+        new RequestError("Crie um orçamento ou aceite um convite."),
+      );
 
-      return next({ context: { household } });
-    } catch (error) {
-      throwHttpError(error);
-    }
+    return next({ context: { householdId } });
   });

@@ -23,7 +23,5 @@ export const savePercentages = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSavePercentages)
   .handler(async ({ data, context }) =>
-    runMutation(() =>
-      getBudgetStore().savePercentages(context.user, context.household, data),
-    ),
+    runMutation(() => getBudgetStore().savePercentages(context.user, data)),
   );

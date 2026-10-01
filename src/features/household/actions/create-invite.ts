@@ -6,7 +6,5 @@ import { householdMiddleware } from "@/server/middleware";
 export const createInvite = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .handler(async ({ context }) =>
-    runMutation(() =>
-      getBudgetStore().createInvite(context.user, context.household),
-    ),
+    runMutation(() => getBudgetStore().createInvite(context.householdId)),
   );

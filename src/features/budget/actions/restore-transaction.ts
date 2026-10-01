@@ -22,7 +22,7 @@ export const restoreTransaction = createServerFn({ method: "POST" })
     runMutation(() =>
       getBudgetStore().restoreTransaction(
         context.user,
-        context.household,
+        context.householdId,
         data,
       ),
     ),

@@ -20,6 +20,6 @@ export const deleteAccount = createServerFn({ method: "POST" })
   .validator(parseDeleteAccount)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().deleteAccount(context.user, context.household, data),
+      getBudgetStore().deleteAccount(context.householdId, data),
     ),
   );

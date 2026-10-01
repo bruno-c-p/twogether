@@ -26,6 +26,10 @@ export const deleteTransaction = createServerFn({ method: "POST" })
   .validator(parseDeleteTransaction)
   .handler(async ({ data, context }) =>
     runMutation(() =>
-      getBudgetStore().deleteTransaction(context.user, context.household, data),
+      getBudgetStore().deleteTransaction(
+        context.user,
+        context.householdId,
+        data,
+      ),
     ),
   );
