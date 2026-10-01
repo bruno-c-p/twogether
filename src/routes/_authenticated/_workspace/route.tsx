@@ -12,15 +12,14 @@ import {
   validateWorkspaceSearch,
   withDefaultMonthHref,
 } from "@/features/budget/search";
-import { workspaceQueryOptions } from "@/features/budget/workspace";
-import { LoadingState } from "@/features/budget/components/empty-state";
+import { loadCachedWorkspace } from "@/features/budget/workspace";
+import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
 import {
   browserTimeZone,
   isValidTimeZone,
   monthIn,
   TIME_ZONE_COOKIE,
 } from "@/lib/time-zone";
-import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 
 const requestTimeZone = createIsomorphicFn()
   .server(() => {
@@ -29,10 +28,6 @@ const requestTimeZone = createIsomorphicFn()
     return isValidTimeZone(timeZone) ? timeZone : undefined;
   })
   .client(() => browserTimeZone());
-
-function BudgetPending() {
-  return <LoadingState>Carregando orçamento…</LoadingState>;
-}
 
 // Pathless layout for every workspace page: it owns the snapshot loader,
 // the shell, and the month/person params that carry across pages.
@@ -47,11 +42,10 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
     if (!timeZone) return;
     throw redirect({ href: withDefaultMonthHref(location, monthIn(timeZone)) });
   },
-  loader: async ({ context }): Promise<WorkspaceSnapshot> =>
-    context.queryClient.ensureQueryData(workspaceQueryOptions),
-  pendingComponent: BudgetPending,
+  loader: ({ context }) => loadCachedWorkspace(context.queryClient),
+  pendingComponent: WorkspaceSkeleton,
   pendingMs: 300,
-  pendingMinMs: 500,
+  pendingMinMs: 0,
 });
 
 function WorkspaceRoute() {
@@ -71,7 +65,7 @@ function WorkspaceRoute() {
     });
   }, [missing, navigate]);
 
-  if (!search.month) return <BudgetPending />;
+  if (!search.month) return <WorkspaceSkeleton />;
 
   return <BudgetApp month={search.month} />;
 }

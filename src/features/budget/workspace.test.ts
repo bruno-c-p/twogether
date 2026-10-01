@@ -1,3 +1,4 @@
+import { QueryClient } from "@tanstack/react-query";
 import { describe, expect, it } from "vitest";
 import type {
   Transaction,
@@ -5,9 +6,11 @@ import type {
 } from "@/features/budget/domain/types";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
+  loadCachedWorkspace,
   optimisticDelete,
   optimisticRestore,
   optimisticSave,
+  workspaceQueryKey,
 } from "@/features/budget/workspace";
 
 const mercado: Transaction = {
@@ -43,6 +46,19 @@ const snapshot: WorkspaceSnapshot = {
     transactions: [mercado],
   },
 };
+
+describe("loadCachedWorkspace", () => {
+  it("returns the snapshot already in memory without waiting", () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { staleTime: 30_000, retry: false } },
+    });
+
+    queryClient.setQueryData(workspaceQueryKey, snapshot);
+
+    expect(loadCachedWorkspace(queryClient)).toBe(snapshot);
+    expect(queryClient.isFetching({ queryKey: workspaceQueryKey })).toBe(0);
+  });
+});
 
 describe("optimisticSave", () => {
   it("inserts a new transaction for the signed-in person", () => {

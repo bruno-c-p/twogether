@@ -1,4 +1,4 @@
-import { queryOptions } from "@tanstack/react-query";
+import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import { loadWorkspace } from "@/features/budget/actions";
 import type {
   Transaction,
@@ -11,6 +11,24 @@ export const workspaceQueryOptions = queryOptions({
   queryKey: workspaceQueryKey,
   queryFn: loadWorkspace,
 });
+
+// Page changes re-run the layout loader. Paint the snapshot already in
+// memory and let a stale copy refresh behind the new screen.
+export function loadCachedWorkspace(
+  queryClient: QueryClient,
+): WorkspaceSnapshot | Promise<WorkspaceSnapshot> {
+  const cached = queryClient.getQueryData<WorkspaceSnapshot>(workspaceQueryKey);
+
+  if (cached) {
+    void queryClient
+      .prefetchQuery(workspaceQueryOptions)
+      .catch(() => undefined);
+
+    return cached;
+  }
+
+  return queryClient.ensureQueryData(workspaceQueryOptions);
+}
 
 export function optimisticSave(
   snapshot: WorkspaceSnapshot,
