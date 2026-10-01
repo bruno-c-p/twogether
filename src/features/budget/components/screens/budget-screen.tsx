@@ -1,26 +1,28 @@
 import { GoalTable } from "@/features/budget/components/goal-table";
 import { IncomeDistribution } from "@/features/budget/components/income-distribution";
 import { PageHeading } from "@/features/budget/components/page-heading";
-import type { ScreenProps } from "@/features/budget/components/screens/screen-props";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 
-export function BudgetScreen({
-  budget,
-  search,
-  data,
-  busy,
-  hidden,
-  displayMoney,
-  dialogs,
-}: ScreenProps) {
+export function BudgetScreen() {
+  const {
+    budget,
+    data,
+    busy,
+    hidden,
+    displayMoney,
+    dialogs,
+    memberFilter,
+    navigation,
+  } = useWorkspace();
+
   const ownMember = budget.household.members.find(
     (member) => member.id === budget.user.id,
   );
 
-  const canEdit =
-    search.memberFilter === "all" || search.memberFilter === budget.user.id;
+  const canEdit = memberFilter === "all" || memberFilter === budget.user.id;
 
   const note =
-    search.memberFilter === "all"
+    memberFilter === "all"
       ? `Renda base de ${displayMoney(data.summary.income)} dividida por meta. O planejado soma as metas de cada pessoa.`
       : "Renda, gastos e metas da pessoa selecionada.";
 
@@ -52,7 +54,7 @@ export function BudgetScreen({
         plans={data.plans}
         hidden={hidden}
         displayMoney={displayMoney}
-        onFilterGoal={search.filterGoal}
+        onFilterGoal={navigation.filterGoal}
       />
     </>
   );

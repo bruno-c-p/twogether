@@ -70,12 +70,29 @@ export const DEFAULT_PERCENTAGES: GoalPercentages = {
   knowledge: 5,
 };
 
+export const WORKSPACE_PATHS = {
+  overview: "/",
+  transactions: "/transacoes",
+  accounts: "/contas",
+  goals: "/orcamento",
+} as const satisfies Record<View, string>;
+
+type WorkspacePath = (typeof WORKSPACE_PATHS)[View];
+
 export const WORKSPACE_NAVIGATION = [
-  { id: "overview", label: "Visão geral", icon: LayoutGrid },
-  { id: "transactions", label: "Transações", icon: ReceiptText },
-  { id: "accounts", label: "Contas", icon: Landmark },
-  { id: "goals", label: "Orçamento", icon: Target },
-] as const satisfies { id: View; label: string; icon: typeof LayoutGrid }[];
+  { to: WORKSPACE_PATHS.overview, label: "Visão geral", icon: LayoutGrid },
+  {
+    to: WORKSPACE_PATHS.transactions,
+    label: "Transações",
+    icon: ReceiptText,
+  },
+  { to: WORKSPACE_PATHS.accounts, label: "Contas", icon: Landmark },
+  { to: WORKSPACE_PATHS.goals, label: "Orçamento", icon: Target },
+] as const satisfies {
+  to: WorkspacePath;
+  label: string;
+  icon: typeof LayoutGrid;
+}[];
 
 export const GOAL_ICONS: Record<GoalId, typeof House> = {
   fixed: House,

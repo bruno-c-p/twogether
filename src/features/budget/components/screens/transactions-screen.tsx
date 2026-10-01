@@ -1,31 +1,25 @@
 import { Plus } from "lucide-react";
+import { longMonthName } from "@/features/budget/domain/format";
 import { PageHeading } from "@/features/budget/components/page-heading";
 import { PhraseBar } from "@/features/budget/components/phrase-bar";
 import {
   TransactionList,
   TransactionSearch,
 } from "@/features/budget/components/transaction-list/transaction-list";
-import type { ScreenProps } from "@/features/budget/components/screens/screen-props";
+import { useTransactionFilters } from "@/features/budget/hooks/use-transaction-filters";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Button } from "@/components/ui/button";
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long" });
-
 function countNote(count: number, month: string) {
-  const [year, number] = month.split("-").map(Number);
-  const name = monthFormatter.format(new Date(year, number - 1, 1));
+  const noun = count === 1 ? "transação" : "transações";
 
-  return `${count} ${count === 1 ? "transação" : "transações"} em ${name}`;
+  return `${count} ${noun} em ${longMonthName(month)}`;
 }
 
-export function TransactionsScreen({
-  budget,
-  search,
-  data,
-  month,
-  busy,
-  hidden,
-  actions,
-}: ScreenProps) {
+export function TransactionsScreen() {
+  const { budget, data, month, busy, hidden, actions } = useWorkspace();
+  const filters = useTransactionFilters();
+
   return (
     <>
       <PageHeading
@@ -34,8 +28,8 @@ export function TransactionsScreen({
         action={
           <div className="flex items-center gap-[12px] flex-wrap max-bp620:w-full">
             <TransactionSearch
-              query={search.query}
-              setQuery={search.setQuery}
+              query={filters.query}
+              setQuery={filters.setQuery}
             />
             <Button
               disabled={busy}
@@ -58,7 +52,7 @@ export function TransactionsScreen({
         userId={budget.user.id}
         busy={busy}
         hidden={hidden}
-        filters={search}
+        filters={filters}
         onEdit={(transaction) => actions.openTransaction(transaction)}
         onDelete={(transaction) => void actions.remove(transaction)}
         onAdd={() => actions.openTransaction(null)}

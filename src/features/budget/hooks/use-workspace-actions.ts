@@ -32,7 +32,7 @@ export function useWorkspaceActions({
   notice,
   setNotice,
   setMonth,
-  setView,
+  openView,
 }: {
   budget: BudgetController;
   dialogs: WorkspaceDialogs;
@@ -41,7 +41,7 @@ export function useWorkspaceActions({
   notice: Notice | null;
   setNotice: (notice: Notice | null) => void;
   setMonth: (month: string) => void;
-  setView: (view: View) => void;
+  openView: (view: View) => void;
 }) {
   const posthog = usePostHog();
 
@@ -92,7 +92,7 @@ export function useWorkspaceActions({
   ) {
     if (!transaction && budget.state.accounts.length === 0) {
       setNotice({ message: "Cadastre uma conta para lançar transações." });
-      setView("accounts");
+      openView("accounts");
 
       return;
     }

@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import type { View } from "@/features/budget/domain/types";
 import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
 import {
   DesktopNavigation,
@@ -9,14 +8,12 @@ import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
 
 export function WorkspaceShell({
-  view,
   controls,
   onRegister,
   children,
   overlays,
   account,
 }: {
-  view?: View;
   controls?: ReactNode;
   onRegister?: () => void;
   children: ReactNode;
@@ -44,7 +41,7 @@ export function WorkspaceShell({
             markClassName="scale-[.8]"
             textClassName="max-bp620:hidden"
           />
-          <DesktopNavigation view={view} />
+          <DesktopNavigation />
           {controls && (
             <div
               className={cx(
@@ -70,7 +67,7 @@ export function WorkspaceShell({
       <div className="max-bp1000:pb-[77px]">
         <AppFooter />
       </div>
-      <MobileNavigation view={view} onRegister={onRegister} />
+      <MobileNavigation onRegister={onRegister} />
       {overlays}
     </div>
   );

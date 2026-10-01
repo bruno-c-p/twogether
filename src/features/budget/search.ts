@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import { goalIdSchema, monthSchema } from "@/features/budget/domain/schemas";
 import type {
   GoalId,
@@ -26,10 +27,14 @@ const kindSchema = z.enum(["expense", "income", "split"], {
   error: "Tipo inválido.",
 });
 
-const budgetFiltersSchema = z.object({
-  view: drop(viewSchema),
+// Month and person apply to every workspace page.
+const workspaceSearchSchema = z.object({
   month: drop(monthSchema),
   member: drop(memberSchema),
+});
+
+// Search, goal, tag and kind only narrow the transactions list.
+const transactionFiltersSchema = z.object({
   query: drop(querySchema),
   goal: drop(goalIdSchema),
   tag: drop(tagSchema),
@@ -38,58 +43,69 @@ const budgetFiltersSchema = z.object({
 
 export type KindFilter = TransactionKind | "split";
 
-export interface BudgetFilters {
-  view?: View;
+export interface WorkspaceSearch {
   month?: string;
   member?: string;
+}
+
+export interface TransactionFilterSearch {
   query?: string;
   goal?: GoalId;
   tag?: string;
   kind?: KindFilter;
 }
 
-export function withView(search: BudgetFilters, view: View): BudgetFilters {
-  return { ...search, view };
-}
-
-export function openView(search: BudgetFilters, view: View): BudgetFilters {
-  return {
-    ...search,
-    view,
-    query: undefined,
-    goal: undefined,
-    tag: undefined,
-    kind: undefined,
-  };
-}
-
-export function openGoalTransactions(
-  search: BudgetFilters,
-  goal: GoalId,
-): BudgetFilters {
-  return {
-    ...search,
-    view: "transactions",
-    goal,
-    query: undefined,
-    tag: undefined,
-    kind: undefined,
-  };
-}
-
-export function missingWorkspaceMonth(search: BudgetFilters): boolean {
+export function missingWorkspaceMonth(search: WorkspaceSearch): boolean {
   return !search.month;
 }
 
-export function withDefaultMonth(
-  search: BudgetFilters,
+export function withDefaultMonth<Search extends WorkspaceSearch>(
+  search: Search,
   month: string,
-): BudgetFilters {
+): Search {
   return { ...search, month };
 }
 
-export function validateBudgetFilters<
+interface RequestLocation {
+  pathname: string;
+  searchStr: string;
+}
+
+function hrefFor(pathname: string, params: URLSearchParams) {
+  const query = params.toString();
+
+  return query ? `${pathname}?${query}` : pathname;
+}
+
+// Same page and params with the month filled in, for a server redirect.
+export function withDefaultMonthHref(location: RequestLocation, month: string) {
+  const params = new URLSearchParams(location.searchStr);
+
+  params.set("month", month);
+
+  return hrefFor(location.pathname, params);
+}
+
+export function validateWorkspaceSearch<
   RawSearch extends Record<string, unknown>,
->(search: RawSearch): BudgetFilters {
-  return budgetFiltersSchema.parse(search);
+>(search: RawSearch): WorkspaceSearch {
+  return workspaceSearchSchema.parse(search);
+}
+
+export function validateTransactionFilters<
+  RawSearch extends Record<string, unknown>,
+>(search: RawSearch): TransactionFilterSearch {
+  return transactionFiltersSchema.parse(search);
+}
+
+// Views used to live in /?view=<view>; old bookmarks still carry it.
+export function legacyViewHref(searchStr: string) {
+  const params = new URLSearchParams(searchStr);
+  const view: View | undefined = drop(viewSchema).parse(params.get("view"));
+
+  if (!view) return undefined;
+
+  params.delete("view");
+
+  return hrefFor(WORKSPACE_PATHS[view], params);
 }

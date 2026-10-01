@@ -146,14 +146,14 @@ test.describe("overview and goals", () => {
     await nav(page, "desktop")
       .getByRole("link", { name: "Transações" })
       .click();
+    await expect(page).toHaveURL(/\/transacoes\?/);
     const kept = new URL(page.url()).searchParams;
-    expect(kept.get("view")).toBe("transactions");
     expect(kept.get("month")).toBe("2026-10");
     expect(kept.get("member")).toBe(memberId);
 
     await reloadApp(page);
+    expect(new URL(page.url()).pathname).toBe("/transacoes");
     const restored = new URL(page.url()).searchParams;
-    expect(restored.get("view")).toBe("transactions");
     expect(restored.get("month")).toBe("2026-10");
     expect(restored.get("member")).toBe(memberId);
 
@@ -184,10 +184,10 @@ test.describe("overview and goals", () => {
     await addExpense(page, "Farmácia", "2026-09-02");
 
     const views = [
-      { name: "Visão geral", heading: "Visão geral", view: undefined },
-      { name: "Transações", heading: "Transações", view: "transactions" },
-      { name: "Contas", heading: "Contas", view: "accounts" },
-      { name: "Orçamento", heading: "Orçamento", view: "goals" },
+      { name: "Visão geral", heading: "Visão geral", path: "/" },
+      { name: "Transações", heading: "Transações", path: "/transacoes" },
+      { name: "Contas", heading: "Contas", path: "/contas" },
+      { name: "Orçamento", heading: "Orçamento", path: "/orcamento" },
     ] as const;
 
     for (const item of views) {
@@ -196,11 +196,13 @@ test.describe("overview and goals", () => {
       await expect(
         nav(page, "desktop").getByRole("link", { name: item.name }),
       ).toHaveAttribute("aria-current", "page");
-
-      if (item.view) {
-        expect(new URL(page.url()).searchParams.get("view")).toBe(item.view);
-      }
+      expect(new URL(page.url()).pathname).toBe(item.path);
     }
+
+    // Old bookmarks kept the page in ?view=.
+    await page.goto("/?view=accounts&month=2026-09");
+    await expect(page).toHaveURL(/\/contas\?month=2026-09$/);
+    await expect(page.locator("#main-content h1")).toHaveText("Contas");
 
     await nav(page, "desktop")
       .getByRole("link", { name: "Visão geral" })

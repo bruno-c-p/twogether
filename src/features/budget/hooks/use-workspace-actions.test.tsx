@@ -67,7 +67,7 @@ function Harness({
     notice,
     setNotice,
     setMonth: vi.fn(),
-    setView: vi.fn(),
+    openView: vi.fn(),
   });
 
   return (

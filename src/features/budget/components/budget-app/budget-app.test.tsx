@@ -1,4 +1,5 @@
-import { describe, expect, test, vi } from "vitest";
+import { within } from "@testing-library/react";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
@@ -53,6 +54,11 @@ describe("BudgetWorkspace", () => {
   });
 
   test("moves between months through the URL", async () => {
+    // "Voltar para este mês" only shows away from the current month.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 8, 15));
+    onTestFinished(() => void vi.useRealTimers());
+
     const { screen, user, router } = await renderWorkspace();
 
     await user.click(
@@ -98,7 +104,7 @@ describe("BudgetWorkspace", () => {
   test("the accounts view explains balances and opens the account dialog", async () => {
     const { screen, user } = await renderWorkspace(
       budget(),
-      "/?month=2026-09&view=accounts",
+      "/contas?month=2026-09",
     );
 
     expect(screen.getByText(/Inclui as transações do casal\./)).toBeTruthy();
@@ -111,14 +117,15 @@ describe("BudgetWorkspace", () => {
   test("a new transaction without accounts sends the person to Contas", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget({ accounts: [] }),
-      "/?month=2026-09&view=transactions",
+      "/transacoes?month=2026-09",
     );
 
     await user.click(screen.getByRole("button", { name: "Nova transação" }));
     expect(
       await screen.findByText("Cadastre uma conta para lançar transações."),
     ).toBeTruthy();
-    expect(router.state.location.search).toMatchObject({ view: "accounts" });
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({ month: "2026-09" });
   });
 
   test("editing a transaction opens it prefilled", async () => {
@@ -143,7 +150,7 @@ describe("BudgetWorkspace", () => {
 
     const { screen, user } = await renderWorkspace(
       budget({ transactions: series }),
-      "/?month=2026-09&view=transactions",
+      "/transacoes?month=2026-09",
     );
 
     await user.click(screen.getByRole("button", { name: "Excluir Aluguel" }));
@@ -159,7 +166,7 @@ describe("BudgetWorkspace", () => {
   test("goals open the percentages editor; filtering by a goal opens its transactions", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget(),
-      "/?month=2026-09&view=goals",
+      "/orcamento?month=2026-09",
     );
 
     await user.click(
@@ -172,8 +179,9 @@ describe("BudgetWorkspace", () => {
       screen.getByRole("button", { name: "Fechar percentuais" }),
     );
     await user.click(screen.getByRole("button", { name: /^Custo fixo:/ }));
-    expect(router.state.location.search).toMatchObject({
-      view: "transactions",
+    expect(router.state.location.pathname).toBe("/transacoes");
+    expect(router.state.location.search).toEqual({
+      month: "2026-09",
       goal: "fixed",
     });
   });
@@ -197,11 +205,51 @@ describe("BudgetWorkspace", () => {
     const { screen, user, router } = await renderWorkspace();
 
     await user.click(screen.getByRole("button", { name: /Ver todas/ }));
-    expect(router.state.location.search).toMatchObject({
-      view: "transactions",
-    });
+    expect(router.state.location.pathname).toBe("/transacoes");
     expect(
       await screen.findByRole("heading", { level: 1, name: "Transações" }),
     ).toBeTruthy();
+  });
+
+  test("page links keep month and person and drop transaction filters", async () => {
+    const { screen, user, router } = await renderWorkspace(
+      budget(),
+      "/transacoes?month=2026-08&member=ana&tag=casa",
+    );
+
+    const nav = screen.getByRole("navigation", {
+      name: "Navegação principal",
+    });
+
+    expect(
+      within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
+    ).toBe("page");
+    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Contas" }),
+    ).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({
+      month: "2026-08",
+      member: "ana",
+    });
+    expect(within(nav).getByRole("link", { name: "Contas" }).ariaCurrent).toBe(
+      "page",
+    );
+    expect(
+      within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
+    ).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "outubro 2026" }),
+    );
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({
+      month: "2026-10",
+      member: "ana",
+    });
   });
 });

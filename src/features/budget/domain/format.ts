@@ -42,16 +42,25 @@ export function monthName(number: number) {
     .replace(".", "");
 }
 
+function monthNameOf(year: number, number: number, short: boolean) {
+  return new Date(year, number - 1, 1)
+    .toLocaleDateString("pt-BR", { month: short ? "short" : "long" })
+    .replace(".", "");
+}
+
 export function monthLabel(month: string, short = false) {
   const [year, number] = month.split("-").map(Number);
 
   if (!year || !number) return "Mês";
 
-  const name = new Date(year, number - 1, 1).toLocaleDateString("pt-BR", {
-    month: short ? "short" : "long",
-  });
+  return `${monthNameOf(year, number, short)} ${year}`;
+}
 
-  return `${name.replace(".", "")} ${year}`;
+// "2026-09" → "setembro".
+export function longMonthName(month: string) {
+  const [year, number] = month.split("-").map(Number);
+
+  return monthNameOf(year, number, false);
 }
 
 function parseCents(value: string, min: number): number | null {

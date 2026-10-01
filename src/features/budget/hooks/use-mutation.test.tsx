@@ -126,16 +126,13 @@ describe("useMutation", () => {
 
   test("a redirect navigates instead of showing an error", async () => {
     const { screen, user, onResult, router } = await setup(async () => {
-      throw redirect({
-        to: "/",
-        search: { month: "2026-09", view: "accounts" },
-      });
+      throw redirect({ to: "/contas", search: { month: "2026-09" } });
     });
 
     await user.click(screen.getByRole("button", { name: "run" }));
 
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
-    expect(router.state.location.search).toMatchObject({ view: "accounts" });
+    expect(router.state.location.pathname).toBe("/contas");
     expect(screen.getByRole("status").textContent).toBe("idle");
   });
 
