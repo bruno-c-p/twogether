@@ -8,7 +8,7 @@ import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutatio
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
 import { ana, nubank, transaction } from "@/test/fixtures";
-import { renderPlain } from "@/test/render";
+import { renderWithProviders } from "@/test/render";
 
 function fakeMutations(succeeds: boolean): BudgetMutations {
   const ok = succeeds ? { ok: true as const } : null;
@@ -35,9 +35,8 @@ const budget: BudgetController = {
     percentages: { ...DEFAULT_PERCENTAGES },
   },
   user: { id: "ana", name: "Ana" },
-  household: { id: "home", members: [ana] },
+  household: { id: "home", members: [{ ...ana, percentagesRevision: 7 }] },
   syncError: "",
-  refresh: vi.fn(),
 };
 
 const series = [0, 1, 2].map((index) =>
@@ -63,20 +62,20 @@ function Harness({
     budget,
     dialogs,
     mutations,
-    following: series.slice(1),
     notice,
     setNotice,
     setMonth: vi.fn(),
-    openView: vi.fn(),
   });
 
   return (
     <>
       <button onClick={() => dialogs.setDeleting(series[0])}>pick</button>
-      <button onClick={() => void actions.deleteRecurring(false)}>
+      <button onClick={() => void actions.deleteRecurring(series[0], [])}>
         delete one
       </button>
-      <button onClick={() => void actions.deleteRecurring(true)}>
+      <button
+        onClick={() => void actions.deleteRecurring(series[0], series.slice(1))}
+      >
         delete following
       </button>
       <button onClick={() => dialogs.setAccount({ account: nubank })}>
@@ -85,21 +84,24 @@ function Harness({
       <button onClick={() => void actions.saveAccountRecord(nubank)}>
         save account
       </button>
+      <button onClick={actions.openPercentages}>edit percentages</button>
       <button onClick={() => void actions.undoNotice()}>undo</button>
       <p role="status">{notice?.message ?? ""}</p>
       <p data-testid="deleting">{dialogs.deleting?.id ?? "none"}</p>
+      <p data-testid="account">{dialogs.account ? "open" : "closed"}</p>
+      <p data-testid="percentages">{dialogs.percentagesRevision ?? "closed"}</p>
     </>
   );
 }
 
 function setup(props: Parameters<typeof Harness>[0]) {
-  return renderPlain(<Harness {...props} />);
+  return renderWithProviders(<Harness {...props} />);
 }
 
 describe("useWorkspaceActions", () => {
   test("deleting one occurrence offers undo and closes the dialog", async () => {
     const mutations = fakeMutations(true);
-    const { screen, user } = setup({ mutations });
+    const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
     await user.click(screen.getByRole("button", { name: "delete one" }));
@@ -119,7 +121,7 @@ describe("useWorkspaceActions", () => {
 
   test("deleting the following occurrences sends each revision", async () => {
     const mutations = fakeMutations(true);
-    const { screen, user } = setup({ mutations });
+    const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
     await user.click(screen.getByRole("button", { name: "delete following" }));
@@ -139,12 +141,9 @@ describe("useWorkspaceActions", () => {
     });
   });
 
-  test("a failed delete keeps the dialog open; nothing picked means no call", async () => {
+  test("a failed delete keeps the dialog open", async () => {
     const mutations = fakeMutations(false);
-    const { screen, user } = setup({ mutations });
-
-    await user.click(screen.getByRole("button", { name: "delete one" }));
-    expect(mutations.deleteTx.run).not.toHaveBeenCalled();
+    const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
     await user.click(screen.getByRole("button", { name: "delete one" }));
@@ -154,7 +153,7 @@ describe("useWorkspaceActions", () => {
   });
 
   test("saving an account says added or updated, and nothing on failure", async () => {
-    const added = setup({ mutations: fakeMutations(true) });
+    const added = await setup({ mutations: fakeMutations(true) });
 
     await added.user.click(
       added.screen.getByRole("button", { name: "save account" }),
@@ -166,7 +165,7 @@ describe("useWorkspaceActions", () => {
     );
     added.unmount();
 
-    const updated = setup({ mutations: fakeMutations(true) });
+    const updated = await setup({ mutations: fakeMutations(true) });
 
     await updated.user.click(
       updated.screen.getByRole("button", { name: "edit account" }),
@@ -179,21 +178,33 @@ describe("useWorkspaceActions", () => {
         "Conta atualizada.",
       ),
     );
+    expect(updated.screen.getByTestId("account").textContent).toBe("closed");
     updated.unmount();
 
-    const failed = setup({ mutations: fakeMutations(false) });
+    const failed = await setup({ mutations: fakeMutations(false) });
 
+    await failed.user.click(
+      failed.screen.getByRole("button", { name: "edit account" }),
+    );
     await failed.user.click(
       failed.screen.getByRole("button", { name: "save account" }),
     );
     expect(failed.screen.getByRole("status").textContent).toBe("");
+    expect(failed.screen.getByTestId("account").textContent).toBe("open");
+  });
+
+  test("percentages open at the person's own revision", async () => {
+    const { screen, user } = await setup({ mutations: fakeMutations(true) });
+
+    await user.click(screen.getByRole("button", { name: "edit percentages" }));
+    expect(screen.getByTestId("percentages").textContent).toBe("7");
   });
 
   test("undo restores the deleted transaction at the next revision", async () => {
     const mutations = fakeMutations(true);
     const undo: Transaction = transaction({ id: "t9", revision: 4 });
 
-    const { screen, user } = setup({
+    const { screen, user } = await setup({
       mutations,
       initialNotice: { message: "Transação excluída.", undo },
     });
@@ -215,7 +226,7 @@ describe("useWorkspaceActions", () => {
   test("undo without anything to restore does nothing", async () => {
     const mutations = fakeMutations(true);
 
-    const { screen, user } = setup({
+    const { screen, user } = await setup({
       mutations,
       initialNotice: { message: "Oi." },
     });

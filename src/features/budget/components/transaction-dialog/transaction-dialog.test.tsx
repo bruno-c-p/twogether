@@ -19,21 +19,21 @@ function setup({
   editing = null,
   draft,
   accounts = [nubank],
-  saved = true,
+  busy = false,
   currentUserId = "ana",
 }: {
   editing?: Transaction | null;
   draft?: PhraseDraft;
   accounts?: BankAccount[];
-  saved?: boolean;
+  busy?: boolean;
   currentUserId?: string;
 } = {}) {
   const onSettle = vi.fn();
-  const onUnsettle = vi.fn(() => Promise.resolve(true));
+  const onUnsettle = vi.fn(() => Promise.resolve());
 
   const onSave = vi.fn<
-    (transaction: Transaction, occurrences?: number) => Promise<boolean>
-  >(() => Promise.resolve(saved));
+    (transaction: Transaction, occurrences?: number) => Promise<void>
+  >(() => Promise.resolve());
 
   const onClose = vi.fn();
 
@@ -46,6 +46,7 @@ function setup({
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
       accounts={accounts}
       currentUserId={currentUserId}
+      busy={busy}
       serverError=""
       splitBusy={false}
       onSave={onSave}
@@ -83,7 +84,15 @@ describe("TransactionDialog", () => {
       }),
       1,
     );
-    expect(onClose).toHaveBeenCalled();
+    // The save action closes the dialog once it succeeds.
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("while saving the form is locked and says so", () => {
+    const { screen } = setup({ editing: transaction(), busy: true });
+    const submit = screen.getByRole("button", { name: "Salvando…" });
+
+    expect(submit.closest("fieldset")?.disabled).toBe(true);
   });
 
   test("income drops the goal picker and repeats monthly when asked", async () => {
@@ -123,7 +132,7 @@ describe("TransactionDialog", () => {
       memberId: "bia",
     });
 
-    const { screen, user, onSave, onClose } = setup({ editing, saved: false });
+    const { screen, user, onSave } = setup({ editing });
 
     expect(
       screen.getByRole("heading", { name: "Editar transação" }),
@@ -146,7 +155,6 @@ describe("TransactionDialog", () => {
       }),
       1,
     );
-    expect(onClose).not.toHaveBeenCalled();
   });
 
   test("rejects a zero amount with a linked field error", async () => {
@@ -266,13 +274,13 @@ describe("TransactionDialog", () => {
     expect(onSettle).toHaveBeenCalledWith(editing);
   });
 
-  test("a paid split locks amount and kind, and unmarking closes the dialog", async () => {
+  test("a paid split locks amount and kind and can be unmarked", async () => {
     const editing = transaction({
       memberId: "ana",
       split: { paidAt: "2026-09-12T12:00:00.000Z" },
     });
 
-    const { screen, user, onUnsettle, onClose } = setup({
+    const { screen, user, onUnsettle } = setup({
       editing,
       currentUserId: "bia",
     });
@@ -286,7 +294,6 @@ describe("TransactionDialog", () => {
     await user.click(
       screen.getByRole("button", { name: "Desmarcar pagamento" }),
     );
-    await vi.waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(onUnsettle).toHaveBeenCalledWith(editing);
   });
 

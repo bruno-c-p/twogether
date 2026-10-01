@@ -56,11 +56,14 @@ interface Props {
   members: Member[];
   accounts: BankAccount[];
   currentUserId: string;
+  // The save is in flight; the caller closes the dialog when it succeeds,
+  // and also after a successful unsettle.
+  busy: boolean;
   serverError: string;
   splitBusy: boolean;
-  onSave: (transaction: Transaction, occurrences?: number) => Promise<boolean>;
+  onSave: (transaction: Transaction, occurrences?: number) => Promise<void>;
   onSettle: (transaction: Transaction) => void;
-  onUnsettle: (transaction: Transaction) => Promise<boolean>;
+  onUnsettle: (transaction: Transaction) => Promise<void>;
   onClose: () => void;
 }
 
@@ -141,8 +144,8 @@ function useTransactionForm({
   members,
   accounts,
   currentUserId,
+  busy,
   onSave,
-  onClose,
 }: Pick<
   Props,
   | "transaction"
@@ -150,8 +153,8 @@ function useTransactionForm({
   | "members"
   | "accounts"
   | "currentUserId"
+  | "busy"
   | "onSave"
-  | "onClose"
 >) {
   const prefill = transaction ?? draft;
 
@@ -167,7 +170,6 @@ function useTransactionForm({
 
   const [recurring, setRecurring] = useState(Boolean(draft?.recurring));
   const [occurrences, setOccurrences] = useState(12);
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const { split, setSplit, canSplit, paid, memberId } = useSplitChoice({
@@ -197,9 +199,8 @@ function useTransactionForm({
     setTags(tags.filter((t) => t !== tag));
   }
 
-  async function save(parsed: TransactionForm, completeTags: string[]) {
+  function save(parsed: TransactionForm, completeTags: string[]) {
     setErrors({});
-    setSaving(true);
 
     const next: Transaction = {
       id: transaction?.id ?? newId(),
@@ -216,19 +217,13 @@ function useTransactionForm({
 
     if (canSplit && split) next.split = transaction?.split ?? {};
 
-    try {
-      const saved = await onSave(next, parsed.occurrences);
-
-      if (saved) onClose();
-    } finally {
-      setSaving(false);
-    }
+    void onSave(next, parsed.occurrences);
   }
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (saving) return;
+    if (busy) return;
 
     const form = new FormData(event.currentTarget);
 
@@ -249,7 +244,7 @@ function useTransactionForm({
       return;
     }
 
-    await save(parsed.data, withPendingTag(tags, tagInput));
+    save(parsed.data, withPendingTag(tags, tagInput));
   }
 
   return {
@@ -268,7 +263,6 @@ function useTransactionForm({
     setRecurring,
     occurrences,
     setOccurrences,
-    saving,
     errors,
     submit,
     split,
@@ -430,11 +424,7 @@ function SplitSection({
   busy,
   onSettle,
   onUnsettle,
-  onClose,
-}: Pick<
-  Props,
-  "members" | "currentUserId" | "onSettle" | "onUnsettle" | "onClose"
-> & {
+}: Pick<Props, "members" | "currentUserId" | "onSettle" | "onUnsettle"> & {
   form: TransactionFormState;
   transaction: Transaction | null;
   busy: boolean;
@@ -446,10 +436,6 @@ function SplitSection({
 
   const userIsDebtor = debtor.id === currentUserId;
   const payerName = payer?.name ?? "a outra pessoa";
-
-  async function unsettle() {
-    if (transaction && (await onUnsettle(transaction))) onClose();
-  }
 
   return (
     <SplitPanel
@@ -469,7 +455,9 @@ function SplitSection({
       onSettle={() => {
         if (transaction) onSettle(transaction);
       }}
-      onUnsettle={() => void unsettle()}
+      onUnsettle={() => {
+        if (transaction) void onUnsettle(transaction);
+      }}
     />
   );
 }
@@ -523,6 +511,7 @@ export function TransactionDialog({
   members,
   accounts,
   currentUserId,
+  busy,
   serverError,
   splitBusy,
   onSave,
@@ -536,8 +525,8 @@ export function TransactionDialog({
     members,
     accounts,
     currentUserId,
+    busy,
     onSave,
-    onClose,
   });
 
   const amountInput = useRef<HTMLInputElement>(null);
@@ -558,8 +547,8 @@ export function TransactionDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={(event) => void form.submit(event)}>
-          <Fieldset disabled={form.saving}>
+        <form onSubmit={form.submit}>
+          <Fieldset disabled={busy}>
             <KindToggle
               kind={form.kind}
               disabled={form.paid}
@@ -591,7 +580,6 @@ export function TransactionDialog({
                   busy={splitBusy}
                   onSettle={onSettle}
                   onUnsettle={onUnsettle}
-                  onClose={onClose}
                 />
               }
             />
@@ -603,7 +591,7 @@ export function TransactionDialog({
               </Button>
               <Button type="submit">
                 <Check size={17} />
-                {submitLabel(form.saving, Boolean(transaction))}
+                {submitLabel(busy, Boolean(transaction))}
               </Button>
             </DialogFooter>
           </Fieldset>

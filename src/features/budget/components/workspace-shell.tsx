@@ -4,22 +4,37 @@ import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/features/budget/components/workspace-navigation";
+import { NoticeToast } from "@/features/budget/components/notice";
+import { TransactionFlows } from "@/features/budget/components/transaction-flows";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
 
+function WorkspaceNotice() {
+  const { notice, setNotice, actions } = useWorkspace();
+
+  if (!notice) return null;
+
+  return (
+    <NoticeToast
+      notice={notice}
+      onUndo={() => void actions.undoNotice()}
+      onDismiss={() => setNotice(null)}
+    />
+  );
+}
+
 export function WorkspaceShell({
   controls,
-  onRegister,
-  children,
-  overlays,
   account,
+  children,
 }: {
-  controls?: ReactNode;
-  onRegister?: () => void;
+  controls: ReactNode;
+  account: ReactNode;
   children: ReactNode;
-  overlays?: ReactNode;
-  account?: ReactNode;
 }) {
+  const { actions } = useWorkspace();
+
   return (
     <div className="min-h-[100dvh]">
       <header
@@ -42,23 +57,16 @@ export function WorkspaceShell({
             textClassName="max-bp620:hidden"
           />
           <DesktopNavigation />
-          {controls && (
-            <div
-              className={cx(
-                "ml-auto flex flex-wrap items-center gap-[10px]",
-                "max-bp1000:order-2 max-bp1000:w-auto max-bp1000:flex-1 max-bp1000:flex-nowrap max-bp1000:ml-0",
-                "max-bp620:justify-center max-bp620:gap-[6px]",
-              )}
-            >
-              {controls}
-            </div>
-          )}
           <div
             className={cx(
-              "flex items-center gap-[8px] max-bp1000:order-3",
-              !controls && "ml-auto",
+              "ml-auto flex flex-wrap items-center gap-[10px]",
+              "max-bp1000:order-2 max-bp1000:w-auto max-bp1000:flex-1 max-bp1000:flex-nowrap max-bp1000:ml-0",
+              "max-bp620:justify-center max-bp620:gap-[6px]",
             )}
           >
+            {controls}
+          </div>
+          <div className="flex items-center gap-[8px] max-bp1000:order-3">
             {account}
           </div>
         </div>
@@ -67,8 +75,9 @@ export function WorkspaceShell({
       <div className="max-bp1000:pb-[77px]">
         <AppFooter />
       </div>
-      <MobileNavigation onRegister={onRegister} />
-      {overlays}
+      <MobileNavigation onRegister={actions.openRegister} />
+      <TransactionFlows />
+      <WorkspaceNotice />
     </div>
   );
 }

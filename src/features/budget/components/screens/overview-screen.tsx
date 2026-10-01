@@ -15,15 +15,9 @@ export function OverviewScreen() {
     displayMoney,
     hidden,
     onToggleHidden,
-    dialogs,
     actions,
     memberFilter,
-    navigation,
   } = useWorkspace();
-
-  const ownMember = budget.household.members.find(
-    (member) => member.id === budget.user.id,
-  );
 
   return (
     <>
@@ -59,18 +53,14 @@ export function OverviewScreen() {
           plans={data.plans}
           hidden={hidden}
           displayMoney={displayMoney}
-          canEdit={memberFilter === "all" || memberFilter === budget.user.id}
+          canEdit={data.canEditPercentages}
           busy={busy}
-          onEditPercentages={() =>
-            dialogs.setPercentagesRevision(ownMember?.percentagesRevision ?? 0)
-          }
-          onFilterGoal={navigation.filterGoal}
+          onEditPercentages={actions.openPercentages}
         />
         <LatestTransactionsCard
           transactions={data.monthly}
           displayMoney={displayMoney}
           onEdit={actions.openTransaction}
-          onViewAll={() => navigation.openView("transactions")}
         />
       </div>
     </>

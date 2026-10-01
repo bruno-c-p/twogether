@@ -222,7 +222,7 @@ test.describe("overview and goals", () => {
     await expect(
       page.getByRole("button", { name: "Editar Farmácia" }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: /Ver todas/ })).toBeVisible();
+    await expect(page.getByRole("link", { name: /Ver todas/ })).toBeVisible();
 
     await openView(page, "Orçamento");
     await expect(
@@ -309,12 +309,12 @@ test.describe("overview and goals", () => {
 
     await openView(page, "Orçamento");
     await expect(
-      page.getByRole("button", {
+      page.getByRole("link", {
         name: /Custo fixo: R\$\s*0,00 de R\$\s*1\.500,00 planejados/,
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", {
+      page.getByRole("link", {
         name: /Metas: R\$\s*0,00 de R\$\s*750,00 planejados/,
       }),
     ).toBeVisible();
@@ -328,12 +328,12 @@ test.describe("overview and goals", () => {
     await expectToast(page, "Percentuais atualizados.");
 
     await expect(
-      page.getByRole("button", {
+      page.getByRole("link", {
         name: /Custo fixo: R\$\s*0,00 de R\$\s*1\.000,00 planejados/,
       }),
     ).toBeVisible();
     await expect(
-      page.getByRole("button", {
+      page.getByRole("link", {
         name: /Metas: R\$\s*0,00 de R\$\s*1\.250,00 planejados/,
       }),
     ).toBeVisible();

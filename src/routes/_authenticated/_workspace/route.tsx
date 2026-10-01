@@ -71,7 +71,7 @@ function WorkspaceRoute() {
     });
   }, [missing, navigate]);
 
-  if (missing) return <BudgetPending />;
+  if (!search.month) return <BudgetPending />;
 
-  return <BudgetApp />;
+  return <BudgetApp month={search.month} />;
 }

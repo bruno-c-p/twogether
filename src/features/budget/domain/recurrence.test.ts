@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { firstOccurrence } from "@/features/budget/domain/recurrence";
+import {
+  firstOccurrence,
+  laterOccurrences,
+} from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
 
 const base: Transaction = {
@@ -79,5 +82,34 @@ describe("firstOccurrence", () => {
 
     expect(first.memberId).toBe("ana");
     expect(first.createdBy).toBe("ana");
+  });
+});
+
+describe("laterOccurrences", () => {
+  const series = [2, 0, 1].map((index) => ({
+    ...base,
+    id: `r${index}`,
+    recurrenceId: "rent",
+    recurrenceIndex: index,
+  }));
+
+  test("lists only the later occurrences of the same series", () => {
+    const other = {
+      ...base,
+      id: "o3",
+      recurrenceId: "gym",
+      recurrenceIndex: 3,
+    };
+
+    expect(
+      laterOccurrences([...series, other, base], series[1]).map(
+        (item) => item.id,
+      ),
+    ).toEqual(["r2", "r1"]);
+    expect(laterOccurrences(series, series[0])).toEqual([]);
+  });
+
+  test("a transaction outside a series has no later occurrences", () => {
+    expect(laterOccurrences([...series, base], base)).toEqual([]);
   });
 });

@@ -12,39 +12,20 @@ function viewFor(transactions: Transaction[], memberFilter: string) {
   return transactions.filter((t) => t.memberId === memberFilter);
 }
 
-function laterOccurrences(
-  transactions: Transaction[],
-  deleting: Transaction | null,
-) {
-  const index = deleting?.recurrenceIndex;
-
-  if (!deleting || index === undefined) return [];
-
-  return transactions.filter(
-    (item) =>
-      item.recurrenceId === deleting.recurrenceId &&
-      item.recurrenceIndex !== undefined &&
-      item.recurrenceIndex > index,
-  );
-}
-
 export function useWorkspaceData(
   budget: BudgetController,
   month: string,
   memberFilter: string,
-  deleting: Transaction | null,
 ) {
   const { transactions } = budget.state;
   const members = budget.household.members;
 
-  const historyTransactions = useMemo(
-    () => viewFor(transactions, memberFilter),
-    [transactions, memberFilter],
-  );
-
   const monthly = useMemo(
-    () => historyTransactions.filter((t) => t.date.startsWith(month)),
-    [historyTransactions, month],
+    () =>
+      viewFor(transactions, memberFilter).filter((t) =>
+        t.date.startsWith(month),
+      ),
+    [transactions, memberFilter, month],
   );
 
   const summary = useMemo(() => summarize(monthly), [monthly]);
@@ -68,11 +49,6 @@ export function useWorkspaceData(
     [transactions],
   );
 
-  const following = useMemo(
-    () => laterOccurrences(transactions, deleting),
-    [transactions, deleting],
-  );
-
   const debt = useMemo(
     () => splitDebt(transactions, budget.user.id),
     [transactions, budget.user.id],
@@ -85,13 +61,14 @@ export function useWorkspaceData(
 
   return {
     monthly,
-    historyTransactions,
     summary,
     plans,
     allTags,
-    following,
     debt,
     partner,
+    // Each person edits only their own percentages.
+    canEditPercentages:
+      memberFilter === "all" || memberFilter === budget.user.id,
   };
 }
 

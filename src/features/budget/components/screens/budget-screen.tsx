@@ -4,22 +4,8 @@ import { PageHeading } from "@/features/budget/components/page-heading";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 
 export function BudgetScreen() {
-  const {
-    budget,
-    data,
-    busy,
-    hidden,
-    displayMoney,
-    dialogs,
-    memberFilter,
-    navigation,
-  } = useWorkspace();
-
-  const ownMember = budget.household.members.find(
-    (member) => member.id === budget.user.id,
-  );
-
-  const canEdit = memberFilter === "all" || memberFilter === budget.user.id;
+  const { data, busy, hidden, displayMoney, actions, memberFilter } =
+    useWorkspace();
 
   const note =
     memberFilter === "all"
@@ -32,16 +18,12 @@ export function BudgetScreen() {
         title="Orçamento"
         note={note}
         action={
-          canEdit && (
+          data.canEditPercentages && (
             <button
               className="h-[40px] px-[16px] rounded-[10px] border border-solid border-green bg-surface text-green text-[14px] font-600 cursor-pointer disabled:opacity-60"
               disabled={busy}
               aria-label="Editar meus percentuais"
-              onClick={() =>
-                dialogs.setPercentagesRevision(
-                  ownMember?.percentagesRevision ?? 0,
-                )
-              }
+              onClick={actions.openPercentages}
             >
               Editar percentuais
             </button>
@@ -54,7 +36,6 @@ export function BudgetScreen() {
         plans={data.plans}
         hidden={hidden}
         displayMoney={displayMoney}
-        onFilterGoal={navigation.filterGoal}
       />
     </>
   );

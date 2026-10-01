@@ -1,3 +1,4 @@
+import { getRouteApi } from "@tanstack/react-router";
 import { within } from "@testing-library/react";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
@@ -25,8 +26,25 @@ function budget({
     user: { id: "ana", name: "Ana" },
     household: { id: "home", members: [ana] },
     syncError,
-    refresh: vi.fn(),
   };
+}
+
+const workspaceRoute = getRouteApi("/_authenticated/_workspace");
+
+// Stands in for the layout route, which renders the workspace once the URL
+// carries a month.
+function Layout({ controller }: { controller: BudgetController }) {
+  const { month } = workspaceRoute.useSearch();
+
+  if (!month) return null;
+
+  return (
+    <BudgetWorkspace
+      budget={controller}
+      month={month}
+      account={<span>conta</span>}
+    />
+  );
 }
 
 async function renderWorkspace(
@@ -35,10 +53,7 @@ async function renderWorkspace(
 ) {
   window.scrollTo = vi.fn();
 
-  return renderWithProviders(
-    <BudgetWorkspace budget={controller} account={<span>conta</span>} />,
-    path,
-  );
+  return renderWithProviders(<Layout controller={controller} />, path);
 }
 
 describe("BudgetWorkspace", () => {
@@ -178,7 +193,7 @@ describe("BudgetWorkspace", () => {
     await user.click(
       screen.getByRole("button", { name: "Fechar percentuais" }),
     );
-    await user.click(screen.getByRole("button", { name: /^Custo fixo:/ }));
+    await user.click(screen.getByRole("link", { name: /^Custo fixo:/ }));
     expect(router.state.location.pathname).toBe("/transacoes");
     expect(router.state.location.search).toEqual({
       month: "2026-09",
@@ -204,7 +219,7 @@ describe("BudgetWorkspace", () => {
   test("the transactions list links from the overview to the full view", async () => {
     const { screen, user, router } = await renderWorkspace();
 
-    await user.click(screen.getByRole("button", { name: /Ver todas/ }));
+    await user.click(screen.getByRole("link", { name: /Ver todas/ }));
     expect(router.state.location.pathname).toBe("/transacoes");
     expect(
       await screen.findByRole("heading", { level: 1, name: "Transações" }),

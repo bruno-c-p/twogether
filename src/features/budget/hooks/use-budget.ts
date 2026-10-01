@@ -1,32 +1,26 @@
-import { useQuery } from "@tanstack/react-query";
-import { getRouteApi, isRedirect } from "@tanstack/react-router";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { isRedirect } from "@tanstack/react-router";
+import { failureMessage } from "@/features/budget/hooks/use-mutation";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 
-const workspaceRoute = getRouteApi("/_authenticated/_workspace");
+const SYNC_OFFLINE_MESSAGE =
+  "Sem conexão com o servidor. Tentaremos sincronizar novamente.";
 
-function syncMessage(cause: unknown) {
-  if (cause instanceof Error && !(cause instanceof TypeError)) {
-    return cause.message;
-  }
-
-  return "Sem conexão com o servidor. Tentaremos sincronizar novamente.";
-}
-
+// The workspace loader runs ensureQueryData first, so the snapshot is
+// already cached; a failed background refetch keeps it and reports why.
 export function useBudget() {
-  const initial = workspaceRoute.useLoaderData();
-  const query = useQuery(workspaceQueryOptions);
-
-  const snapshot = query.data ?? initial;
+  const query = useSuspenseQuery(workspaceQueryOptions);
 
   const syncError =
-    query.error && !isRedirect(query.error) ? syncMessage(query.error) : "";
+    query.error && !isRedirect(query.error)
+      ? failureMessage(query.error, SYNC_OFFLINE_MESSAGE)
+      : "";
 
   return {
-    state: snapshot.budget,
-    user: snapshot.user,
-    household: snapshot.household,
+    state: query.data.budget,
+    user: query.data.user,
+    household: query.data.household,
     syncError,
-    refresh: query.refetch,
   };
 }
 

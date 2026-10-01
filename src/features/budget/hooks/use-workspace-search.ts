@@ -19,7 +19,6 @@ export function useWorkspaceSearch() {
   }
 
   return {
-    month: search.month,
     memberFilter: search.member ?? "all",
     setMonth: (month: string) => update({ month }),
     setMemberFilter: (member: string) =>

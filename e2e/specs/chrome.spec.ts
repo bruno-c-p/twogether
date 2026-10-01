@@ -51,7 +51,7 @@ test.describe("chrome", () => {
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
 
     const barWidth = await page
-      .getByRole("button", { name: /Custo fixo:/ })
+      .getByRole("link", { name: /Custo fixo:/ })
       .evaluate((card) => {
         const fill = [...card.querySelectorAll("span")].find((span) =>
           span.getAttribute("style")?.includes("width"),

@@ -12,16 +12,16 @@ const itau: BankAccount = { id: "itau", name: "Itaú", openingBalance: 0 };
 function setup({
   source = transaction({ amount: 10000, memberId: "ana", split: {} }),
   accounts = [nubank, itau],
-  confirmed = true,
+  busy = false,
   serverError = "",
 }: {
   source?: Transaction;
   accounts?: BankAccount[];
-  confirmed?: boolean;
+  busy?: boolean;
   serverError?: string;
 } = {}) {
-  const onConfirm = vi.fn<(input: SettleInput) => Promise<boolean>>(() =>
-    Promise.resolve(confirmed),
+  const onConfirm = vi.fn<(input: SettleInput) => Promise<void>>(() =>
+    Promise.resolve(),
   );
 
   const onClose = vi.fn();
@@ -31,6 +31,7 @@ function setup({
       transaction={source}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
       accounts={accounts}
+      busy={busy}
       serverError={serverError}
       onConfirm={onConfirm}
       onClose={onClose}
@@ -61,20 +62,23 @@ describe("SettleDialog", () => {
         payerAccountId: "nubank",
       }),
     );
-    expect(onClose).toHaveBeenCalled();
+    // The settle action closes the dialog once it succeeds.
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  test("stays open when the server refuses, showing its message", async () => {
-    const { screen, user, onClose } = setup({
-      confirmed: false,
-      serverError: "Já foi pago.",
-    });
+  test("shows the server's message when it refuses", () => {
+    const { screen } = setup({ serverError: "Já foi pago." });
 
     expect(screen.getByText("Já foi pago.")).toBeTruthy();
-    await user.click(
-      screen.getByRole("button", { name: "Confirmar pagamento" }),
-    );
-    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("while saving the form is locked and says so", async () => {
+    const { screen, user, onConfirm } = setup({ busy: true });
+    const submit = screen.getByRole("button", { name: "Salvando…" });
+
+    expect(submit.closest("fieldset")?.disabled).toBe(true);
+    await user.click(submit);
+    expect(onConfirm).not.toHaveBeenCalled();
   });
 
   test("an account that no longer exists must be chosen again", async () => {

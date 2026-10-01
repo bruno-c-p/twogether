@@ -6,15 +6,15 @@ import { renderPlain } from "@/test/render";
 
 function setup({
   account = null,
-  saved = true,
+  busy = false,
   serverError = "",
 }: {
   account?: BankAccount | null;
-  saved?: boolean;
+  busy?: boolean;
   serverError?: string;
 } = {}) {
-  const onSave = vi.fn<(account: BankAccount) => Promise<boolean>>(() =>
-    Promise.resolve(saved),
+  const onSave = vi.fn<(account: BankAccount) => Promise<void>>(() =>
+    Promise.resolve(),
   );
 
   const onClose = vi.fn();
@@ -22,6 +22,7 @@ function setup({
   const view = renderPlain(
     <AccountDialog
       account={account}
+      busy={busy}
       serverError={serverError}
       onSave={onSave}
       onClose={onClose}
@@ -47,13 +48,13 @@ describe("AccountDialog", () => {
     expect(onSave).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Itaú", openingBalance: 150075 }),
     );
-    expect(onClose).toHaveBeenCalled();
+    // The save action closes the dialog once it succeeds.
+    expect(onClose).not.toHaveBeenCalled();
   });
 
-  test("edits keep the id and revision and stay open when saving fails", async () => {
+  test("edits keep the id and revision and show the server's error", async () => {
     const { screen, user, onSave, onClose } = setup({
       account: nubank,
-      saved: false,
       serverError: "Conflito.",
     });
 
@@ -67,6 +68,13 @@ describe("AccountDialog", () => {
       revision: 1,
     });
     expect(onClose).not.toHaveBeenCalled();
+  });
+
+  test("while saving the form is locked and says so", () => {
+    const { screen } = setup({ account: nubank, busy: true });
+    const submit = screen.getByRole("button", { name: "Salvando…" });
+
+    expect(submit.closest("fieldset")?.disabled).toBe(true);
   });
 
   test("shows field errors instead of saving invalid input", async () => {

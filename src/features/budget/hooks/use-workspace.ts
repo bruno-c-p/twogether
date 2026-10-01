@@ -1,12 +1,14 @@
 import { createContext, use } from "react";
+import type { Notice } from "@/features/budget/components/notice";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import type { WorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import type { WorkspaceData } from "@/features/budget/hooks/use-workspace-data";
 import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
-import type { useWorkspaceNavigation } from "@/features/budget/hooks/use-workspace-navigation";
 
-// State the workspace layout owns and every page reads: the snapshot,
-// derived month data, dialogs, actions and the hide-values toggle.
+// State the workspace layout owns and every page, dialog and toast reads:
+// the snapshot, derived month data, mutations, dialogs, actions, the
+// notice and the hide-values toggle.
 export interface Workspace {
   budget: BudgetController;
   data: WorkspaceData;
@@ -16,9 +18,11 @@ export interface Workspace {
   hidden: boolean;
   onToggleHidden: () => void;
   displayMoney: (value: number) => string;
+  mutations: BudgetMutations;
   dialogs: WorkspaceDialogs;
   actions: WorkspaceActions;
-  navigation: ReturnType<typeof useWorkspaceNavigation>;
+  notice: Notice | null;
+  setNotice: (notice: Notice | null) => void;
 }
 
 export const WorkspaceContext = createContext<Workspace | null>(null);

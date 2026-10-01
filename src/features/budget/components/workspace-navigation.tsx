@@ -3,12 +3,9 @@ import { Plus } from "lucide-react";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
 import { cx } from "@/lib/cx";
 
-function scrollTop() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
-
 // Links keep month and person through the workspace layout's
-// retainSearchParams and mark the current page with aria-current.
+// retainSearchParams and mark the current page with aria-current. The
+// router's scroll restoration moves to the top of the new page.
 const activeOptions = { exact: true, includeSearch: false };
 
 export function DesktopNavigation() {
@@ -22,7 +19,6 @@ export function DesktopNavigation() {
           key={item.to}
           to={item.to}
           activeOptions={activeOptions}
-          onClick={scrollTop}
           className={cx(
             "px-[13px] py-[8px] rounded-[9px] text-[13px]",
             "hover:bg-surface-soft",
@@ -42,7 +38,6 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
     <Link
       to={item.to}
       activeOptions={activeOptions}
-      onClick={scrollTop}
       className={cx(
         "flex flex-col items-center gap-[4px] flex-1 min-w-0 py-[2px] text-[10.5px]",
       )}
@@ -63,7 +58,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
   );
 }
 
-export function MobileNavigation({ onRegister }: { onRegister?: () => void }) {
+export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
   const [first, second, third, fourth] = WORKSPACE_NAVIGATION;
 
   return (
