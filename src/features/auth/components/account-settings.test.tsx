@@ -113,7 +113,7 @@ describe("AccountSettings", () => {
 
     const error = await screen.findByRole("alert");
 
-    expect(error.id).toBe("account-name-error");
+    expect(error.id).toBe("name-error");
     expect(calls.saveName).not.toHaveBeenCalled();
   });
 
