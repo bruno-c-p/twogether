@@ -1,8 +1,8 @@
+import { Link } from "@tanstack/react-router";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
-import type { GoalId } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
@@ -28,24 +28,23 @@ function BudgetRow({
   plan,
   hidden,
   displayMoney,
-  onFilterGoal,
 }: {
   goal: GoalSummary;
   plan: GoalPlan;
   hidden: boolean;
   displayMoney: (value: number) => string;
-  onFilterGoal: (id: GoalId) => void;
 }) {
   const over = goal.amount > plan.planned;
   const planned = `${displayMoney(plan.planned)} planejados`;
 
   return (
     <li>
-      <button
-        type="button"
-        className="block w-full p-0 border-0 bg-transparent text-left text-text cursor-pointer"
+      {/* Month and person carry over through retainSearchParams. */}
+      <Link
+        to="/transacoes"
+        search={{ goal: goal.id }}
+        className="block w-full text-left text-text"
         aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${planned}${over ? ", acima do planejado" : ""}`}
-        onClick={() => onFilterGoal(goal.id)}
       >
         <span className="flex items-baseline gap-[10px] text-[14px] max-bp620:text-[13px]">
           <span className="flex items-baseline gap-[8px] min-w-0">
@@ -91,7 +90,7 @@ function BudgetRow({
             }}
           />
         </span>
-      </button>
+      </Link>
     </li>
   );
 }
@@ -104,7 +103,6 @@ export function BudgetCard({
   canEdit,
   busy,
   onEditPercentages,
-  onFilterGoal,
 }: {
   summary: ReturnType<typeof summarize>;
   plans: ReturnType<typeof planGoals>;
@@ -113,7 +111,6 @@ export function BudgetCard({
   canEdit: boolean;
   busy: boolean;
   onEditPercentages: () => void;
-  onFilterGoal: (id: GoalId) => void;
 }) {
   const plansById = new Map(plans.map((plan) => [plan.id, plan]));
 
@@ -147,7 +144,6 @@ export function BudgetCard({
             plan={plansById.get(goal.id) ?? { planned: 0, percentage: null }}
             hidden={hidden}
             displayMoney={displayMoney}
-            onFilterGoal={onFilterGoal}
           />
         ))}
       </ul>

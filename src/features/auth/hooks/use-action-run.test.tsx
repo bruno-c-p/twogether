@@ -1,17 +1,16 @@
 import { redirect } from "@tanstack/react-router";
 import { describe, expect, test, vi } from "vitest";
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
-import type { MutationResult } from "@/server/mutation-result";
 import { renderWithProviders } from "@/test/render";
 
-type Step = () => Promise<MutationResult>;
+type Step = () => Promise<string>;
 
 function RunHarness({
   step,
   onResult,
 }: {
   step: Step;
-  onResult: (value: MutationResult | null) => void;
+  onResult: (value: { data: string } | null) => void;
 }) {
   const { run, busy, error } = useActionRun("Sem conexão. Tente novamente.");
 
@@ -41,23 +40,21 @@ async function renderRun(step: Step) {
 describe("useActionRun", () => {
   test("a successful step reloads the route and returns its result", async () => {
     const { screen, user, onResult, router } = await renderRun(() =>
-      Promise.resolve({ ok: true }),
+      Promise.resolve("done"),
     );
 
     const invalidate = vi.spyOn(router, "invalidate");
 
     await user.click(screen.getByRole("button", { name: "run" }));
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith({ ok: true }));
+    await vi.waitFor(() =>
+      expect(onResult).toHaveBeenCalledWith({ data: "done" }),
+    );
     expect(invalidate).toHaveBeenCalled();
   });
 
-  test("a failure result is shown and returns nothing", async () => {
+  test("a rejected action shows its message and returns null", async () => {
     const { screen, user, onResult } = await renderRun(() =>
-      Promise.resolve({
-        ok: false,
-        code: "expired",
-        message: "Convite expirado.",
-      }),
+      Promise.reject(new Error("Convite expirado.")),
     );
 
     await user.click(screen.getByRole("button", { name: "run" }));
@@ -78,7 +75,7 @@ describe("useActionRun", () => {
     const { screen, user, onResult, router } = await renderRun(() => {
       const next = steps.shift();
 
-      return next ? next() : Promise.resolve({ ok: true });
+      return next ? next() : Promise.resolve("done");
     });
 
     await user.click(screen.getByRole("button", { name: "run" }));
@@ -95,7 +92,7 @@ describe("useActionRun", () => {
   });
 
   test("a second run while busy is ignored", async () => {
-    let finish: (value: MutationResult) => void = () => undefined;
+    let finish: (value: string) => void = () => undefined;
 
     const step = vi.fn<Step>(
       () =>
@@ -110,7 +107,7 @@ describe("useActionRun", () => {
     await user.click(screen.getByRole("button", { name: "run" }));
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
     expect(screen.getByRole("status").textContent).toBe("busy");
-    finish({ ok: true });
+    finish("done");
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledTimes(2));
     expect(step).toHaveBeenCalledTimes(1);
   });

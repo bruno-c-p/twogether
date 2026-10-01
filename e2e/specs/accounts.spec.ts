@@ -17,7 +17,7 @@ test.describe("accounts", () => {
       .click();
     await page.getByRole("button", { name: "Nova transação" }).click();
     await expectToast(page, "Cadastre uma conta para lançar transações.");
-    expect(new URL(page.url()).searchParams.get("view")).toBe("accounts");
+    await expect(page).toHaveURL(/\/contas\?/);
     await expect(
       page.getByRole("heading", { name: "Nova transação" }),
     ).toHaveCount(0);

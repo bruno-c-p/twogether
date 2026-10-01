@@ -3,24 +3,21 @@ import { BudgetCard } from "@/features/budget/components/budget-card";
 import { LatestTransactionsCard } from "@/features/budget/components/latest-transactions-card";
 import { PhraseBar } from "@/features/budget/components/phrase-bar";
 import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
-import type { ScreenProps } from "@/features/budget/components/screens/screen-props";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { cx } from "@/lib/cx";
 
-export function OverviewScreen({
-  budget,
-  search,
-  data,
-  month,
-  busy,
-  displayMoney,
-  hidden,
-  onToggleHidden,
-  dialogs,
-  actions,
-}: ScreenProps) {
-  const ownMember = budget.household.members.find(
-    (member) => member.id === budget.user.id,
-  );
+export function OverviewScreen() {
+  const {
+    budget,
+    data,
+    month,
+    busy,
+    displayMoney,
+    hidden,
+    onToggleHidden,
+    actions,
+    memberFilter,
+  } = useWorkspace();
 
   return (
     <>
@@ -34,7 +31,7 @@ export function OverviewScreen({
         <BalanceCard
           summary={data.summary}
           month={month}
-          memberFilter={search.memberFilter}
+          memberFilter={memberFilter}
           displayMoney={displayMoney}
           hidden={hidden}
           onToggleHidden={onToggleHidden}
@@ -56,21 +53,14 @@ export function OverviewScreen({
           plans={data.plans}
           hidden={hidden}
           displayMoney={displayMoney}
-          canEdit={
-            search.memberFilter === "all" ||
-            search.memberFilter === budget.user.id
-          }
+          canEdit={data.canEditPercentages}
           busy={busy}
-          onEditPercentages={() =>
-            dialogs.setPercentagesRevision(ownMember?.percentagesRevision ?? 0)
-          }
-          onFilterGoal={search.filterGoal}
+          onEditPercentages={actions.openPercentages}
         />
         <LatestTransactionsCard
           transactions={data.monthly}
           displayMoney={displayMoney}
           onEdit={actions.openTransaction}
-          onViewAll={() => search.setView("transactions")}
         />
       </div>
     </>

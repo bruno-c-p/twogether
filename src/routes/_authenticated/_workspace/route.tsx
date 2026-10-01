@@ -1,12 +1,16 @@
 import { useEffect } from "react";
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import {
+  createFileRoute,
+  redirect,
+  retainSearchParams,
+  useNavigate,
+} from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { BudgetApp } from "@/features/budget";
 import {
-  missingWorkspaceMonth,
-  validateBudgetFilters,
-  withDefaultMonth,
+  validateWorkspaceSearch,
+  withDefaultMonthHref,
 } from "@/features/budget/search";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 import { LoadingState } from "@/features/budget/components/empty-state";
@@ -30,18 +34,18 @@ function BudgetPending() {
   return <LoadingState>Carregando orçamento…</LoadingState>;
 }
 
-export const Route = createFileRoute("/_authenticated/")({
-  component: BudgetRoute,
-  validateSearch: validateBudgetFilters,
-  beforeLoad: ({ search }) => {
-    if (!missingWorkspaceMonth(search)) return;
+// Pathless layout for every workspace page: it owns the snapshot loader,
+// the shell, and the month/person params that carry across pages.
+export const Route = createFileRoute("/_authenticated/_workspace")({
+  component: WorkspaceRoute,
+  validateSearch: validateWorkspaceSearch,
+  search: { middlewares: [retainSearchParams(["month", "member"])] },
+  beforeLoad: ({ search, location }) => {
+    if (search.month) return;
     const timeZone = requestTimeZone();
 
     if (!timeZone) return;
-    throw redirect({
-      to: "/",
-      search: withDefaultMonth(search, monthIn(timeZone)),
-    });
+    throw redirect({ href: withDefaultMonthHref(location, monthIn(timeZone)) });
   },
   loader: async ({ context }): Promise<WorkspaceSnapshot> =>
     context.queryClient.ensureQueryData(workspaceQueryOptions),
@@ -50,21 +54,24 @@ export const Route = createFileRoute("/_authenticated/")({
   pendingMinMs: 500,
 });
 
-function BudgetRoute() {
+function WorkspaceRoute() {
   const search = Route.useSearch();
-  const navigate = Route.useNavigate();
-  const missing = missingWorkspaceMonth(search);
+  const navigate = useNavigate();
+  const missing = !search.month;
 
+  // Without a time zone cookie the server could not pick the month; the
+  // browser fills in its own current month.
   useEffect(() => {
     if (!missing) return;
     void navigate({
-      to: "/",
-      search: (prev) => withDefaultMonth(prev, monthIn(browserTimeZone())),
+      to: ".",
+      search: (prev) => ({ ...prev, month: monthIn(browserTimeZone()) }),
       replace: true,
+      resetScroll: false,
     });
   }, [missing, navigate]);
 
-  if (missing) return <BudgetPending />;
+  if (!search.month) return <BudgetPending />;
 
-  return <BudgetApp />;
+  return <BudgetApp month={search.month} />;
 }

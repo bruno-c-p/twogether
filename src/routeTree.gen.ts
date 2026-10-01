@@ -11,8 +11,12 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as EntrarRouteImport } from './routes/entrar'
-import { Route as AuthenticatedIndexRouteImport } from './routes/_authenticated/index'
+import { Route as AuthenticatedWorkspaceRouteRouteImport } from './routes/_authenticated/_workspace/route'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
+import { Route as AuthenticatedWorkspaceIndexRouteImport } from './routes/_authenticated/_workspace/index'
+import { Route as AuthenticatedWorkspaceContasRouteImport } from './routes/_authenticated/_workspace/contas'
+import { Route as AuthenticatedWorkspaceOrcamentoRouteImport } from './routes/_authenticated/_workspace/orcamento'
+import { Route as AuthenticatedWorkspaceTransacoesRouteImport } from './routes/_authenticated/_workspace/transacoes'
 
 const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
   id: '/_authenticated',
@@ -23,45 +27,95 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedIndexRoute = AuthenticatedIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
+const AuthenticatedWorkspaceRouteRoute =
+  AuthenticatedWorkspaceRouteRouteImport.update({
+    id: '/_workspace',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const ConviteTokenRoute = ConviteTokenRouteImport.update({
   id: '/convite/$token',
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedWorkspaceIndexRoute =
+  AuthenticatedWorkspaceIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
+  } as any)
+const AuthenticatedWorkspaceContasRoute =
+  AuthenticatedWorkspaceContasRouteImport.update({
+    id: '/contas',
+    path: '/contas',
+    getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
+  } as any)
+const AuthenticatedWorkspaceOrcamentoRoute =
+  AuthenticatedWorkspaceOrcamentoRouteImport.update({
+    id: '/orcamento',
+    path: '/orcamento',
+    getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
+  } as any)
+const AuthenticatedWorkspaceTransacoesRoute =
+  AuthenticatedWorkspaceTransacoesRouteImport.update({
+    id: '/transacoes',
+    path: '/transacoes',
+    getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof AuthenticatedIndexRoute
+  '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/contas': typeof AuthenticatedWorkspaceContasRoute
+  '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
+  '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
 export interface FileRoutesByTo {
+  '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
   '/convite/$token': typeof ConviteTokenRoute
-  '/': typeof AuthenticatedIndexRoute
+  '/contas': typeof AuthenticatedWorkspaceContasRoute
+  '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
+  '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/entrar': typeof EntrarRoute
+  '/_authenticated/_workspace': typeof AuthenticatedWorkspaceRouteRouteWithChildren
   '/convite/$token': typeof ConviteTokenRoute
-  '/_authenticated/': typeof AuthenticatedIndexRoute
+  '/_authenticated/_workspace/contas': typeof AuthenticatedWorkspaceContasRoute
+  '/_authenticated/_workspace/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
+  '/_authenticated/_workspace/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
+  '/_authenticated/_workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/entrar' | '/convite/$token'
+  fullPaths:
+    | '/'
+    | '/entrar'
+    | '/convite/$token'
+    | '/contas'
+    | '/orcamento'
+    | '/transacoes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/entrar' | '/convite/$token' | '/'
+  to:
+    | '/'
+    | '/entrar'
+    | '/convite/$token'
+    | '/contas'
+    | '/orcamento'
+    | '/transacoes'
   id:
     | '__root__'
     | '/_authenticated'
     | '/entrar'
+    | '/_authenticated/_workspace'
     | '/convite/$token'
-    | '/_authenticated/'
+    | '/_authenticated/_workspace/contas'
+    | '/_authenticated/_workspace/orcamento'
+    | '/_authenticated/_workspace/transacoes'
+    | '/_authenticated/_workspace/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -86,11 +140,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/': {
-      id: '/_authenticated/'
-      path: '/'
+    '/_authenticated/_workspace': {
+      id: '/_authenticated/_workspace'
+      path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AuthenticatedIndexRouteImport
+      preLoaderRoute: typeof AuthenticatedWorkspaceRouteRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/convite/$token': {
@@ -100,15 +154,65 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ConviteTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/_workspace/': {
+      id: '/_authenticated/_workspace/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedWorkspaceIndexRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRouteRoute
+    }
+    '/_authenticated/_workspace/contas': {
+      id: '/_authenticated/_workspace/contas'
+      path: '/contas'
+      fullPath: '/contas'
+      preLoaderRoute: typeof AuthenticatedWorkspaceContasRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRouteRoute
+    }
+    '/_authenticated/_workspace/orcamento': {
+      id: '/_authenticated/_workspace/orcamento'
+      path: '/orcamento'
+      fullPath: '/orcamento'
+      preLoaderRoute: typeof AuthenticatedWorkspaceOrcamentoRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRouteRoute
+    }
+    '/_authenticated/_workspace/transacoes': {
+      id: '/_authenticated/_workspace/transacoes'
+      path: '/transacoes'
+      fullPath: '/transacoes'
+      preLoaderRoute: typeof AuthenticatedWorkspaceTransacoesRouteImport
+      parentRoute: typeof AuthenticatedWorkspaceRouteRoute
+    }
   }
 }
 
+interface AuthenticatedWorkspaceRouteRouteChildren {
+  AuthenticatedWorkspaceContasRoute: typeof AuthenticatedWorkspaceContasRoute
+  AuthenticatedWorkspaceOrcamentoRoute: typeof AuthenticatedWorkspaceOrcamentoRoute
+  AuthenticatedWorkspaceTransacoesRoute: typeof AuthenticatedWorkspaceTransacoesRoute
+  AuthenticatedWorkspaceIndexRoute: typeof AuthenticatedWorkspaceIndexRoute
+}
+
+const AuthenticatedWorkspaceRouteRouteChildren: AuthenticatedWorkspaceRouteRouteChildren =
+  {
+    AuthenticatedWorkspaceContasRoute: AuthenticatedWorkspaceContasRoute,
+    AuthenticatedWorkspaceOrcamentoRoute: AuthenticatedWorkspaceOrcamentoRoute,
+    AuthenticatedWorkspaceTransacoesRoute:
+      AuthenticatedWorkspaceTransacoesRoute,
+    AuthenticatedWorkspaceIndexRoute: AuthenticatedWorkspaceIndexRoute,
+  }
+
+const AuthenticatedWorkspaceRouteRouteWithChildren =
+  AuthenticatedWorkspaceRouteRoute._addFileChildren(
+    AuthenticatedWorkspaceRouteRouteChildren,
+  )
+
 interface AuthenticatedRouteRouteChildren {
-  AuthenticatedIndexRoute: typeof AuthenticatedIndexRoute
+  AuthenticatedWorkspaceRouteRoute: typeof AuthenticatedWorkspaceRouteRouteWithChildren
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
-  AuthenticatedIndexRoute: AuthenticatedIndexRoute,
+  AuthenticatedWorkspaceRouteRoute:
+    AuthenticatedWorkspaceRouteRouteWithChildren,
 }
 
 const AuthenticatedRouteRouteWithChildren =

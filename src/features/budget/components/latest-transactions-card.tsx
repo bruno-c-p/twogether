@@ -1,24 +1,13 @@
+import { Link } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import { GOALS } from "@/features/budget/constants";
+import { shortDay } from "@/features/budget/domain/format";
 import type { Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
 const LATEST_COUNT = 5;
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
-
-function dayLabel(date: string) {
-  return dayFormatter
-    .format(new Date(`${date}T12:00:00`))
-    .replaceAll(" de ", " ")
-    .replace(".", "");
-}
 
 function Tile({ transaction }: { transaction: Transaction }) {
   const goal = GOALS.find((item) => item.id === transaction.goal);
@@ -48,12 +37,10 @@ export function LatestTransactionsCard({
   transactions,
   displayMoney,
   onEdit,
-  onViewAll,
 }: {
   transactions: Transaction[];
   displayMoney: (value: number) => string;
   onEdit: (transaction: Transaction) => void;
-  onViewAll: () => void;
 }) {
   const latest = [...transactions]
     .sort((a, b) => b.date.localeCompare(a.date))
@@ -65,13 +52,13 @@ export function LatestTransactionsCard({
         <h2 id="latest-title" className="m-0 font-heading text-[19px] font-500">
           Últimas transações
         </h2>
-        <Button
-          variant="text"
-          className="text-[13px] text-text"
-          onClick={onViewAll}
+        {/* Month and person carry over through retainSearchParams. */}
+        <Link
+          to="/transacoes"
+          className="inline-flex items-center gap-[7px] py-[8px] text-[13px] text-text"
         >
           Ver todas →
-        </Button>
+        </Link>
       </div>
       {latest.length ? (
         <ul className="list-none m-0 p-0 flex flex-col">
@@ -95,7 +82,7 @@ export function LatestTransactionsCard({
                     <span className="block text-[12px] text-text-muted truncate">
                       {income ? "Entrada" : (goal?.name ?? "Sem meta")}
                       {" · "}
-                      {dayLabel(transaction.date)}
+                      {shortDay(transaction.date)}
                     </span>
                   </span>
                   <span

@@ -3,7 +3,7 @@ import { BudgetCard } from "@/features/budget/components/budget-card";
 import { planGoals, summarize } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import { ana, transaction } from "@/test/fixtures";
-import { renderPlain } from "@/test/render";
+import { renderWithProviders } from "@/test/render";
 
 const salary = transaction({
   id: "s",
@@ -12,12 +12,11 @@ const salary = transaction({
   amount: 100000,
 });
 
-function renderCard(amount: number, canEdit = true) {
+async function renderCard(amount: number, canEdit = true) {
   const transactions = [salary, transaction({ id: "m", amount })];
   const onEditPercentages = vi.fn();
-  const onFilterGoal = vi.fn();
 
-  const view = renderPlain(
+  const view = await renderWithProviders(
     <BudgetCard
       summary={summarize(transactions)}
       plans={planGoals(transactions, [ana])}
@@ -26,33 +25,38 @@ function renderCard(amount: number, canEdit = true) {
       canEdit={canEdit}
       busy={false}
       onEditPercentages={onEditPercentages}
-      onFilterGoal={onFilterGoal}
     />,
+    "/?month=2026-09&member=ana",
   );
 
-  return { ...view, onEditPercentages, onFilterGoal };
+  return { ...view, onEditPercentages };
 }
 
 describe("BudgetCard", () => {
-  test("lists what is left in each goal and filters by it", async () => {
-    const { screen, user, onFilterGoal } = renderCard(10000);
+  test("lists what is left in each goal and links to its transactions", async () => {
+    const { screen, user, router } = await renderCard(10000);
 
     expect(screen.getAllByText(/^restam /).length).toBeGreaterThan(0);
-    await user.click(screen.getByRole("button", { name: /^Custo fixo:/ }));
-    expect(onFilterGoal).toHaveBeenCalledWith("fixed");
+    await user.click(screen.getByRole("link", { name: /^Custo fixo:/ }));
+    expect(router.state.location.pathname).toBe("/transacoes");
+    expect(router.state.location.search).toEqual({
+      month: "2026-09",
+      member: "ana",
+      goal: "fixed",
+    });
   });
 
-  test("flags a goal spent beyond its plan", () => {
-    const { screen } = renderCard(90000);
+  test("flags a goal spent beyond its plan", async () => {
+    const { screen } = await renderCard(90000);
 
     expect(screen.getByText(/acima$/)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: /^Custo fixo:.*acima do planejado/ }),
+      screen.getByRole("link", { name: /^Custo fixo:.*acima do planejado/ }),
     ).toBeTruthy();
   });
 
   test("edits percentages only when allowed", async () => {
-    const allowed = renderCard(1000);
+    const allowed = await renderCard(1000);
 
     await allowed.user.click(
       allowed.screen.getByRole("button", { name: "Editar meus percentuais" }),
@@ -60,7 +64,7 @@ describe("BudgetCard", () => {
     expect(allowed.onEditPercentages).toHaveBeenCalled();
     allowed.unmount();
 
-    const denied = renderCard(1000, false);
+    const denied = await renderCard(1000, false);
 
     expect(
       denied.screen.queryByRole("button", { name: "Editar meus percentuais" }),

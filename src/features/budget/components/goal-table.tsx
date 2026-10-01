@@ -1,10 +1,10 @@
+import { Link } from "@tanstack/react-router";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
 import {
   goalProgress,
   percentLabel,
   sumPercentages,
 } from "@/features/budget/domain/goal-progress";
-import type { GoalId } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
@@ -37,13 +37,13 @@ function Progress({
 }) {
   const progress = goalProgress(goal.amount, planned);
   const over = progress.over > 0;
+  // Nothing planned means there is no share to show, only the amount.
+  const share = progress.percent === null ? "" : `${progress.percent}% · `;
   let text: string;
 
   if (hidden) text = over ? PROGRESS_HIDDEN : "";
-  else if (over)
-    text = `${progress.percent === null ? "" : `${progress.percent}% · `}${displayMoney(progress.over)} acima`;
-  else
-    text = `${progress.percent}% · restam ${displayMoney(progress.remaining)}`;
+  else if (over) text = `${share}${displayMoney(progress.over)} acima`;
+  else text = `${share}restam ${displayMoney(progress.remaining)}`;
 
   return (
     <span className="col-span-3 bp1000:col-span-1 flex flex-col gap-[6px]">
@@ -76,25 +76,25 @@ function GoalRow({
   plan,
   hidden,
   displayMoney,
-  onFilterGoal,
 }: {
   goal: GoalSummary;
   plan: Plan;
   hidden: boolean;
   displayMoney: (value: number) => string;
-  onFilterGoal: (id: GoalId) => void;
 }) {
   const overBudget = goal.amount > plan.planned;
 
   return (
-    <button
+    // Month and person carry over through retainSearchParams.
+    <Link
+      to="/transacoes"
+      search={{ goal: goal.id }}
       className={cx(
         ROW,
-        "w-full text-left bg-transparent border-0 border-b border-solid border-border text-text",
-        "cursor-pointer hover:bg-surface-soft",
+        "w-full text-left border-0 border-b border-solid border-border text-text",
+        "hover:bg-surface-soft",
       )}
       aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
-      onClick={() => onFilterGoal(goal.id)}
     >
       <span className="col-span-3 bp1000:col-span-1 flex items-center gap-[12px] min-w-0">
         <span
@@ -132,7 +132,7 @@ function GoalRow({
         hidden={hidden}
         displayMoney={displayMoney}
       />
-    </button>
+    </Link>
   );
 }
 
@@ -141,13 +141,11 @@ export function GoalTable({
   plans,
   hidden,
   displayMoney,
-  onFilterGoal,
 }: {
   summary: ReturnType<typeof summarize>;
   plans: ReturnType<typeof planGoals>;
   hidden: boolean;
   displayMoney: (value: number) => string;
-  onFilterGoal: (id: GoalId) => void;
 }) {
   const plansById = new Map(plans.map((plan) => [plan.id, plan]));
 
@@ -187,7 +185,6 @@ export function GoalTable({
           plan={plan}
           hidden={hidden}
           displayMoney={displayMoney}
-          onFilterGoal={onFilterGoal}
         />
       ))}
       <div

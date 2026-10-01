@@ -4,9 +4,9 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { renderPlain } from "@/test/render";
 
-function setup(saved = true, error = "") {
-  const onSave = vi.fn<(values: GoalPercentages) => Promise<boolean>>(() =>
-    Promise.resolve(saved),
+function setup({ busy = false, error = "" } = {}) {
+  const onSave = vi.fn<(values: GoalPercentages) => Promise<void>>(() =>
+    Promise.resolve(),
   );
 
   const onClose = vi.fn();
@@ -14,6 +14,7 @@ function setup(saved = true, error = "") {
   const view = renderPlain(
     <GoalPercentagesDialog
       percentages={{ ...DEFAULT_PERCENTAGES }}
+      busy={busy}
       error={error}
       onSave={onSave}
       onClose={onClose}
@@ -50,7 +51,7 @@ describe("GoalPercentagesDialog", () => {
     ).toBe(true);
   });
 
-  test("saves a valid split and closes", async () => {
+  test("saves a valid split and leaves closing to the caller", async () => {
     const view = setup();
 
     await setPercentage(view, "Custo fixo", "35");
@@ -62,19 +63,21 @@ describe("GoalPercentagesDialog", () => {
     expect(view.onSave).toHaveBeenCalledWith(
       expect.objectContaining({ fixed: 35, freedom: 20 }),
     );
-    expect(view.onClose).toHaveBeenCalled();
+    expect(view.onClose).not.toHaveBeenCalled();
   });
 
-  test("stays open when saving fails, then the default can be restored", async () => {
-    const view = setup(false, "Conflito.");
+  test("while saving every control is locked", () => {
+    const view = setup({ busy: true });
 
-    await setPercentage(view, "Custo fixo", "35");
-    await setPercentage(view, "Liberdade financeira", "20");
-    await view.user.click(
-      view.screen.getByRole("button", { name: "Salvar percentuais" }),
-    );
+    for (const name of ["Salvar percentuais", "Restaurar padrão"])
+      expect(
+        view.screen.getByRole("button", { name }).hasAttribute("disabled"),
+      ).toBe(true);
+  });
 
-    expect(view.onClose).not.toHaveBeenCalled();
+  test("shows the server's error, then the default can be restored", async () => {
+    const view = setup({ error: "Conflito." });
+
     expect(view.screen.getByText("Conflito.")).toBeTruthy();
     expect(
       view.screen

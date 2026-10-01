@@ -1,16 +1,11 @@
+import { useHydrated } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
-import { currentMonth } from "@/features/budget/domain/format";
+import { currentMonth, monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
 import { cx } from "@/lib/cx";
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long" });
-
-function monthName(month: string) {
-  return monthFormatter.format(new Date(`${month}-15T12:00:00`));
-}
-
-function daysLeft(month: string, today = new Date()) {
+function daysLeft(month: string, today: Date) {
   if (month !== currentMonth(today)) return null;
 
   const [year, number] = month.split("-").map(Number);
@@ -44,7 +39,10 @@ export function BalanceCard({
   onToggleHidden: () => void;
   className?: string;
 }) {
-  const days = daysLeft(month);
+  // The server's clock and time zone can differ from the reader's, so the
+  // countdown waits for hydration instead of risking a mismatch.
+  const hydrated = useHydrated();
+  const days = hydrated ? daysLeft(month, new Date()) : null;
 
   return (
     <OverviewCard

@@ -15,17 +15,19 @@ import styles from "@/features/budget/components/goal-percentages-dialog/goal-pe
 
 export function GoalPercentagesDialog({
   percentages,
+  busy,
+  error,
   onSave,
   onClose,
-  error,
 }: {
   percentages: GoalPercentages;
+  // The save is in flight; the caller closes the dialog when it succeeds.
+  busy: boolean;
   error: string;
-  onSave: (values: GoalPercentages) => Promise<boolean>;
+  onSave: (values: GoalPercentages) => Promise<void>;
   onClose: () => void;
 }) {
   const [values, setValues] = useState(percentages);
-  const [saving, setSaving] = useState(false);
   const parsed = goalPercentagesSchema.safeParse(values);
   const valid = parsed.success;
   const invalidMessage = parsed.success ? "" : parsed.error.issues[0].message;
@@ -36,26 +38,16 @@ export function GoalPercentagesDialog({
     0,
   );
 
-  async function submit(event: FormEvent) {
+  function submit(event: FormEvent) {
     event.preventDefault();
 
-    if (!valid || saving) return;
-    setSaving(true);
-
-    let saved = false;
-
-    try {
-      saved = await onSave(values);
-    } finally {
-      setSaving(false);
-    }
-
-    if (saved) onClose();
+    if (!valid || busy) return;
+    void onSave(values);
   }
 
   return (
     <Dialog labelledBy="percentages-title" narrow onClose={onClose}>
-      <DialogContent as="form" onSubmit={(event) => void submit(event)}>
+      <DialogContent as="form" onSubmit={submit}>
         <DialogHeader onClose={onClose} closeLabel="Fechar percentuais">
           <h2 id="percentages-title">Divisão da minha renda</h2>
         </DialogHeader>
@@ -66,7 +58,7 @@ export function GoalPercentagesDialog({
         </p>
         <GoalPercentageList
           values={values}
-          disabled={saving}
+          disabled={busy}
           onChange={(goal, value) => setValues({ ...values, [goal]: value })}
         />
         <p
@@ -81,12 +73,12 @@ export function GoalPercentagesDialog({
           <Button
             type="button"
             variant="text"
-            disabled={saving}
+            disabled={busy}
             onClick={() => setValues({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
           </Button>
-          <Button disabled={!valid || saving}>Salvar percentuais</Button>
+          <Button disabled={!valid || busy}>Salvar percentuais</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

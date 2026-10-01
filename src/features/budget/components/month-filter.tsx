@@ -63,7 +63,7 @@ function MonthGrid({
                   : "border-border bg-surface",
               )}
             >
-              {monthName(number)}
+              {monthName(value, true)}
             </button>
           );
         })}

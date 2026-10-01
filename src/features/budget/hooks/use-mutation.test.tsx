@@ -4,7 +4,6 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { workspaceQueryKey } from "@/features/budget/workspace";
-import type { MutationResult } from "@/server/mutation-result";
 import { ana } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
@@ -23,7 +22,7 @@ const renamed = (current: WorkspaceSnapshot): WorkspaceSnapshot => ({
   user: { ...current.user, name: "Ana otimista" },
 });
 
-type Run = (label: string) => Promise<MutationResult>;
+type Run = (label: string) => Promise<void>;
 
 function Harness({
   fn,
@@ -32,7 +31,7 @@ function Harness({
 }: {
   fn: Run;
   optimistic?: typeof renamed;
-  onResult: (value: MutationResult | null) => void;
+  onResult: (value: boolean) => void;
 }) {
   const mutation = useMutation(fn, optimistic);
 
@@ -43,6 +42,7 @@ function Harness({
   return (
     <>
       <button onClick={() => void go()}>run</button>
+      <button onClick={mutation.reset}>reset</button>
       <p role="status">
         {mutation.pending ? "pending" : mutation.error || "idle"}
       </p>
@@ -69,19 +69,19 @@ async function setup(fn: Run, optimistic?: typeof renamed) {
 
 describe("useMutation", () => {
   test("returns the server result and forwards the arguments", async () => {
-    const fn = vi.fn<Run>(() => Promise.resolve({ ok: true }));
+    const fn = vi.fn<Run>(() => Promise.resolve());
     const { screen, user, onResult } = await setup(fn);
 
     await user.click(screen.getByRole("button", { name: "run" }));
 
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith({ ok: true }));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(true));
     expect(fn).toHaveBeenCalledWith("go");
     expect(screen.getByRole("status").textContent).toBe("idle");
   });
 
   test("applies the optimistic snapshot and keeps it on success", async () => {
     const { screen, user, onResult, cachedName } = await setup(
-      () => Promise.resolve({ ok: true }),
+      () => Promise.resolve(),
       renamed,
     );
 
@@ -91,15 +91,15 @@ describe("useMutation", () => {
     expect(cachedName()).toBe("Ana otimista");
   });
 
-  test("a failure result shows its message and rolls the snapshot back", async () => {
+  test("a rejected change shows its message and rolls the snapshot back", async () => {
     const { screen, user, onResult, cachedName } = await setup(
-      () => Promise.resolve({ ok: false, code: "conflict", message: "Mudou." }),
+      () => Promise.reject(new Error("Mudou.")),
       renamed,
     );
 
     await user.click(screen.getByRole("button", { name: "run" }));
 
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
     expect(screen.getByRole("status").textContent).toBe("Mudou.");
     expect(cachedName()).toBe("Ana");
   });
@@ -124,23 +124,34 @@ describe("useMutation", () => {
     expect(screen.getByRole("status").textContent).toMatch(/^Sem conexão/);
   });
 
+  test("reset clears the last error without running again", async () => {
+    const fn = vi.fn<Run>(() => Promise.reject(new Error("Mudou.")));
+
+    const { screen, user, onResult } = await setup(fn);
+
+    await user.click(screen.getByRole("button", { name: "run" }));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
+    expect(screen.getByRole("status").textContent).toBe("Mudou.");
+
+    await user.click(screen.getByRole("button", { name: "reset" }));
+    expect(screen.getByRole("status").textContent).toBe("idle");
+    expect(fn).toHaveBeenCalledTimes(1);
+  });
+
   test("a redirect navigates instead of showing an error", async () => {
     const { screen, user, onResult, router } = await setup(async () => {
-      throw redirect({
-        to: "/",
-        search: { month: "2026-09", view: "accounts" },
-      });
+      throw redirect({ to: "/contas", search: { month: "2026-09" } });
     });
 
     await user.click(screen.getByRole("button", { name: "run" }));
 
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
-    expect(router.state.location.search).toMatchObject({ view: "accounts" });
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
+    expect(router.state.location.pathname).toBe("/contas");
     expect(screen.getByRole("status").textContent).toBe("idle");
   });
 
   test("ignores a second run while one is in flight", async () => {
-    let finish: (value: MutationResult) => void = () => undefined;
+    let finish: () => void = () => undefined;
 
     const fn = vi.fn<Run>(
       () =>
@@ -154,10 +165,10 @@ describe("useMutation", () => {
     await user.click(screen.getByRole("button", { name: "run" }));
     await user.click(screen.getByRole("button", { name: "run" }));
 
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(null));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
     expect(screen.getByRole("status").textContent).toBe("pending");
-    finish({ ok: true });
-    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith({ ok: true }));
+    finish();
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(true));
     expect(fn).toHaveBeenCalledTimes(1);
   });
 });

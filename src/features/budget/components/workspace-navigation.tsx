@@ -1,15 +1,14 @@
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
-import type { View } from "@/features/budget/domain/types";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
-import { withView } from "@/features/budget/search";
 import { cx } from "@/lib/cx";
 
-function scrollTop() {
-  window.scrollTo({ top: 0, behavior: "smooth" });
-}
+// Links keep month and person through the workspace layout's
+// retainSearchParams and mark the current page with aria-current. The
+// router's scroll restoration moves to the top of the new page.
+const activeOptions = { exact: true, includeSearch: false };
 
-export function DesktopNavigation({ view }: { view?: View }) {
+export function DesktopNavigation() {
   return (
     <nav
       aria-label="Navegação principal"
@@ -17,16 +16,15 @@ export function DesktopNavigation({ view }: { view?: View }) {
     >
       {WORKSPACE_NAVIGATION.map((item) => (
         <Link
-          key={item.id}
-          to="/"
-          search={(prev) => withView(prev, item.id)}
-          aria-current={view === item.id ? "page" : undefined}
-          onClick={scrollTop}
+          key={item.to}
+          to={item.to}
+          activeOptions={activeOptions}
           className={cx(
-            "px-[13px] py-[8px] rounded-[9px] text-[13px] text-text-muted",
+            "px-[13px] py-[8px] rounded-[9px] text-[13px]",
             "hover:bg-surface-soft",
-            view === item.id && "bg-surface-soft text-text font-600",
           )}
+          activeProps={{ className: "bg-surface-soft text-text font-600" }}
+          inactiveProps={{ className: "text-text-muted" }}
         >
           {item.label}
         </Link>
@@ -35,39 +33,32 @@ export function DesktopNavigation({ view }: { view?: View }) {
   );
 }
 
-function MobileLink({
-  item,
-  view,
-}: {
-  item: (typeof WORKSPACE_NAVIGATION)[number];
-  view?: View;
-}) {
-  const active = view === item.id;
-
+function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
   return (
     <Link
-      to="/"
-      search={(prev) => withView(prev, item.id)}
-      aria-current={active ? "page" : undefined}
-      onClick={scrollTop}
+      to={item.to}
+      activeOptions={activeOptions}
       className={cx(
         "flex flex-col items-center gap-[4px] flex-1 min-w-0 py-[2px] text-[10.5px]",
-        active ? "text-green font-600" : "text-text-muted",
       )}
+      activeProps={{ className: "text-green font-600" }}
+      inactiveProps={{ className: "text-text-muted" }}
     >
-      <item.icon aria-hidden="true" size={20} strokeWidth={active ? 2.2 : 1.8} />
-      <span className="truncate max-w-full">{item.label}</span>
+      {({ isActive }) => (
+        <>
+          <item.icon
+            aria-hidden="true"
+            size={20}
+            strokeWidth={isActive ? 2.2 : 1.8}
+          />
+          <span className="truncate max-w-full">{item.label}</span>
+        </>
+      )}
     </Link>
   );
 }
 
-export function MobileNavigation({
-  view,
-  onRegister,
-}: {
-  view?: View;
-  onRegister?: () => void;
-}) {
+export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
   const [first, second, third, fourth] = WORKSPACE_NAVIGATION;
 
   return (
@@ -79,8 +70,8 @@ export function MobileNavigation({
         "px-[8px] pt-[8px] pb-[max(20px,env(safe-area-inset-bottom))]",
       )}
     >
-      <MobileLink item={first} view={view} />
-      <MobileLink item={second} view={view} />
+      <MobileLink item={first} />
+      <MobileLink item={second} />
       <div className="flex-1 flex justify-center">
         <button
           type="button"
@@ -95,8 +86,8 @@ export function MobileNavigation({
           <Plus size={22} />
         </button>
       </div>
-      <MobileLink item={third} view={view} />
-      <MobileLink item={fourth} view={view} />
+      <MobileLink item={third} />
+      <MobileLink item={fourth} />
     </nav>
   );
 }

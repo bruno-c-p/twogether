@@ -36,43 +36,48 @@ export async function requireUser(store: BudgetStore, user: UserRow) {
   return store.ensureUser(user.id);
 }
 
+// Mirrors householdMiddleware: re-read the user, then require a household.
 export async function withHousehold(store: BudgetStore, user: UserRow) {
   const fresh = await store.ensureUser(user.id);
-  const household = await store.householdFor(fresh);
 
-  if (!household)
+  if (!fresh.household_id)
     throw new RequestError("Crie um orçamento ou aceite um convite.");
 
-  return { user: fresh, household };
+  return { user: fresh, householdId: fresh.household_id };
+}
+
+// The workspace as loadWorkspace would serve it to this user right now.
+export async function view(store: BudgetStore, user: UserRow) {
+  const actor = await withHousehold(store, user);
+
+  return store.snapshot(actor.user, actor.householdId);
 }
 
 export async function signup(store: BudgetStore, name: string) {
   const user = await store.ensureUser(clerkId(name));
   await store.setName(user, name);
-  const fresh = await store.ensureUser(user.id);
 
-  return { user: fresh, snapshot: await store.snapshot(fresh) };
+  return { user: await store.ensureUser(user.id) };
 }
 
 export async function couple(store: BudgetStore) {
   const a = await signup(store, "Ana");
   await store.createHousehold(a.user);
   const ana = await withHousehold(store, a.user);
-  const invite = await store.createInvite(ana.user, ana.household);
+  const invite = await store.createInvite(ana.householdId);
   const b = await signup(store, "Bia");
   await store.joinHousehold(b.user, invite.inviteToken);
-  const bia = await store.ensureUser(b.user.id);
 
   return {
-    a: { ...a, snapshot: await store.snapshot(a.user) },
-    b: { ...b, user: bia, snapshot: await store.snapshot(bia) },
+    a: { user: ana.user },
+    b: { user: await store.ensureUser(b.user.id) },
   };
 }
 
 export async function householdReady(store: BudgetStore) {
   const pair = await couple(store);
   const actor = await withHousehold(store, pair.a.user);
-  await store.saveAccount(actor.user, actor.household, account());
+  await store.saveAccount(actor.householdId, account());
 
   return pair;
 }

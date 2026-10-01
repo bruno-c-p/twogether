@@ -5,7 +5,6 @@ import {
   idSchema,
   revisionSchema,
 } from "@/features/budget/domain/schemas";
-import { runMutation } from "@/server/request-error";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -25,7 +24,5 @@ export const deleteTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseDeleteTransaction)
   .handler(async ({ data, context }) =>
-    runMutation(() =>
-      getBudgetStore().deleteTransaction(context.user, context.household, data),
-    ),
+    getBudgetStore().deleteTransaction(context.user, context.householdId, data),
   );

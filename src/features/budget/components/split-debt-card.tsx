@@ -1,20 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
+import { shortDay } from "@/features/budget/domain/format";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
-
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
-
-function dayLabel(date: string) {
-  return dayFormatter
-    .format(new Date(`${date}T12:00:00`))
-    .replaceAll(" de ", " ")
-    .replace(".", "");
-}
 
 export function SplitDebtCard({
   net,
@@ -80,7 +69,7 @@ export function SplitDebtCard({
                 {transaction.description}
                 <span className="text-text-muted text-[13px]">
                   {" · "}
-                  {dayLabel(transaction.date)}
+                  {shortDay(transaction.date)}
                 </span>
               </span>
               <span className="shrink-0">

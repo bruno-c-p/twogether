@@ -7,17 +7,18 @@ import { renderPlain } from "@/test/render";
 function setup() {
   const onParsed = vi.fn<(draft: PhraseDraft) => void>();
   const onManual = vi.fn();
+  const onClose = vi.fn();
 
   const view = renderPlain(
     <RegisterSheet
       accounts={[nubank]}
       onParsed={onParsed}
       onManual={onManual}
-      onClose={vi.fn()}
+      onClose={onClose}
     />,
   );
 
-  return { ...view, onParsed, onManual };
+  return { ...view, onParsed, onManual, onClose };
 }
 
 describe("RegisterSheet", () => {
@@ -46,6 +47,17 @@ describe("RegisterSheet", () => {
         tags: ["casa"],
       }),
     );
+  });
+
+  test("opens as a named modal that a backdrop click closes", async () => {
+    const { screen, user, onClose } = setup();
+    const sheet = screen.getByRole("dialog", { name: "Registrar transação" });
+
+    expect(sheet).toHaveProperty("open", true);
+    await user.click(screen.getByRole("heading", { name: "O que aconteceu?" }));
+    expect(onClose).not.toHaveBeenCalled();
+    await user.click(sheet);
+    expect(onClose).toHaveBeenCalled();
   });
 
   test("offers manual entry", async () => {
