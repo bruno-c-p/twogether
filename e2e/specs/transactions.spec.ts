@@ -108,9 +108,10 @@ test.describe("transactions", () => {
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
       const box = await page.locator("dialog").boundingBox();
+      // The sheet is full-bleed, so the backdrop is the gap above it.
       await page.mouse.click(
-        Math.max(2, (box?.x ?? 16) - 8),
-        (box?.y ?? 80) + 24,
+        (box?.x ?? 0) + (box?.width ?? 320) / 2,
+        Math.max(2, (box?.y ?? 24) - 12),
       );
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
