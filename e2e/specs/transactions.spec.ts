@@ -116,12 +116,8 @@ test.describe("transactions", () => {
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
-      const box = await page.locator("dialog").boundingBox();
-      // The sheet is full-bleed, so the backdrop is the gap above it.
-      await page.mouse.click(
-        (box?.x ?? 0) + (box?.width ?? 320) / 2,
-        Math.max(2, (box?.y ?? 24) - 12),
-      );
+      // The backdrop is above the sheet on mobile.
+      await mobileDialog.click({ position: { x: 16, y: -12 } });
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toHaveCount(0);

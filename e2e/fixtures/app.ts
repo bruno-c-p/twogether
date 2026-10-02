@@ -2,6 +2,28 @@ import { createHash, randomBytes } from "node:crypto";
 import { expect, test, type Page } from "@playwright/test";
 import { createClerkClient } from "@clerk/backend";
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
+import { createClient } from "@libsql/client";
+
+test.beforeEach(async () => {
+  if (test.info().retry === 0) return;
+
+  const databasePath = process.env.E2E_DATABASE_PATH;
+
+  if (!databasePath) throw new Error("E2E_DATABASE_PATH is missing");
+  const database = createClient({ url: `file:${databasePath}` });
+
+  try {
+    // A retry keeps the Clerk identity but must repeat onboarding from scratch.
+    await database.batch(
+      ["transactions", "accounts", "invites", "users", "households"].map(
+        (table) => `DELETE FROM ${table}`,
+      ),
+      "write",
+    );
+  } finally {
+    database.close();
+  }
+});
 
 export const desktop = { width: 1280, height: 800 };
 
