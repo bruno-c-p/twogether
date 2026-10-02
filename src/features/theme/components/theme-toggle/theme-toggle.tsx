@@ -19,13 +19,22 @@ function preference(): Theme {
   );
 }
 
+function applyTheme(theme: Theme, media: MediaQueryList) {
+  const style = document.createElement("style");
+
+  style.textContent = "*,*::before,*::after{transition:none!important}";
+  document.head.appendChild(style);
+  document.documentElement.dataset.theme =
+    theme === "system" ? (media.matches ? "dark" : "light") : theme;
+  void document.body.offsetHeight;
+  requestAnimationFrame(() => style.remove());
+}
+
 function subscribe(notify: () => void) {
   const media = window.matchMedia("(prefers-color-scheme: dark)");
 
   const sync = () => {
-    const theme = preference();
-    document.documentElement.dataset.theme =
-      theme === "system" ? (media.matches ? "dark" : "light") : theme;
+    applyTheme(preference(), media);
     notify();
   };
 

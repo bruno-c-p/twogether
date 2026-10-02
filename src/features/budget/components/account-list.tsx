@@ -39,7 +39,7 @@ export function AccountList({
         title="Nenhuma conta cadastrada."
         action={
           <Button className="mt-[8px]" onClick={onAdd}>
-            <Plus size={18} /> Adicionar primeira conta
+            <Plus size={18} /> Adicionar conta
           </Button>
         }
       >

@@ -37,6 +37,12 @@ export function WorkspaceShell({
 
   return (
     <div className="min-h-[100dvh]">
+      <a
+        href="#main-content"
+        className="absolute z-40 top-[16px] [inset-inline-start:-999px] focus:[inset-inline-start:16px] bg-surface text-text px-[12px] py-[8px] rounded-[8px]"
+      >
+        Pular para o conteúdo
+      </a>
       <header
         className={cx(
           "sticky top-0 z-20 bg-topbar backdrop-blur",
@@ -71,7 +77,9 @@ export function WorkspaceShell({
           </div>
         </div>
       </header>
-      <main id="main-content">{children}</main>
+      <main id="main-content" tabIndex={-1} className="scroll-mt-[80px]">
+        {children}
+      </main>
       <div className="max-bp1000:pb-[77px]">
         <AppFooter />
       </div>

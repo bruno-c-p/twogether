@@ -4,18 +4,20 @@
   color: var(--text);
   background: var(--page);
   font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
   font-size: 14px;
   --green: #173f35;
   --muted: #899087;
-  --border: #e8ebe4;
+  --border: #888a84;
   --surface: #fff;
   --surface-soft: #edf2e9;
   --page: #f8f9f6;
   --text: #293c33;
-  --text-muted: #7b837b;
+  --text-muted: #676e67;
   --accent: #83aa68;
-  --warning: #a16a42;
+  --warning: #986139;
   --warning-soft: #fff0e8;
   --danger: #a4474e;
   --danger-soft: #f8e9e8;
@@ -61,7 +63,7 @@
   --surface-soft: #24332b;
   --text: #e5ebe2;
   --text-muted: #acb9a7;
-  --border: #35463b;
+  --border: #6b7e71;
   --accent: #b6ce98;
   --green: #b6ce98;
   --muted: #acb9a7;
@@ -132,10 +134,14 @@ button:disabled {
   cursor: not-allowed;
   opacity: 0.45;
 }
+/* --text on --balance is about 1:1 in light mode, so the ring sits between page-colored bands. */
 button:focus-visible,
 a:focus-visible {
-  outline: 3px solid var(--accent);
+  outline: 3px solid var(--text);
   outline-offset: 4px;
+  box-shadow:
+    0 0 0 4px var(--page),
+    0 0 0 9px var(--page);
 }
 button:active:not(:disabled) {
   transform: translateY(1px);
@@ -158,8 +164,17 @@ select {
   }
 }
 :where(input, select):focus {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
+}
+@media (forced-colors: active) {
+  button:focus-visible,
+  a:focus-visible,
+  :where(input, select):focus {
+    outline: 3px solid Highlight;
+    outline-offset: 2px;
+    box-shadow: none;
+  }
 }
 h1,
 h2,

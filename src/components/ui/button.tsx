@@ -11,7 +11,7 @@ const variants: Record<Variant, string> = {
     "whitespace-nowrap min-h-[43px]",
     "hover:bg-brand-hover",
     "bp1450:text-[14px]",
-    "max-bp800:text-[11px] max-bp800:p-[12px]",
+    "max-bp800:p-[12px]",
   ),
   secondary: cx(
     "border border-solid border-border rounded-[6px] bg-surface-soft",
@@ -19,7 +19,7 @@ const variants: Record<Variant, string> = {
   ),
   text: cx(
     "border-0 bg-transparent inline-flex gap-[7px] items-center",
-    "text-text-muted text-[11px] py-[8px] px-0",
+    "text-text-muted text-[12px] py-[8px] px-0",
     "hover:text-text",
   ),
   icon: cx(
@@ -30,7 +30,7 @@ const variants: Record<Variant, string> = {
   tag: cx(
     "inline-flex items-center gap-[6px] px-[9px] py-[5px]",
     "border border-solid border-border rounded-[5px] bg-surface-soft",
-    "text-text-muted text-[11px]",
+    "text-text-muted text-[12px]",
   ),
 };
 

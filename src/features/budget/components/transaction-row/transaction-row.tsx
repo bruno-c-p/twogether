@@ -152,8 +152,7 @@ export function TransactionRow({
       </div>
       <span
         className={cx(
-          "text-right text-[15px] font-600 whitespace-nowrap",
-          t.kind === "income" ? "text-green" : "text-text",
+          "text-right text-[15px] font-600 whitespace-nowrap tabular-nums text-text",
           "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-[14px]",
         )}
       >

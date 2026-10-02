@@ -85,12 +85,7 @@ export function LatestTransactionsCard({
                       {shortDay(transaction.date)}
                     </span>
                   </span>
-                  <span
-                    className={cx(
-                      "text-[14px] font-600 shrink-0",
-                      income && "text-green",
-                    )}
-                  >
+                  <span className="text-[14px] font-600 tabular-nums shrink-0">
                     {income ? "+" : "–"} {displayMoney(transaction.amount)}
                   </span>
                 </button>

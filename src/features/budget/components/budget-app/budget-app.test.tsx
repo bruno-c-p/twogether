@@ -123,7 +123,7 @@ describe("BudgetWorkspace", () => {
     );
 
     expect(screen.getByText(/Inclui as transações do casal\./)).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Nova conta" }));
+    await user.click(screen.getByRole("button", { name: "Adicionar conta" }));
     expect(
       await screen.findByRole("heading", { name: "Nova conta" }),
     ).toBeTruthy();
@@ -135,7 +135,9 @@ describe("BudgetWorkspace", () => {
       "/transacoes?month=2026-09",
     );
 
-    await user.click(screen.getByRole("button", { name: "Nova transação" }));
+    await user.click(
+      screen.getAllByRole("button", { name: "Adicionar transação" })[0],
+    );
     expect(
       await screen.findByText("Cadastre uma conta para lançar transações."),
     ).toBeTruthy();

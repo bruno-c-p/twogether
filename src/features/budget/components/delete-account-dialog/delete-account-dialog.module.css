@@ -1,0 +1,17 @@
+.accountName {
+  margin: 0 0 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+button.deleteConfirm {
+  border-color: transparent;
+  background: var(--danger);
+  color: var(--on-danger);
+}
+
+button.deleteConfirm:hover {
+  background: color-mix(in srgb, var(--danger) 82%, #000);
+}

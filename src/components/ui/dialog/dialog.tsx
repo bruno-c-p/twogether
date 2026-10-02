@@ -98,6 +98,11 @@ function useDialogClose(onClose: () => void) {
     const previous = document.activeElement;
 
     element?.showModal();
+    // showModal moves focus onto the dialog after React's autoFocus, which
+    // never writes the autofocus attribute. A marked control is the one
+    // that should end up focused (the least destructive action).
+    element?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
+
     const overflow = document.body.style.overflow;
 
     document.body.style.overflow = "hidden";
@@ -183,11 +188,23 @@ export function Dialog({
   );
 }
 
-export function DialogDismiss({ children }: { children: ReactNode }) {
+export function DialogDismiss({
+  children,
+  autoFocus,
+}: {
+  children: ReactNode;
+  autoFocus?: boolean;
+}) {
   const requestClose = useContext(DialogCloseContext);
 
   return (
-    <Button type="button" variant="text" onClick={() => requestClose?.()}>
+    <Button
+      type="button"
+      variant="text"
+      autoFocus={autoFocus}
+      data-initial-focus={autoFocus ? "" : undefined}
+      onClick={() => requestClose?.()}
+    >
       {children}
     </Button>
   );
