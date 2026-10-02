@@ -173,9 +173,11 @@ describe("BudgetWorkspace", () => {
       await screen.findByText("3 transações desta recorrência."),
     ).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(
-      screen.queryByRole("heading", { name: "Excluir transação" }),
-    ).toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Excluir transação" }),
+      ).toBeNull();
+    });
   });
 
   test("goals open the percentages editor; filtering by a goal opens its transactions", async () => {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDismiss,
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
@@ -36,9 +37,7 @@ export function DeleteRecurrenceDialog({
       labelledBy="delete-title"
       onClose={onClose}
       onCancel={(event) => {
-        event.preventDefault();
-
-        if (!busy) onClose();
+        if (busy) event.preventDefault();
       }}
     >
       <DialogContent>
@@ -87,9 +86,7 @@ export function DeleteRecurrenceDialog({
           )}
           {error && <FormError>{error}</FormError>}
           <DialogFooter>
-            <Button type="button" variant="text" onClick={onClose}>
-              Cancelar
-            </Button>
+            <DialogDismiss>Cancelar</DialogDismiss>
             <Button
               type="button"
               className={styles.deleteConfirm}

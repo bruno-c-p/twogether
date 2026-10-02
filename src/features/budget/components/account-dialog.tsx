@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDismiss,
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
@@ -137,9 +138,7 @@ export function AccountDialog({
             </FieldHint>
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>
-              <Button type="button" variant="text" onClick={onClose}>
-                Cancelar
-              </Button>
+              <DialogDismiss>Cancelar</DialogDismiss>
               <Button type="submit">
                 <Check size={17} />
                 {busy
