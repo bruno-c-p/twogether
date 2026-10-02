@@ -1,17 +1,13 @@
 import { z } from "zod";
-import { goalIdSchema, monthSchema } from "@/features/budget/domain/schemas";
-import type {
-  GoalId,
-  TransactionKind,
-  View,
-} from "@/features/budget/domain/types";
+import { WORKSPACE_PATHS } from "@/features/budget/constants";
+import {
+  goalIdSchema,
+  monthSchema,
+  viewSchema,
+} from "@/features/budget/domain/schemas";
 
 const drop = <Schema extends z.ZodType>(schema: Schema) =>
   schema.optional().catch(undefined);
-
-const viewSchema = z.enum(["overview", "transactions", "accounts", "goals"], {
-  error: "Visão inválida.",
-});
 
 const memberSchema = z.string({ error: "Pessoa inválida." }).min(1).max(64);
 
@@ -22,74 +18,71 @@ const querySchema = z
 
 const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
 
-const kindSchema = z.enum(["expense", "income", "split"], {
+// The list also filters by split expenses, which are not a stored kind.
+const kindFilterSchema = z.enum(["expense", "income", "split"], {
   error: "Tipo inválido.",
 });
 
-const budgetFiltersSchema = z.object({
-  view: drop(viewSchema),
+// Month and person apply to every workspace page.
+const workspaceSearchSchema = z.object({
   month: drop(monthSchema),
   member: drop(memberSchema),
+});
+
+// Search, goal, tag and kind only narrow the transactions list.
+const transactionFiltersSchema = z.object({
   query: drop(querySchema),
   goal: drop(goalIdSchema),
   tag: drop(tagSchema),
-  kind: drop(kindSchema),
+  kind: drop(kindFilterSchema),
 });
 
-export type KindFilter = TransactionKind | "split";
+export type KindFilter = z.infer<typeof kindFilterSchema>;
 
-export interface BudgetFilters {
-  view?: View;
-  month?: string;
-  member?: string;
-  query?: string;
-  goal?: GoalId;
-  tag?: string;
-  kind?: KindFilter;
+export type WorkspaceSearch = z.infer<typeof workspaceSearchSchema>;
+
+export type TransactionFilterSearch = z.infer<typeof transactionFiltersSchema>;
+
+interface RequestLocation {
+  pathname: string;
+  searchStr: string;
 }
 
-export function withView(search: BudgetFilters, view: View): BudgetFilters {
-  return { ...search, view };
+function hrefFor(pathname: string, params: URLSearchParams) {
+  const query = params.toString();
+
+  return query ? `${pathname}?${query}` : pathname;
 }
 
-export function openView(search: BudgetFilters, view: View): BudgetFilters {
-  return {
-    ...search,
-    view,
-    query: undefined,
-    goal: undefined,
-    tag: undefined,
-    kind: undefined,
-  };
+// Same page and params with the month filled in, for a server redirect.
+export function withDefaultMonthHref(location: RequestLocation, month: string) {
+  const params = new URLSearchParams(location.searchStr);
+
+  params.set("month", month);
+
+  return hrefFor(location.pathname, params);
 }
 
-export function openGoalTransactions(
-  search: BudgetFilters,
-  goal: GoalId,
-): BudgetFilters {
-  return {
-    ...search,
-    view: "transactions",
-    goal,
-    query: undefined,
-    tag: undefined,
-    kind: undefined,
-  };
-}
-
-export function missingWorkspaceMonth(search: BudgetFilters): boolean {
-  return !search.month;
-}
-
-export function withDefaultMonth(
-  search: BudgetFilters,
-  month: string,
-): BudgetFilters {
-  return { ...search, month };
-}
-
-export function validateBudgetFilters<
+export function validateWorkspaceSearch<
   RawSearch extends Record<string, unknown>,
->(search: RawSearch): BudgetFilters {
-  return budgetFiltersSchema.parse(search);
+>(search: RawSearch): WorkspaceSearch {
+  return workspaceSearchSchema.parse(search);
+}
+
+export function validateTransactionFilters<
+  RawSearch extends Record<string, unknown>,
+>(search: RawSearch): TransactionFilterSearch {
+  return transactionFiltersSchema.parse(search);
+}
+
+// Views used to live in /?view=<view>; old bookmarks still carry it.
+export function legacyViewHref(searchStr: string) {
+  const params = new URLSearchParams(searchStr);
+  const view = drop(viewSchema).parse(params.get("view"));
+
+  if (!view) return undefined;
+
+  params.delete("view");
+
+  return hrefFor(WORKSPACE_PATHS[view], params);
 }

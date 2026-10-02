@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDismiss,
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
@@ -20,27 +21,27 @@ import {
   formText,
   newId,
 } from "@/features/budget/domain/format";
-import {
-  accountFormSchema,
-  fieldErrors,
-} from "@/features/budget/domain/schemas";
+import { accountFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import type { BankAccount } from "@/features/budget/domain/types";
 
 interface Props {
   account: BankAccount | null;
+  // The save is in flight; the caller closes the dialog when it succeeds.
+  busy: boolean;
   serverError: string;
-  onSave: (account: BankAccount) => Promise<boolean>;
+  onSave: (account: BankAccount) => Promise<void>;
   onClose: () => void;
 }
 
 export function AccountDialog({
   account,
+  busy,
   serverError,
   onSave,
   onClose,
 }: Props) {
   const amountInput = useRef<HTMLInputElement>(null);
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const [openingValue, setOpeningValue] = useState(
@@ -54,10 +55,10 @@ export function AccountDialog({
     input.setSelectionRange(input.value.length, input.value.length);
   }, [openingValue]);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (saving) return;
+    if (busy) return;
 
     const parsed = accountFormSchema.safeParse({
       name: formText(new FormData(event.currentTarget), "name"),
@@ -71,21 +72,12 @@ export function AccountDialog({
     }
 
     setErrors({});
-    setSaving(true);
-
-    try {
-      if (
-        await onSave({
-          id: account?.id ?? newId(),
-          name: parsed.data.name,
-          openingBalance: parsed.data.openingBalance,
-          revision: account?.revision,
-        })
-      )
-        onClose();
-    } finally {
-      setSaving(false);
-    }
+    void onSave({
+      id: account?.id ?? newId(),
+      name: parsed.data.name,
+      openingBalance: parsed.data.openingBalance,
+      revision: account?.revision,
+    });
   }
 
   return (
@@ -98,8 +90,8 @@ export function AccountDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={(event) => void submit(event)}>
-          <Fieldset disabled={saving}>
+        <form onSubmit={submit}>
+          <Fieldset disabled={busy}>
             <Field htmlFor="account-name">
               Nome da conta
               <input
@@ -146,12 +138,10 @@ export function AccountDialog({
             </FieldHint>
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>
-              <Button type="button" variant="text" onClick={onClose}>
-                Cancelar
-              </Button>
+              <DialogDismiss>Cancelar</DialogDismiss>
               <Button type="submit">
                 <Check size={17} />
-                {saving
+                {busy
                   ? "Salvando…"
                   : account
                     ? "Salvar alterações"

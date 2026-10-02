@@ -4,14 +4,24 @@ const LIMIT = 60;
 
 const MAX_TRACKED_KEYS = 10_000;
 
-export const RATE_LIMIT_WINDOW_SECONDS = Math.ceil(WINDOW_MS / 1_000);
-
 interface Window {
   count: number;
   resetAt: number;
 }
 
 const windows = new Map<string, Window>();
+
+// The function middleware that rejects a call cannot set response headers, so
+// it leaves the computed wait here for the request middleware to send.
+const retryAfter = new WeakMap<Request, number>();
+
+export function rememberRetryAfter(request: Request, seconds: number) {
+  retryAfter.set(request, seconds);
+}
+
+export function retryAfterFor(request: Request) {
+  return retryAfter.get(request);
+}
 
 function prune(now: number) {
   for (const [key, window] of windows) {

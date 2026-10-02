@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { firstIssueMessage } from "@/features/budget/domain/schemas";
+import { firstIssueMessage } from "@/lib/zod-errors";
 
 function invalid(message = "Requisição inválida."): never {
   throw new Error(message);

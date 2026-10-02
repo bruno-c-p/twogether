@@ -1,16 +1,11 @@
+import { useHydrated } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
-import { currentMonth } from "@/features/budget/domain/format";
+import { currentMonth, monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
 import { cx } from "@/lib/cx";
 
-const monthFormatter = new Intl.DateTimeFormat("pt-BR", { month: "long" });
-
-function monthName(month: string) {
-  return monthFormatter.format(new Date(`${month}-15T12:00:00`));
-}
-
-function daysLeft(month: string, today = new Date()) {
+function daysLeft(month: string, today: Date) {
   if (month !== currentMonth(today)) return null;
 
   const [year, number] = month.split("-").map(Number);
@@ -44,7 +39,10 @@ export function BalanceCard({
   onToggleHidden: () => void;
   className?: string;
 }) {
-  const days = daysLeft(month);
+  // The server's clock and time zone can differ from the reader's, so the
+  // countdown waits for hydration instead of risking a mismatch.
+  const hydrated = useHydrated();
+  const days = hydrated ? daysLeft(month, new Date()) : null;
 
   return (
     <OverviewCard
@@ -65,7 +63,7 @@ export function BalanceCard({
             className={cx(
               "m-0 mt-[10px] font-heading font-600 tracking-[-1.5px] leading-none",
               "text-[52px] max-bp620:text-[36px] max-bp620:mt-[8px]",
-              "break-words",
+              "break-words tabular-nums",
             )}
           >
             {displayMoney(summary.balance)}
@@ -112,7 +110,7 @@ function BalanceFigure({ label, value }: { label: string; value: string }) {
       <dt className="text-[13px] text-on-balance-muted max-bp620:text-[12px]">
         {label}
       </dt>
-      <dd className="m-0 text-[20px] font-500 max-bp620:text-[13px] max-bp1000:text-[15px]">
+      <dd className="m-0 text-[20px] font-500 tabular-nums max-bp620:text-[13px] max-bp1000:text-[15px]">
         {value}
       </dd>
     </div>

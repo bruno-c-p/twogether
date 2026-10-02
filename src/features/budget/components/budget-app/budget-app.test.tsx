@@ -1,4 +1,6 @@
-import { describe, expect, test, vi } from "vitest";
+import { getRouteApi } from "@tanstack/react-router";
+import { within } from "@testing-library/react";
+import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
@@ -24,8 +26,25 @@ function budget({
     user: { id: "ana", name: "Ana" },
     household: { id: "home", members: [ana] },
     syncError,
-    refresh: vi.fn(),
   };
+}
+
+const workspaceRoute = getRouteApi("/_authenticated/_workspace");
+
+// Stands in for the layout route, which renders the workspace once the URL
+// carries a month.
+function Layout({ controller }: { controller: BudgetController }) {
+  const { month } = workspaceRoute.useSearch();
+
+  if (!month) return null;
+
+  return (
+    <BudgetWorkspace
+      budget={controller}
+      month={month}
+      account={<span>conta</span>}
+    />
+  );
 }
 
 async function renderWorkspace(
@@ -34,10 +53,7 @@ async function renderWorkspace(
 ) {
   window.scrollTo = vi.fn();
 
-  return renderWithProviders(
-    <BudgetWorkspace budget={controller} account={<span>conta</span>} />,
-    path,
-  );
+  return renderWithProviders(<Layout controller={controller} />, path);
 }
 
 describe("BudgetWorkspace", () => {
@@ -52,11 +68,12 @@ describe("BudgetWorkspace", () => {
     expect(screen.getByRole("button", { name: "Editar Mercado" })).toBeTruthy();
   });
 
-  test("moves between months through the URL", async ({ onTestFinished }) => {
+  test("moves between months through the URL", async () => {
+    // "Voltar para este mês" only shows away from the current month.
+    vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 8, 15));
-    onTestFinished(() => {
-      vi.useRealTimers();
-    });
+    onTestFinished(() => void vi.useRealTimers());
+
     const { screen, user, router } = await renderWorkspace();
 
     await user.click(
@@ -102,11 +119,11 @@ describe("BudgetWorkspace", () => {
   test("the accounts view explains balances and opens the account dialog", async () => {
     const { screen, user } = await renderWorkspace(
       budget(),
-      "/?month=2026-09&view=accounts",
+      "/contas?month=2026-09",
     );
 
     expect(screen.getByText(/Inclui as transações do casal\./)).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Nova conta" }));
+    await user.click(screen.getByRole("button", { name: "Adicionar conta" }));
     expect(
       await screen.findByRole("heading", { name: "Nova conta" }),
     ).toBeTruthy();
@@ -115,14 +132,17 @@ describe("BudgetWorkspace", () => {
   test("a new transaction without accounts sends the person to Contas", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget({ accounts: [] }),
-      "/?month=2026-09&view=transactions",
+      "/transacoes?month=2026-09",
     );
 
-    await user.click(screen.getByRole("button", { name: "Nova transação" }));
+    await user.click(
+      screen.getAllByRole("button", { name: "Adicionar transação" })[0],
+    );
     expect(
       await screen.findByText("Cadastre uma conta para lançar transações."),
     ).toBeTruthy();
-    expect(router.state.location.search).toMatchObject({ view: "accounts" });
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({ month: "2026-09" });
   });
 
   test("editing a transaction opens it prefilled", async () => {
@@ -147,7 +167,7 @@ describe("BudgetWorkspace", () => {
 
     const { screen, user } = await renderWorkspace(
       budget({ transactions: series }),
-      "/?month=2026-09&view=transactions",
+      "/transacoes?month=2026-09",
     );
 
     await user.click(screen.getByRole("button", { name: "Excluir Aluguel" }));
@@ -155,15 +175,17 @@ describe("BudgetWorkspace", () => {
       await screen.findByText("3 transações desta recorrência."),
     ).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Cancelar" }));
-    expect(
-      screen.queryByRole("heading", { name: "Excluir transação" }),
-    ).toBeNull();
+    await vi.waitFor(() => {
+      expect(
+        screen.queryByRole("heading", { name: "Excluir transação" }),
+      ).toBeNull();
+    });
   });
 
   test("goals open the percentages editor; filtering by a goal opens its transactions", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget(),
-      "/?month=2026-09&view=goals",
+      "/orcamento?month=2026-09",
     );
 
     await user.click(
@@ -175,9 +197,10 @@ describe("BudgetWorkspace", () => {
     await user.click(
       screen.getByRole("button", { name: "Fechar percentuais" }),
     );
-    await user.click(screen.getByRole("button", { name: /^Custo fixo:/ }));
-    expect(router.state.location.search).toMatchObject({
-      view: "transactions",
+    await user.click(screen.getByRole("link", { name: /^Custo fixo:/ }));
+    expect(router.state.location.pathname).toBe("/transacoes");
+    expect(router.state.location.search).toEqual({
+      month: "2026-09",
       goal: "fixed",
     });
   });
@@ -200,12 +223,93 @@ describe("BudgetWorkspace", () => {
   test("the transactions list links from the overview to the full view", async () => {
     const { screen, user, router } = await renderWorkspace();
 
-    await user.click(screen.getByRole("button", { name: /Ver todas/ }));
-    expect(router.state.location.search).toMatchObject({
-      view: "transactions",
-    });
+    await user.click(screen.getByRole("link", { name: /Ver todas/ }));
+    expect(router.state.location.pathname).toBe("/transacoes");
     expect(
       await screen.findByRole("heading", { level: 1, name: "Transações" }),
     ).toBeTruthy();
+  });
+
+  test("month, person and filter changes keep the scroll; page links reset it", async () => {
+    const { screen, user, router } = await renderWorkspace(
+      budget(),
+      "/transacoes?month=2026-09",
+    );
+
+    const scrollTo = vi.mocked(window.scrollTo);
+
+    scrollTo.mockClear();
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "outubro 2026" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Filtrar por pessoa: Nós" }),
+    );
+    await user.click(await screen.findByRole("radio", { name: "Eu" }));
+    await user.type(screen.getByLabelText("Buscar transações"), "a");
+    await vi.waitFor(() =>
+      expect(router.state.location.search).toMatchObject({
+        month: "2026-10",
+        member: "ana",
+        query: "a",
+      }),
+    );
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    const nav = screen.getByRole("navigation", {
+      name: "Navegação principal",
+    });
+
+    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    await vi.waitFor(() =>
+      expect(scrollTo).toHaveBeenCalledWith(
+        expect.objectContaining({ top: 0 }),
+      ),
+    );
+  });
+
+  test("page links keep month and person and drop transaction filters", async () => {
+    const { screen, user, router } = await renderWorkspace(
+      budget(),
+      "/transacoes?month=2026-08&member=ana&tag=casa",
+    );
+
+    const nav = screen.getByRole("navigation", {
+      name: "Navegação principal",
+    });
+
+    expect(
+      within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
+    ).toBe("page");
+    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    expect(
+      await screen.findByRole("heading", { level: 1, name: "Contas" }),
+    ).toBeTruthy();
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({
+      month: "2026-08",
+      member: "ana",
+    });
+    expect(within(nav).getByRole("link", { name: "Contas" }).ariaCurrent).toBe(
+      "page",
+    );
+    expect(
+      within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
+    ).toBeNull();
+
+    await user.click(
+      screen.getByRole("button", { name: /^Selecionar mês e ano/ }),
+    );
+    await user.click(
+      await screen.findByRole("button", { name: "outubro 2026" }),
+    );
+    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.search).toEqual({
+      month: "2026-10",
+      member: "ana",
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { firstIssueMessage } from "@/features/budget/domain/schemas";
+import { firstIssueMessage } from "@/lib/zod-errors";
 
 const CLERK_MESSAGE =
   "VITE_CLERK_PUBLISHABLE_KEY variable required by Clerk is missing or un-configured.";

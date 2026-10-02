@@ -58,12 +58,12 @@ describe("DeleteRecurrenceDialog", () => {
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  test("Escape closes it when idle", () => {
+  test("Escape closes it when idle", async () => {
     const { props, container } = setup();
 
     container.ownerDocument
       .querySelector("dialog")
       ?.dispatchEvent(new Event("cancel", { cancelable: true }));
-    expect(props.onClose).toHaveBeenCalled();
+    await vi.waitFor(() => expect(props.onClose).toHaveBeenCalled());
   });
 });

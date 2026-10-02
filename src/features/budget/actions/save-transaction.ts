@@ -4,7 +4,6 @@ import {
   occurrencesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
-import { runMutation } from "@/server/request-error";
 import type { Transaction } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
@@ -23,7 +22,5 @@ export const saveTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSaveTransaction)
   .handler(async ({ data, context }) =>
-    runMutation(() =>
-      getBudgetStore().saveTransaction(context.user, context.household, data),
-    ),
+    getBudgetStore().saveTransaction(context.user, context.householdId, data),
   );

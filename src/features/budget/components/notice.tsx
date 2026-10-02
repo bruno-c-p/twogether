@@ -11,7 +11,8 @@ export type Notice = {
 export function useNotice() {
   const [notice, setNotice] = useState<Notice | null>(null);
   useEffect(() => {
-    if (!notice) return;
+    if (!notice || notice.undo || notice.undoSettle) return;
+
     const timer = window.setTimeout(() => setNotice(null), 8000);
 
     return () => window.clearTimeout(timer);

@@ -4,40 +4,45 @@ import { TransactionDialog } from "@/features/budget/components/transaction-dial
 import { SettleDialog } from "@/features/budget/components/settle-dialog";
 import { RegisterSheet } from "@/features/budget/components/register-sheet";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
-import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
-import type { WorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
-import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
+import { laterOccurrences } from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
-
-type FlowProps = {
-  budget: BudgetController;
-  dialogs: WorkspaceDialogs;
-  mutations: BudgetMutations;
-  actions: WorkspaceActions;
-};
 
 function transactionDefaultDate(month: string) {
   return month === currentMonth() ? localDate() : `${month}-01`;
 }
 
-function EditorDialogs({
-  budget,
-  dialogs,
-  mutations,
-  actions,
-  month,
-  allTags,
-}: FlowProps & { month: string; allTags: string[] }) {
+function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
+  const { budget, dialogs, mutations, actions } = useWorkspace();
+  const following = laterOccurrences(budget.state.transactions, transaction);
+
+  return (
+    <DeleteRecurrenceDialog
+      transaction={transaction}
+      count={following.length + 1}
+      busy={mutations.deleteTx.pending}
+      error={mutations.deleteTx.error}
+      onClose={() => dialogs.setDeleting(null)}
+      onDelete={(all) =>
+        actions.deleteRecurring(transaction, all ? following : [])
+      }
+    />
+  );
+}
+
+export function TransactionFlows() {
+  const { budget, data, month, dialogs, mutations, actions } = useWorkspace();
+
   return (
     <>
       {dialogs.percentagesRevision !== null && (
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
-          onClose={() => dialogs.setPercentagesRevision(null)}
+          busy={mutations.savePct.pending}
           error={mutations.savePct.error}
           onSave={actions.saveGoalPercentages}
+          onClose={() => dialogs.setPercentagesRevision(null)}
         />
       )}
       {dialogs.transaction && (
@@ -45,10 +50,11 @@ function EditorDialogs({
           transaction={dialogs.transaction.transaction}
           draft={dialogs.transaction.draft}
           defaultDate={transactionDefaultDate(month)}
-          existingTags={allTags}
+          existingTags={data.allTags}
           members={budget.household.members}
           accounts={budget.state.accounts}
           currentUserId={budget.user.id}
+          busy={mutations.saveTx.pending}
           serverError={mutations.saveTx.error}
           splitBusy={mutations.splitBusy}
           onSave={actions.save}
@@ -60,30 +66,12 @@ function EditorDialogs({
       {dialogs.account && (
         <AccountDialog
           account={dialogs.account.account}
+          busy={mutations.saveAcc.pending}
           serverError={mutations.saveAcc.error}
           onSave={actions.saveAccountRecord}
           onClose={() => dialogs.setAccount(null)}
         />
       )}
-    </>
-  );
-}
-
-export function TransactionFlows({
-  month,
-  allTags,
-  following,
-  ...flow
-}: FlowProps & {
-  month: string;
-  allTags: string[];
-  following: Transaction[];
-}) {
-  const { budget, dialogs, mutations, actions } = flow;
-
-  return (
-    <>
-      <EditorDialogs {...flow} month={month} allTags={allTags} />
       {dialogs.register && (
         <RegisterSheet
           accounts={budget.state.accounts}
@@ -93,20 +81,14 @@ export function TransactionFlows({
         />
       )}
       {dialogs.deleting && (
-        <DeleteRecurrenceDialog
-          transaction={dialogs.deleting}
-          count={following.length + 1}
-          busy={mutations.deleteTx.pending}
-          error={mutations.deleteTx.error}
-          onClose={() => dialogs.setDeleting(null)}
-          onDelete={actions.deleteRecurring}
-        />
+        <DeleteRecurrenceFlow transaction={dialogs.deleting} />
       )}
       {dialogs.settling && (
         <SettleDialog
           transaction={dialogs.settling}
           members={budget.household.members}
           accounts={budget.state.accounts}
+          busy={mutations.settleTx.pending}
           serverError={mutations.settleTx.error}
           onConfirm={actions.confirmSettle}
           onClose={() => dialogs.setSettling(null)}

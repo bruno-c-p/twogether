@@ -1,15 +1,10 @@
 import { useId } from "react";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { money } from "@/features/budget/domain/format";
+import { money, shortDay } from "@/features/budget/domain/format";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
-
-const dateFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-});
 
 const capitalize = (value: string) =>
   value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
@@ -37,9 +32,7 @@ function settlementStatus(
   const paidAt = transaction.split?.paidAt;
 
   if (paidAt) {
-    const day = dateFormatter.format(new Date(paidAt)).replace(".", "");
-
-    return `Pago por ${debtorName} em ${day}.`;
+    return `Pago por ${debtorName} em ${shortDay(paidAt)}.`;
   }
 
   return userIsDebtor

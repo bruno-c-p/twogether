@@ -1,16 +1,32 @@
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { formText } from "@/features/budget/domain/format";
-import { fieldErrors, nameFormSchema } from "@/features/budget/domain/schemas";
+import { nameFormSchema } from "@/features/budget/domain/schemas";
+import { fieldErrors } from "@/lib/zod-errors";
 import { Button } from "@/components/ui/button";
 import { FieldError, Form } from "@/components/ui/field/field";
+
+const CONTINUE = (
+  <>
+    Continuar
+    <ArrowRight size={18} />
+  </>
+);
 
 export function NameForm({
   busy,
   onSubmit,
+  defaultName,
+  submitLabel = CONTINUE,
+  status,
 }: {
   busy: boolean;
   onSubmit: (name: string) => Promise<void>;
+  defaultName?: string;
+  submitLabel?: ReactNode;
+  // Confirmation shown next to the button once a save went through; pass
+  // it (even empty) to keep the button at its own width beside it.
+  status?: string;
 }) {
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -31,6 +47,8 @@ export function NameForm({
     await onSubmit(parsed.data.name);
   }
 
+  const button = <Button disabled={busy}>{submitLabel}</Button>;
+
   return (
     <Form onSubmit={(event) => void submit(event)}>
       <label>
@@ -39,6 +57,7 @@ export function NameForm({
           name="name"
           autoComplete="given-name"
           maxLength={50}
+          defaultValue={defaultName}
           placeholder="Como você quer aparecer?"
           required
           aria-describedby={errors.name ? "name-error" : undefined}
@@ -46,10 +65,18 @@ export function NameForm({
         />
         <FieldError id="name-error">{errors.name}</FieldError>
       </label>
-      <Button disabled={busy}>
-        Continuar
-        <ArrowRight size={18} />
-      </Button>
+      {status === undefined ? (
+        button
+      ) : (
+        <div className="flex items-center gap-4">
+          {button}
+          {status && (
+            <p role="status" className="text-text-muted text-[12px]">
+              {status}
+            </p>
+          )}
+        </div>
+      )}
     </Form>
   );
 }

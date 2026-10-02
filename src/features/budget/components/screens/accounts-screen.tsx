@@ -1,24 +1,19 @@
 import { Plus } from "lucide-react";
 import { AccountList } from "@/features/budget/components/account-list";
 import { PageHeading } from "@/features/budget/components/page-heading";
-import type { ScreenProps } from "@/features/budget/components/screens/screen-props";
+import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Button } from "@/components/ui/button";
 
-export function AccountsScreen({
-  budget,
-  search,
-  busy,
-  month,
-  displayMoney,
-  dialogs,
-  actions,
-}: ScreenProps) {
+export function AccountsScreen() {
+  const { budget, busy, month, displayMoney, dialogs, actions, memberFilter } =
+    useWorkspace();
+
   return (
     <>
       <PageHeading
         title="Contas"
         note={
-          search.memberFilter === "all"
+          memberFilter === "all"
             ? "Saldo inicial mais receitas, menos despesas. Inclui as transações do casal."
             : "Saldo inicial mais receitas, menos despesas. Considera só as transações da pessoa selecionada."
         }
@@ -27,14 +22,14 @@ export function AccountsScreen({
             disabled={busy}
             onClick={() => dialogs.setAccount({ account: null })}
           >
-            <Plus size={19} /> Nova conta
+            <Plus size={19} /> Adicionar conta
           </Button>
         }
       />
       <AccountList
         accounts={budget.state.accounts}
         transactions={budget.state.transactions}
-        memberFilter={search.memberFilter}
+        memberFilter={memberFilter}
         busy={busy}
         month={month}
         displayMoney={displayMoney}

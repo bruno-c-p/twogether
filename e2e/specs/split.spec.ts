@@ -13,16 +13,15 @@ import {
   choosePerson,
 } from "../fixtures/app";
 
-async function addAccount(page: Page, name: string, first: boolean) {
+async function addAccount(page: Page, name: string) {
   await openView(page, "Contas");
-  await page
-    .getByRole("button", {
-      name: first ? "Adicionar primeira conta" : "Nova conta",
-    })
-    .click();
+  await page.getByRole("button", { name: "Adicionar conta" }).first().click();
   await page.getByLabel("Nome da conta").fill(name);
   await page.getByLabel("Saldo inicial").fill("0,00");
-  await page.getByRole("button", { name: "Adicionar conta" }).click();
+  await page
+    .getByRole("dialog", { name: "Nova conta" })
+    .getByRole("button", { name: "Adicionar conta" })
+    .click();
   await expectToast(page, "Conta adicionada.");
 }
 
@@ -60,8 +59,8 @@ test.describe("split expenses", () => {
     browser,
   }) => {
     await onboard(page, "Ana");
-    await addAccount(page, "Nubank", true);
-    await addAccount(page, "Itaú", false);
+    await addAccount(page, "Nubank");
+    await addAccount(page, "Itaú");
     const { context, partner } = await joinPartner(page, browser);
     await reloadApp(page);
     await setMonth(page, "2026-09");

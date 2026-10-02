@@ -23,3 +23,21 @@ export function firstOccurrence({
     createdBy: previous?.createdBy ?? userId,
   };
 }
+
+// Occurrences after this one in the same series, for "delete this and the
+// following ones".
+export function laterOccurrences(
+  transactions: Transaction[],
+  transaction: Transaction,
+) {
+  const index = transaction.recurrenceIndex;
+
+  if (!transaction.recurrenceId || index === undefined) return [];
+
+  return transactions.filter(
+    (item) =>
+      item.recurrenceId === transaction.recurrenceId &&
+      item.recurrenceIndex !== undefined &&
+      item.recurrenceIndex > index,
+  );
+}

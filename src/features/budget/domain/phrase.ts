@@ -104,11 +104,30 @@ function describe(text: string, rest: string) {
   return named ? capitalize(named[1].trim()) : text;
 }
 
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+// Plain string search so names like "C++" or "Itaú (PJ)" are never read as
+// a regular expression; a hit counts only when no letter or digit touches it.
+function containsWord(text: string, word: string) {
+  for (
+    let index = text.indexOf(word);
+    index !== -1;
+    index = text.indexOf(word, index + 1)
+  ) {
+    const before = text.charAt(index - 1);
+    const after = text.charAt(index + word.length);
+
+    if (!WORD_CHAR.test(before) && !WORD_CHAR.test(after)) return true;
+  }
+
+  return false;
+}
+
 function findAccount(text: string, accounts: BankAccount[]) {
   const named = accounts.find((account) => {
     const name = plain(account.name).trim();
 
-    return name.length > 1 && new RegExp(`\\b${name}\\b`).test(text);
+    return name.length > 1 && containsWord(text, name);
   });
 
   return named?.id ?? (accounts.length === 1 ? accounts[0].id : "");

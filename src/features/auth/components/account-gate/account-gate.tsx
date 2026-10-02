@@ -161,17 +161,12 @@ function useGateActions(run: ActionRun, invitation: string) {
     if (result) posthog.capture("household_created");
   }
 
-  async function leave() {
-    posthog.reset();
-    await signOut();
-  }
-
   return {
     acceptInvitation: () => joinWith(invitation),
     joinWithInvite: joinWith,
     submitName,
     startHousehold,
-    leave,
+    leave: signOut,
   };
 }
 
@@ -194,14 +189,7 @@ export function AccountGateView({
   email: string;
   busy: boolean;
   error: string;
-  actions: Pick<
-    GateActions,
-    | "acceptInvitation"
-    | "joinWithInvite"
-    | "submitName"
-    | "startHousehold"
-    | "leave"
-  >;
+  actions: GateActions;
   onClearInvitation: () => void;
   signIn: ReactNode;
 }) {
@@ -271,8 +259,7 @@ export function AccountGate({
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const { user: clerkUser } = useUser();
-  const invitation = invite;
-  const actions = useGateActions(run, invitation);
+  const actions = useGateActions(run, invite);
 
   // Clerk signs in before the server session exists; poll until it does.
   useEffect(() => {
@@ -291,14 +278,14 @@ export function AccountGate({
   return (
     <AccountGateView
       user={user}
-      invitation={invitation}
+      invitation={invite}
       isSignedIn={isSignedIn}
       email={clerkUser?.primaryEmailAddress?.emailAddress ?? ""}
       busy={busy}
       error={error}
       actions={actions}
       onClearInvitation={() => void navigate({ to: "/entrar" })}
-      signIn={<ClerkSignIn invitation={invitation} />}
+      signIn={<ClerkSignIn invitation={invite} />}
     />
   );
 }

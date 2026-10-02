@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDismiss,
   DialogFooter,
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
@@ -33,6 +34,7 @@ export function SettleDialog({
   transaction,
   members,
   accounts,
+  busy,
   serverError,
   onConfirm,
   onClose,
@@ -40,11 +42,12 @@ export function SettleDialog({
   transaction: Transaction;
   members: Member[];
   accounts: BankAccount[];
+  // The payment is being saved; the caller closes the dialog when it succeeds.
+  busy: boolean;
   serverError: string;
-  onConfirm: (input: SettleInput) => Promise<boolean>;
+  onConfirm: (input: SettleInput) => Promise<void>;
   onClose: () => void;
 }) {
-  const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const payer =
@@ -58,10 +61,10 @@ export function SettleDialog({
     ? transaction.accountId
     : "";
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (saving) return;
+    if (busy) return;
     const form = new FormData(event.currentTarget);
 
     const input = {
@@ -83,13 +86,7 @@ export function SettleDialog({
     setErrors(next);
 
     if (Object.keys(next).length) return;
-    setSaving(true);
-
-    try {
-      if (await onConfirm(input)) onClose();
-    } finally {
-      setSaving(false);
-    }
+    void onConfirm(input);
   }
 
   function accountSelect(name: keyof SettleInput, label: string) {
@@ -124,8 +121,8 @@ export function SettleDialog({
             <h2 id="settle-dialog-title">Marcar como pago</h2>
           </div>
         </DialogHeader>
-        <form onSubmit={(event) => void submit(event)}>
-          <Fieldset disabled={saving}>
+        <form onSubmit={submit}>
+          <Fieldset disabled={busy}>
             <div className="mb-[18px]">
               <FieldHint>
                 {`Você paga ${money(share)} a ${payer} por “${transaction.description}”.`}{" "}
@@ -152,12 +149,10 @@ export function SettleDialog({
             {accountSelect("payerAccountId", `Conta onde ${payer} recebeu`)}
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>
-              <Button type="button" variant="text" onClick={onClose}>
-                Cancelar
-              </Button>
+              <DialogDismiss>Cancelar</DialogDismiss>
               <Button type="submit">
                 <Check size={17} />
-                {saving ? "Salvando…" : "Confirmar pagamento"}
+                {busy ? "Salvando…" : "Confirmar pagamento"}
               </Button>
             </DialogFooter>
           </Fieldset>

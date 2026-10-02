@@ -1,26 +1,48 @@
 import { useState } from "react";
 import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
+import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 
-export function useWorkspaceDialogs() {
-  const [transaction, setTransaction] = useState<{
+// Opening or closing a dialog clears the errors of the mutations it shows,
+// so a failure from an earlier attempt never greets the next one.
+function useDialogState<Value>(
+  initial: Value,
+  mutations: { reset: () => void }[],
+) {
+  const [value, setValue] = useState<Value>(initial);
+
+  function set(next: Value) {
+    for (const mutation of mutations) mutation.reset();
+    setValue(next);
+  }
+
+  return [value, set] as const;
+}
+
+export function useWorkspaceDialogs(mutations: BudgetMutations) {
+  const [transaction, setTransaction] = useDialogState<{
     transaction: Transaction | null;
     draft?: PhraseDraft;
-  } | null>(null);
+  } | null>(null, [mutations.saveTx]);
 
   // Phrase input sheet opened from the mobile "+" button.
   const [register, setRegister] = useState(false);
 
-  const [account, setAccount] = useState<{
+  const [account, setAccount] = useDialogState<{
     account: BankAccount | null;
-  } | null>(null);
+  } | null>(null, [mutations.saveAcc]);
 
-  const [percentagesRevision, setPercentagesRevision] = useState<number | null>(
-    null,
-  );
+  const [percentagesRevision, setPercentagesRevision] = useDialogState<
+    number | null
+  >(null, [mutations.savePct]);
 
-  const [deleting, setDeleting] = useState<Transaction | null>(null);
-  const [settling, setSettling] = useState<Transaction | null>(null);
+  const [deleting, setDeleting] = useDialogState<Transaction | null>(null, [
+    mutations.deleteTx,
+  ]);
+
+  const [settling, setSettling] = useDialogState<Transaction | null>(null, [
+    mutations.settleTx,
+  ]);
 
   return {
     transaction,

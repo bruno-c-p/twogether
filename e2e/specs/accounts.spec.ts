@@ -15,9 +15,12 @@ test.describe("accounts", () => {
     await nav(page, "desktop")
       .getByRole("link", { name: "Transações" })
       .click();
-    await page.getByRole("button", { name: "Nova transação" }).click();
+    await page
+      .getByRole("button", { name: "Adicionar transação" })
+      .first()
+      .click();
     await expectToast(page, "Cadastre uma conta para lançar transações.");
-    expect(new URL(page.url()).searchParams.get("view")).toBe("accounts");
+    await expect(page).toHaveURL(/\/contas\?/);
     await expect(
       page.getByRole("heading", { name: "Nova transação" }),
     ).toHaveCount(0);
@@ -37,15 +40,16 @@ test.describe("accounts", () => {
       page.getByText("Inclui as transações do casal.", { exact: false }),
     ).toBeVisible();
     await expect(page.getByText("Nenhuma conta cadastrada.")).toBeVisible();
-    await page
-      .getByRole("button", { name: "Adicionar primeira conta" })
-      .click();
+    await page.getByRole("button", { name: "Adicionar conta" }).first().click();
     await expect(
       page.getByRole("heading", { name: "Nova conta" }),
     ).toBeVisible();
     await page.getByLabel("Nome da conta").fill("Nubank");
     await page.getByLabel("Saldo inicial").fill("1.250,00");
-    await page.getByRole("button", { name: "Adicionar conta" }).click();
+    await page
+      .getByRole("dialog", { name: "Nova conta" })
+      .getByRole("button", { name: "Adicionar conta" })
+      .click();
     await expectToast(page, "Conta adicionada.");
     await expect(
       page.getByRole("heading", { name: "Nubank", exact: true }),
@@ -62,7 +66,7 @@ test.describe("accounts", () => {
     await withMobile(page, async () => {
       await dismissToast(page);
       await expect(
-        page.getByRole("button", { name: "Nova conta" }),
+        page.getByRole("button", { name: "Adicionar conta" }),
       ).toBeVisible();
       await expect(
         page.getByRole("heading", { name: "Nubank", exact: true }),

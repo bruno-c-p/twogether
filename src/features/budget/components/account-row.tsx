@@ -1,25 +1,17 @@
+import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
+import { DeleteAccountDialog } from "@/features/budget/components/delete-account-dialog/delete-account-dialog";
+import { shortDay } from "@/features/budget/domain/format";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 
-const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
-  day: "2-digit",
-  month: "short",
-  timeZone: "UTC",
-});
-
-function shortDate(date: string) {
-  return dayFormatter.format(new Date(`${date}T00:00:00Z`)).replace(".", "");
+function activityGoal(transaction: Transaction) {
+  return GOALS.find((goal) => goal.id === transaction.goal);
 }
 
 function dotColor(transaction: Transaction) {
-  if (transaction.kind === "income") return "var(--green)";
-
-  return (
-    GOALS.find((goal) => goal.id === transaction.goal)?.color ??
-    "var(--text-muted)"
-  );
+  return activityGoal(transaction)?.color ?? "var(--green)";
 }
 
 export function AccountRow({
@@ -48,6 +40,7 @@ export function AccountRow({
   onDelete: (account: BankAccount) => void;
 }) {
   const count = monthTransactions.length;
+  const [confirming, setConfirming] = useState(false);
 
   return (
     <li className="list-none min-w-0 flex flex-col gap-[20px] p-[24px] max-bp620:p-[18px] bg-surface border border-solid border-border rounded-[18px]">
@@ -75,7 +68,7 @@ export function AccountRow({
                 : "Excluir conta"
             }
             aria-label={`Excluir ${account.name}`}
-            onClick={() => onDelete(account)}
+            onClick={() => setConfirming(true)}
           >
             <Trash2 size={15} />
           </Button>
@@ -96,7 +89,7 @@ export function AccountRow({
       <div className="flex flex-wrap gap-x-[28px] gap-y-[8px] text-[14px] tabular-nums">
         <div>
           <p className="text-[12px] text-text-muted">Entrou no mês</p>
-          <p className="font-600 text-green">+ {displayMoney(entered)}</p>
+          <p className="font-600">+ {displayMoney(entered)}</p>
         </div>
         <div>
           <p className="text-[12px] text-text-muted">Saiu no mês</p>
@@ -110,25 +103,34 @@ export function AccountRow({
               key={transaction.id}
               className="list-none flex items-center gap-[10px] py-[11px] border-b border-b-solid border-b-border text-[14px]"
             >
-              <span
-                className="w-[8px] h-[8px] rounded-full shrink-0"
-                style={{ backgroundColor: dotColor(transaction) }}
-              />
+              <span className="inline-flex items-center gap-[6px] shrink-0">
+                <span
+                  className="w-[8px] h-[8px] rounded-full shrink-0"
+                  style={{ backgroundColor: dotColor(transaction) }}
+                />
+                {activityGoal(transaction)?.name ?? "Receita"}
+              </span>
               <span className="flex-1 min-w-0 truncate">
                 {transaction.description}{" "}
                 <span className="text-text-muted">
-                  · {shortDate(transaction.date)}
+                  · {shortDay(transaction.date)}
                 </span>
               </span>
-              <span
-                className={`font-600 tabular-nums shrink-0 ${transaction.kind === "income" ? "text-green" : ""}`}
-              >
+              <span className="font-600 tabular-nums shrink-0">
                 {transaction.kind === "income" ? "+" : "-"}{" "}
                 {displayMoney(transaction.amount)}
               </span>
             </li>
           ))}
         </ul>
+      )}
+      {confirming && (
+        <DeleteAccountDialog
+          account={account}
+          busy={busy}
+          onClose={() => setConfirming(false)}
+          onDelete={() => onDelete(account)}
+        />
       )}
     </li>
   );

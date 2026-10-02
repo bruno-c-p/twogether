@@ -17,7 +17,7 @@ export function EmptyState({
       <div className="w-[58px] h-[58px] rounded-[18px] bg-surface-soft grid place-items-center text-text-muted mb-[4px]">
         {icon}
       </div>
-      <h3 className="font-heading text-[19px] font-550">{title}</h3>
+      <h2 className="font-heading text-[19px] font-550">{title}</h2>
       {children ? (
         <p className="text-text-muted text-[13px] leading-[1.7] max-w-[410px]">
           {children}

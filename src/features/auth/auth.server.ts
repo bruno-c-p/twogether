@@ -2,7 +2,6 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   execute,
   one,
-  text,
   type StoreContext,
   userRowSchema,
   type UserRow,
@@ -13,14 +12,14 @@ export async function ensureUser(
   ctx: StoreContext,
   clerkUserId: string,
 ): Promise<UserRow> {
+  // ctx.db is used directly here, outside atomic(), so wait for the schema.
   await ctx.ready;
-  const id = text(clerkUserId, 64);
 
   const existing = await one(
     ctx.db,
     userRowSchema,
     "SELECT * FROM users WHERE id = ?",
-    [id],
+    [clerkUserId],
   );
 
   if (existing) return existing;
@@ -28,7 +27,7 @@ export async function ensureUser(
     await execute(
       transaction,
       "INSERT INTO users(id,name,percentages) VALUES (?,?,?) ON CONFLICT(id) DO NOTHING",
-      [id, "", JSON.stringify(DEFAULT_PERCENTAGES)],
+      [clerkUserId, "", JSON.stringify(DEFAULT_PERCENTAGES)],
     );
   });
 
@@ -36,7 +35,7 @@ export async function ensureUser(
     ctx.db,
     userRowSchema,
     "SELECT * FROM users WHERE id = ?",
-    [id],
+    [clerkUserId],
   );
 
   if (!user) throw new RequestError("Não foi possível criar a conta.");
@@ -45,10 +44,9 @@ export async function ensureUser(
 }
 
 export async function setName(ctx: StoreContext, user: UserRow, name: string) {
-  await ctx.ready;
   await ctx.atomic(async (transaction) => {
     await execute(transaction, "UPDATE users SET name = ? WHERE id = ?", [
-      text(name, 50),
+      name,
       user.id,
     ]);
   });

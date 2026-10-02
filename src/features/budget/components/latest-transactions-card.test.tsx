@@ -2,29 +2,28 @@ import { describe, expect, test, vi } from "vitest";
 import { LatestTransactionsCard } from "@/features/budget/components/latest-transactions-card";
 import { money } from "@/features/budget/domain/format";
 import { transaction } from "@/test/fixtures";
-import { renderPlain } from "@/test/render";
+import { renderWithProviders } from "@/test/render";
 
-function renderCard(transactions = [transaction()]) {
+async function renderCard(transactions = [transaction()]) {
   const onEdit = vi.fn();
-  const onViewAll = vi.fn();
 
-  const view = renderPlain(
+  const view = await renderWithProviders(
     <LatestTransactionsCard
       transactions={transactions}
       displayMoney={money}
       onEdit={onEdit}
-      onViewAll={onViewAll}
     />,
+    "/?month=2026-09",
   );
 
-  return { ...view, onEdit, onViewAll };
+  return { ...view, onEdit };
 }
 
 describe("LatestTransactionsCard", () => {
   test("shows the five most recent, signed, and opens one for editing", async () => {
     const days = ["01", "02", "03", "04", "05", "06"];
 
-    const { screen, user, onEdit } = renderCard([
+    const { screen, user, onEdit } = await renderCard([
       ...days.map((day) =>
         transaction({
           id: day,
@@ -52,10 +51,11 @@ describe("LatestTransactionsCard", () => {
   });
 
   test("links to the full list and handles an empty month", async () => {
-    const { screen, user, onViewAll } = renderCard([]);
+    const { screen, user, router } = await renderCard([]);
 
     expect(screen.getByText("Nenhuma transação neste mês.")).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: /Ver todas/ }));
-    expect(onViewAll).toHaveBeenCalled();
+    await user.click(screen.getByRole("link", { name: /Ver todas/ }));
+    expect(router.state.location.pathname).toBe("/transacoes");
+    expect(router.state.location.search).toEqual({ month: "2026-09" });
   });
 });

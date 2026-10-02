@@ -278,7 +278,10 @@ export async function openView(page: Page, name: string) {
 
 export async function openNewTransaction(page: Page) {
   await openView(page, "Transações");
-  await page.getByRole("button", { name: "Nova transação" }).click();
+  await page
+    .getByRole("button", { name: "Adicionar transação" })
+    .first()
+    .click();
 
   return page.getByRole("dialog", { name: "Nova transação" });
 }

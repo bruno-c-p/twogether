@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
+import { NameForm } from "@/features/auth/components/name-form";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import {
   useActionRun,
@@ -12,15 +13,11 @@ import {
 import { createInvite, revokeInvite } from "@/features/household/actions";
 import { MemberList } from "@/features/household/components/member-list/member-list";
 import { workspaceQueryKey } from "@/features/budget/workspace";
-import { formText } from "@/features/budget/domain/format";
-import { fieldErrors, nameFormSchema } from "@/features/budget/domain/schemas";
 import type { Member } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import {
-  FieldError,
   FieldHint,
-  Form,
   FormError,
   FormStack,
   Note,
@@ -39,34 +36,18 @@ export function useNameForm({
   saveName: (name: string) => ReturnType<typeof setName>;
   onSaved: () => void;
 }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [notice, setNotice] = useState("");
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const parsed = nameFormSchema.safeParse({
-      name: formText(new FormData(event.currentTarget), "name"),
-    });
-
-    if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
-
-      return;
-    }
-
-    setErrors({});
+  async function save(name: string) {
     setNotice("");
 
-    const result = await run(() => saveName(parsed.data.name));
-
-    if (!result?.ok) return;
+    if (!(await run(() => saveName(name)))) return;
 
     onSaved();
     setNotice("Nome atualizado.");
   }
 
-  return { errors, notice, submit };
+  return { notice, save };
 }
 
 export type NameFormState = ReturnType<typeof useNameForm>;
@@ -89,10 +70,10 @@ export function useInviteLink({
   async function makeInvite() {
     const result = await run(create);
 
-    if (!result?.ok) return;
+    if (!result) return;
 
     onCreated();
-    setLink(`${window.location.origin}/convite/${result.inviteToken}`);
+    setLink(`${window.location.origin}/convite/${result.data.inviteToken}`);
     setCopied(false);
     setStatus("");
   }
@@ -136,32 +117,13 @@ function NameSection({
         description="Como você aparece no orçamento."
       />
       <div className={PANEL_BODY}>
-        <Form onSubmit={(event) => void name.submit(event)}>
-          <label>
-            Seu nome
-            <input
-              name="name"
-              autoComplete="given-name"
-              maxLength={50}
-              defaultValue={defaultName}
-              placeholder="Como você quer aparecer?"
-              required
-              aria-describedby={
-                name.errors.name ? "account-name-error" : undefined
-              }
-              aria-invalid={name.errors.name ? true : undefined}
-            />
-            <FieldError id="account-name-error">{name.errors.name}</FieldError>
-          </label>
-          <div className="flex items-center gap-4">
-            <Button disabled={busy}>Salvar nome</Button>
-            {name.notice && (
-              <p role="status" className="text-text-muted text-[12px]">
-                {name.notice}
-              </p>
-            )}
-          </div>
-        </Form>
+        <NameForm
+          busy={busy}
+          defaultName={defaultName}
+          submitLabel="Salvar nome"
+          status={name.notice}
+          onSubmit={name.save}
+        />
       </div>
     </Panel>
   );
@@ -307,11 +269,6 @@ export function AccountSettings({
     onCreated: () => posthog.capture("household_invite_generated"),
   });
 
-  async function leave() {
-    posthog.reset();
-    await signOut();
-  }
-
   return (
     <AccountSettingsView
       user={user}
@@ -321,7 +278,7 @@ export function AccountSettings({
       error={error}
       name={name}
       invite={invite}
-      onLeave={() => void leave()}
+      onLeave={() => void signOut()}
       onManage={onManage}
     />
   );
