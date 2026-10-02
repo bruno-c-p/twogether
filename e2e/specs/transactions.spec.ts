@@ -107,11 +107,7 @@ test.describe("transactions", () => {
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
-      const box = await page.locator("dialog").boundingBox();
-      await page.mouse.click(
-        Math.max(2, (box?.x ?? 16) - 8),
-        (box?.y ?? 80) + 24,
-      );
+      await mobileDialog.click({ position: { x: -8, y: 24 } });
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toHaveCount(0);

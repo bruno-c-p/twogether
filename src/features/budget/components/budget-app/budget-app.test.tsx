@@ -52,7 +52,11 @@ describe("BudgetWorkspace", () => {
     expect(screen.getByRole("button", { name: "Editar Mercado" })).toBeTruthy();
   });
 
-  test("moves between months through the URL", async () => {
+  test("moves between months through the URL", async ({ onTestFinished }) => {
+    vi.setSystemTime(new Date(2026, 8, 15));
+    onTestFinished(() => {
+      vi.useRealTimers();
+    });
     const { screen, user, router } = await renderWorkspace();
 
     await user.click(
