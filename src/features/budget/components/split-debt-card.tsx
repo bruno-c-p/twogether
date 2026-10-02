@@ -51,7 +51,7 @@ export function SplitDebtCard({
       </h2>
       <p
         className={cx(
-          "font-heading text-[28px] font-600 m-0 mt-[14px] tracking-[-0.5px]",
+          "font-heading text-[28px] font-600 tabular-nums m-0 mt-[14px] tracking-[-0.5px]",
           "max-bp1000:mt-[2px] max-bp1000:text-[17px] max-bp1000:tracking-normal",
           net < 0 ? "text-danger" : "text-text",
         )}

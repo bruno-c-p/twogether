@@ -39,7 +39,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
       to={item.to}
       activeOptions={activeOptions}
       className={cx(
-        "flex flex-col items-center gap-[4px] flex-1 min-w-0 py-[2px] text-[10.5px]",
+        "flex flex-col items-center gap-[4px] shrink-0 py-[2px] text-center text-[12px] leading-[1.2]",
       )}
       activeProps={{ className: "text-green" }}
       inactiveProps={{ className: "text-text-muted" }}
@@ -51,7 +51,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
             size={20}
             strokeWidth={isActive ? 2.2 : 1.8}
           />
-          <span className="truncate max-w-full">{item.label}</span>
+          <span className="whitespace-normal">{item.label}</span>
         </>
       )}
     </Link>
@@ -65,14 +65,14 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
     <nav
       aria-label="Navegação mobile"
       className={cx(
-        "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center",
+        "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center justify-between",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
         "px-[8px] pt-[8px] pb-[max(20px,env(safe-area-inset-bottom))]",
       )}
     >
       <MobileLink item={first} />
       <MobileLink item={second} />
-      <div className="flex-1 flex justify-center">
+      <div className="shrink-0 flex justify-center">
         <button
           type="button"
           aria-label="Registrar transação"

@@ -39,6 +39,20 @@ describe("AccountRow", () => {
     await user.click(screen.getByRole("button", { name: "Editar Nubank" }));
     await user.click(screen.getByRole("button", { name: "Excluir Nubank" }));
     expect(props.onEdit).toHaveBeenCalledWith(nubank);
+    expect(props.onDelete).not.toHaveBeenCalled();
+    expect(
+      screen.getByRole("heading", { name: "Excluir esta conta?" }),
+    ).toBeTruthy();
+    expect(document.activeElement).toBe(
+      screen.getByRole("button", { name: "Cancelar" }),
+    );
+    await user.click(screen.getByRole("button", { name: "Cancelar" }));
+    expect(props.onDelete).not.toHaveBeenCalled();
+    expect(
+      screen.queryByRole("heading", { name: "Excluir esta conta?" }),
+    ).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Excluir Nubank" }));
+    await user.click(screen.getByRole("button", { name: "Excluir conta" }));
     expect(props.onDelete).toHaveBeenCalledWith(nubank);
   });
 
@@ -54,12 +68,25 @@ describe("AccountRow", () => {
     const { screen } = setup({
       entered: 5000,
       left: 8000,
-      monthTransactions: [transaction()],
+      monthTransactions: [
+        transaction(),
+        transaction({
+          id: "income",
+          description: "Salário",
+          kind: "income",
+          goal: null,
+          amount: 1234,
+        }),
+      ],
     });
 
-    expect(screen.getByText("1 transação em setembro")).toBeTruthy();
+    expect(screen.getByText("2 transações em setembro")).toBeTruthy();
     expect(screen.getByText("Mercado")).toBeTruthy();
+    expect(screen.getByText("Custo fixo")).toBeTruthy();
+    expect(screen.getByText("Salário")).toBeTruthy();
+    expect(screen.getByText("Receita")).toBeTruthy();
     expect(screen.getByText(/^-\sR\$\s45,90$/)).toBeTruthy();
+    expect(screen.getByText(/^\+\sR\$\s12,34$/)).toBeTruthy();
     expect(screen.getByText(/^\+\sR\$\s50,00$/)).toBeTruthy();
   });
 

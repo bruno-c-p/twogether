@@ -20,7 +20,7 @@
   border-radius: 6px;
   background: transparent;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .themeToggle button:hover {
@@ -29,6 +29,6 @@
 
 .themeToggle button[aria-pressed="true"] {
   background: var(--surface-soft);
-  color: var(--accent);
+  color: var(--text);
   box-shadow: inset 0 0 0 1px var(--border);
 }

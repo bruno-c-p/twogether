@@ -63,7 +63,7 @@ export function BalanceCard({
             className={cx(
               "m-0 mt-[10px] font-heading font-600 tracking-[-1.5px] leading-none",
               "text-[52px] max-bp620:text-[36px] max-bp620:mt-[8px]",
-              "break-words",
+              "break-words tabular-nums",
             )}
           >
             {displayMoney(summary.balance)}
@@ -110,7 +110,7 @@ function BalanceFigure({ label, value }: { label: string; value: string }) {
       <dt className="text-[13px] text-on-balance-muted max-bp620:text-[12px]">
         {label}
       </dt>
-      <dd className="m-0 text-[20px] font-500 max-bp620:text-[13px] max-bp1000:text-[15px]">
+      <dd className="m-0 text-[20px] font-500 tabular-nums max-bp620:text-[13px] max-bp1000:text-[15px]">
         {value}
       </dd>
     </div>

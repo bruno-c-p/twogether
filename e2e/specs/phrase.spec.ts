@@ -11,10 +11,13 @@ import {
 
 async function addNubank(page: Page) {
   await openView(page, "Contas");
-  await page.getByRole("button", { name: "Adicionar primeira conta" }).click();
+  await page.getByRole("button", { name: "Adicionar conta" }).first().click();
   await page.getByLabel("Nome da conta").fill("Nubank");
   await page.getByLabel("Saldo inicial").fill("1.250,00");
-  await page.getByRole("button", { name: "Adicionar conta" }).click();
+  await page
+    .getByRole("dialog", { name: "Nova conta" })
+    .getByRole("button", { name: "Adicionar conta" })
+    .click();
   await expectToast(page, "Conta adicionada.");
   await openView(page, "Visão geral");
 }

@@ -197,7 +197,7 @@ describe("TransactionList", () => {
 
     expect(screen.getByText("Nenhuma transação neste mês.")).toBeTruthy();
     await user.click(
-      screen.getByRole("button", { name: "Adicionar primeira transação" }),
+      screen.getByRole("button", { name: "Adicionar transação" }),
     );
     expect(onAdd).toHaveBeenCalled();
   });

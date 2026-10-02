@@ -22,7 +22,7 @@ export function AccountsScreen() {
             disabled={busy}
             onClick={() => dialogs.setAccount({ account: null })}
           >
-            <Plus size={19} /> Nova conta
+            <Plus size={19} /> Adicionar conta
           </Button>
         }
       />

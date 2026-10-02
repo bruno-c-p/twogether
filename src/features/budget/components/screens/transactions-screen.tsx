@@ -35,7 +35,7 @@ export function TransactionsScreen() {
               disabled={busy}
               onClick={() => actions.openTransaction(null)}
             >
-              <Plus size={19} /> Nova transação
+              <Plus size={19} /> Adicionar transação
             </Button>
           </div>
         }

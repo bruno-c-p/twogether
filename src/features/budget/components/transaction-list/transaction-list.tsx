@@ -252,7 +252,7 @@ function NoTransactions({
       title="Nenhuma transação neste mês."
       action={
         <Button className="mt-[8px]" onClick={onAdd}>
-          Adicionar primeira transação
+          Adicionar transação
         </Button>
       }
     >
