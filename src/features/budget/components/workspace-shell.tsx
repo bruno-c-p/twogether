@@ -83,7 +83,7 @@ export function WorkspaceShell({
       <div className="max-bp1000:pb-[77px]">
         <AppFooter />
       </div>
-      <MobileNavigation onRegister={actions.openRegister} />
+      <MobileNavigation onRegister={() => actions.openTransaction(null)} />
       <TransactionFlows />
       <WorkspaceNotice />
     </div>

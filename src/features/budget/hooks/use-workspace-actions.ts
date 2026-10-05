@@ -7,7 +7,6 @@ import type {
   GoalPercentages,
   Transaction,
 } from "@/features/budget/domain/types";
-import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import type { WorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
@@ -85,10 +84,7 @@ export function useWorkspaceActions({
     setNotice({ message: "Transação excluída.", undo: transaction });
   }
 
-  function openTransaction(
-    transaction: Transaction | null,
-    draft?: PhraseDraft,
-  ) {
+  function openTransaction(transaction: Transaction | null) {
     if (!transaction && budget.state.accounts.length === 0) {
       setNotice({ message: "Cadastre uma conta para lançar transações." });
       void navigate({ to: WORKSPACE_PATHS.accounts });
@@ -96,18 +92,7 @@ export function useWorkspaceActions({
       return;
     }
 
-    dialogs.setRegister(false);
-    dialogs.setTransaction({ transaction, draft });
-  }
-
-  function openRegister() {
-    if (budget.state.accounts.length === 0) {
-      openTransaction(null);
-
-      return;
-    }
-
-    dialogs.setRegister(true);
+    dialogs.setTransaction({ transaction });
   }
 
   function openPercentages() {
@@ -229,7 +214,6 @@ export function useWorkspaceActions({
     save,
     remove,
     openTransaction,
-    openRegister,
     openPercentages,
     saveAccountRecord,
     removeAccount,

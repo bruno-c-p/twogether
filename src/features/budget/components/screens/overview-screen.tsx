@@ -1,7 +1,6 @@
 import { BalanceCard } from "@/features/budget/components/balance-card";
 import { BudgetCard } from "@/features/budget/components/budget-card";
 import { LatestTransactionsCard } from "@/features/budget/components/latest-transactions-card";
-import { PhraseBar } from "@/features/budget/components/phrase-bar";
 import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { cx } from "@/lib/cx";
@@ -22,11 +21,6 @@ export function OverviewScreen() {
   return (
     <>
       <h1 className="sr-only">Visão geral</h1>
-      <PhraseBar
-        accounts={budget.state.accounts}
-        disabled={busy}
-        onParsed={(draft) => actions.openTransaction(null, draft)}
-      />
       <div className="grid grid-cols-2 gap-[20px] items-stretch max-bp1000:grid-cols-1 max-bp620:gap-[12px]">
         <BalanceCard
           summary={data.summary}

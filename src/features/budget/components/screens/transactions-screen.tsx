@@ -1,7 +1,6 @@
 import { Plus } from "lucide-react";
 import { monthName } from "@/features/budget/domain/format";
 import { PageHeading } from "@/features/budget/components/page-heading";
-import { PhraseBar } from "@/features/budget/components/phrase-bar";
 import {
   TransactionList,
   TransactionSearch,
@@ -39,11 +38,6 @@ export function TransactionsScreen() {
             </Button>
           </div>
         }
-      />
-      <PhraseBar
-        accounts={budget.state.accounts}
-        disabled={busy}
-        onParsed={(draft) => actions.openTransaction(null, draft)}
       />
       <TransactionList
         transactions={data.monthly}
