@@ -71,9 +71,6 @@ test.describe("auth", () => {
     await expect(
       nav(page, "desktop").getByRole("link", { name: "Visão geral" }),
     ).toHaveAttribute("aria-current", "page");
-    await expect(
-      page.getByRole("textbox", { name: "Registrar com uma frase" }),
-    ).toBeVisible();
     await expectPerson(page, "Nós");
     await expectPersonOptions(page, ["Nós", "Eu"]);
     await expect(

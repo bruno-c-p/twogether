@@ -16,7 +16,6 @@ import {
 } from "@/features/budget/domain/format";
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
 import { fieldErrors } from "@/lib/zod-errors";
-import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type {
   BankAccount,
   Transaction,
@@ -48,8 +47,6 @@ import {
 
 interface Props {
   transaction: Transaction | null;
-  // A parsed phrase that prefills a new transaction.
-  draft?: PhraseDraft;
   defaultDate: string;
   existingTags: string[];
   members: Member[];
@@ -99,30 +96,25 @@ function submitLabel(saving: boolean, editing: boolean) {
 
 function defaultAccountId(
   transaction: Transaction | null,
-  draft: PhraseDraft | undefined,
   accounts: BankAccount[],
 ) {
   const fallback = accounts.length === 1 ? accounts[0].id : "";
 
-  return transaction?.accountId ?? (draft?.accountId || fallback);
+  return transaction?.accountId ?? fallback;
 }
 
 function useSplitChoice({
   transaction,
-  draft,
   members,
   kind,
   currentUserId,
 }: {
   transaction: Transaction | null;
-  draft: PhraseDraft | undefined;
   members: Member[];
   kind: TransactionKind;
   currentUserId: string;
 }) {
-  const [split, setSplit] = useState(
-    Boolean(transaction?.split) || Boolean(draft?.split),
-  );
+  const [split, setSplit] = useState(Boolean(transaction?.split));
 
   // Only expenses between the two partners split; repayments never do.
   const canSplit =
@@ -139,7 +131,6 @@ function useSplitChoice({
 
 function useTransactionForm({
   transaction,
-  draft,
   members,
   accounts,
   currentUserId,
@@ -147,33 +138,26 @@ function useTransactionForm({
   onSave,
 }: Pick<
   Props,
-  | "transaction"
-  | "draft"
-  | "members"
-  | "accounts"
-  | "currentUserId"
-  | "busy"
-  | "onSave"
+  "transaction" | "members" | "accounts" | "currentUserId" | "busy" | "onSave"
 >) {
-  const prefill = transaction ?? draft;
+  const [kind, setKind] = useState<TransactionKind>(
+    transaction?.kind ?? "expense",
+  );
 
-  const [kind, setKind] = useState<TransactionKind>(prefill?.kind ?? "expense");
-
-  const [goal, setGoal] = useState(prefill?.goal ?? null);
-  const [tags, setTags] = useState(prefill?.tags ?? []);
+  const [goal, setGoal] = useState(transaction?.goal ?? null);
+  const [tags, setTags] = useState(transaction?.tags ?? []);
   const [tagInput, setTagInput] = useState("");
 
   const [amountValue, setAmountValue] = useState(
-    prefill ? formatAmountInput(String(prefill.amount)) : "",
+    transaction ? formatAmountInput(String(transaction.amount)) : "",
   );
 
-  const [recurring, setRecurring] = useState(Boolean(draft?.recurring));
+  const [recurring, setRecurring] = useState(false);
   const [occurrences, setOccurrences] = useState(12);
   const [errors, setErrors] = useState<FieldErrors>({});
 
   const { split, setSplit, canSplit, paid, memberId } = useSplitChoice({
     transaction,
-    draft,
     members,
     kind,
     currentUserId,
@@ -322,17 +306,13 @@ function AmountInput({
 
 function DescriptionAndDate({
   transaction,
-  draft,
   defaultDate,
   errors,
 }: {
   transaction: Transaction | null;
-  draft: PhraseDraft | undefined;
   defaultDate: string;
   errors: FieldErrors;
 }) {
-  const prefill = transaction ?? draft;
-
   return (
     <FieldRow>
       <label>
@@ -341,7 +321,7 @@ function DescriptionAndDate({
           name="description"
           placeholder="Ex.: supermercado"
           maxLength={80}
-          defaultValue={prefill?.description}
+          defaultValue={transaction?.description}
           required
           {...invalidProps(errors, "description", "description-error")}
         />
@@ -352,7 +332,7 @@ function DescriptionAndDate({
         <input
           type="date"
           name="date"
-          defaultValue={prefill?.date ?? defaultDate}
+          defaultValue={transaction?.date ?? defaultDate}
           min="1900-01-01"
           max="9999-12-31"
           required
@@ -366,12 +346,10 @@ function DescriptionAndDate({
 
 function AccountSelect({
   transaction,
-  draft,
   accounts,
   errors,
 }: {
   transaction: Transaction | null;
-  draft: PhraseDraft | undefined;
   accounts: BankAccount[];
   errors: FieldErrors;
 }) {
@@ -382,7 +360,7 @@ function AccountSelect({
         id="transaction-account"
         name="accountId"
         aria-label="Conta"
-        defaultValue={defaultAccountId(transaction, draft, accounts)}
+        defaultValue={defaultAccountId(transaction, accounts)}
         required
         {...invalidProps(errors, "accountId", "account-error")}
       >
@@ -504,7 +482,6 @@ function ClassificationFields({
 
 export function TransactionDialog({
   transaction,
-  draft,
   defaultDate,
   existingTags,
   members,
@@ -520,7 +497,6 @@ export function TransactionDialog({
 }: Props) {
   const form = useTransactionForm({
     transaction,
-    draft,
     members,
     accounts,
     currentUserId,
@@ -556,13 +532,11 @@ export function TransactionDialog({
             <AmountInput form={form} amountInput={amountInput} />
             <DescriptionAndDate
               transaction={transaction}
-              draft={draft}
               defaultDate={defaultDate}
               errors={form.errors}
             />
             <AccountSelect
               transaction={transaction}
-              draft={draft}
               accounts={accounts}
               errors={form.errors}
             />

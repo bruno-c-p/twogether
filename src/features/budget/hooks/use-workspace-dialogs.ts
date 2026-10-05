@@ -1,5 +1,4 @@
 import { useState } from "react";
-import type { PhraseDraft } from "@/features/budget/domain/phrase";
 import type { BankAccount, Transaction } from "@/features/budget/domain/types";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 
@@ -22,11 +21,7 @@ function useDialogState<Value>(
 export function useWorkspaceDialogs(mutations: BudgetMutations) {
   const [transaction, setTransaction] = useDialogState<{
     transaction: Transaction | null;
-    draft?: PhraseDraft;
   } | null>(null, [mutations.saveTx]);
-
-  // Phrase input sheet opened from the mobile "+" button.
-  const [register, setRegister] = useState(false);
 
   const [account, setAccount] = useDialogState<{
     account: BankAccount | null;
@@ -47,8 +42,6 @@ export function useWorkspaceDialogs(mutations: BudgetMutations) {
   return {
     transaction,
     setTransaction,
-    register,
-    setRegister,
     account,
     setAccount,
     percentagesRevision,

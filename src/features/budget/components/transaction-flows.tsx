@@ -2,7 +2,6 @@ import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recu
 import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { SettleDialog } from "@/features/budget/components/settle-dialog";
-import { RegisterSheet } from "@/features/budget/components/register-sheet";
 import { AccountDialog } from "@/features/budget/components/account-dialog";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { localDate, currentMonth } from "@/features/budget/domain/format";
@@ -48,7 +47,6 @@ export function TransactionFlows() {
       {dialogs.transaction && (
         <TransactionDialog
           transaction={dialogs.transaction.transaction}
-          draft={dialogs.transaction.draft}
           defaultDate={transactionDefaultDate(month)}
           existingTags={data.allTags}
           members={budget.household.members}
@@ -70,14 +68,6 @@ export function TransactionFlows() {
           serverError={mutations.saveAcc.error}
           onSave={actions.saveAccountRecord}
           onClose={() => dialogs.setAccount(null)}
-        />
-      )}
-      {dialogs.register && (
-        <RegisterSheet
-          accounts={budget.state.accounts}
-          onParsed={(draft) => actions.openTransaction(null, draft)}
-          onManual={() => actions.openTransaction(null)}
-          onClose={() => dialogs.setRegister(false)}
         />
       )}
       {dialogs.deleting && (
