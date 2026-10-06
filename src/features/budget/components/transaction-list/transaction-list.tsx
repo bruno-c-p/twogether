@@ -1,4 +1,4 @@
-import { Search, X } from "lucide-react";
+import { ChevronDown, Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import type {
@@ -181,23 +181,39 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
           {chip.label}
         </button>
       ))}
-      <select
-        aria-label="Filtrar por meta"
-        value={goalFilter}
-        onChange={(event) => {
-          const found = GOALS.find((g) => g.id === event.target.value);
+      {/* A native select keeps the phone's own picker; it is only dressed as a chip. */}
+      <div className="relative inline-flex max-w-full">
+        <select
+          aria-label="Filtrar por meta"
+          value={goalFilter}
+          onChange={(event) => {
+            const found = GOALS.find((g) => g.id === event.target.value);
 
-          filters.setGoalFilter(found?.id ?? "all");
-        }}
-        className="px-3 py-2 rounded-full border border-solid border-border bg-surface text-sm max-w-full"
-      >
-        <option value="all">Todas as metas</option>
-        {GOALS.map((goal) => (
-          <option key={goal.id} value={goal.id}>
-            {goal.name}
-          </option>
-        ))}
-      </select>
+            filters.setGoalFilter(found?.id ?? "all");
+          }}
+          className={cx(
+            "appearance-none pl-4 pr-9 py-2 rounded-full border border-solid text-sm max-w-full cursor-pointer",
+            goalFilter === "all"
+              ? "bg-surface text-text border-border hover:bg-surface-soft"
+              : "bg-green text-on-brand border-green",
+          )}
+        >
+          <option value="all">Todas as metas</option>
+          {GOALS.map((goal) => (
+            <option key={goal.id} value={goal.id}>
+              {goal.name}
+            </option>
+          ))}
+        </select>
+        <ChevronDown
+          size={14}
+          aria-hidden="true"
+          className={cx(
+            "absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none",
+            goalFilter === "all" ? "text-text-muted" : "text-on-brand",
+          )}
+        />
+      </div>
       {tagFilter && (
         <>
           <span className="sr-only">Filtrando por</span>
