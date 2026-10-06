@@ -64,7 +64,7 @@ export const Route = createRootRouteWithContext<{
         name: "description",
         content: "Organize transações, metas e tags em um orçamento pessoal.",
       },
-      { name: "theme-color", content: "#173f35" },
+      { name: "theme-color", content: "#0d0d12" },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "twogether" },
@@ -82,7 +82,7 @@ export const Route = createRootRouteWithContext<{
       },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;450;500;550;600;650;700&family=Manrope:wght@400;500;600;650;700;750;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..800&display=swap",
       },
     ],
   }),
@@ -98,7 +98,7 @@ export const Route = createRootRouteWithContext<{
           localization={ptBR}
           appearance={{
             variables: {
-              colorPrimary: "var(--green)",
+              colorPrimary: "var(--brand)",
               colorForeground: "var(--text)",
               colorMutedForeground: "var(--text-muted)",
               colorBackground: "var(--surface)",
@@ -106,7 +106,7 @@ export const Route = createRootRouteWithContext<{
               colorInputForeground: "var(--text)",
               colorDanger: "var(--danger)",
               borderRadius: "10px",
-              fontFamily: '"DM Sans", sans-serif',
+              fontFamily: '"Inter Tight", sans-serif',
               fontSize: "14px",
             },
           }}

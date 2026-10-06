@@ -145,7 +145,7 @@ export function TransactionSearch({
         placeholder="Buscar…"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="w-full min-h-[43px] pl-[35px] pr-[38px] rounded-[7px] border border-solid border-border bg-surface text-[13px]"
+        className="w-full min-h-[43px] pl-[35px] pr-[38px] rounded-[7px] border border-solid border-line-strong bg-surface text-[13px]"
       />
       {query && (
         <Button

@@ -19,7 +19,7 @@
 }
 
 .heading h2 {
-  font-family: "Manrope", sans-serif;
+  font-family: "Inter Tight", sans-serif;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -35,7 +35,7 @@
 }
 
 .count {
-  font-family: "DM Sans", sans-serif;
+  font-family: "Inter Tight", sans-serif;
   letter-spacing: 0;
   background: var(--surface-soft);
   border: 1px solid var(--border);
