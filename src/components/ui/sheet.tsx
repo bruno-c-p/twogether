@@ -46,12 +46,12 @@ export function Sheet({
         >
           <Drawer.Popup
             className={cx(
-              "flex flex-col bg-surface text-text outline-0 overflow-y-auto overscroll-contain",
-              "border-0 border-solid border-border",
+              "flex flex-col bg-page text-text outline-0 overflow-y-auto overscroll-contain",
+              "border-0 border-solid border-transparent",
               narrow ? "w-[360px]" : "w-[440px]",
               "h-full max-w-full border-l",
               "max-bp620:h-auto max-bp620:w-full max-bp620:max-h-[88dvh]",
-              "max-bp620:border-l-0 max-bp620:border-t max-bp620:rounded-t-[16px]",
+              "max-bp620:border-l-0 max-bp620:border-t max-bp620:rounded-t-lg",
               "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
               "data-[swipe-direction=right]:[transform:translateX(var(--drawer-swipe-movement-x))]",
               "data-[swipe-direction=down]:[transform:translateY(var(--drawer-swipe-movement-y))]",
@@ -84,13 +84,13 @@ export function SheetHeader({
   description?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-4 mb-[16px]">
+    <div className="flex items-start justify-between gap-[16px] mb-[16px]">
       <div>
-        <Drawer.Title className="m-0 text-[24px] font-heading font-600">
+        <Drawer.Title className="m-0 text-2xl font-800 tracking-[-0.035em]">
           {title}
         </Drawer.Title>
         {description && (
-          <Drawer.Description className="text-text-muted mt-1.5 mb-0">
+          <Drawer.Description className="text-text-muted mt-[4px] mb-0">
             {description}
           </Drawer.Description>
         )}

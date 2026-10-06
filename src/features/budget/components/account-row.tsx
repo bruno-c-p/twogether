@@ -74,7 +74,6 @@ export function AccountRow({
           </Button>
           <Button
             variant="secondary"
-            className="bg-transparent text-text-muted text-[13px] px-[10px] py-[6px] rounded-[8px]"
             disabled={busy}
             aria-label={`Editar ${account.name}`}
             onClick={() => onEdit(account)}

@@ -8,7 +8,7 @@ export function ColorDot({
   return (
     <span
       className={cx(
-        "w-[6px] h-[6px] rounded-full inline-block shrink-0",
+        "w-[8px] h-[8px] rounded-full inline-block shrink-0",
         className,
       )}
       {...props}

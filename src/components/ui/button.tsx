@@ -5,32 +5,32 @@ type Variant = "primary" | "secondary" | "text" | "icon" | "tag";
 
 const variants: Record<Variant, string> = {
   primary: cx(
-    "inline-flex items-center justify-center gap-[9px]",
-    "bg-green text-on-brand border border-solid border-green",
-    "px-[19px] py-[13px] rounded-[7px] text-[12px] font-500",
-    "whitespace-nowrap min-h-[43px]",
+    "inline-flex items-center justify-center gap-[8px]",
+    "bg-brand text-on-brand border border-solid border-transparent",
+    "px-[20px] py-[12px] rounded-md text-md font-600",
+    "whitespace-nowrap min-h-[44px]",
     "hover:bg-brand-hover",
-    "bp1450:text-[14px]",
-    "max-bp800:p-[12px]",
+    "max-bp800:px-[16px]",
   ),
   secondary: cx(
-    "border border-solid border-border rounded-[6px] bg-surface-soft",
-    "px-[16px] py-[11px] text-[12px]",
+    "border border-solid border-transparent rounded-md bg-surface-2",
+    "px-[16px] py-[10px] text-sm font-600",
+    "hover:bg-surface-3",
   ),
   text: cx(
-    "border-0 bg-transparent inline-flex gap-[7px] items-center",
-    "text-text-muted text-[12px] py-[8px] px-0",
+    "border-0 bg-transparent inline-flex gap-[8px] items-center",
+    "text-text-muted text-sm font-500 py-[8px] px-0",
     "hover:text-text",
   ),
   icon: cx(
     "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
-    "border-none bg-transparent p-0 rounded-[6px]",
-    "hover:bg-surface-soft",
+    "border-none bg-transparent p-0 rounded-md",
+    "hover:bg-surface-2",
   ),
   tag: cx(
-    "inline-flex items-center gap-[6px] px-[9px] py-[5px]",
-    "border border-solid border-border rounded-[5px] bg-surface-soft",
-    "text-text-muted text-[12px]",
+    "inline-flex items-center gap-[6px] px-[8px] py-[4px]",
+    "border border-solid border-transparent rounded-sm bg-surface-2",
+    "text-text-muted text-xs font-500",
   ),
 };
 

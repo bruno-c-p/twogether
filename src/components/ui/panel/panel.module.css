@@ -1,80 +1,54 @@
+/* A transparent border keeps the edge visible in forced-colors mode. */
 .panel {
-  margin-top: 33px;
-  border: 1px solid var(--border);
-  border-radius: 11px;
+  margin-top: 32px;
+  border: 1px solid transparent;
+  border-radius: 14px;
   background: var(--surface);
   overflow: hidden;
 }
 
 .panel > .heading {
-  padding: 23px 23px 0;
+  padding: 24px 24px 0;
 }
 
 .heading {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 18px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .heading h2 {
-  font-family: "Inter Tight", sans-serif;
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-size: 17px;
-  font-weight: 650;
-  letter-spacing: -0.45px;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .heading p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 4px;
 }
 
 .count {
-  font-family: "Inter Tight", sans-serif;
   letter-spacing: 0;
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
+  background: var(--surface-2);
   color: var(--text-muted);
-  border-radius: 5px;
-  font-size: 10px;
-  font-weight: 400;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
   min-width: 22px;
   text-align: center;
-  padding: 2px 5px;
-}
-
-@media (min-width: 1450px) {
-  .heading h2 {
-    font-size: 19px;
-  }
-
-  .heading p {
-    font-size: 13px;
-  }
-
-  .heading button {
-    font-size: 13px;
-  }
+  padding: 0 6px;
 }
 
 @media (max-width: 620px) {
-  .heading {
-    margin-bottom: 15px;
-  }
-
-  .heading h2 {
-    font-size: 17px;
-    gap: 6px;
-  }
-
   .panel {
-    margin-top: 27px;
-    border-radius: 9px;
+    margin-top: 24px;
   }
 
   .panel > .heading {
@@ -82,12 +56,10 @@
   }
 
   .heading p {
-    font-size: 10px;
     line-height: 1.6;
   }
 
   .heading button {
-    font-size: 10px;
     white-space: nowrap;
   }
 }
