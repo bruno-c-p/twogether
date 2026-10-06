@@ -18,18 +18,6 @@ import {
   setMonth,
 } from "../fixtures/app";
 
-async function addAccount(page: Page, name = "Nubank") {
-  await openView(page, "Contas");
-  await page.getByRole("button", { name: "Adicionar conta" }).first().click();
-  await page.getByLabel("Nome da conta").fill(name);
-  await page.getByLabel("Saldo inicial").fill("0,00");
-  await page
-    .getByRole("dialog", { name: "Nova conta" })
-    .getByRole("button", { name: "Adicionar conta" })
-    .click();
-  await expectToast(page, "Conta adicionada.");
-}
-
 async function addExpense(page: Page, description: string, date: string) {
   const dialog = await openNewTransaction(page);
   await dialog.getByRole("button", { name: "Despesa" }).click();
@@ -73,7 +61,6 @@ test.describe("overview and goals", () => {
     browser,
   }) => {
     const { bia, biaPage } = await onboardCouple(page, browser);
-    await addAccount(page);
     await setMonth(page, "2026-09");
     await addExpense(page, "Ana mercado", "2026-09-10");
 
@@ -138,12 +125,7 @@ test.describe("overview and goals", () => {
       await expect(page.getByRole("dialog")).toHaveCount(0);
     }
 
-    await openView(page, "Contas");
-    await expect(
-      page.getByText("Considera só as transações da pessoa selecionada.", {
-        exact: false,
-      }),
-    ).toBeVisible();
+    await openView(page, "Orçamento");
 
     const memberId = new URL(page.url()).searchParams.get("member");
     await nav(page, "desktop")
@@ -180,16 +162,14 @@ test.describe("overview and goals", () => {
     await bia.close();
   });
 
-  test("M11 four views, desktop and mobile nav", async ({ page, browser }) => {
+  test("M11 three views, desktop and mobile nav", async ({ page, browser }) => {
     const { bia } = await onboardCouple(page, browser);
-    await addAccount(page);
     await setMonth(page, "2026-09");
     await addExpense(page, "Farmácia", "2026-09-02");
 
     const views = [
       { name: "Visão geral", heading: "Visão geral", path: "/" },
       { name: "Transações", heading: "Transações", path: "/transacoes" },
-      { name: "Contas", heading: "Contas", path: "/contas" },
       { name: "Orçamento", heading: "Orçamento", path: "/orcamento" },
     ] as const;
 
@@ -203,9 +183,9 @@ test.describe("overview and goals", () => {
     }
 
     // Old bookmarks kept the page in ?view=.
-    await page.goto("/?view=accounts&month=2026-09");
-    await expect(page).toHaveURL(/\/contas\?month=2026-09$/);
-    await expect(page.locator("#main-content h1")).toHaveText("Contas");
+    await page.goto("/?view=goals&month=2026-09");
+    await expect(page).toHaveURL(/\/orcamento\?month=2026-09$/);
+    await expect(page.locator("#main-content h1")).toHaveText("Orçamento");
 
     await nav(page, "desktop")
       .getByRole("link", { name: "Visão geral" })
@@ -254,7 +234,7 @@ test.describe("overview and goals", () => {
       page.getByRole("button", { name: "Editar meus percentuais" }),
     ).toBeHidden();
 
-    await openView(page, "Contas");
+    await openView(page, "Transações");
     await expect(monthTrigger(page)).toBeVisible();
     await expect(personFilter(page)).toBeVisible();
 
@@ -299,7 +279,6 @@ test.describe("overview and goals", () => {
     page,
   }) => {
     await onboard(page, "Ana");
-    await addAccount(page);
     await setMonth(page, "2026-09");
 
     const income = await openNewTransaction(page);

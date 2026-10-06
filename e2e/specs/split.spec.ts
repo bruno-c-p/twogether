@@ -13,18 +13,6 @@ import {
   choosePerson,
 } from "../fixtures/app";
 
-async function addAccount(page: Page, name: string) {
-  await openView(page, "Contas");
-  await page.getByRole("button", { name: "Adicionar conta" }).first().click();
-  await page.getByLabel("Nome da conta").fill(name);
-  await page.getByLabel("Saldo inicial").fill("0,00");
-  await page
-    .getByRole("dialog", { name: "Nova conta" })
-    .getByRole("button", { name: "Adicionar conta" })
-    .click();
-  await expectToast(page, "Conta adicionada.");
-}
-
 async function joinPartner(page: Page, browser: Browser) {
   await openCouple(page);
   await page.getByRole("button", { name: "Gerar convite" }).click();
@@ -59,8 +47,6 @@ test.describe("split expenses", () => {
     browser,
   }) => {
     await onboard(page, "Ana");
-    await addAccount(page, "Nubank");
-    await addAccount(page, "Itaú");
     const { context, partner } = await joinPartner(page, browser);
     await reloadApp(page);
     await setMonth(page, "2026-09");
@@ -69,7 +55,6 @@ test.describe("split expenses", () => {
     await dialog.getByLabel("Valor").fill("2000,00");
     await dialog.getByLabel("Descrição").fill("Aluguel");
     await dialog.getByLabel("Data").fill("2026-09-05");
-    await dialog.getByLabel("Conta").selectOption({ label: "Nubank" });
     await dialog
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
@@ -97,12 +82,6 @@ test.describe("split expenses", () => {
     await card.getByRole("button", { name: "Marcar como pago" }).click();
     const settle = partner.getByRole("dialog", { name: "Marcar como pago" });
     await settle.getByLabel("Data do pagamento").fill("2026-09-10");
-    await settle
-      .getByLabel("Conta de onde você pagou")
-      .selectOption({ label: "Itaú" });
-    await settle
-      .getByLabel("Conta onde Ana recebeu")
-      .selectOption({ label: "Nubank" });
     await settle.getByRole("button", { name: "Confirmar pagamento" }).click();
     await expectToast(partner, "Pagamento registrado.");
     await expect(card.getByText("Nada pendente entre vocês")).toBeVisible();

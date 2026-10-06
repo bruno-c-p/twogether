@@ -2,7 +2,6 @@ import { ChevronDown, Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import type {
-  BankAccount,
   GoalId,
   Transaction,
   Member,
@@ -26,7 +25,6 @@ interface TransactionFilters {
 
 type RowActions = {
   members: Member[];
-  accounts: BankAccount[];
   userId: string;
   busy: boolean;
   hidden: boolean;
@@ -249,11 +247,7 @@ function NoTransactions({
         icon={<Search size={25} strokeWidth={1.5} />}
         title="Nenhuma transação encontrada."
         action={
-          <Button
-            variant="secondary"
-            className="mt-2"
-            onClick={clearFilters}
-          >
+          <Button variant="secondary" className="mt-2" onClick={clearFilters}>
             Limpar filtros
           </Button>
         }

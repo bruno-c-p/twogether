@@ -3,24 +3,21 @@ import { within } from "@testing-library/react";
 import { describe, expect, onTestFinished, test, vi } from "vitest";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
-import type { BankAccount, Transaction } from "@/features/budget/domain/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-import { ana, nubank, transaction } from "@/test/fixtures";
+import { ana, transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
 function budget({
   transactions = [transaction()],
-  accounts = [nubank],
   syncError = "",
 }: {
   transactions?: Transaction[];
-  accounts?: BankAccount[];
   syncError?: string;
 } = {}): BudgetController {
   return {
     state: {
       transactions,
-      accounts,
       percentages: { ...DEFAULT_PERCENTAGES },
     },
     user: { id: "ana", name: "Ana" },
@@ -114,35 +111,6 @@ describe("BudgetWorkspace", () => {
       screen.getByRole("button", { name: "Mostrar valores" }),
     ).toBeTruthy();
     expect(screen.getAllByText("R$ ••••").length).toBeGreaterThan(0);
-  });
-
-  test("the accounts view explains balances and opens the account dialog", async () => {
-    const { screen, user } = await renderWorkspace(
-      budget(),
-      "/contas?month=2026-09",
-    );
-
-    expect(screen.getByText(/Inclui as transações do casal\./)).toBeTruthy();
-    await user.click(screen.getByRole("button", { name: "Adicionar conta" }));
-    expect(
-      await screen.findByRole("heading", { name: "Nova conta" }),
-    ).toBeTruthy();
-  });
-
-  test("a new transaction without accounts sends the person to Contas", async () => {
-    const { screen, user, router } = await renderWorkspace(
-      budget({ accounts: [] }),
-      "/transacoes?month=2026-09",
-    );
-
-    await user.click(
-      screen.getAllByRole("button", { name: "Adicionar transação" })[0],
-    );
-    expect(
-      await screen.findByText("Cadastre uma conta para lançar transações."),
-    ).toBeTruthy();
-    expect(router.state.location.pathname).toBe("/contas");
-    expect(router.state.location.search).toEqual({ month: "2026-09" });
   });
 
   test("editing a transaction opens it prefilled", async () => {
@@ -263,7 +231,7 @@ describe("BudgetWorkspace", () => {
       name: "Navegação principal",
     });
 
-    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    await user.click(within(nav).getByRole("link", { name: "Orçamento" }));
     await vi.waitFor(() =>
       expect(scrollTo).toHaveBeenCalledWith(
         expect.objectContaining({ top: 0 }),
@@ -284,18 +252,18 @@ describe("BudgetWorkspace", () => {
     expect(
       within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
     ).toBe("page");
-    await user.click(within(nav).getByRole("link", { name: "Contas" }));
+    await user.click(within(nav).getByRole("link", { name: "Orçamento" }));
     expect(
-      await screen.findByRole("heading", { level: 1, name: "Contas" }),
+      await screen.findByRole("heading", { level: 1, name: "Orçamento" }),
     ).toBeTruthy();
-    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.pathname).toBe("/orcamento");
     expect(router.state.location.search).toEqual({
       month: "2026-08",
       member: "ana",
     });
-    expect(within(nav).getByRole("link", { name: "Contas" }).ariaCurrent).toBe(
-      "page",
-    );
+    expect(
+      within(nav).getByRole("link", { name: "Orçamento" }).ariaCurrent,
+    ).toBe("page");
     expect(
       within(nav).getByRole("link", { name: "Transações" }).ariaCurrent,
     ).toBeNull();
@@ -306,7 +274,7 @@ describe("BudgetWorkspace", () => {
     await user.click(
       await screen.findByRole("button", { name: "outubro 2026" }),
     );
-    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.pathname).toBe("/orcamento");
     expect(router.state.location.search).toEqual({
       month: "2026-10",
       member: "ana",

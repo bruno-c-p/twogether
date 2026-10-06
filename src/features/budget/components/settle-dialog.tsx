@@ -18,22 +18,15 @@ import {
 import { formText, localDate, money } from "@/features/budget/domain/format";
 import { dateSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
-import type {
-  BankAccount,
-  Member,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { Member, Transaction } from "@/features/budget/domain/types";
 
 export interface SettleInput {
   date: string;
-  payerAccountId: string;
-  partnerAccountId: string;
 }
 
 export function SettleDialog({
   transaction,
   members,
-  accounts,
   busy,
   serverError,
   onConfirm,
@@ -41,7 +34,6 @@ export function SettleDialog({
 }: {
   transaction: Transaction;
   members: Member[];
-  accounts: BankAccount[];
   // The payment is being saved; the caller closes the dialog when it succeeds.
   busy: boolean;
   serverError: string;
@@ -55,11 +47,6 @@ export function SettleDialog({
     "a outra pessoa";
 
   const share = partnerShare(transaction.amount);
-  const accountIds = new Set(accounts.map((account) => account.id));
-
-  const defaultAccount = accountIds.has(transaction.accountId)
-    ? transaction.accountId
-    : "";
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -67,50 +54,16 @@ export function SettleDialog({
     if (busy) return;
     const form = new FormData(event.currentTarget);
 
-    const input = {
-      date: formText(form, "date"),
-      payerAccountId: formText(form, "payerAccountId"),
-      partnerAccountId: formText(form, "partnerAccountId"),
-    };
+    const input = { date: formText(form, "date") };
 
     const next: Record<string, string> = {};
 
     if (!dateSchema.safeParse(input.date).success)
       next.date = "Escolha uma data válida.";
-
-    if (!accountIds.has(input.payerAccountId))
-      next.payerAccountId = "Escolha uma conta bancária.";
-
-    if (!accountIds.has(input.partnerAccountId))
-      next.partnerAccountId = "Escolha uma conta bancária.";
     setErrors(next);
 
     if (Object.keys(next).length) return;
     void onConfirm(input);
-  }
-
-  function accountSelect(name: keyof SettleInput, label: string) {
-    return (
-      <Field>
-        {label}
-        <select
-          name={name}
-          aria-label={label}
-          defaultValue={defaultAccount}
-          required
-          aria-describedby={errors[name] ? `${name}-error` : undefined}
-          aria-invalid={errors[name] ? true : undefined}
-        >
-          {!defaultAccount && <option value="">Selecione uma conta</option>}
-          {accounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.name}
-            </option>
-          ))}
-        </select>
-        <FieldError id={`${name}-error`}>{errors[name]}</FieldError>
-      </Field>
-    );
   }
 
   return (
@@ -145,8 +98,6 @@ export function SettleDialog({
               />
               <FieldError id="date-error">{errors.date}</FieldError>
             </Field>
-            {accountSelect("partnerAccountId", "Conta de onde você pagou")}
-            {accountSelect("payerAccountId", `Conta onde ${payer} recebeu`)}
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>
               <DialogDismiss>Cancelar</DialogDismiss>

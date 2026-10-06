@@ -1,9 +1,6 @@
-import { useNavigate } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import type { Notice } from "@/features/budget/components/notice";
-import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import type {
-  BankAccount,
   GoalPercentages,
   Transaction,
 } from "@/features/budget/domain/types";
@@ -42,18 +39,9 @@ export function useWorkspaceActions({
   setMonth: (month: string) => void;
 }) {
   const posthog = usePostHog();
-  const navigate = useNavigate();
 
-  const {
-    saveTx,
-    deleteTx,
-    restoreTx,
-    saveAcc,
-    deleteAcc,
-    savePct,
-    settleTx,
-    unsettleTx,
-  } = mutations;
+  const { saveTx, deleteTx, restoreTx, savePct, settleTx, unsettleTx } =
+    mutations;
 
   async function save(transaction: Transaction, occurrences = 1) {
     const isUpdate = Boolean(dialogs.transaction?.transaction);
@@ -85,13 +73,6 @@ export function useWorkspaceActions({
   }
 
   function openTransaction(transaction: Transaction | null) {
-    if (!transaction && budget.state.accounts.length === 0) {
-      setNotice({ message: "Cadastre uma conta para lançar transações." });
-      void navigate({ to: WORKSPACE_PATHS.accounts });
-
-      return;
-    }
-
     dialogs.setTransaction({ transaction });
   }
 
@@ -101,25 +82,6 @@ export function useWorkspaceActions({
     );
 
     dialogs.setPercentagesRevision(own?.percentagesRevision ?? 0);
-  }
-
-  async function saveAccountRecord(account: BankAccount) {
-    const isUpdate = Boolean(dialogs.account?.account);
-
-    if (!(await saveAcc.run(account))) return;
-
-    posthog.capture(isUpdate ? "account_updated" : "account_created");
-    dialogs.setAccount(null);
-    setNotice({
-      message: isUpdate ? "Conta atualizada." : "Conta adicionada.",
-    });
-  }
-
-  async function removeAccount(account: BankAccount) {
-    if (!(await deleteAcc.run(versioned(account)))) return;
-
-    posthog.capture("account_deleted");
-    setNotice({ message: "Conta excluída." });
   }
 
   function openSettle(transaction: Transaction) {
@@ -215,8 +177,6 @@ export function useWorkspaceActions({
     remove,
     openTransaction,
     openPercentages,
-    saveAccountRecord,
-    removeAccount,
     undoNotice,
     saveGoalPercentages,
     deleteRecurring,

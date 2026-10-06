@@ -11,7 +11,6 @@ import {
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
-import { AccountsScreen } from "@/features/budget/components/screens/accounts-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
@@ -58,7 +57,6 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
           validateSearch: validateTransactionFilters,
           component: TransactionsScreen,
         }),
-        page("/contas", AccountsScreen),
         page("/orcamento", BudgetScreen),
       ]),
     ]),

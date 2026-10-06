@@ -12,7 +12,6 @@ const snapshot: WorkspaceSnapshot = {
   household: { id: "home", members: [ana] },
   budget: {
     transactions: [],
-    accounts: [],
     percentages: { ...DEFAULT_PERCENTAGES },
   },
 };
@@ -140,13 +139,13 @@ describe("useMutation", () => {
 
   test("a redirect navigates instead of showing an error", async () => {
     const { screen, user, onResult, router } = await setup(async () => {
-      throw redirect({ to: "/contas", search: { month: "2026-09" } });
+      throw redirect({ to: "/orcamento", search: { month: "2026-09" } });
     });
 
     await user.click(screen.getByRole("button", { name: "run" }));
 
     await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
-    expect(router.state.location.pathname).toBe("/contas");
+    expect(router.state.location.pathname).toBe("/orcamento");
     expect(screen.getByRole("status").textContent).toBe("idle");
   });
 

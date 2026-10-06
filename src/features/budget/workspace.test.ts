@@ -21,7 +21,6 @@ const mercado: Transaction = {
   date: "2026-09-14",
   goal: "fixed",
   tags: ["casa"],
-  accountId: "account-1",
   revision: 1,
   memberId: "ana",
   createdBy: "ana",
@@ -42,7 +41,6 @@ const snapshot: WorkspaceSnapshot = {
   },
   budget: {
     percentages: DEFAULT_PERCENTAGES,
-    accounts: [{ id: "account-1", name: "Nubank", openingBalance: 0 }],
     transactions: [mercado],
   },
 };
@@ -70,7 +68,6 @@ describe("optimisticSave", () => {
       date: "2026-09-01",
       goal: null,
       tags: [],
-      accountId: "account-1",
     };
 
     const next = optimisticSave(snapshot, { transaction: salary });

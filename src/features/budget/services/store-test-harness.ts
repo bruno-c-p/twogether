@@ -5,16 +5,9 @@ import {
 } from "@/features/budget/budget.server";
 import { RequestError } from "@/server/request-error";
 import type { UserRow } from "@/server/db.server";
-import type { BankAccount, Transaction } from "@/features/budget/domain/types";
+import type { Transaction } from "@/features/budget/domain/types";
 
-export function account(id = "account-1"): BankAccount {
-  return { id, name: "Nubank", openingBalance: 0 };
-}
-
-export function transaction(
-  memberId: string,
-  accountId = "account-1",
-): Transaction {
+export function transaction(memberId: string): Transaction {
   return {
     id: "transaction-1",
     description: "Mercado",
@@ -24,7 +17,6 @@ export function transaction(
     goal: "fixed",
     tags: ["casa"],
     memberId,
-    accountId,
   };
 }
 
@@ -72,14 +64,6 @@ export async function couple(store: BudgetStore) {
     a: { user: ana.user },
     b: { user: await store.ensureUser(b.user.id) },
   };
-}
-
-export async function householdReady(store: BudgetStore) {
-  const pair = await couple(store);
-  const actor = await withHousehold(store, pair.a.user);
-  await store.saveAccount(actor.householdId, account());
-
-  return pair;
 }
 
 export function setupMemoryStore() {

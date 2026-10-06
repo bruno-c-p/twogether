@@ -14,7 +14,6 @@ import { Route as EntrarRouteImport } from './routes/entrar'
 import { Route as AuthenticatedWorkspaceRouteRouteImport } from './routes/_authenticated/_workspace/route'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
 import { Route as AuthenticatedWorkspaceIndexRouteImport } from './routes/_authenticated/_workspace/index'
-import { Route as AuthenticatedWorkspaceContasRouteImport } from './routes/_authenticated/_workspace/contas'
 import { Route as AuthenticatedWorkspaceOrcamentoRouteImport } from './routes/_authenticated/_workspace/orcamento'
 import { Route as AuthenticatedWorkspaceTransacoesRouteImport } from './routes/_authenticated/_workspace/transacoes'
 
@@ -43,12 +42,6 @@ const AuthenticatedWorkspaceIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
   } as any)
-const AuthenticatedWorkspaceContasRoute =
-  AuthenticatedWorkspaceContasRouteImport.update({
-    id: '/contas',
-    path: '/contas',
-    getParentRoute: () => AuthenticatedWorkspaceRouteRoute,
-  } as any)
 const AuthenticatedWorkspaceOrcamentoRoute =
   AuthenticatedWorkspaceOrcamentoRouteImport.update({
     id: '/orcamento',
@@ -66,7 +59,6 @@ export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
   '/convite/$token': typeof ConviteTokenRoute
-  '/contas': typeof AuthenticatedWorkspaceContasRoute
   '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
@@ -74,7 +66,6 @@ export interface FileRoutesByTo {
   '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
   '/convite/$token': typeof ConviteTokenRoute
-  '/contas': typeof AuthenticatedWorkspaceContasRoute
   '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
@@ -84,35 +75,21 @@ export interface FileRoutesById {
   '/entrar': typeof EntrarRoute
   '/_authenticated/_workspace': typeof AuthenticatedWorkspaceRouteRouteWithChildren
   '/convite/$token': typeof ConviteTokenRoute
-  '/_authenticated/_workspace/contas': typeof AuthenticatedWorkspaceContasRoute
   '/_authenticated/_workspace/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/_authenticated/_workspace/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
   '/_authenticated/_workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/entrar'
-    | '/convite/$token'
-    | '/contas'
-    | '/orcamento'
-    | '/transacoes'
+  fullPaths: '/' | '/entrar' | '/convite/$token' | '/orcamento' | '/transacoes'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/entrar'
-    | '/convite/$token'
-    | '/contas'
-    | '/orcamento'
-    | '/transacoes'
+  to: '/' | '/entrar' | '/convite/$token' | '/orcamento' | '/transacoes'
   id:
     | '__root__'
     | '/_authenticated'
     | '/entrar'
     | '/_authenticated/_workspace'
     | '/convite/$token'
-    | '/_authenticated/_workspace/contas'
     | '/_authenticated/_workspace/orcamento'
     | '/_authenticated/_workspace/transacoes'
     | '/_authenticated/_workspace/'
@@ -161,13 +138,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedWorkspaceIndexRouteImport
       parentRoute: typeof AuthenticatedWorkspaceRouteRoute
     }
-    '/_authenticated/_workspace/contas': {
-      id: '/_authenticated/_workspace/contas'
-      path: '/contas'
-      fullPath: '/contas'
-      preLoaderRoute: typeof AuthenticatedWorkspaceContasRouteImport
-      parentRoute: typeof AuthenticatedWorkspaceRouteRoute
-    }
     '/_authenticated/_workspace/orcamento': {
       id: '/_authenticated/_workspace/orcamento'
       path: '/orcamento'
@@ -186,7 +156,6 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedWorkspaceRouteRouteChildren {
-  AuthenticatedWorkspaceContasRoute: typeof AuthenticatedWorkspaceContasRoute
   AuthenticatedWorkspaceOrcamentoRoute: typeof AuthenticatedWorkspaceOrcamentoRoute
   AuthenticatedWorkspaceTransacoesRoute: typeof AuthenticatedWorkspaceTransacoesRoute
   AuthenticatedWorkspaceIndexRoute: typeof AuthenticatedWorkspaceIndexRoute
@@ -194,7 +163,6 @@ interface AuthenticatedWorkspaceRouteRouteChildren {
 
 const AuthenticatedWorkspaceRouteRouteChildren: AuthenticatedWorkspaceRouteRouteChildren =
   {
-    AuthenticatedWorkspaceContasRoute: AuthenticatedWorkspaceContasRoute,
     AuthenticatedWorkspaceOrcamentoRoute: AuthenticatedWorkspaceOrcamentoRoute,
     AuthenticatedWorkspaceTransacoesRoute:
       AuthenticatedWorkspaceTransacoesRoute,

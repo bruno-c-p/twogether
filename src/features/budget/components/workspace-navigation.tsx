@@ -59,19 +59,21 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
 }
 
 export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
-  const [first, second, third, fourth] = WORKSPACE_NAVIGATION;
+  const [first, second, third] = WORKSPACE_NAVIGATION;
 
   return (
     <nav
       aria-label="Navegação mobile"
       className={cx(
-        "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center justify-between",
+        "hidden max-bp1000:grid grid-cols-[1fr_auto_1fr] fixed bottom-0 inset-x-0 z-30 items-center",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
         "px-2 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]",
       )}
     >
-      <MobileLink item={first} />
-      <MobileLink item={second} />
+      <div className="flex justify-around">
+        <MobileLink item={first} />
+        <MobileLink item={second} />
+      </div>
       <div className="shrink-0 flex justify-center">
         <button
           type="button"
@@ -86,8 +88,9 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
           <Plus size={22} />
         </button>
       </div>
-      <MobileLink item={third} />
-      <MobileLink item={fourth} />
+      <div className="flex justify-around">
+        <MobileLink item={third} />
+      </div>
     </nav>
   );
 }

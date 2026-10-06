@@ -31,13 +31,6 @@ export const transactionRowSchema = z.object({
   deleted: z.number(),
 });
 
-export const accountRowSchema = z.object({
-  id: z.string(),
-  payload: z.string(),
-  revision: z.number(),
-  deleted: z.number(),
-});
-
 const schema = [
   `CREATE TABLE IF NOT EXISTS households (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0)`,
   `CREATE TABLE IF NOT EXISTS users (id TEXT PRIMARY KEY, name TEXT NOT NULL DEFAULT '', household_id TEXT REFERENCES households(id), percentages TEXT NOT NULL, revision INTEGER NOT NULL DEFAULT 0)`,
@@ -46,7 +39,9 @@ const schema = [
     BEGIN SELECT RAISE(ABORT, 'household_full'); END`,
   `CREATE TABLE IF NOT EXISTS invites (hash TEXT PRIMARY KEY, household_id TEXT NOT NULL UNIQUE REFERENCES households(id), expires INTEGER NOT NULL)`,
   `CREATE TABLE IF NOT EXISTS transactions (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
-  `CREATE TABLE IF NOT EXISTS accounts (id TEXT NOT NULL, household_id TEXT NOT NULL REFERENCES households(id), payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))`,
+  // Bank accounts were removed; the revision stays because no client reads accountId.
+  `DROP TABLE IF EXISTS accounts`,
+  `UPDATE transactions SET payload = json_remove(payload, '$.accountId') WHERE json_extract(payload, '$.accountId') IS NOT NULL`,
 ] as const;
 
 export async function execute(

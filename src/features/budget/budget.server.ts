@@ -4,13 +4,11 @@ import type { InStatement } from "@libsql/client";
 import { firstOccurrence } from "@/features/budget/domain/recurrence";
 import { ensureUser, setName } from "@/features/auth/auth.server";
 import {
-  bankAccountSchema,
   goalPercentagesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
 import type {
-  BankAccount,
   GoalPercentages,
   Transaction,
   WorkspaceSnapshot,
@@ -29,7 +27,6 @@ import {
   one,
   parseRows,
   type DatabaseTransaction,
-  accountRowSchema,
   transactionRowSchema,
   userRowSchema,
   type StoreContext,
@@ -62,9 +59,6 @@ function stored<Output>(schema: z.ZodType<Output>, payload: string): Output {
 const storedTransaction = (payload: string): Transaction =>
   stored(transactionSchema, payload);
 
-const storedAccount = (payload: string): BankAccount =>
-  stored(bankAccountSchema, payload);
-
 const storedPercentages = (payload: string): GoalPercentages =>
   stored(goalPercentagesSchema, payload);
 
@@ -85,18 +79,9 @@ function canonical(value: Transaction, user: UserRow): Transaction {
     kind: value.kind,
     goal: value.goal,
     tags: [...new Set(value.tags)],
-    accountId: value.accountId,
     split: value.split ? {} : undefined,
     updatedBy: user.id,
     updatedAt: new Date().toISOString(),
-  };
-}
-
-function canonicalAccount(value: BankAccount): BankAccount {
-  return {
-    id: value.id,
-    name: value.name,
-    openingBalance: value.openingBalance,
   };
 }
 
@@ -128,7 +113,7 @@ const insertTransaction = (
   args: [entry.id, householdId, JSON.stringify(entry)],
 });
 
-const payloadRowSchema = accountRowSchema.pick({
+const payloadRowSchema = transactionRowSchema.pick({
   payload: true,
   revision: true,
 });
@@ -149,14 +134,10 @@ async function snapshot(
 ): Promise<WorkspaceSnapshot> {
   await ctx.ready;
 
-  const [transactions, accounts, members] = await ctx.db.batch(
+  const [transactions, members] = await ctx.db.batch(
     [
       {
         sql: "SELECT payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
-        args: [householdId],
-      },
-      {
-        sql: "SELECT payload, revision FROM accounts WHERE household_id = ? AND deleted = 0",
         args: [householdId],
       },
       {
@@ -185,40 +166,13 @@ async function snapshot(
         ...storedTransaction(row.payload),
         revision: row.revision,
       })),
-      accounts: parseRows(payloadRowSchema, accounts).map((row) => ({
-        ...storedAccount(row.payload),
-        revision: row.revision,
-      })),
     },
   };
 }
 
-async function requireAccount(
-  transaction: DatabaseTransaction,
-  householdId: string,
-  accountId: Transaction["accountId"],
-  message = "Escolha uma conta bancária.",
-) {
-  const account = await one(
-    transaction,
-    accountRowSchema.pick({ id: true }),
-    "SELECT id FROM accounts WHERE household_id = ? AND id = ? AND deleted = 0",
-    [householdId, accountId],
-  );
-
-  if (!account) throw new RequestError(message);
-}
-
 // A create retried after a lost response carries no revision; accept it when
 // the stored row already matches the submission.
-const RETRY_FIELDS = [
-  "description",
-  "amount",
-  "date",
-  "kind",
-  "goal",
-  "accountId",
-] as const;
+const RETRY_FIELDS = ["description", "amount", "date", "kind", "goal"] as const;
 
 function sameTags(a: string[], b: string[]) {
   return a.length === b.length && a.every((tag, index) => tag === b[index]);
@@ -331,8 +285,6 @@ async function saveTransaction(
   await ctx.atomic(async (transaction) => {
     const occurrences = input.occurrences ?? 1;
     const t = canonical(input.transaction, user);
-
-    await requireAccount(transaction, householdId, t.accountId);
 
     const old = await one(
       transaction,
@@ -492,13 +444,6 @@ async function restoreTransaction(
 
     if (item.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
 
-    await requireAccount(
-      transaction,
-      householdId,
-      item.accountId,
-      "A conta desta transação foi excluída. Recrie a conta antes de restaurar a transação.",
-    );
-
     const result = await execute(
       transaction,
       "UPDATE transactions SET deleted = 0, payload = ?, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 1",
@@ -569,20 +514,12 @@ async function settleSplit(
     id: string;
     revision: number;
     date: string;
-    payerAccountId: string;
-    partnerAccountId: string;
   },
 ) {
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, householdId, input);
 
     if (source.stored.split?.paidAt) throw conflict();
-
-    await Promise.all(
-      [input.payerAccountId, input.partnerAccountId].map((accountId) =>
-        requireAccount(transaction, householdId, accountId),
-      ),
-    );
 
     const now = new Date().toISOString();
     const { stored } = source;
@@ -603,7 +540,6 @@ async function settleSplit(
       kind: "income",
       goal: null,
       tags: [],
-      accountId: input.payerAccountId,
       memberId: stored.memberId,
     };
 
@@ -614,7 +550,6 @@ async function settleSplit(
       kind: "expense",
       goal: stored.goal,
       tags: stored.tags,
-      accountId: input.partnerAccountId,
       memberId: user.id,
     };
 
@@ -657,61 +592,6 @@ async function unsettleSplit(
   });
 }
 
-async function saveAccount(
-  ctx: StoreContext,
-  householdId: string,
-  input: BankAccount,
-) {
-  await ctx.atomic(async (transaction) => {
-    const account = canonicalAccount(input);
-
-    const old = await one(
-      transaction,
-      accountRowSchema,
-      "SELECT * FROM accounts WHERE household_id = ? AND id = ?",
-      [householdId, account.id],
-    );
-
-    assertRevision(old, input.revision);
-    await execute(
-      transaction,
-      "INSERT INTO accounts(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = accounts.revision + 1",
-      [account.id, householdId, JSON.stringify(account)],
-    );
-  });
-}
-
-async function deleteAccount(
-  ctx: StoreContext,
-  householdId: string,
-  input: { id: string; revision: number },
-) {
-  await ctx.atomic(async (transaction) => {
-    const used = await one(
-      transaction,
-      z.object({ found: z.number() }),
-      `SELECT 1 AS found FROM transactions
-         WHERE household_id = ? AND deleted = 0
-           AND json_extract(payload, '$.accountId') = ?
-         LIMIT 1`,
-      [householdId, input.id],
-    );
-
-    if (used)
-      throw new RequestError(
-        "Exclua ou mova as transações desta conta antes de apagá-la.",
-      );
-
-    const result = await execute(
-      transaction,
-      "UPDATE accounts SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND revision = ? AND deleted = 0",
-      [householdId, input.id, input.revision],
-    );
-
-    if (result.rowsAffected !== 1) throw conflict();
-  });
-}
-
 async function savePercentages(
   ctx: StoreContext,
   user: UserRow,
@@ -751,8 +631,6 @@ export function createBudgetStore(filename: string) {
     restoreTransaction: bind(restoreTransaction),
     settleSplit: bind(settleSplit),
     unsettleSplit: bind(unsettleSplit),
-    saveAccount: bind(saveAccount),
-    deleteAccount: bind(deleteAccount),
     savePercentages: bind(savePercentages),
     close: () => ctx.close(),
   };

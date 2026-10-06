@@ -7,7 +7,7 @@ import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
-import { ana, nubank, transaction } from "@/test/fixtures";
+import { ana, transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
 function fakeMutations(succeeds: boolean): BudgetMutations {
@@ -18,8 +18,6 @@ function fakeMutations(succeeds: boolean): BudgetMutations {
     saveTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     deleteTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     restoreTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    saveAcc: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    deleteAcc: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     savePct: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     settleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
     unsettleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
@@ -31,7 +29,6 @@ function fakeMutations(succeeds: boolean): BudgetMutations {
 const budget: BudgetController = {
   state: {
     transactions: [],
-    accounts: [nubank],
     percentages: { ...DEFAULT_PERCENTAGES },
   },
   user: { id: "ana", name: "Ana" },
@@ -78,17 +75,10 @@ function Harness({
       >
         delete following
       </button>
-      <button onClick={() => dialogs.setAccount({ account: nubank })}>
-        edit account
-      </button>
-      <button onClick={() => void actions.saveAccountRecord(nubank)}>
-        save account
-      </button>
       <button onClick={actions.openPercentages}>edit percentages</button>
       <button onClick={() => void actions.undoNotice()}>undo</button>
       <p role="status">{notice?.message ?? ""}</p>
       <p data-testid="deleting">{dialogs.deleting?.id ?? "none"}</p>
-      <p data-testid="account">{dialogs.account ? "open" : "closed"}</p>
       <p data-testid="percentages">{dialogs.percentagesRevision ?? "closed"}</p>
     </>
   );
@@ -150,47 +140,6 @@ describe("useWorkspaceActions", () => {
     await vi.waitFor(() => expect(mutations.deleteTx.run).toHaveBeenCalled());
     expect(screen.getByTestId("deleting").textContent).toBe("r0");
     expect(screen.getByRole("status").textContent).toBe("");
-  });
-
-  test("saving an account says added or updated, and nothing on failure", async () => {
-    const added = await setup({ mutations: fakeMutations(true) });
-
-    await added.user.click(
-      added.screen.getByRole("button", { name: "save account" }),
-    );
-    await vi.waitFor(() =>
-      expect(added.screen.getByRole("status").textContent).toBe(
-        "Conta adicionada.",
-      ),
-    );
-    added.unmount();
-
-    const updated = await setup({ mutations: fakeMutations(true) });
-
-    await updated.user.click(
-      updated.screen.getByRole("button", { name: "edit account" }),
-    );
-    await updated.user.click(
-      updated.screen.getByRole("button", { name: "save account" }),
-    );
-    await vi.waitFor(() =>
-      expect(updated.screen.getByRole("status").textContent).toBe(
-        "Conta atualizada.",
-      ),
-    );
-    expect(updated.screen.getByTestId("account").textContent).toBe("closed");
-    updated.unmount();
-
-    const failed = await setup({ mutations: fakeMutations(false) });
-
-    await failed.user.click(
-      failed.screen.getByRole("button", { name: "edit account" }),
-    );
-    await failed.user.click(
-      failed.screen.getByRole("button", { name: "save account" }),
-    );
-    expect(failed.screen.getByRole("status").textContent).toBe("");
-    expect(failed.screen.getByTestId("account").textContent).toBe("open");
   });
 
   test("percentages open at the person's own revision", async () => {

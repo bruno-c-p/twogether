@@ -1,8 +1,4 @@
-import type {
-  BankAccount,
-  MemberBudget,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { MemberBudget, Transaction } from "@/features/budget/domain/types";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 
 export const ana: MemberBudget = {
@@ -10,13 +6,6 @@ export const ana: MemberBudget = {
   name: "Ana",
   percentages: { ...DEFAULT_PERCENTAGES },
   percentagesRevision: 0,
-};
-
-export const nubank: BankAccount = {
-  id: "nubank",
-  name: "Nubank",
-  openingBalance: 100000,
-  revision: 1,
 };
 
 export function transaction(overrides: Partial<Transaction> = {}): Transaction {
@@ -28,7 +17,6 @@ export function transaction(overrides: Partial<Transaction> = {}): Transaction {
     date: "2026-09-10",
     goal: "fixed",
     tags: ["casa"],
-    accountId: "nubank",
     memberId: "ana",
     revision: 1,
     ...overrides,

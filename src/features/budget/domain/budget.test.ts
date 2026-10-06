@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  accountBalance,
   memberTotals,
   planGoals,
   summarize,
@@ -14,11 +13,9 @@ import {
   parseAmount,
   monthLabel,
   monthName,
-  parseBalance,
   shortDay,
 } from "@/features/budget/domain/format";
 import {
-  bankAccountSchema,
   goalPercentagesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
@@ -34,7 +31,6 @@ const transactions: Transaction[] = [
     date: "2026-09-01",
     goal: null,
     tags: [],
-    accountId: "account-1",
   },
   {
     id: "fixed",
@@ -44,7 +40,6 @@ const transactions: Transaction[] = [
     date: "2026-09-05",
     goal: "fixed",
     tags: ["casa"],
-    accountId: "account-1",
   },
   {
     id: "pleasure",
@@ -54,7 +49,6 @@ const transactions: Transaction[] = [
     date: "2026-09-11",
     goal: "pleasure",
     tags: ["a dois"],
-    accountId: "account-1",
   },
 ];
 
@@ -176,68 +170,11 @@ describe("tipo da transação", () => {
       transactionSchema.safeParse({ ...transactions[1], goal: null }).success,
     ).toBe(false);
   });
-  it("exige uma conta bancária", () => {
+  it("aceita transações salvas antes da remoção das contas", () => {
     expect(
-      transactionSchema.safeParse({ ...transactions[0], accountId: "" })
+      transactionSchema.safeParse({ ...transactions[0], accountId: "nubank" })
         .success,
-    ).toBe(false);
-    expect(
-      transactionSchema.safeParse({ ...transactions[0], accountId: undefined })
-        .success,
-    ).toBe(false);
-  });
-});
-
-describe("conta bancária", () => {
-  it("exige identificador, nome e saldo inicial", () => {
-    expect(
-      bankAccountSchema.safeParse({
-        id: "account-1",
-        name: "Nubank",
-        openingBalance: 0,
-      }).success,
     ).toBe(true);
-    expect(
-      bankAccountSchema.safeParse({ id: "account-1", name: "Nubank" }).success,
-    ).toBe(false);
-    expect(
-      bankAccountSchema.safeParse({ id: "", name: "Nubank", openingBalance: 0 })
-        .success,
-    ).toBe(false);
-    expect(
-      bankAccountSchema.safeParse({
-        id: "account-1",
-        name: "   ",
-        openingBalance: 0,
-      }).success,
-    ).toBe(false);
-    expect(
-      bankAccountSchema.safeParse({
-        id: "account-1",
-        name: "Nubank",
-        openingBalance: -1,
-      }).success,
-    ).toBe(false);
-  });
-  it("aceita saldo inicial zero e soma receitas e despesas da conta", () => {
-    expect(parseBalance("")).toBe(0);
-    expect(parseBalance("0,00")).toBe(0);
-    expect(parseBalance("1.250,50")).toBe(125050);
-    expect(parseBalance("abc")).toBeNull();
-
-    const account = {
-      id: "account-1",
-      name: "Nubank",
-      openingBalance: 100000,
-    };
-
-    expect(
-      accountBalance(account, [
-        { ...transactions[0], accountId: "account-1" },
-        { ...transactions[1], accountId: "account-1" },
-        { ...transactions[2], accountId: "other" },
-      ]),
-    ).toBe(170000);
   });
 });
 
@@ -315,7 +252,6 @@ describe("individual goal planning", () => {
     date: "2026-09-14",
     goal: null,
     tags: [],
-    accountId: "account-1",
   });
 
   const monthly = [income("a", 500000), income("b", 300000)];
@@ -332,8 +268,7 @@ describe("individual goal planning", () => {
   });
   it("keeps each person's share of a goal's plan", () => {
     expect(
-      planGoals(monthly, members).find((goal) => goal.id === "targets")
-        ?.shares,
+      planGoals(monthly, members).find((goal) => goal.id === "targets")?.shares,
     ).toEqual([
       { memberId: "a", planned: 100000, percentage: 20 },
       { memberId: "b", planned: 30000, percentage: 10 },
@@ -380,7 +315,6 @@ describe("memberTotals", () => {
     date: "2026-09-14",
     goal: kind === "expense" ? "fixed" : null,
     tags: [],
-    accountId: "account-1",
   });
 
   it("splits income and expenses by who recorded them, in member order", () => {

@@ -17,7 +17,6 @@ import {
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
 import { fieldErrors } from "@/lib/zod-errors";
 import type {
-  BankAccount,
   Transaction,
   TransactionKind,
   Member,
@@ -37,7 +36,6 @@ import {
 } from "@/components/ui/dialog/dialog";
 import {
   AmountField,
-  Field,
   FieldError,
   FieldHint,
   FieldRow,
@@ -50,7 +48,6 @@ interface Props {
   defaultDate: string;
   existingTags: string[];
   members: Member[];
-  accounts: BankAccount[];
   currentUserId: string;
   // The save is in flight; the caller closes the dialog when it succeeds,
   // and also after a successful unsettle.
@@ -94,15 +91,6 @@ function submitLabel(saving: boolean, editing: boolean) {
   return editing ? "Salvar alterações" : "Adicionar transação";
 }
 
-function defaultAccountId(
-  transaction: Transaction | null,
-  accounts: BankAccount[],
-) {
-  const fallback = accounts.length === 1 ? accounts[0].id : "";
-
-  return transaction?.accountId ?? fallback;
-}
-
 function useSplitChoice({
   transaction,
   members,
@@ -132,13 +120,12 @@ function useSplitChoice({
 function useTransactionForm({
   transaction,
   members,
-  accounts,
   currentUserId,
   busy,
   onSave,
 }: Pick<
   Props,
-  "transaction" | "members" | "accounts" | "currentUserId" | "busy" | "onSave"
+  "transaction" | "members" | "currentUserId" | "busy" | "onSave"
 >) {
   const [kind, setKind] = useState<TransactionKind>(
     transaction?.kind ?? "expense",
@@ -193,7 +180,6 @@ function useTransactionForm({
       kind: parsed.kind,
       goal: parsed.kind === "income" ? null : parsed.goal,
       tags: completeTags,
-      accountId: parsed.accountId,
       memberId,
       revision: transaction?.revision,
     };
@@ -210,11 +196,10 @@ function useTransactionForm({
 
     const form = new FormData(event.currentTarget);
 
-    const parsed = transactionFormSchema(accounts).safeParse({
+    const parsed = transactionFormSchema.safeParse({
       amount: formText(form, "amount"),
       description: formText(form, "description"),
       date: formText(form, "date"),
-      accountId: formText(form, "accountId"),
       goal,
       kind,
       occurrences: recurring && !transaction ? occurrences : 1,
@@ -259,7 +244,7 @@ function useTransactionForm({
 type TransactionFormState = ReturnType<typeof useTransactionForm>;
 
 type TransactionForm = Extract<
-  ReturnType<ReturnType<typeof transactionFormSchema>["safeParse"]>,
+  ReturnType<typeof transactionFormSchema.safeParse>,
   { success: true }
 >["data"];
 
@@ -341,38 +326,6 @@ function DescriptionAndDate({
         <FieldError id="date-error">{errors.date}</FieldError>
       </label>
     </FieldRow>
-  );
-}
-
-function AccountSelect({
-  transaction,
-  accounts,
-  errors,
-}: {
-  transaction: Transaction | null;
-  accounts: BankAccount[];
-  errors: FieldErrors;
-}) {
-  return (
-    <Field htmlFor="transaction-account">
-      Conta
-      <select
-        id="transaction-account"
-        name="accountId"
-        aria-label="Conta"
-        defaultValue={defaultAccountId(transaction, accounts)}
-        required
-        {...invalidProps(errors, "accountId", "account-error")}
-      >
-        {accounts.length !== 1 && <option value="">Selecione uma conta</option>}
-        {accounts.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name}
-          </option>
-        ))}
-      </select>
-      <FieldError id="account-error">{errors.accountId}</FieldError>
-    </Field>
   );
 }
 
@@ -485,7 +438,6 @@ export function TransactionDialog({
   defaultDate,
   existingTags,
   members,
-  accounts,
   currentUserId,
   busy,
   serverError,
@@ -498,7 +450,6 @@ export function TransactionDialog({
   const form = useTransactionForm({
     transaction,
     members,
-    accounts,
     currentUserId,
     busy,
     onSave,
@@ -533,11 +484,6 @@ export function TransactionDialog({
             <DescriptionAndDate
               transaction={transaction}
               defaultDate={defaultDate}
-              errors={form.errors}
-            />
-            <AccountSelect
-              transaction={transaction}
-              accounts={accounts}
               errors={form.errors}
             />
             <ClassificationFields

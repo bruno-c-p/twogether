@@ -1,8 +1,6 @@
 import {
-  deleteAccount,
   deleteTransaction,
   restoreTransaction,
-  saveAccount,
   savePercentages,
   saveTransaction,
   settleSplit,
@@ -18,7 +16,6 @@ import {
 } from "@/features/budget/workspace";
 import type { SettleInput } from "@/features/budget/components/settle-dialog";
 import type {
-  BankAccount,
   GoalPercentages,
   Transaction,
 } from "@/features/budget/domain/types";
@@ -45,14 +42,6 @@ export function useBudgetMutations() {
     (snapshot, data) => optimisticRestore(snapshot, data.transaction),
   );
 
-  const saveAcc = useMutation((account: BankAccount) =>
-    saveAccount({ data: { account } }),
-  );
-
-  const deleteAcc = useMutation((data: { id: string; revision: number }) =>
-    deleteAccount({ data }),
-  );
-
   const savePct = useMutation(
     (data: { percentages: GoalPercentages; revision: number }) =>
       savePercentages({ data }),
@@ -69,23 +58,12 @@ export function useBudgetMutations() {
     optimisticUnsettle,
   );
 
-  const all = [
-    saveTx,
-    deleteTx,
-    restoreTx,
-    saveAcc,
-    deleteAcc,
-    savePct,
-    settleTx,
-    unsettleTx,
-  ];
+  const all = [saveTx, deleteTx, restoreTx, savePct, settleTx, unsettleTx];
 
   return {
     saveTx,
     deleteTx,
     restoreTx,
-    saveAcc,
-    deleteAcc,
     savePct,
     settleTx,
     unsettleTx,
