@@ -5,26 +5,13 @@
   margin: 22px 0;
 }
 
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 34px;
-  height: 34px;
-  background: var(--surface-soft);
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
 .coupleMember {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 12px;
-  background: var(--surface-soft);
-  border-radius: 12px;
+  background: var(--surface-2);
+  border-radius: 10px;
 }
 
 .coupleMember strong {

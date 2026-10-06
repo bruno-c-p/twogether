@@ -52,11 +52,11 @@ function MarkBar({ second }: { second?: boolean }) {
   return (
     <span
       className={cx(
-        "absolute w-[8px] h-[24px] bg-green",
+        "absolute w-[8px] h-[24px] bg-brand",
         second ? "left-[16px] top-[1px]" : "left-[3px] top-[7px]",
         "rounded-t-[1px] rounded-b-[5px]",
         "after:content-[''] after:absolute after:top-[6px] after:left-[-4px]",
-        "after:w-[16px] after:h-[6px] after:bg-green",
+        "after:w-[16px] after:h-[6px] after:bg-brand",
       )}
     />
   );

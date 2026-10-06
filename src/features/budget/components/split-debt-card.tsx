@@ -88,8 +88,7 @@ export function SplitDebtCard({
         <Button
           variant="secondary"
           className={cx(
-            "w-full mt-[10px] min-h-[44px] bg-transparent rounded-[10px]",
-            "border-text text-text font-500 text-[14px]",
+            "w-full mt-[10px] min-h-[44px]",
             "max-bp1000:mt-0 max-bp1000:w-auto max-bp1000:col-start-2 max-bp1000:row-start-1 max-bp1000:row-span-2 max-bp1000:whitespace-nowrap",
           )}
           disabled={busy}

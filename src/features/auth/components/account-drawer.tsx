@@ -5,11 +5,8 @@ import { ThemeToggle } from "@/features/theme";
 import type { Member } from "@/features/budget/domain/types";
 import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
-
-function initial(member: Member) {
-  return member.name.trim().charAt(0).toLocaleUpperCase("pt-BR") || "?";
-}
 
 export function AccountDrawer({
   user,
@@ -39,19 +36,16 @@ export function AccountDrawer({
           className="flex items-center pl-[8px] border-0 bg-transparent p-0 cursor-pointer"
         >
           {members.slice(0, 2).map((member, index) => (
-            <span
+            <PersonAvatar
               key={member.id}
               aria-hidden="true"
+              name={member.name}
+              position={index}
               className={cx(
-                "w-[32px] h-[32px] rounded-full inline-flex items-center justify-center",
-                "text-[12px] font-600 border-2 border-solid border-page",
-                index === 0
-                  ? "bg-green text-on-brand"
-                  : "bg-category-pleasure text-on-brand -ml-[10px]",
+                "w-[32px] h-[32px] text-[12px] border-2 border-solid border-page",
+                index > 0 && "-ml-[10px]",
               )}
-            >
-              {initial(member)}
-            </span>
+            />
           ))}
         </SheetTrigger>
       }

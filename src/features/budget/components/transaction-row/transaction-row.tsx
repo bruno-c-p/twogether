@@ -8,6 +8,7 @@ import type {
 } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
 
 function amountLabel(transaction: Transaction, hidden: boolean) {
@@ -48,21 +49,15 @@ function PayerAvatar({
   memberId: string | undefined;
 }) {
   const index = members.findIndex((member) => member.id === memberId);
-  const name = members[index]?.name ?? "Pessoa do casal";
+  const name = members[index]?.name;
 
   return (
-    <span
-      title={name}
-      className={cx(
-        "w-[26px] h-[26px] rounded-full inline-flex items-center justify-center",
-        "text-[11px] font-600 shrink-0 max-bp1000:row-span-2",
-        index === -1 && "bg-surface-soft text-text-muted",
-        index === 0 && "bg-green text-on-brand",
-        index > 0 && "bg-category-pleasure text-on-brand",
-      )}
-    >
-      {index === -1 ? "?" : name.slice(0, 1).toLocaleUpperCase("pt-BR")}
-    </span>
+    <PersonAvatar
+      title={name ?? "Pessoa do casal"}
+      name={name}
+      position={index}
+      className="w-[26px] h-[26px] text-[12px] max-bp1000:row-span-2"
+    />
   );
 }
 
@@ -141,7 +136,7 @@ export function TransactionRow({
           </span>
         ) : (
           <span className="inline-flex items-center gap-[8px] min-w-0 text-text max-bp1000:text-text-muted">
-            <ColorDot className="w-[7px] h-[7px] bg-green" />
+            <ColorDot className="bg-brand" />
             Receita
           </span>
         )}
