@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { Transaction } from "@/features/budget/domain/types";
 import {
-  account,
-  householdReady,
+  couple,
   signup,
   transaction,
   setupMemoryStore,
@@ -25,10 +24,9 @@ function rent(memberId: string): Transaction {
 
 async function setup() {
   const { store } = ctx;
-  const { a, b } = await householdReady(store);
+  const { a, b } = await couple(store);
   const ana = await withHousehold(store, a.user);
   const bia = await withHousehold(store, b.user);
-  await store.saveAccount(ana.householdId, account("account-2"));
   await store.saveTransaction(ana.user, ana.householdId, {
     transaction: rent(ana.user.id),
   });
@@ -45,8 +43,6 @@ const settleInput = {
   id: "rent",
   revision: 1,
   date: "2026-09-20",
-  payerAccountId: "account-1",
-  partnerAccountId: "account-2",
 };
 
 describe("split transactions", () => {
@@ -56,7 +52,6 @@ describe("split transactions", () => {
     const solo = await signup(store, "Cris");
     await store.createHousehold(solo.user);
     const cris = await withHousehold(store, solo.user);
-    await store.saveAccount(cris.householdId, account());
     await expect(
       store.saveTransaction(cris.user, cris.householdId, {
         transaction: rent(cris.user.id),
@@ -78,7 +73,6 @@ describe("split transactions", () => {
     expect(income).toMatchObject({
       amount: 100000,
       memberId: ana.user.id,
-      accountId: "account-1",
       date: "2026-09-20",
       goal: null,
       description: "Reembolso: Aluguel",
@@ -86,7 +80,6 @@ describe("split transactions", () => {
     expect(expense).toMatchObject({
       amount: 100000,
       memberId: bia.user.id,
-      accountId: "account-2",
       date: "2026-09-20",
       goal: "fixed",
       tags: ["casa"],

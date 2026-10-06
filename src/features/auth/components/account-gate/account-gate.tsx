@@ -48,7 +48,7 @@ function gateHeadline(user: GateUser) {
 
 function gateIntro(user: GateUser) {
   return user
-    ? "Tudo compartilhado: contas, transações, tags e as seis metas de vocês."
+    ? "Tudo compartilhado: transações, tags e as seis metas de vocês."
     : "Seu e-mail é a única chave. Sem senha: enviamos um código de acesso.";
 }
 

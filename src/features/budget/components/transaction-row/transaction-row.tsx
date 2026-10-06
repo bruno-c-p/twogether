@@ -1,11 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
-import type {
-  BankAccount,
-  Member,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { Member, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
 import { PersonAvatar } from "@/components/ui/person-avatar";
@@ -64,7 +60,6 @@ function PayerAvatar({
 export function TransactionRow({
   transaction,
   members,
-  accounts,
   userId,
   busy,
   hidden,
@@ -74,7 +69,6 @@ export function TransactionRow({
 }: {
   transaction: Transaction;
   members: Member[];
-  accounts: BankAccount[];
   userId: string;
   busy: boolean;
   hidden: boolean;
@@ -84,7 +78,6 @@ export function TransactionRow({
 }) {
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
-  const account = accounts.find((item) => item.id === t.accountId)?.name;
   const status = splitLabel(t, userId);
   const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
   const removeLock = deleteLock(t);
@@ -93,7 +86,7 @@ export function TransactionRow({
     <div
       className={cx(
         "grid items-center gap-x-4 px-6 py-3 border-0 border-t border-solid border-border",
-        "grid-cols-[26px_minmax(0,1fr)_210px_120px_130px_64px]",
+        "grid-cols-[26px_minmax(0,1fr)_210px_130px_64px]",
         "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-0.5 max-bp1000:px-4",
       )}
     >
@@ -116,9 +109,7 @@ export function TransactionRow({
             #{tag}
           </button>
         ))}
-        {status && (
-          <span className="text-xs text-text-muted">{status}</span>
-        )}
+        {status && <span className="text-xs text-text-muted">{status}</span>}
       </div>
       <div
         className={cx(
@@ -140,10 +131,6 @@ export function TransactionRow({
             Receita
           </span>
         )}
-        <span aria-hidden="true" className="bp1000:hidden">
-          ·
-        </span>
-        <span className="break-words min-w-0">{account ?? "Sem conta"}</span>
       </div>
       <span
         className={cx(

@@ -1,19 +1,15 @@
 import { describe, expect, test, vi } from "vitest";
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
-import type { BankAccount, Transaction } from "@/features/budget/domain/types";
-import { ana, nubank, transaction } from "@/test/fixtures";
+import type { Transaction } from "@/features/budget/domain/types";
+import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
-
-const itau: BankAccount = { id: "itau", name: "Itaú", openingBalance: 0 };
 
 function setup({
   editing = null,
-  accounts = [nubank],
   busy = false,
   currentUserId = "ana",
 }: {
   editing?: Transaction | null;
-  accounts?: BankAccount[];
   busy?: boolean;
   currentUserId?: string;
 } = {}) {
@@ -32,7 +28,6 @@ function setup({
       defaultDate="2026-09-15"
       existingTags={["casa", "mercado"]}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
-      accounts={accounts}
       currentUserId={currentUserId}
       busy={busy}
       serverError=""
@@ -48,7 +43,7 @@ function setup({
 }
 
 describe("TransactionDialog", () => {
-  test("adds an expense with goal, typed tag and the only account preselected", async () => {
+  test("adds an expense with goal and typed tag", async () => {
     const { screen, user, onSave, onClose } = setup();
 
     await user.type(screen.getByLabelText("Valor"), "4590");
@@ -67,7 +62,6 @@ describe("TransactionDialog", () => {
         kind: "expense",
         goal: "pleasure",
         tags: ["sábado"],
-        accountId: "nubank",
         memberId: "ana",
       }),
       1,
@@ -84,16 +78,12 @@ describe("TransactionDialog", () => {
   });
 
   test("income drops the goal picker and repeats monthly when asked", async () => {
-    const { screen, user, onSave } = setup({ accounts: [nubank, itau] });
+    const { screen, user, onSave } = setup();
 
     await user.click(screen.getByRole("button", { name: "Receita" }));
     expect(screen.queryByRole("group", { name: "Para qual meta?" })).toBeNull();
     await user.type(screen.getByLabelText("Valor"), "500000");
     await user.type(screen.getByLabelText("Descrição"), "Salário");
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Conta" }),
-      "itau",
-    );
     await user.click(
       screen.getByRole("switch", { name: "Repetir mensalmente" }),
     );
@@ -107,7 +97,6 @@ describe("TransactionDialog", () => {
       expect.objectContaining({
         kind: "income",
         goal: null,
-        accountId: "itau",
       }),
       3,
     );

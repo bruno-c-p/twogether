@@ -2,7 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
-import { nubank } from "@/test/fixtures";
+import { transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
 function idle() {
@@ -15,16 +15,14 @@ function idle() {
 }
 
 function Harness() {
-  const saveAcc = useMutation(() =>
-    Promise.reject(new Error("Conta duplicada.")),
+  const saveTx = useMutation(() =>
+    Promise.reject(new Error("Transação duplicada.")),
   );
 
   const mutations: BudgetMutations = {
-    saveTx: idle(),
+    saveTx,
     deleteTx: idle(),
     restoreTx: idle(),
-    saveAcc,
-    deleteAcc: idle(),
     savePct: idle(),
     settleTx: idle(),
     unsettleTx: idle(),
@@ -36,12 +34,14 @@ function Harness() {
 
   return (
     <>
-      <button onClick={() => dialogs.setAccount({ account: nubank })}>
+      <button
+        onClick={() => dialogs.setTransaction({ transaction: transaction() })}
+      >
         open
       </button>
-      <button onClick={() => void saveAcc.run()}>save</button>
-      <button onClick={() => dialogs.setAccount(null)}>close</button>
-      <p role="status">{saveAcc.error || "no error"}</p>
+      <button onClick={() => void saveTx.run()}>save</button>
+      <button onClick={() => dialogs.setTransaction(null)}>close</button>
+      <p role="status">{saveTx.error || "no error"}</p>
     </>
   );
 }
@@ -53,13 +53,13 @@ describe("useWorkspaceDialogs", () => {
 
     await user.click(screen.getByRole("button", { name: "open" }));
     await user.click(screen.getByRole("button", { name: "save" }));
-    await vi.waitFor(() => expect(status()).toBe("Conta duplicada."));
+    await vi.waitFor(() => expect(status()).toBe("Transação duplicada."));
 
     await user.click(screen.getByRole("button", { name: "close" }));
     expect(status()).toBe("no error");
 
     await user.click(screen.getByRole("button", { name: "save" }));
-    await vi.waitFor(() => expect(status()).toBe("Conta duplicada."));
+    await vi.waitFor(() => expect(status()).toBe("Transação duplicada."));
     await user.click(screen.getByRole("button", { name: "open" }));
     expect(status()).toBe("no error");
   });

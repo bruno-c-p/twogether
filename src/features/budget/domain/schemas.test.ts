@@ -34,13 +34,12 @@ describe("schemas", () => {
   });
 
   test("the form keeps the split minimum and the goal rules", () => {
-    const form = transactionFormSchema([{ id: "nubank" }]);
+    const form = transactionFormSchema;
 
     const base = {
       amount: "0,01",
       description: "Pão",
       date: "2026-09-10",
-      accountId: "nubank",
       goal: null,
       kind: "expense" as const,
       occurrences: 1,

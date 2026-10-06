@@ -6,7 +6,7 @@ import {
 } from "@/features/budget/components/transaction-list/transaction-list";
 import type { GoalId, Transaction } from "@/features/budget/domain/types";
 import type { KindFilter } from "@/features/budget/search";
-import { ana, nubank, transaction } from "@/test/fixtures";
+import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
 const month = [
@@ -25,7 +25,6 @@ const month = [
     date: "2026-09-05",
     tags: [],
     memberId: "someone-else",
-    accountId: "gone",
   }),
   transaction({
     id: "t3",
@@ -70,7 +69,6 @@ function List({
           setKindFilter,
         }}
         members={[ana]}
-        accounts={[nubank]}
         userId="ana"
         busy={false}
         hidden={hidden}
@@ -89,7 +87,7 @@ function rowNames(screen: ReturnType<typeof renderPlain>["screen"]) {
 }
 
 describe("TransactionList", () => {
-  test("lists newest first grouped by day with account, goal and signed amounts", () => {
+  test("lists newest first grouped by day with goal and signed amounts", () => {
     const { screen } = renderPlain(<List />);
 
     expect(rowNames(screen)).toEqual([
@@ -100,8 +98,6 @@ describe("TransactionList", () => {
     expect(screen.getByText("12 set · sábado")).toBeTruthy();
     expect(screen.getByText("10 set · quinta")).toBeTruthy();
     expect(screen.getByText("05 set · sábado")).toBeTruthy();
-    expect(screen.getByText("Sem conta")).toBeTruthy();
-    expect(screen.getAllByText("Nubank")).toHaveLength(2);
     expect(screen.getByText("Receita")).toBeTruthy();
     expect(screen.getAllByText(/\+\sR\$\s5\.000,00/)).toHaveLength(2);
     expect(screen.getAllByText(/−\sR\$\s45,90/)).toHaveLength(4);

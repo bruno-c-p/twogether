@@ -12,16 +12,12 @@ const settleSplitSchema = inputSchema({
   id: idSchema,
   revision: revisionSchema,
   date: dateSchema,
-  payerAccountId: idSchema,
-  partnerAccountId: idSchema,
 });
 
 export const parseSettleSplit = actionInput<{
   id: string;
   revision: number;
   date: string;
-  payerAccountId: string;
-  partnerAccountId: string;
 }>(settleSplitSchema);
 
 export const settleSplit = createServerFn({ method: "POST" })

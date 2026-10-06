@@ -1,9 +1,5 @@
 import { z } from "zod";
-import {
-  localDate,
-  parseAmount,
-  parseBalance,
-} from "@/features/budget/domain/format";
+import { localDate, parseAmount } from "@/features/budget/domain/format";
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
@@ -66,34 +62,19 @@ export const transactionKindSchema = z.enum(["expense", "income"], {
   error: "Tipo da transação inválido.",
 });
 
-export const viewSchema = z.enum(
-  ["overview", "transactions", "goals", "accounts"],
-  { error: "Visão inválida." },
-);
+export const viewSchema = z.enum(["overview", "transactions", "goals"], {
+  error: "Visão inválida.",
+});
 
 const centsSchema = z
   .int({ error: "Digite um valor válido, como 45,90." })
   .min(1, { error: "Digite um valor válido, como 45,90." })
   .max(MONEY_MAX, { error: "Digite um valor válido, como 45,90." });
 
-const balanceCentsSchema = z
-  .int({ error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
-  .min(0, { error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00." })
-  .max(MONEY_MAX, {
-    error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
-  });
-
 const amountInputSchema = z
   .string({ error: "Digite um valor válido, como 45,90." })
   .transform((value) => parseAmount(value))
   .pipe(centsSchema);
-
-const balanceInputSchema = z
-  .string({
-    error: "Digite um saldo inicial válido, como 0,00 ou 1.250,00.",
-  })
-  .transform((value) => parseBalance(value))
-  .pipe(balanceCentsSchema);
 
 const tagSchema = z
   .string({ error: "Cada tag deve ter no máximo 24 caracteres." })
@@ -124,12 +105,6 @@ const descriptionSchema = z
   .trim()
   .min(1, { error: "Dê um nome para esta transação." })
   .max(80, { error: "A descrição deve ter no máximo 80 caracteres." });
-
-const accountNameSchema = z
-  .string({ error: "Dê um nome para esta conta." })
-  .trim()
-  .min(1, { error: "Dê um nome para esta conta." })
-  .max(50, { error: "O nome da conta deve ter no máximo 50 caracteres." });
 
 // Expenses need one of the six goals; income never has one.
 function withGoalRules<
@@ -184,10 +159,6 @@ export const transactionSchema = withGoalRules(
     date: dateSchema,
     goal: goalIdSchema.nullable(),
     tags: tagsSchema,
-    accountId: z
-      .string({ error: "Escolha uma conta bancária." })
-      .min(1, { error: "Escolha uma conta bancária." })
-      .max(100, { error: "Escolha uma conta bancária." }),
     recurrenceId: optionalText,
     recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
     memberId: optionalText,
@@ -207,16 +178,6 @@ export const transactionSchema = withGoalRules(
     error: SPLIT_MINIMUM_ERROR,
     path: ["split"],
   });
-
-export const bankAccountSchema = z.looseObject({
-  id: z
-    .string({ error: "Confira os dados da conta." })
-    .min(1, { error: "Confira os dados da conta." })
-    .max(100, { error: "Confira os dados da conta." }),
-  name: accountNameSchema,
-  openingBalance: balanceCentsSchema,
-  revision: revisionSchema.optional(),
-});
 
 const percentageValueSchema = z
   .number({ error: "Informe um percentual entre 0 e 100." })
@@ -248,38 +209,22 @@ export const goalPercentagesSchema = z
     { error: "Os percentuais devem somar 100%." },
   );
 
-export function transactionFormSchema(accounts: { id: string }[]) {
-  const accountError = accounts.length
-    ? "Escolha uma conta bancária."
-    : "Cadastre uma conta na aba Contas antes de lançar transações.";
-
-  return withGoalRules(
-    z
-      .object({
-        amount: amountInputSchema,
-        description: descriptionSchema,
-        date: dateSchema,
-        accountId: z
-          .string({ error: accountError })
-          .refine((value) => accounts.some((account) => account.id === value), {
-            error: accountError,
-          }),
-        goal: goalIdSchema.nullable(),
-        kind: transactionKindSchema,
-        occurrences: occurrencesSchema,
-        split: z.boolean(),
-      })
-      .refine((value) => !splitTooSmall(value), {
-        error: SPLIT_MINIMUM_ERROR,
-        path: ["amount"],
-      }),
-  );
-}
-
-export const accountFormSchema = z.object({
-  name: accountNameSchema,
-  openingBalance: balanceInputSchema,
-});
+export const transactionFormSchema = withGoalRules(
+  z
+    .object({
+      amount: amountInputSchema,
+      description: descriptionSchema,
+      date: dateSchema,
+      goal: goalIdSchema.nullable(),
+      kind: transactionKindSchema,
+      occurrences: occurrencesSchema,
+      split: z.boolean(),
+    })
+    .refine((value) => !splitTooSmall(value), {
+      error: SPLIT_MINIMUM_ERROR,
+      path: ["amount"],
+    }),
+);
 
 export const nameFormSchema = z.object({ name: nameSchema });
 

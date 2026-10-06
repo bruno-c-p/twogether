@@ -42,7 +42,6 @@ export function TransactionsScreen() {
       <TransactionList
         transactions={data.monthly}
         members={budget.household.members}
-        accounts={budget.state.accounts}
         userId={budget.user.id}
         busy={busy}
         hidden={hidden}

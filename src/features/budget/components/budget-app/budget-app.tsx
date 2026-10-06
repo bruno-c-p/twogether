@@ -42,7 +42,6 @@ export function BudgetApp({ month }: { month: string }) {
 
 function listErrorFor(mutations: BudgetMutations, deleting: boolean) {
   return (
-    mutations.deleteAcc.error ||
     mutations.restoreTx.error ||
     mutations.unsettleTx.error ||
     (deleting ? "" : mutations.deleteTx.error)

@@ -3,6 +3,7 @@ import { mkdtempSync, rmSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
+import { createClient } from "@libsql/client";
 import { createStoreContext, one } from "@/server/db.server";
 
 const countSchema = z.object({ total: z.number() });
@@ -18,6 +19,45 @@ async function householdCount(ctx: ReturnType<typeof createStoreContext>) {
 }
 
 describe("createStoreContext", () => {
+  test("drops the old bank accounts and their ids from transactions", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "twogether-db-"));
+    const file = join(dir, "legacy.sqlite");
+    const legacy = createClient({ url: `file:${file}` });
+
+    await legacy.batch(
+      [
+        "CREATE TABLE accounts (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
+        "CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
+        `INSERT INTO accounts VALUES ('nubank', 'home', '{"id":"nubank"}', 1, 0)`,
+        `INSERT INTO transactions VALUES ('t1', 'home', '{"id":"t1","accountId":"nubank"}', 3, 0)`,
+      ],
+      "write",
+    );
+    legacy.close();
+
+    const ctx = createStoreContext(file);
+
+    try {
+      await ctx.ready;
+
+      const tables = await ctx.db.execute(
+        "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'accounts'",
+      );
+
+      const row = await one(
+        ctx.db,
+        z.object({ payload: z.string(), revision: z.number() }),
+        "SELECT payload, revision FROM transactions WHERE id = 't1'",
+      );
+
+      expect(tables.rows).toHaveLength(0);
+      expect(row).toEqual({ payload: '{"id":"t1"}', revision: 3 });
+    } finally {
+      ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   test("creates a private SQLite file and its folder for a plain path", async () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-db-"));
     const file = join(dir, "nested", "budget.sqlite");

@@ -13,7 +13,6 @@ const base: Transaction = {
   date: "2026-09-05",
   goal: "fixed",
   tags: [],
-  accountId: "a1",
 };
 
 const newId = () => "series-1";

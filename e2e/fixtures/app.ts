@@ -15,7 +15,7 @@ test.beforeEach(async () => {
   try {
     // A retry keeps the Clerk identity but must repeat onboarding from scratch.
     await database.batch(
-      ["transactions", "accounts", "invites", "users", "households"].map(
+      ["transactions", "invites", "users", "households"].map(
         (table) => `DELETE FROM ${table}`,
       ),
       "write",

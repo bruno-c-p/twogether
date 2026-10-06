@@ -2,7 +2,6 @@ import {
   Armchair,
   BookOpen,
   House,
-  Landmark,
   LayoutGrid,
   ReceiptText,
   Sprout,
@@ -73,7 +72,6 @@ export const DEFAULT_PERCENTAGES: GoalPercentages = {
 export const WORKSPACE_PATHS = {
   overview: "/",
   transactions: "/transacoes",
-  accounts: "/contas",
   goals: "/orcamento",
 } as const satisfies Record<View, string>;
 
@@ -86,7 +84,6 @@ export const WORKSPACE_NAVIGATION = [
     label: "Transações",
     icon: ReceiptText,
   },
-  { to: WORKSPACE_PATHS.accounts, label: "Contas", icon: Landmark },
   { to: WORKSPACE_PATHS.goals, label: "Orçamento", icon: Target },
 ] as const satisfies {
   to: WorkspacePath;

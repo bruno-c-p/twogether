@@ -9,18 +9,6 @@ import {
   withMobile,
 } from "../fixtures/app";
 
-async function addNubank(page: Page) {
-  await openView(page, "Contas");
-  await page.getByRole("button", { name: "Adicionar conta" }).first().click();
-  await page.getByLabel("Nome da conta").fill("Nubank");
-  await page.getByLabel("Saldo inicial").fill("1.250,00");
-  await page
-    .getByRole("dialog", { name: "Nova conta" })
-    .getByRole("button", { name: "Adicionar conta" })
-    .click();
-  await expectToast(page, "Conta adicionada.");
-}
-
 function summary(page: Page) {
   return page.getByRole("region", { name: "Resumo mensal" });
 }
@@ -40,7 +28,6 @@ test.describe("transactions", () => {
     page,
   }) => {
     await onboard(page, "Ana");
-    await addNubank(page);
     await setMonth(page, "2026-09");
 
     const dialog = await openNewTransaction(page);
@@ -51,7 +38,6 @@ test.describe("transactions", () => {
     await dialog.getByLabel("Valor").fill("5000,00");
     await dialog.getByLabel("Descrição").fill("Salário");
     await dialog.getByLabel("Data").fill("2026-09-01");
-    await dialog.getByLabel("Conta").selectOption({ label: "Nubank" });
     await expect(dialog.getByText("Para qual meta?")).toHaveCount(0);
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
@@ -61,7 +47,6 @@ test.describe("transactions", () => {
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
     await expense.getByLabel("Data").fill("2026-09-14");
-    await expense.getByLabel("Conta").selectOption({ label: "Nubank" });
     await expense
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
@@ -81,7 +66,6 @@ test.describe("transactions", () => {
       page.getByRole("button", { name: "Mercado", exact: true }),
     ).toBeVisible();
     const list = page.getByRole("region", { name: "Transações do mês" });
-    await expect(list.getByText("Nubank").first()).toBeVisible();
     await expect(list.getByTitle("Ana").first()).toBeVisible();
     await expect(
       list.locator("span").getByText("Custo fixo", { exact: true }),
@@ -128,7 +112,6 @@ test.describe("transactions", () => {
     page,
   }) => {
     await onboard(page, "Ana");
-    await addNubank(page);
     await setMonth(page, "2026-09");
 
     const dialog = await openNewTransaction(page);
@@ -136,7 +119,6 @@ test.describe("transactions", () => {
     await dialog.getByLabel("Valor").fill("100,00");
     await dialog.getByLabel("Descrição").fill("Aluguel");
     await dialog.getByLabel("Data").fill("2026-09-14");
-    await dialog.getByLabel("Conta").selectOption({ label: "Nubank" });
     await dialog
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
@@ -200,7 +182,6 @@ test.describe("transactions", () => {
     page,
   }) => {
     await onboard(page, "Ana");
-    await addNubank(page);
     await setMonth(page, "2026-09");
 
     const income = await openNewTransaction(page);
@@ -208,7 +189,6 @@ test.describe("transactions", () => {
     await income.getByLabel("Valor").fill("200,00");
     await income.getByLabel("Descrição").fill("Salário");
     await income.getByLabel("Data").fill("2026-09-01");
-    await income.getByLabel("Conta").selectOption({ label: "Nubank" });
     await income.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
@@ -217,7 +197,6 @@ test.describe("transactions", () => {
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
     await expense.getByLabel("Data").fill("2026-09-14");
-    await expense.getByLabel("Conta").selectOption({ label: "Nubank" });
     await expense
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();

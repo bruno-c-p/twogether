@@ -211,7 +211,7 @@ export function AccountSettingsView({
           title="Nosso espaço"
           titleId="account-space-title"
           count={memberCount}
-          description="Tudo aqui é dos dois. Ambos podem ver e editar contas, transações, tags e percentuais."
+          description="Tudo aqui é dos dois. Ambos podem ver e editar transações, tags e percentuais."
         />
         <div className={PANEL_BODY}>
           <MemberList members={members} currentUserId={user.id} />

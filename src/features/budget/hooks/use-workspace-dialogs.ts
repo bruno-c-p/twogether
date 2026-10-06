@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { BankAccount, Transaction } from "@/features/budget/domain/types";
+import type { Transaction } from "@/features/budget/domain/types";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 
 // Opening or closing a dialog clears the errors of the mutations it shows,
@@ -23,10 +23,6 @@ export function useWorkspaceDialogs(mutations: BudgetMutations) {
     transaction: Transaction | null;
   } | null>(null, [mutations.saveTx]);
 
-  const [account, setAccount] = useDialogState<{
-    account: BankAccount | null;
-  } | null>(null, [mutations.saveAcc]);
-
   const [percentagesRevision, setPercentagesRevision] = useDialogState<
     number | null
   >(null, [mutations.savePct]);
@@ -42,8 +38,6 @@ export function useWorkspaceDialogs(mutations: BudgetMutations) {
   return {
     transaction,
     setTransaction,
-    account,
-    setAccount,
     percentagesRevision,
     setPercentagesRevision,
     deleting,

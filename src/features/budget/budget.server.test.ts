@@ -6,9 +6,7 @@ import { createBudgetStore } from "@/features/budget/budget.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
 import {
-  account,
   couple,
-  householdReady,
   requireUser,
   signup,
   transaction,
@@ -22,7 +20,7 @@ const ctx = setupMemoryStore();
 describe("budget store", () => {
   test("new transactions use the logged-in member and edits preserve attribution", async () => {
     const { store } = ctx;
-    const { a, b } = await householdReady(store);
+    const { a, b } = await couple(store);
     const t = transaction(b.user.id);
     const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.householdId, {
@@ -44,7 +42,7 @@ describe("budget store", () => {
 
   test("stale edits fail and unrelated concurrent additions survive", async () => {
     const { store } = ctx;
-    const { a, b } = await householdReady(store);
+    const { a, b } = await couple(store);
     const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.householdId, {
       transaction: transaction(a.user.id),
@@ -72,7 +70,7 @@ describe("budget store", () => {
 
   test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
     const { store } = ctx;
-    const { a } = await householdReady(store);
+    const { a } = await couple(store);
     const t = transaction(a.user.id);
     const ana = await withHousehold(store, a.user);
     await store.saveTransaction(ana.user, ana.householdId, { transaction: t });
@@ -87,7 +85,7 @@ describe("budget store", () => {
 
   test("deletion undo restores only that transaction, never a whole stale budget", async () => {
     const { store } = ctx;
-    const { a, b } = await householdReady(store);
+    const { a, b } = await couple(store);
     const ana = await withHousehold(store, a.user);
     const bia = await withHousehold(store, b.user);
     await store.saveTransaction(ana.user, ana.householdId, {
@@ -120,7 +118,7 @@ describe("budget store", () => {
 
   test("couples are isolated and transaction attribution comes from the member", async () => {
     const { store } = ctx;
-    const { a } = await householdReady(store);
+    const { a } = await couple(store);
     const c = await signup(store, "Cris");
     await store.createHousehold(await requireUser(store, c.user));
     const ana = await withHousehold(store, a.user);
@@ -142,7 +140,7 @@ describe("budget store", () => {
 
   test("individual percentages are per member and reject same-person concurrent overwrite", async () => {
     const { store } = ctx;
-    const { a, b } = await householdReady(store);
+    const { a, b } = await couple(store);
     const percentages = { ...DEFAULT_PERCENTAGES, fixed: 20, targets: 25 };
     const ana = await withHousehold(store, a.user);
     const bia = await withHousehold(store, b.user);
@@ -184,7 +182,6 @@ describe("budget store", () => {
 
       const actor = await withHousehold(disk, user);
 
-      await disk.saveAccount(actor.householdId, account());
       await disk.saveTransaction(actor.user, actor.householdId, {
         transaction: transaction(user.id),
       });
@@ -207,7 +204,7 @@ describe("budget store", () => {
 describe("monthly recurring transactions", () => {
   test("clamps month ends, persists for both members and edits only one occurrence", async () => {
     const { store } = ctx;
-    const { a, b } = await householdReady(store);
+    const { a, b } = await couple(store);
 
     const original = {
       ...transaction(a.user.id),
@@ -256,7 +253,7 @@ describe("monthly recurring transactions", () => {
 
   test("rolls back dates beyond supported range", async () => {
     const { store } = ctx;
-    const { a } = await householdReady(store);
+    const { a } = await couple(store);
     const original = transaction(a.user.id);
     const ana = await withHousehold(store, a.user);
 
@@ -272,7 +269,7 @@ describe("monthly recurring transactions", () => {
 
 test("deletes only the selected series from its original occurrence onward and rejects stale batches", async () => {
   const { store } = ctx;
-  const { a, b } = await householdReady(store);
+  const { a, b } = await couple(store);
   const original = transaction(a.user.id);
   const ana = await withHousehold(store, a.user);
   const bia = await withHousehold(store, b.user);
@@ -326,141 +323,4 @@ test("deletes only the selected series from its original occurrence onward and r
       .filter((item) => item.recurrenceId === series[0].recurrenceId)
       .map((item) => item.id),
   ).toEqual([series[0].id]);
-});
-
-describe("bank accounts", () => {
-  test("creates, edits and shares accounts with both members", async () => {
-    const { store } = ctx;
-    const { a, b } = await couple(store);
-    const ana = await withHousehold(store, a.user);
-    await store.saveAccount(ana.householdId, account());
-    expect((await view(store, a.user)).budget.accounts).toEqual([
-      { id: "account-1", name: "Nubank", openingBalance: 0, revision: 1 },
-    ]);
-    expect((await view(store, b.user)).budget.accounts).toHaveLength(1);
-    const current = (await view(store, a.user)).budget.accounts[0];
-    const bia = await withHousehold(store, b.user);
-    await store.saveAccount(bia.householdId, {
-      ...current,
-      name: "Itaú",
-    });
-    expect((await view(store, a.user)).budget.accounts[0]?.name).toBe("Itaú");
-  });
-
-  test("stores an opening balance on the account", async () => {
-    const { store } = ctx;
-    const { a } = await couple(store);
-    const ana = await withHousehold(store, a.user);
-    await store.saveAccount(ana.householdId, {
-      ...account("balance"),
-      openingBalance: 250000,
-    });
-    expect(
-      (await view(store, a.user)).budget.accounts.find(
-        (item) => item.id === "balance",
-      )?.openingBalance,
-    ).toBe(250000);
-  });
-
-  test("requires an existing account on every transaction save", async () => {
-    const { store } = ctx;
-    const a = await signup(store, "Ana");
-    await store.createHousehold(await requireUser(store, a.user));
-    const ana = await withHousehold(store, a.user);
-    const userId = ana.user.id;
-    await expect(
-      store.saveTransaction(ana.user, ana.householdId, {
-        transaction: transaction(userId),
-      }),
-    ).rejects.toThrow("conta bancária");
-    await store.saveAccount(ana.householdId, account());
-    await expect(
-      store.saveTransaction(ana.user, ana.householdId, {
-        transaction: transaction(userId, "missing"),
-      }),
-    ).rejects.toThrow("conta bancária");
-    await store.saveTransaction(ana.user, ana.householdId, {
-      transaction: transaction(userId),
-    });
-    expect((await view(store, a.user)).budget.transactions[0]?.accountId).toBe(
-      "account-1",
-    );
-  });
-
-  test("rejects deleting an account still used by a transaction", async () => {
-    const { store } = ctx;
-    const { a } = await householdReady(store);
-    const ana = await withHousehold(store, a.user);
-    await store.saveTransaction(ana.user, ana.householdId, {
-      transaction: transaction(a.user.id),
-    });
-    await expect(
-      store.deleteAccount(ana.householdId, {
-        id: "account-1",
-        revision: 1,
-      }),
-    ).rejects.toThrow("transações desta conta");
-    expect((await view(store, a.user)).budget.accounts).toHaveLength(1);
-    await store.deleteTransaction(ana.user, ana.householdId, {
-      id: "transaction-1",
-      revision: 1,
-    });
-    await store.deleteAccount(ana.householdId, {
-      id: "account-1",
-      revision: 1,
-    });
-    expect((await view(store, a.user)).budget.accounts).toHaveLength(0);
-  });
-
-  test("undo cannot restore a transaction onto a deleted account", async () => {
-    const { store } = ctx;
-    const { a } = await householdReady(store);
-    const ana = await withHousehold(store, a.user);
-    await store.saveTransaction(ana.user, ana.householdId, {
-      transaction: transaction(a.user.id),
-    });
-    await store.deleteTransaction(ana.user, ana.householdId, {
-      id: "transaction-1",
-      revision: 1,
-    });
-    await store.deleteAccount(ana.householdId, {
-      id: "account-1",
-      revision: 1,
-    });
-    await expect(
-      store.restoreTransaction(ana.user, ana.householdId, {
-        id: "transaction-1",
-        revision: 2,
-      }),
-    ).rejects.toThrow("A conta desta transação foi excluída.");
-    expect((await view(store, a.user)).budget.transactions).toHaveLength(0);
-  });
-
-  test("stale account edits fail and households stay isolated", async () => {
-    const { store } = ctx;
-    const { a, b } = await householdReady(store);
-    const old = (await view(store, a.user)).budget.accounts[0];
-    const bia = await withHousehold(store, b.user);
-    await store.saveAccount(bia.householdId, {
-      ...old,
-      name: "Caixa",
-    });
-    const ana = await withHousehold(store, a.user);
-    await expect(
-      store.saveAccount(ana.householdId, {
-        ...old,
-        name: "Bradesco",
-      }),
-    ).rejects.toThrow("mudou");
-    const c = await signup(store, "Cris");
-    await store.createHousehold(await requireUser(store, c.user));
-    const cris = await withHousehold(store, c.user);
-    await expect(
-      store.deleteAccount(cris.householdId, {
-        id: "account-1",
-        revision: 2,
-      }),
-    ).rejects.toThrow("mudou");
-    expect((await view(store, c.user)).budget.accounts).toHaveLength(0);
-  });
 });

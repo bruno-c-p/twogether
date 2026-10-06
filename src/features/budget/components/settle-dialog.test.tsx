@@ -3,20 +3,17 @@ import {
   SettleDialog,
   type SettleInput,
 } from "@/features/budget/components/settle-dialog";
-import type { BankAccount, Transaction } from "@/features/budget/domain/types";
-import { ana, nubank, transaction } from "@/test/fixtures";
+import { localDate } from "@/features/budget/domain/format";
+import type { Transaction } from "@/features/budget/domain/types";
+import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
-
-const itau: BankAccount = { id: "itau", name: "Itaú", openingBalance: 0 };
 
 function setup({
   source = transaction({ amount: 10000, memberId: "ana", split: {} }),
-  accounts = [nubank, itau],
   busy = false,
   serverError = "",
 }: {
   source?: Transaction;
-  accounts?: BankAccount[];
   busy?: boolean;
   serverError?: string;
 } = {}) {
@@ -30,7 +27,6 @@ function setup({
     <SettleDialog
       transaction={source}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
-      accounts={accounts}
       busy={busy}
       serverError={serverError}
       onConfirm={onConfirm}
@@ -42,26 +38,17 @@ function setup({
 }
 
 describe("SettleDialog", () => {
-  test("explains the half owed and confirms with the chosen accounts", async () => {
+  test("explains the half owed and confirms with the chosen date", async () => {
     const { screen, user, onConfirm, onClose } = setup();
 
     expect(
       screen.getByText(/Você paga R\$\s50,00 a Ana por “Mercado”\./),
     ).toBeTruthy();
-    await user.selectOptions(
-      screen.getByRole("combobox", { name: "Conta de onde você pagou" }),
-      "itau",
-    );
     await user.click(
       screen.getByRole("button", { name: "Confirmar pagamento" }),
     );
 
-    expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({
-        partnerAccountId: "itau",
-        payerAccountId: "nubank",
-      }),
-    );
+    expect(onConfirm).toHaveBeenCalledWith({ date: localDate() });
     // The settle action closes the dialog once it succeeds.
     expect(onClose).not.toHaveBeenCalled();
   });
@@ -78,24 +65,6 @@ describe("SettleDialog", () => {
 
     expect(submit.closest("fieldset")?.disabled).toBe(true);
     await user.click(submit);
-    expect(onConfirm).not.toHaveBeenCalled();
-  });
-
-  test("an account that no longer exists must be chosen again", async () => {
-    const { screen, onConfirm, container } = setup({
-      source: transaction({ accountId: "gone", memberId: "ana", split: {} }),
-      accounts: [itau],
-    });
-
-    const form = container.ownerDocument.querySelector("form");
-
-    for (const select of container.ownerDocument.querySelectorAll("select"))
-      select.removeAttribute("required");
-    form?.requestSubmit();
-
-    expect(
-      (await screen.findAllByText("Escolha uma conta bancária.")).length,
-    ).toBe(2);
     expect(onConfirm).not.toHaveBeenCalled();
   });
 

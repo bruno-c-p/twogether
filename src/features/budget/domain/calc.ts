@@ -1,53 +1,5 @@
 import { GOALS } from "@/features/budget/constants";
-import type {
-  BankAccount,
-  Transaction,
-  MemberBudget,
-} from "@/features/budget/domain/types";
-
-export function accountBalance(
-  account: BankAccount,
-  transactions: Transaction[],
-): number {
-  return transactions.reduce((balance, transaction) => {
-    if (transaction.accountId !== account.id) return balance;
-
-    switch (transaction.kind) {
-      case "income":
-        return balance + transaction.amount;
-      case "expense":
-        return balance - transaction.amount;
-      default: {
-        const _exhaustive: never = transaction.kind;
-
-        return _exhaustive;
-      }
-    }
-  }, account.openingBalance ?? 0);
-}
-
-export function accountMonthActivity(
-  account: BankAccount,
-  transactions: Transaction[],
-  month: string,
-) {
-  const inMonth = transactions.filter(
-    (transaction) =>
-      transaction.accountId === account.id &&
-      transaction.date.startsWith(month),
-  );
-
-  const total = (kind: Transaction["kind"]) =>
-    inMonth
-      .filter((transaction) => transaction.kind === kind)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
-
-  return {
-    entered: total("income"),
-    left: total("expense"),
-    transactions: [...inMonth].sort((a, b) => b.date.localeCompare(a.date)),
-  };
-}
+import type { Transaction, MemberBudget } from "@/features/budget/domain/types";
 
 export function summarize(transactions: Transaction[]) {
   const income = transactions

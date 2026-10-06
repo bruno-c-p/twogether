@@ -95,12 +95,6 @@ export function parseAmount(value: string): number | null {
   return parseCents(value, 1);
 }
 
-export function parseBalance(value: string): number | null {
-  if (!value.trim()) return 0;
-
-  return parseCents(value, 0);
-}
-
 export function normalizeTag(value: string) {
   return value
     .trim()

@@ -11,13 +11,6 @@ export type TransactionKind = z.infer<typeof transactionKindSchema>;
 
 export type View = z.infer<typeof viewSchema>;
 
-export interface BankAccount {
-  id: string;
-  name: string;
-  openingBalance: number;
-  revision?: number;
-}
-
 export interface TransactionSplit {
   paidAt?: string;
   paidBy?: string;
@@ -32,7 +25,6 @@ export interface Transaction {
   date: string;
   goal: GoalId | null;
   tags: string[];
-  accountId: string;
   recurrenceId?: string;
   recurrenceIndex?: number;
   memberId?: string;
@@ -49,7 +41,6 @@ export type GoalPercentages = Record<GoalId, number>;
 export interface BudgetState {
   percentages: GoalPercentages;
   transactions: Transaction[];
-  accounts: BankAccount[];
 }
 
 export interface Goal {
