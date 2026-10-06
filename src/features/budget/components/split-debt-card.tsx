@@ -40,19 +40,19 @@ export function SplitDebtCard({
       className={cx(
         "grid gap-x-4 content-start",
         "max-bp1000:grid-cols-[1fr_auto] max-bp1000:items-center",
-        "max-bp620:px-4 max-bp620:py-4",
+        "max-bp620:grid-cols-1 max-bp620:px-4 max-bp620:py-4",
       )}
     >
       <h2
         id="split-debt-title"
-        className="font-body font-400 uppercase tracking-[0.06em] text-xs text-text-muted m-0 max-bp1000:normal-case max-bp1000:tracking-normal"
+        className="font-body font-400 uppercase tracking-[0.06em] text-xs text-text-muted m-0 max-bp1000:col-start-1 max-bp1000:normal-case max-bp1000:tracking-normal"
       >
         Acerto entre vocês
       </h2>
       <p
         className={cx(
           "font-heading text-2xl font-700 tabular-nums m-0 mt-4 tracking-[-0.035em]",
-          "max-bp1000:mt-0.5 max-bp1000:text-lg max-bp1000:tracking-normal",
+          "max-bp1000:col-start-1 max-bp1000:mt-0.5 max-bp1000:text-lg max-bp1000:tracking-normal",
           net < 0 ? "text-danger" : "text-text",
         )}
       >
@@ -90,6 +90,8 @@ export function SplitDebtCard({
           className={cx(
             "w-full mt-2 min-h-[44px]",
             "max-bp1000:mt-0 max-bp1000:w-auto max-bp1000:col-start-2 max-bp1000:row-start-1 max-bp1000:row-span-2 max-bp1000:whitespace-nowrap",
+            // Phones stack the button under the text so the headline keeps its width.
+            "max-bp620:mt-3 max-bp620:w-full max-bp620:col-start-1 max-bp620:row-start-auto max-bp620:row-span-1",
           )}
           disabled={busy}
           onClick={() => onSettle(owed)}
