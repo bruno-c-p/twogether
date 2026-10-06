@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { GoalTable } from "@/features/budget/components/goal-table";
 import { IncomeDistribution } from "@/features/budget/components/income-distribution";
 import { PageHeading } from "@/features/budget/components/page-heading";
@@ -19,14 +20,14 @@ export function BudgetScreen() {
         note={note}
         action={
           data.canEditPercentages && (
-            <button
-              className="h-[40px] px-[16px] rounded-[10px] border border-solid border-green bg-surface text-green text-[14px] font-600 cursor-pointer disabled:opacity-60"
+            <Button
+              variant="secondary"
               disabled={busy}
               aria-label="Editar meus percentuais"
               onClick={actions.openPercentages}
             >
               Editar percentuais
-            </button>
+            </Button>
           )
         }
       />

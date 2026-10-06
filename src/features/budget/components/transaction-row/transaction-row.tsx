@@ -56,7 +56,7 @@ function PayerAvatar({
       title={name ?? "Pessoa do casal"}
       name={name}
       position={index}
-      className="w-[26px] h-[26px] text-[12px] max-bp1000:row-span-2"
+      className="w-[26px] h-[26px] text-xs max-bp1000:row-span-2"
     />
   );
 }
@@ -92,15 +92,15 @@ export function TransactionRow({
   return (
     <div
       className={cx(
-        "grid items-center gap-x-[14px] px-[24px] py-[13px] border-0 border-t border-solid border-border",
+        "grid items-center gap-x-4 px-6 py-3 border-0 border-t border-solid border-border",
         "grid-cols-[26px_minmax(0,1fr)_210px_120px_130px_64px]",
-        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-[2px] max-bp1000:px-[16px]",
+        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-0.5 max-bp1000:px-4",
       )}
     >
       <PayerAvatar members={members} memberId={t.memberId} />
-      <div className="min-w-0 flex items-baseline gap-[8px] flex-wrap">
+      <div className="min-w-0 flex items-baseline gap-2 flex-wrap">
         <button
-          className="border-0 bg-transparent p-0 text-left text-[15px] text-text min-w-0 break-words disabled:cursor-default"
+          className="border-0 bg-transparent p-0 text-left text-md text-text min-w-0 break-words disabled:cursor-default"
           disabled={busy || Boolean(editLock)}
           title={editLock || undefined}
           onClick={() => onEdit(t)}
@@ -110,24 +110,24 @@ export function TransactionRow({
         {t.tags.map((tag) => (
           <button
             key={tag}
-            className="border-0 bg-transparent p-0 text-[12px] text-text-muted hover:text-text"
+            className="border-0 bg-transparent p-0 text-xs text-text-muted hover:text-text"
             onClick={() => onTag(tag)}
           >
             #{tag}
           </button>
         ))}
         {status && (
-          <span className="text-[12px] text-text-muted">{status}</span>
+          <span className="text-xs text-text-muted">{status}</span>
         )}
       </div>
       <div
         className={cx(
-          "contents text-[13px] text-text-muted",
-          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-[6px] max-bp1000:min-w-0",
+          "contents text-sm text-text-muted",
+          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-1.5 max-bp1000:min-w-0",
         )}
       >
         {goal ? (
-          <span className="inline-flex items-center gap-[8px] min-w-0 text-text max-bp1000:text-text-muted">
+          <span className="inline-flex items-center gap-2 min-w-0 text-text max-bp1000:text-text-muted">
             <ColorDot
               className="w-[7px] h-[7px]"
               style={{ background: goal.color }}
@@ -135,7 +135,7 @@ export function TransactionRow({
             <span className="break-words min-w-0">{goal.name}</span>
           </span>
         ) : (
-          <span className="inline-flex items-center gap-[8px] min-w-0 text-text max-bp1000:text-text-muted">
+          <span className="inline-flex items-center gap-2 min-w-0 text-text max-bp1000:text-text-muted">
             <ColorDot className="bg-brand" />
             Receita
           </span>
@@ -147,8 +147,8 @@ export function TransactionRow({
       </div>
       <span
         className={cx(
-          "text-right text-[15px] font-600 whitespace-nowrap tabular-nums text-text",
-          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-[14px]",
+          "text-right text-md font-600 whitespace-nowrap tabular-nums text-text",
+          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-md",
         )}
       >
         {amountLabel(t, hidden)}

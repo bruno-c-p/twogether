@@ -46,28 +46,28 @@ function BudgetRow({
         className="block w-full text-left text-text"
         aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${planned}${over ? ", acima do planejado" : ""}`}
       >
-        <span className="flex items-baseline gap-[10px] text-[14px] max-bp620:text-[13px]">
-          <span className="flex items-baseline gap-[8px] min-w-0">
+        <span className="flex items-baseline gap-2 text-md max-bp620:text-sm">
+          <span className="flex items-baseline gap-2 min-w-0">
             <span
               className="size-[8px] rounded-full shrink-0 self-center"
               style={{ background: goal.color }}
               aria-hidden="true"
             />
             <span className="truncate">{goal.name}</span>
-            <span className="text-[11px] text-text-muted max-bp620:hidden">
+            <span className="text-xs text-text-muted max-bp620:hidden">
               {percentageLabel(plan.percentage)}
             </span>
           </span>
-          <span className="ml-auto flex items-baseline gap-[10px]">
+          <span className="ml-auto flex items-baseline gap-2">
             <strong className="font-600 max-bp620:hidden">
               {displayMoney(goal.amount)}
             </strong>
-            <span className="text-[12px] text-text-muted max-bp1000:hidden">
+            <span className="text-xs text-text-muted max-bp1000:hidden">
               de {displayMoney(plan.planned)}
             </span>
             <span
               className={cx(
-                "text-[12px] min-w-[96px] text-right max-bp620:min-w-0",
+                "text-xs min-w-[96px] text-right max-bp620:min-w-0",
                 over ? "text-danger" : "text-text-muted",
               )}
             >
@@ -78,7 +78,7 @@ function BudgetRow({
           </span>
         </span>
         <span
-          className="block h-[4px] rounded-full mt-[8px] overflow-hidden"
+          className="block h-[4px] rounded-full mt-2 overflow-hidden"
           style={{ background: goal.background }}
           aria-hidden="true"
         >
@@ -116,10 +116,10 @@ export function BudgetCard({
 
   return (
     <OverviewCard aria-labelledby="budget-title">
-      <div className="flex items-center justify-between gap-[12px] mb-[18px]">
+      <div className="flex items-center justify-between gap-3 mb-4">
         <h2
           id="budget-title"
-          className="m-0 font-heading text-[19px] font-500 max-bp620:text-[16px]"
+          className="m-0 font-heading text-lg font-700 tracking-[-0.02em]"
         >
           Orçamento do mês
         </h2>
@@ -136,7 +136,7 @@ export function BudgetCard({
           </Button>
         )}
       </div>
-      <ul className="list-none m-0 p-0 flex flex-col gap-[16px] max-bp620:gap-[12px]">
+      <ul className="list-none m-0 p-0 flex flex-col gap-4 max-bp620:gap-3">
         {summary.goals.map((goal) => (
           <BudgetRow
             key={goal.id}

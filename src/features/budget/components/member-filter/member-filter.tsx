@@ -46,7 +46,7 @@ export function MemberFilter({
       }
     >
       <SheetHeader title="Filtrar por pessoa" />
-      <div role="radiogroup" aria-label="Pessoa" className="grid gap-[6px]">
+      <div role="radiogroup" aria-label="Pessoa" className="grid gap-1.5">
         {options.map((option) => (
           <button
             key={option.id}
@@ -58,8 +58,8 @@ export function MemberFilter({
               setOpen(false);
             }}
             className={cx(
-              "flex items-center justify-between gap-[10px] cursor-pointer",
-              "border border-solid rounded-[10px] px-[14px] py-[12px] text-[15px] text-text",
+              "flex items-center justify-between gap-2 cursor-pointer",
+              "border border-solid rounded-md px-4 py-3 text-md text-text",
               option.id === current.id
                 ? "border-green bg-surface-soft font-600"
                 : "border-border bg-surface",

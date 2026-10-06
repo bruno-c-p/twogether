@@ -33,7 +33,7 @@ export function AccountDrawer({
         <SheetTrigger
           aria-label={`Abrir nosso espaço: ${memberLabel}`}
           title={`Nosso espaço: ${memberLabel}`}
-          className="flex items-center pl-[8px] border-0 bg-transparent p-0 cursor-pointer"
+          className="flex items-center pl-2 border-0 bg-transparent p-0 cursor-pointer"
         >
           {members.slice(0, 2).map((member, index) => (
             <PersonAvatar
@@ -42,8 +42,8 @@ export function AccountDrawer({
               name={member.name}
               position={index}
               className={cx(
-                "w-[32px] h-[32px] text-[12px] border-2 border-solid border-page",
-                index > 0 && "-ml-[10px]",
+                "w-[32px] h-[32px] text-xs border-2 border-solid border-page",
+                index > 0 && "-ml-2",
               )}
             />
           ))}
@@ -60,7 +60,7 @@ export function AccountDrawer({
           titleId="account-theme-title"
           description="Claro, escuro ou o mesmo do seu aparelho."
         />
-        <div className="px-[23px] pb-[23px] max-bp620:px-4 max-bp620:pb-4">
+        <div className="px-6 pb-6 max-bp620:px-4 max-bp620:pb-4">
           <ThemeToggle />
         </div>
       </Panel>

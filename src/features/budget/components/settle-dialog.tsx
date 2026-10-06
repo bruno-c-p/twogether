@@ -123,7 +123,7 @@ export function SettleDialog({
         </DialogHeader>
         <form onSubmit={submit}>
           <Fieldset disabled={busy}>
-            <div className="mb-[18px]">
+            <div className="mb-4">
               <FieldHint>
                 {`Você paga ${money(share)} a ${payer} por “${transaction.description}”.`}{" "}
                 Vamos registrar uma receita para {payer} e uma despesa para você

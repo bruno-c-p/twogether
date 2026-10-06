@@ -17,8 +17,7 @@
   box-shadow: 0 24px 60px rgba(13, 13, 18, 0.16);
   transform: translateY(0);
   opacity: 1;
-  transition:
-    transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
+  transition: transform 280ms cubic-bezier(0.32, 0.72, 0, 1),
     opacity 280ms cubic-bezier(0.32, 0.72, 0, 1),
     display 280ms allow-discrete,
     overlay 280ms allow-discrete;

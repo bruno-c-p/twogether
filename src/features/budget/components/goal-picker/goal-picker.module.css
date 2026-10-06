@@ -1,7 +1,7 @@
 .goalField {
   padding: 0;
   border: 0;
-  margin: 0 0 23px;
+  margin: 0 0 24px;
 }
 
 .goalField legend {
@@ -21,11 +21,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   border: 1px solid var(--border);
   border-radius: 6px;
   background: var(--surface);
-  padding: 10px;
+  padding: 8px;
   color: var(--text-muted);
   font-size: 14px;
 }
@@ -46,7 +46,7 @@
 
 @media (max-width: 620px) {
   .goalOption {
-    padding: 10px 8px;
+    padding: 8px 8px;
     min-height: 44px;
   }
 }

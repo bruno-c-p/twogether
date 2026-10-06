@@ -64,9 +64,9 @@ export function Sheet({
           >
             <div
               aria-hidden="true"
-              className="hidden max-bp620:block shrink-0 mx-auto mt-[10px] h-[5px] w-[44px] rounded-full bg-text-muted/40"
+              className="hidden max-bp620:block shrink-0 mx-auto mt-2 h-[5px] w-[44px] rounded-full bg-text-muted/40"
             />
-            <Drawer.Content className="p-[24px] max-bp620:p-[16px] max-bp620:pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
+            <Drawer.Content className="p-6 max-bp620:p-4 max-bp620:pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
               {children}
             </Drawer.Content>
           </Drawer.Popup>
@@ -84,13 +84,13 @@ export function SheetHeader({
   description?: string;
 }) {
   return (
-    <div className="flex items-start justify-between gap-[16px] mb-[16px]">
+    <div className="flex items-start justify-between gap-4 mb-4">
       <div>
         <Drawer.Title className="m-0 text-2xl font-800 tracking-[-0.035em]">
           {title}
         </Drawer.Title>
         {description && (
-          <Drawer.Description className="text-text-muted mt-[4px] mb-0">
+          <Drawer.Description className="text-text-muted mt-1 mb-0">
             {description}
           </Drawer.Description>
         )}

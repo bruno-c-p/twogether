@@ -25,7 +25,7 @@ export function TransactionsScreen() {
         title="Transações"
         note={countNote(data.monthly.length, month)}
         action={
-          <div className="flex items-center gap-[12px] flex-wrap max-bp620:w-full">
+          <div className="flex items-center gap-3 flex-wrap max-bp620:w-full">
             <TransactionSearch
               query={filters.query}
               setQuery={filters.setQuery}

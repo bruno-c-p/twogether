@@ -19,8 +19,8 @@ export function Brand({
     <Link
       to="/"
       className={cx(
-        "flex items-center gap-[9px] font-heading text-[25px] tracking-[-1.2px] font-800",
-        "max-bp1190:text-[23px]",
+        "flex items-center gap-2 font-heading text-2xl tracking-[-1.2px] font-800",
+        "max-bp1190:text-2xl",
         className,
       )}
       {...props}
@@ -39,7 +39,7 @@ export function Brand({
       {children ?? (
         <>
           <span className={textClassName}>twogether</span>
-          <span className={cx("text-text-muted -ml-[9px]", textClassName)}>
+          <span className={cx("text-text-muted -ml-2", textClassName)}>
             .
           </span>
         </>
@@ -54,7 +54,7 @@ function MarkBar({ second }: { second?: boolean }) {
       className={cx(
         "absolute w-[8px] h-[24px] bg-brand",
         second ? "left-[16px] top-[1px]" : "left-[3px] top-[7px]",
-        "rounded-t-[1px] rounded-b-[5px]",
+        "rounded-t-sm rounded-b-sm",
         "after:content-[''] after:absolute after:top-[6px] after:left-[-4px]",
         "after:w-[16px] after:h-[6px] after:bg-brand",
       )}

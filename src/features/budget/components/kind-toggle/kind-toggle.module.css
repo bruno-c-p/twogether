@@ -3,8 +3,8 @@
   padding: 4px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  gap: 5px;
+  border-radius: 10px;
+  gap: 6px;
   margin-bottom: 24px;
 }
 
@@ -12,13 +12,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   flex: 1;
   border: 0;
   background: none;
   color: var(--text-muted);
-  padding: 10px;
-  border-radius: 5px;
+  padding: 8px;
+  border-radius: 6px;
   font-size: 14px;
 }
 

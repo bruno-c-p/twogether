@@ -5,12 +5,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 38px 20px;
+  padding: 40px 20px;
   background: var(--page);
 }
 
 .pageBrand {
-  margin-bottom: 36px;
+  margin-bottom: 40px;
 }
 
 .pageFooter {
@@ -26,8 +26,8 @@
 }
 
 .cardEyebrow {
-  font-size: 10px;
-  letter-spacing: 1.8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
   font-weight: 500;
 }
@@ -35,9 +35,9 @@
 .accountCard {
   width: 100%;
   max-width: 470px;
-  padding: 36px;
+  padding: 40px;
   border: 1px solid var(--border);
-  border-radius: 24px;
+  border-radius: 14px;
   background: var(--surface);
 }
 
@@ -46,18 +46,18 @@
   height: 58px;
   display: grid;
   place-items: center;
-  border-radius: 18px;
+  border-radius: 14px;
   background: var(--surface-soft);
   color: var(--text);
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .accountCard h1 {
-  font-size: clamp(29px, 5vw, 38px);
+  font-size: clamp(24px, 5vw, 32px);
   white-space: pre-line;
   line-height: 1.15;
-  letter-spacing: -1.3px;
-  margin: 10px 0 16px;
+  letter-spacing: -0.035em;
+  margin: 8px 0 16px;
   overflow-wrap: anywhere;
 }
 
@@ -73,7 +73,7 @@
   align-items: center;
   gap: 12px;
   color: var(--text-muted);
-  font-size: 11px;
+  font-size: 12px;
   text-align: center;
 }
 
@@ -123,7 +123,7 @@
   }
 
   .accountCard {
-    padding: 26px 22px;
-    border-radius: 20px;
+    padding: 24px 24px;
+    border-radius: 14px;
   }
 }

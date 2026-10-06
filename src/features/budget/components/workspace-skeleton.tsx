@@ -15,22 +15,22 @@ export function WorkspaceSkeleton() {
         Carregando orçamento…
       </span>
       <header className="h-[63px] border-b border-solid border-border bg-topbar">
-        <div className="mx-auto max-w-[1450px] h-full flex items-center px-[32px] max-bp1190:px-[24px] max-bp800:px-[22px] max-bp620:px-[16px]">
-          <Brand mark className="text-[22px]" markClassName="scale-[.8]" />
+        <div className="mx-auto max-w-[1450px] h-full flex items-center px-8 max-bp1190:px-6 max-bp800:px-6 max-bp620:px-4">
+          <Brand mark className="text-xl" markClassName="scale-[.8]" />
         </div>
       </header>
-      <div className="max-w-[1450px] mx-auto px-[43px] pt-[39px] max-bp1190:px-[28px] max-bp1190:pt-[30px] max-bp800:px-[22px] max-bp800:pt-[27px] max-bp620:px-[19px] max-bp620:pt-[26px]">
+      <div className="max-w-[1450px] mx-auto px-10 pt-10 max-bp1190:px-8 max-bp1190:pt-8 max-bp800:px-6 max-bp800:pt-6 max-bp620:px-5 max-bp620:pt-6">
         <div
           aria-hidden="true"
-          className="h-[28px] w-[180px] rounded-[8px] bg-surface-soft animate-pulse mb-[22px]"
+          className="h-[28px] w-[180px] rounded-md bg-surface-soft animate-pulse mb-6"
         />
-        <div className="grid grid-cols-2 gap-[20px] max-bp1000:grid-cols-1 max-bp620:gap-[12px]">
+        <div className="grid grid-cols-2 gap-5 max-bp1000:grid-cols-1 max-bp620:gap-3">
           {cards.map(([id, height]) => (
             <div
               key={id}
               aria-hidden="true"
               className={cx(
-                "rounded-[16px] bg-surface-soft animate-pulse",
+                "rounded-lg bg-surface-soft animate-pulse",
                 height,
               )}
             />

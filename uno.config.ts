@@ -82,15 +82,9 @@ export default defineConfig({
       sans: '"Inter Tight", sans-serif',
       heading: '"Inter Tight", sans-serif',
     },
-    text: {
-      xs: { fontSize: "12px", lineHeight: "1.5" },
-      sm: { fontSize: "13px", lineHeight: "1.5" },
-      md: { fontSize: "14px", lineHeight: "1.5" },
-      lg: { fontSize: "16px", lineHeight: "1.4" },
-      xl: { fontSize: "20px", lineHeight: "1.3" },
-      "2xl": { fontSize: "24px", lineHeight: "1.2" },
-      "3xl": { fontSize: "32px", lineHeight: "1.15" },
-      "4xl": { fontSize: "44px", lineHeight: "1" },
+    // Fixed 4px base: p-4 is 16px at every root font size.
+    spacing: {
+      DEFAULT: "4px",
     },
     radius: {
       sm: "6px",
@@ -98,6 +92,21 @@ export default defineConfig({
       lg: "14px",
     },
   },
+  // Replaces wind4's text scale instead of merging into it: without a
+  // lineHeight, text-sm only sets font-size and line-height keeps inheriting.
+  extendTheme: (theme) => ({
+    ...theme,
+    text: {
+      xs: { fontSize: "12px" },
+      sm: { fontSize: "13px" },
+      md: { fontSize: "14px" },
+      lg: { fontSize: "16px" },
+      xl: { fontSize: "20px" },
+      "2xl": { fontSize: "24px" },
+      "3xl": { fontSize: "32px" },
+      "4xl": { fontSize: "44px" },
+    },
+  }),
   transformers: [transformerDirectives()],
   preflights: [
     {

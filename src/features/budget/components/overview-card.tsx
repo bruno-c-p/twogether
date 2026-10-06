@@ -9,8 +9,8 @@ export function OverviewCard({
   return (
     <section
       className={cx(
-        "border border-solid rounded-[16px] min-w-0",
-        "p-[24px] max-bp620:p-[16px]",
+        "border border-solid rounded-lg min-w-0",
+        "p-6 max-bp620:p-4",
         tone === "balance"
           ? "bg-balance text-on-balance border-balance-border"
           : "bg-surface border-border",

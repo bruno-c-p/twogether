@@ -12,7 +12,7 @@ export function DesktopNavigation() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="flex items-center gap-[4px] max-bp1000:hidden"
+      className="flex items-center gap-1 max-bp1000:hidden"
     >
       {WORKSPACE_NAVIGATION.map((item) => (
         <Link
@@ -20,7 +20,7 @@ export function DesktopNavigation() {
           to={item.to}
           activeOptions={activeOptions}
           className={cx(
-            "px-[13px] py-[8px] rounded-[9px] text-[13px]",
+            "px-3 py-2 rounded-md text-sm",
             "hover:bg-surface-soft",
           )}
           activeProps={{ className: "bg-surface-soft text-text" }}
@@ -39,7 +39,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
       to={item.to}
       activeOptions={activeOptions}
       className={cx(
-        "flex flex-col items-center gap-[4px] shrink-0 py-[2px] text-center text-[12px] leading-[1.2]",
+        "flex flex-col items-center gap-1 shrink-0 py-0.5 text-center text-xs leading-[1.2]",
       )}
       activeProps={{ className: "text-green" }}
       inactiveProps={{ className: "text-text-muted" }}
@@ -67,7 +67,7 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
       className={cx(
         "hidden max-bp1000:flex fixed bottom-0 inset-x-0 z-30 items-center justify-between",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
-        "px-[8px] pt-[8px] pb-[max(20px,env(safe-area-inset-bottom))]",
+        "px-2 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]",
       )}
     >
       <MobileLink item={first} />

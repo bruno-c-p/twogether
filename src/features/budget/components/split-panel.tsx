@@ -58,7 +58,7 @@ function SettlementRow({
   const paid = Boolean(transaction.split?.paidAt);
 
   return (
-    <div className="flex items-center justify-between gap-[12px] flex-wrap px-[16px] py-[12px] [border-top:1px_solid_var(--border)] text-[12px] max-bp620:px-[14px]">
+    <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3 [border-top:1px_solid_var(--line)] text-xs">
       <span className="text-text-muted leading-[1.6]">
         {settlementStatus(transaction, debtorName, userIsDebtor)}
       </span>
@@ -108,12 +108,12 @@ export function SplitPanel({
   return (
     <section
       aria-label="Divisão"
-      className="mb-[24px] border border-solid border-border rounded-[10px] bg-surface-soft"
+      className="mb-6 border border-solid border-border rounded-md bg-surface-soft"
     >
       <div
         className={cx(
-          "flex items-center gap-[12px] p-[16px]",
-          "max-bp620:p-[14px] max-bp620:gap-[10px]",
+          "flex items-center gap-3 p-4",
+          "max-bp620:p-4 max-bp620:gap-2",
         )}
       >
         <span className="flex text-text-muted max-bp620:hidden">
@@ -122,13 +122,13 @@ export function SplitPanel({
         <span className="flex-1 min-w-0">
           <label
             htmlFor={`${id}-switch`}
-            className="!block !text-[13px] font-500 !mb-[4px] cursor-pointer"
+            className="!block !text-sm font-500 !mb-1 cursor-pointer"
           >
             {title}
           </label>
           <span
             id={`${id}-hint`}
-            className="block text-text-muted text-[12px] leading-[1.6]"
+            className="block text-text-muted text-xs leading-[1.6]"
           >
             {splitHint(transaction, checked, share, {
               payer: payerName,
@@ -145,7 +145,7 @@ export function SplitPanel({
           disabled={Boolean(paidAt)}
           onChange={(event) => onChange(event.target.checked)}
           className={cx(
-            "appearance-none shrink-0 w-[38px] h-[22px] rounded-[20px] relative cursor-pointer m-0",
+            "appearance-none shrink-0 w-[38px] h-[22px] rounded-full relative cursor-pointer m-0",
             "border border-solid border-border bg-surface",
             "after:content-empty after:absolute after:top-[3px] after:left-[3px]",
             "after:w-[14px] after:h-[14px] after:rounded-full after:bg-text-muted",
