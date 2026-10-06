@@ -23,6 +23,24 @@ export function goalProgress(amount: number, planned: number): GoalProgress {
   };
 }
 
+/** The line under a goal's bar; hidden values keep only the warning. */
+export function progressText(
+  progress: GoalProgress,
+  hidden: boolean,
+  displayMoney: (value: number) => string,
+) {
+  const over = progress.over > 0;
+
+  if (hidden) return over ? "Acima do planejado" : "";
+
+  // Nothing planned means there is no share to show, only the amount.
+  const share = progress.percent === null ? "" : `${progress.percent}% · `;
+
+  return over
+    ? `${share}${displayMoney(progress.over)} acima`
+    : `${share}restam ${displayMoney(progress.remaining)}`;
+}
+
 export function sumPercentages(values: Array<number | null>) {
   return (
     Math.round(values.reduce<number>((sum, v) => sum + (v ?? 0), 0) * 100) / 100

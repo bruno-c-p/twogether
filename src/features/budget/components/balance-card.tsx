@@ -3,6 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { currentMonth, monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
+import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
 
 function daysLeft(month: string, today: Date) {
@@ -29,6 +30,7 @@ export function BalanceCard({
   displayMoney,
   hidden,
   onToggleHidden,
+  partners,
   className,
 }: {
   summary: ReturnType<typeof summarize>;
@@ -37,6 +39,7 @@ export function BalanceCard({
   displayMoney: (value: number) => string;
   hidden: boolean;
   onToggleHidden: () => void;
+  partners?: Partner[];
   className?: string;
 }) {
   // The server's clock and time zone can differ from the reader's, so the
@@ -97,22 +100,71 @@ export function BalanceCard({
           "max-bp1000:[border-top:0]",
         )}
       >
-        <BalanceFigure label="Entradas" value={displayMoney(summary.income)} />
-        <BalanceFigure label="Saídas" value={displayMoney(summary.expenses)} />
+        <BalanceFigure
+          label="Entradas"
+          value={displayMoney(summary.income)}
+          parts={partners?.map((partner) => ({
+            ...partner,
+            value: displayMoney(partner.income),
+          }))}
+        />
+        <BalanceFigure
+          label="Saídas"
+          value={displayMoney(summary.expenses)}
+          parts={partners?.map((partner) => ({
+            ...partner,
+            value: displayMoney(partner.expenses),
+          }))}
+        />
       </dl>
     </OverviewCard>
   );
 }
 
-function BalanceFigure({ label, value }: { label: string; value: string }) {
+type Partner = {
+  memberId: string;
+  name: string;
+  position: number;
+  income: number;
+  expenses: number;
+};
+
+function BalanceFigure({
+  label,
+  value,
+  parts,
+}: {
+  label: string;
+  value: string;
+  parts?: (Partner & { value: string })[];
+}) {
   return (
-    <div className="flex flex-col gap-1.5 max-bp1000:flex-row max-bp1000:items-baseline">
+    <div className="flex flex-col gap-1.5 max-bp1000:flex-row max-bp1000:flex-wrap max-bp1000:items-baseline">
       <dt className="text-sm text-on-balance-muted max-bp620:text-xs">
         {label}
       </dt>
       <dd className="m-0 text-xl font-500 tabular-nums max-bp620:text-sm max-bp1000:text-md">
         {value}
       </dd>
+      {parts && (
+        <dd className="m-0 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-600 tabular-nums text-on-balance-muted max-bp1000:basis-full">
+          {parts.map((part) => (
+            <span
+              key={part.memberId}
+              className="inline-flex items-center gap-1.5"
+            >
+              <PersonAvatar
+                aria-hidden="true"
+                name={part.name}
+                position={part.position}
+                className="w-[20px] h-[20px] text-xs"
+              />
+              <span className="sr-only">{part.name}: </span>
+              {part.value}
+            </span>
+          ))}
+        </dd>
+      )}
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
   goalProgress,
+  progressText,
   sumPercentages,
 } from "@/features/budget/domain/goal-progress";
 
@@ -37,5 +38,34 @@ describe("sumPercentages", () => {
   test("ignores nulls and rounds float noise", () => {
     expect(sumPercentages([33.33, 33.33, 33.34, null])).toBe(100);
     expect(sumPercentages([null, null])).toBe(0);
+  });
+});
+
+describe("progressText", () => {
+  const money = (value: number) => `R$${value}`;
+
+  test("under plan reads the share and what remains", () => {
+    expect(progressText(goalProgress(180, 640), false, money)).toBe(
+      "28% · restam R$460",
+    );
+  });
+
+  test("over plan reads the share and the overage", () => {
+    expect(progressText(goalProgress(610, 560), false, money)).toBe(
+      "109% · R$50 acima",
+    );
+  });
+
+  test("an empty plan drops the share", () => {
+    expect(progressText(goalProgress(0, 0), false, money)).toBe(
+      "restam R$0",
+    );
+  });
+
+  test("hidden values keep only the over-plan warning", () => {
+    expect(progressText(goalProgress(610, 560), true, money)).toBe(
+      "Acima do planejado",
+    );
+    expect(progressText(goalProgress(180, 640), true, money)).toBe("");
   });
 });
