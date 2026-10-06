@@ -29,6 +29,7 @@ export function OverviewScreen() {
           displayMoney={displayMoney}
           hidden={hidden}
           onToggleHidden={onToggleHidden}
+          partners={data.partners}
           className={cx(!data.partner && "col-span-2 max-bp1000:col-span-1")}
         />
         {data.partner && (

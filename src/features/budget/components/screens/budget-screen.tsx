@@ -1,11 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { GoalTable } from "@/features/budget/components/goal-table";
+import { GoalCards } from "@/features/budget/components/goal-cards";
 import { IncomeDistribution } from "@/features/budget/components/income-distribution";
 import { PageHeading } from "@/features/budget/components/page-heading";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 
 export function BudgetScreen() {
-  const { data, busy, hidden, displayMoney, actions, memberFilter } =
+  const { budget, data, busy, hidden, displayMoney, actions, memberFilter } =
     useWorkspace();
 
   const note =
@@ -32,9 +32,10 @@ export function BudgetScreen() {
         }
       />
       <IncomeDistribution plans={data.plans} />
-      <GoalTable
+      <GoalCards
         summary={data.summary}
         plans={data.plans}
+        members={budget.household.members}
         hidden={hidden}
         displayMoney={displayMoney}
       />

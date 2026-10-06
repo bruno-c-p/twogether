@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   accountBalance,
+  memberTotals,
   planGoals,
   summarize,
 } from "@/features/budget/domain/calc";
@@ -321,21 +322,30 @@ describe("individual goal planning", () => {
   it("sums each person's plan and weights the combined percentage by income", () => {
     expect(
       planGoals(monthly, members).find((goal) => goal.id === "targets"),
-    ).toEqual({ id: "targets", planned: 130000, percentage: 16.25 });
+    ).toMatchObject({ id: "targets", planned: 130000, percentage: 16.25 });
     expect(
       planGoals(monthly, [members[0]]).find((goal) => goal.id === "targets"),
-    ).toEqual({ id: "targets", planned: 100000, percentage: 20 });
+    ).toMatchObject({ id: "targets", planned: 100000, percentage: 20 });
     expect(
       planGoals(monthly, [members[1]]).find((goal) => goal.id === "targets"),
-    ).toEqual({ id: "targets", planned: 30000, percentage: 10 });
+    ).toMatchObject({ id: "targets", planned: 30000, percentage: 10 });
+  });
+  it("keeps each person's share of a goal's plan", () => {
+    expect(
+      planGoals(monthly, members).find((goal) => goal.id === "targets")
+        ?.shares,
+    ).toEqual([
+      { memberId: "a", planned: 100000, percentage: 20 },
+      { memberId: "b", planned: 30000, percentage: 10 },
+    ]);
   });
   it("keeps personal priorities without income and shows no combined percentage", () => {
-    expect(planGoals([], members)[0]).toEqual({
+    expect(planGoals([], members)[0]).toMatchObject({
       id: "fixed",
       planned: 0,
       percentage: null,
     });
-    expect(planGoals([], [members[0]])[0]).toEqual({
+    expect(planGoals([], [members[0]])[0]).toMatchObject({
       id: "fixed",
       planned: 0,
       percentage: 25,
@@ -353,5 +363,47 @@ describe("individual goal planning", () => {
         (goal) => goal.id === "targets",
       )?.planned,
     ).toBe(2);
+  });
+});
+
+describe("memberTotals", () => {
+  const entry = (
+    memberId: string,
+    kind: Transaction["kind"],
+    amount: number,
+  ): Transaction => ({
+    id: `${memberId}-${kind}-${amount}`,
+    memberId,
+    amount,
+    kind,
+    description: "x",
+    date: "2026-09-14",
+    goal: kind === "expense" ? "fixed" : null,
+    tags: [],
+    accountId: "account-1",
+  });
+
+  it("splits income and expenses by who recorded them, in member order", () => {
+    expect(
+      memberTotals(
+        [
+          entry("b", "expense", 300),
+          entry("a", "income", 5000),
+          entry("a", "expense", 1200),
+          entry("b", "income", 4000),
+        ],
+        ["a", "b"],
+      ),
+    ).toEqual([
+      { memberId: "a", income: 5000, expenses: 1200 },
+      { memberId: "b", income: 4000, expenses: 300 },
+    ]);
+  });
+
+  it("gives a member with no entries zeros", () => {
+    expect(memberTotals([entry("a", "income", 10)], ["a", "b"])).toEqual([
+      { memberId: "a", income: 10, expenses: 0 },
+      { memberId: "b", income: 0, expenses: 0 },
+    ]);
   });
 });

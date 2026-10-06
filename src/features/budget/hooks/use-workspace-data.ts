@@ -1,5 +1,9 @@
 import { useMemo } from "react";
-import { planGoals, summarize } from "@/features/budget/domain/calc";
+import {
+  memberTotals,
+  planGoals,
+  summarize,
+} from "@/features/budget/domain/calc";
 import { splitDebt, usTransactions } from "@/features/budget/domain/split";
 import type { Transaction } from "@/features/budget/domain/types";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -41,6 +45,22 @@ export function useWorkspaceData(
     [monthly, members, memberFilter],
   );
 
+  // Under "Nós" in a two-person space, each partner's part of the month.
+  const partners = useMemo(
+    () =>
+      memberFilter === "all" && members.length === 2
+        ? memberTotals(
+            monthly,
+            members.map((member) => member.id),
+          ).map((totals, position) => ({
+            ...totals,
+            name: members[position].name,
+            position,
+          }))
+        : undefined,
+    [monthly, members, memberFilter],
+  );
+
   const allTags = useMemo(
     () =>
       [...new Set(transactions.flatMap((t) => t.tags))].sort((a, b) =>
@@ -63,6 +83,7 @@ export function useWorkspaceData(
     monthly,
     summary,
     plans,
+    partners,
     allTags,
     debt,
     partner,
