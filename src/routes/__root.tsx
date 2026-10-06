@@ -109,6 +109,10 @@ export const Route = createRootRouteWithContext<{
               fontFamily: '"Inter Tight", sans-serif',
               fontSize: "14px",
             },
+            // Clerk fades colorBorder to ~5% alpha; text fields need a 3:1 edge.
+            elements: {
+              formFieldInput: "!shadow-[inset_0_0_0_1px_var(--line-strong)]",
+            },
           }}
         >
           <TimeZoneCookie />

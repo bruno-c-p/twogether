@@ -15,7 +15,7 @@
   background: var(--surface);
   width: 100%;
   height: 44px;
-  padding: 10px 12px;
+  padding: 8px 12px;
   font-size: 14px;
   font-weight: 400;
   color: var(--text);
@@ -63,14 +63,14 @@
   --amount-font-size: 44px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   border-bottom: 1px solid var(--line);
   padding: 0 0 16px;
   margin-bottom: 24px;
 }
 
 .amount > span {
-  font-size: 18px;
+  font-size: 16px;
   color: var(--text-muted);
   font-weight: 400;
 }
@@ -121,7 +121,7 @@
 .stack input {
   min-width: 0;
   width: 100%;
-  padding: 12px 14px;
+  padding: 12px 16px;
   border: 1px solid var(--line-strong);
   border-radius: 10px;
   background: var(--surface);

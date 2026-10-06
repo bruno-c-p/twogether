@@ -16,7 +16,7 @@ function Tile({ transaction }: { transaction: Transaction }) {
   return (
     <span
       className={cx(
-        "size-[40px] rounded-[10px] grid place-items-center shrink-0",
+        "size-[40px] rounded-md grid place-items-center shrink-0",
         income && "bg-surface-soft text-green",
       )}
       style={
@@ -48,14 +48,14 @@ export function LatestTransactionsCard({
 
   return (
     <OverviewCard aria-labelledby="latest-title" className="max-bp1000:hidden">
-      <div className="flex items-center justify-between gap-[12px] mb-[10px]">
-        <h2 id="latest-title" className="m-0 font-heading text-[19px] font-500">
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <h2 id="latest-title" className="m-0 font-heading text-lg font-700 tracking-[-0.02em]">
           Últimas transações
         </h2>
         {/* Month and person carry over through retainSearchParams. */}
         <Link
           to="/transacoes"
-          className="inline-flex items-center gap-[7px] py-[8px] text-[13px] text-text"
+          className="inline-flex items-center gap-2 py-2 text-sm text-text"
         >
           Ver todas →
         </Link>
@@ -70,22 +70,22 @@ export function LatestTransactionsCard({
               <li key={transaction.id}>
                 <button
                   type="button"
-                  className="flex w-full items-center gap-[14px] py-[10px] p-0 border-0 bg-transparent text-left text-text cursor-pointer"
+                  className="flex w-full items-center gap-4 py-2 p-0 border-0 bg-transparent text-left text-text cursor-pointer"
                   aria-label={`Editar ${transaction.description}`}
                   onClick={() => onEdit(transaction)}
                 >
                   <Tile transaction={transaction} />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[14px] truncate">
+                    <span className="block text-md truncate">
                       {transaction.description}
                     </span>
-                    <span className="block text-[12px] text-text-muted truncate">
+                    <span className="block text-xs text-text-muted truncate">
                       {income ? "Entrada" : (goal?.name ?? "Sem meta")}
                       {" · "}
                       {shortDay(transaction.date)}
                     </span>
                   </span>
-                  <span className="text-[14px] font-600 tabular-nums shrink-0">
+                  <span className="text-md font-600 tabular-nums shrink-0">
                     {income ? "+" : "–"} {displayMoney(transaction.amount)}
                   </span>
                 </button>
@@ -94,7 +94,7 @@ export function LatestTransactionsCard({
           })}
         </ul>
       ) : (
-        <p className="text-[13px] text-text-muted m-0 py-[12px]">
+        <p className="text-sm text-text-muted m-0 py-3">
           Nenhuma transação neste mês.
         </p>
       )}

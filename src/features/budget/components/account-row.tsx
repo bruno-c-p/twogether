@@ -43,21 +43,21 @@ export function AccountRow({
   const [confirming, setConfirming] = useState(false);
 
   return (
-    <li className="list-none min-w-0 flex flex-col gap-[20px] p-[24px] max-bp620:p-[18px] bg-surface border border-solid border-border rounded-[18px]">
-      <div className="flex items-start justify-between gap-[12px] flex-wrap">
-        <div className="flex items-center gap-[12px] min-w-[180px] flex-1">
-          <span className="w-[40px] h-[40px] shrink-0 grid place-items-center rounded-[11px] bg-surface-soft text-green text-[15px] font-700">
+    <li className="list-none min-w-0 flex flex-col gap-5 p-6 max-bp620:p-4 bg-surface border border-solid border-border rounded-lg">
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 min-w-[180px] flex-1">
+          <span className="w-[40px] h-[40px] shrink-0 grid place-items-center rounded-md bg-surface-soft text-green text-md font-700">
             {account.name.charAt(0).toLocaleUpperCase("pt-BR")}
           </span>
           <div className="min-w-0">
-            <h3 className="text-[17px] font-600 truncate">{account.name}</h3>
-            <p className="text-[13px] text-text-muted">
+            <h3 className="text-lg font-600 truncate">{account.name}</h3>
+            <p className="text-sm text-text-muted">
               {count === 1 ? "1 transação" : `${count} transações`} em{" "}
               {monthName}
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-[4px] shrink-0">
+        <div className="flex items-center gap-1 shrink-0">
           <Button
             variant="icon"
             className="text-text-muted"
@@ -82,16 +82,16 @@ export function AccountRow({
           </Button>
         </div>
       </div>
-      <p className="text-[36px] max-bp620:text-[30px] font-600 tracking-[-0.03em] tabular-nums break-words">
+      <p className="text-3xl font-700 tracking-[-0.035em] tabular-nums break-words">
         {displayMoney(balance)}
       </p>
-      <div className="flex flex-wrap gap-x-[28px] gap-y-[8px] text-[14px] tabular-nums">
+      <div className="flex flex-wrap gap-x-8 gap-y-2 text-md tabular-nums">
         <div>
-          <p className="text-[12px] text-text-muted">Entrou no mês</p>
+          <p className="text-xs text-text-muted">Entrou no mês</p>
           <p className="font-600">+ {displayMoney(entered)}</p>
         </div>
         <div>
-          <p className="text-[12px] text-text-muted">Saiu no mês</p>
+          <p className="text-xs text-text-muted">Saiu no mês</p>
           <p className="font-600">- {displayMoney(left)}</p>
         </div>
       </div>
@@ -100,9 +100,9 @@ export function AccountRow({
           {monthTransactions.map((transaction) => (
             <li
               key={transaction.id}
-              className="list-none flex items-center gap-[10px] py-[11px] border-b border-b-solid border-b-border text-[14px]"
+              className="list-none flex items-center gap-2 py-3 border-b border-b-solid border-b-border text-md"
             >
-              <span className="inline-flex items-center gap-[6px] shrink-0">
+              <span className="inline-flex items-center gap-1.5 shrink-0">
                 <span
                   className="w-[8px] h-[8px] rounded-full shrink-0"
                   style={{ backgroundColor: dotColor(transaction) }}

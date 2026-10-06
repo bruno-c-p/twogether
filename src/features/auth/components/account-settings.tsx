@@ -25,7 +25,7 @@ import {
 
 const OFFLINE_MESSAGE = "Sem conexão. Tente novamente.";
 
-const PANEL_BODY = "px-[23px] pb-[23px] max-bp620:px-4 max-bp620:pb-4";
+const PANEL_BODY = "px-6 pb-6 max-bp620:px-4 max-bp620:pb-4";
 
 export function useNameForm({
   run,
@@ -222,8 +222,8 @@ export function AccountSettingsView({
           )}
           {error && <FormError>{error}</FormError>}
         </div>
-        <footer className="flex items-center justify-between gap-4 px-[23px] pb-[23px] max-bp620:px-4 max-bp620:pb-4 max-bp620:items-start max-bp620:flex-col">
-          <span className="text-text-muted text-[12px] break-all">{email}</span>
+        <footer className="flex items-center justify-between gap-4 px-6 pb-6 max-bp620:px-4 max-bp620:pb-4 max-bp620:items-start max-bp620:flex-col">
+          <span className="text-text-muted text-xs break-all">{email}</span>
           <div className="flex items-center gap-4">
             <Button variant="text" onClick={onManage}>
               Gerenciar conta

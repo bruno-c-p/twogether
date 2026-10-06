@@ -1,7 +1,6 @@
-/* A transparent border keeps the edge visible in forced-colors mode. */
 .panel {
   margin-top: 32px;
-  border: 1px solid transparent;
+  border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
   overflow: hidden;

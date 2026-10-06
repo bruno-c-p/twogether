@@ -39,7 +39,7 @@ export function WorkspaceShell({
     <div className="min-h-[100dvh]">
       <a
         href="#main-content"
-        className="absolute z-40 top-[16px] [inset-inline-start:-999px] focus:[inset-inline-start:16px] bg-surface text-text px-[12px] py-[8px] rounded-[8px]"
+        className="absolute z-40 top-[16px] [inset-inline-start:-999px] focus:[inset-inline-start:16px] bg-surface text-text px-3 py-2 rounded-md"
       >
         Pular para o conteúdo
       </a>
@@ -51,28 +51,28 @@ export function WorkspaceShell({
       >
         <div
           className={cx(
-            "mx-auto max-w-[1450px] flex flex-wrap items-center gap-x-[10px] gap-y-[12px] max-bp620:gap-x-[6px]",
-            "px-[32px] py-[14px] max-bp1190:px-[24px] max-bp800:px-[22px] max-bp620:px-[16px]",
+            "mx-auto max-w-[1450px] flex flex-wrap items-center gap-x-2 gap-y-3 max-bp620:gap-x-1.5",
+            "px-8 py-4 max-bp1190:px-6 max-bp800:px-6 max-bp620:px-4",
           )}
         >
           <Brand
             mark
             aria-label="twogether — início"
-            className="max-bp1000:order-1 mr-[8px] max-bp620:mr-0 text-[22px]"
+            className="max-bp1000:order-1 mr-2 max-bp620:mr-0 text-xl"
             markClassName="scale-[.8]"
             textClassName="max-bp620:hidden"
           />
           <DesktopNavigation />
           <div
             className={cx(
-              "ml-auto flex flex-wrap items-center gap-[10px]",
+              "ml-auto flex flex-wrap items-center gap-2",
               "max-bp1000:order-2 max-bp1000:w-auto max-bp1000:flex-1 max-bp1000:flex-nowrap max-bp1000:ml-0",
-              "max-bp620:justify-center max-bp620:gap-[6px]",
+              "max-bp620:justify-center max-bp620:gap-1.5",
             )}
           >
             {controls}
           </div>
-          <div className="flex items-center gap-[8px] max-bp1000:order-3">
+          <div className="flex items-center gap-2 max-bp1000:order-3">
             {account}
           </div>
         </div>
@@ -80,7 +80,7 @@ export function WorkspaceShell({
       <main id="main-content" tabIndex={-1} className="scroll-mt-[80px]">
         {children}
       </main>
-      <div className="max-bp1000:pb-[77px]">
+      <div className="max-bp1000:pb-16">
         <AppFooter />
       </div>
       <MobileNavigation onRegister={() => actions.openTransaction(null)} />

@@ -10,11 +10,11 @@ export function PageHeading({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex items-end justify-between gap-[16px] flex-wrap mb-[22px]">
+    <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
       <div className="min-w-0">
-        <h1 className="text-[34px] max-bp620:text-[27px]">{title}</h1>
+        <h1 className="text-3xl max-bp620:text-2xl">{title}</h1>
         {note && (
-          <p className="text-text-muted text-[14px] mt-[6px] max-bp620:text-[12px]">
+          <p className="text-text-muted text-md mt-1.5 max-bp620:text-xs">
             {note}
           </p>
         )}

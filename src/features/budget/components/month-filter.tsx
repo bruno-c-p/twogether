@@ -25,7 +25,7 @@ function MonthGrid({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-[12px]">
+      <div className="flex items-center justify-between mb-3">
         <Button
           variant="icon"
           aria-label="Ano anterior"
@@ -33,7 +33,7 @@ function MonthGrid({
         >
           <ChevronLeft size={18} />
         </Button>
-        <strong aria-live="polite" className="text-[16px]">
+        <strong aria-live="polite" className="text-lg">
           {year}
         </strong>
         <Button
@@ -44,7 +44,7 @@ function MonthGrid({
           <ChevronRight size={18} />
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-[8px]">
+      <div className="grid grid-cols-3 gap-2">
         {MONTHS.map((number) => {
           const value = `${year}-${String(number).padStart(2, "0")}`;
 
@@ -56,8 +56,8 @@ function MonthGrid({
               aria-pressed={value === month}
               onClick={() => onPick(value)}
               className={cx(
-                "capitalize cursor-pointer border border-solid rounded-[10px]",
-                "py-[14px] text-[14px] text-text",
+                "capitalize cursor-pointer border border-solid rounded-md",
+                "py-4 text-md text-text",
                 value === month
                   ? "border-green bg-surface-soft font-600"
                   : "border-border bg-surface",
@@ -71,7 +71,7 @@ function MonthGrid({
       {today && month !== today && (
         <Button
           variant="secondary"
-          className="mt-[16px] w-full"
+          className="mt-4 w-full"
           onClick={() => onPick(today)}
         >
           Voltar para este mês

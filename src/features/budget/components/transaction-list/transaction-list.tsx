@@ -145,7 +145,7 @@ export function TransactionSearch({
         placeholder="Buscar…"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        className="w-full min-h-[43px] pl-[35px] pr-[38px] rounded-[7px] border border-solid border-line-strong bg-surface text-[13px]"
+        className="w-full min-h-[43px] pl-8 pr-10 rounded-sm border border-solid border-line-strong bg-surface text-sm"
       />
       {query && (
         <Button
@@ -165,14 +165,14 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
   const { goalFilter, kindFilter, tagFilter } = filters;
 
   return (
-    <div className="flex items-center gap-[8px] flex-wrap mb-[18px]">
+    <div className="flex items-center gap-2 flex-wrap mb-4">
       {KIND_CHIPS.map((chip) => (
         <button
           key={chip.value}
           aria-pressed={kindFilter === chip.value}
           onClick={() => filters.setKindFilter(chip.value)}
           className={cx(
-            "px-[15px] py-[8px] rounded-full border border-solid text-[13px]",
+            "px-4 py-2 rounded-full border border-solid text-sm",
             kindFilter === chip.value
               ? "bg-green text-on-brand border-green"
               : "bg-surface text-text border-border hover:bg-surface-soft",
@@ -189,7 +189,7 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
 
           filters.setGoalFilter(found?.id ?? "all");
         }}
-        className="px-[12px] py-[8px] rounded-full border border-solid border-border bg-surface text-[13px] max-w-full"
+        className="px-3 py-2 rounded-full border border-solid border-border bg-surface text-sm max-w-full"
       >
         <option value="all">Todas as metas</option>
         {GOALS.map((goal) => (
@@ -235,7 +235,7 @@ function NoTransactions({
         action={
           <Button
             variant="secondary"
-            className="mt-[8px]"
+            className="mt-2"
             onClick={clearFilters}
           >
             Limpar filtros
@@ -251,7 +251,7 @@ function NoTransactions({
       icon={<Search size={25} strokeWidth={1.5} />}
       title="Nenhuma transação neste mês."
       action={
-        <Button className="mt-[8px]" onClick={onAdd}>
+        <Button className="mt-2" onClick={onAdd}>
           Adicionar transação
         </Button>
       }
@@ -274,11 +274,11 @@ export function TransactionList({
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
-      <div className="rounded-[14px] border border-solid border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-solid border-border bg-surface overflow-hidden">
         {filtered.length ? (
           groupByDay(filtered).map((group) => (
             <div key={group.date}>
-              <div className="flex items-center justify-between gap-[12px] px-[24px] max-bp1000:px-[16px] py-[10px] bg-surface-soft border-0 border-t border-solid border-border first:border-t-0 text-[12px]">
+              <div className="flex items-center justify-between gap-3 px-6 max-bp1000:px-4 py-2 bg-surface-soft border-0 border-t border-solid border-border first:border-t-0 text-xs">
                 <time dateTime={group.date} className="font-500">
                   {dayLabel(group.date)}
                 </time>

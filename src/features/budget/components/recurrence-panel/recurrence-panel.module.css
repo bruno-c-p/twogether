@@ -43,7 +43,7 @@
   flex: 0 0 38px;
   width: 38px;
   height: 22px;
-  border-radius: 20px;
+  border-radius: 999px;
   border: 1px solid var(--border);
   background: var(--surface);
   position: relative;
@@ -82,7 +82,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .recurrencePanel .recurrenceCount label {
@@ -115,11 +115,11 @@
 @media (max-width: 480px) {
   .recurrenceHeading,
   .recurrenceDetails {
-    padding: 14px;
+    padding: 16px;
   }
 
   .recurrenceHeading {
-    gap: 10px;
+    gap: 8px;
   }
 
   .recurrenceIcon {

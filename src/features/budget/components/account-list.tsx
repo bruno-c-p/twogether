@@ -38,7 +38,7 @@ export function AccountList({
         icon={<Landmark size={25} strokeWidth={1.5} />}
         title="Nenhuma conta cadastrada."
         action={
-          <Button className="mt-[8px]" onClick={onAdd}>
+          <Button className="mt-2" onClick={onAdd}>
             <Plus size={18} /> Adicionar conta
           </Button>
         }
@@ -69,19 +69,19 @@ export function AccountList({
     <>
       <section
         aria-labelledby="accounts-total"
-        className="flex flex-wrap items-baseline gap-x-[14px] gap-y-[4px] px-[24px] py-[22px] max-bp620:px-[18px] mb-[24px] bg-surface border border-solid border-border rounded-[18px]"
+        className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-6 py-6 max-bp620:px-4 mb-6 bg-surface border border-solid border-border rounded-lg"
       >
         <h2
           id="accounts-total"
-          className="text-[15px] font-400 font-sans text-text-muted"
+          className="text-md font-400 font-sans text-text-muted"
         >
           Total nas contas
         </h2>
-        <p className="text-[34px] max-bp620:text-[28px] font-600 tracking-[-0.03em] tabular-nums text-green">
+        <p className="text-3xl max-bp620:text-2xl font-700 tracking-[-0.035em] tabular-nums text-green">
           {displayMoney(total)}
         </p>
       </section>
-      <ul className="grid grid-cols-2 max-bp800:grid-cols-1 gap-[24px] m-0 p-0">
+      <ul className="grid grid-cols-2 max-bp800:grid-cols-1 gap-6 m-0 p-0">
         {sorted.map((account, index) => {
           const activity = accountMonthActivity(
             account,

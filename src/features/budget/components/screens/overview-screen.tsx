@@ -21,7 +21,7 @@ export function OverviewScreen() {
   return (
     <>
       <h1 className="sr-only">Visão geral</h1>
-      <div className="grid grid-cols-2 gap-[20px] items-stretch max-bp1000:grid-cols-1 max-bp620:gap-[12px]">
+      <div className="grid grid-cols-2 gap-5 items-stretch max-bp1000:grid-cols-1 max-bp620:gap-3">
         <BalanceCard
           summary={data.summary}
           month={month}

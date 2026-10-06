@@ -71,7 +71,7 @@ export function NameForm({
         <div className="flex items-center gap-4">
           {button}
           {status && (
-            <p role="status" className="text-text-muted text-[12px]">
+            <p role="status" className="text-text-muted text-xs">
               {status}
             </p>
           )}

@@ -38,36 +38,36 @@ export function SplitDebtCard({
     <OverviewCard
       aria-labelledby="split-debt-title"
       className={cx(
-        "grid gap-x-[16px] content-start",
+        "grid gap-x-4 content-start",
         "max-bp1000:grid-cols-[1fr_auto] max-bp1000:items-center",
-        "max-bp620:px-[16px] max-bp620:py-[14px]",
+        "max-bp620:px-4 max-bp620:py-4",
       )}
     >
       <h2
         id="split-debt-title"
-        className="font-body font-400 uppercase tracking-[1px] text-[12px] text-text-muted m-0 max-bp1000:normal-case max-bp1000:tracking-normal max-bp1000:text-[12px]"
+        className="font-body font-400 uppercase tracking-[0.06em] text-xs text-text-muted m-0 max-bp1000:normal-case max-bp1000:tracking-normal"
       >
         Acerto entre vocês
       </h2>
       <p
         className={cx(
-          "font-heading text-[28px] font-600 tabular-nums m-0 mt-[14px] tracking-[-0.5px]",
-          "max-bp1000:mt-[2px] max-bp1000:text-[17px] max-bp1000:tracking-normal",
+          "font-heading text-2xl font-700 tabular-nums m-0 mt-4 tracking-[-0.035em]",
+          "max-bp1000:mt-0.5 max-bp1000:text-lg max-bp1000:tracking-normal",
           net < 0 ? "text-danger" : "text-text",
         )}
       >
         {headline}
       </p>
       {unpaid.length ? (
-        <ul className="list-none m-0 mt-[18px] p-0 flex flex-col max-bp1000:hidden">
+        <ul className="list-none m-0 mt-4 p-0 flex flex-col max-bp1000:hidden">
           {unpaid.map((transaction) => (
             <li
               key={transaction.id}
-              className="flex items-baseline justify-between gap-[12px] py-[12px] text-[14px] [border-top:1px_solid_var(--border)]"
+              className="flex items-baseline justify-between gap-3 py-3 text-md [border-top:1px_solid_var(--border)]"
             >
               <span className="min-w-0 truncate">
                 {transaction.description}
-                <span className="text-text-muted text-[13px]">
+                <span className="text-text-muted text-sm">
                   {" · "}
                   {shortDay(transaction.date)}
                 </span>
@@ -79,7 +79,7 @@ export function SplitDebtCard({
           ))}
         </ul>
       ) : (
-        <p className="text-[12px] text-text-muted m-0 mt-[14px] max-bp1000:hidden">
+        <p className="text-xs text-text-muted m-0 mt-4 max-bp1000:hidden">
           Ao lançar uma despesa, ative “Dividir com {partner.name}” para
           registrar a parte de cada um.
         </p>
@@ -88,7 +88,7 @@ export function SplitDebtCard({
         <Button
           variant="secondary"
           className={cx(
-            "w-full mt-[10px] min-h-[44px]",
+            "w-full mt-2 min-h-[44px]",
             "max-bp1000:mt-0 max-bp1000:w-auto max-bp1000:col-start-2 max-bp1000:row-start-1 max-bp1000:row-span-2 max-bp1000:whitespace-nowrap",
           )}
           disabled={busy}
@@ -98,7 +98,7 @@ export function SplitDebtCard({
         </Button>
       ) : (
         unpaid.length > 0 && (
-          <p className="text-[12px] text-text-muted m-0 mt-[6px] max-bp1000:col-start-1">
+          <p className="text-xs text-text-muted m-0 mt-1.5 max-bp1000:col-start-1">
             Aguardando {partner.name}
           </p>
         )
