@@ -126,7 +126,7 @@ export function BudgetCard({
         {canEdit && (
           <Button
             variant="icon"
-            className="text-text-muted hover:text-text"
+            className="text-text-muted @hover:text-text"
             aria-label="Editar meus percentuais"
             title="Editar meus percentuais"
             disabled={busy}

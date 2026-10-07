@@ -66,7 +66,13 @@ export function Sheet({
               aria-hidden="true"
               className="hidden max-bp620:block shrink-0 mx-auto mt-2 h-[5px] w-[44px] rounded-full bg-text-muted/40"
             />
-            <Drawer.Content className="p-6 max-bp620:p-4 max-bp620:pb-[calc(16px+env(safe-area-inset-bottom,0px))]">
+            <Drawer.Content
+              className={cx(
+                "px-6 pt-[calc(24px+env(safe-area-inset-top,0px))] pb-[calc(24px+env(safe-area-inset-bottom,0px))]",
+                "max-bp620:pt-4 max-bp620:pl-[max(16px,env(safe-area-inset-left,0px))] max-bp620:pr-[max(16px,env(safe-area-inset-right,0px))]",
+                "max-bp620:pb-[calc(16px+env(safe-area-inset-bottom,0px))]",
+              )}
+            >
               {children}
             </Drawer.Content>
           </Drawer.Popup>
