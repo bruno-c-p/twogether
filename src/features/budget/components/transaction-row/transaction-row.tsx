@@ -92,22 +92,24 @@ export function TransactionRow({
     >
       <PayerAvatar members={members} memberId={t.memberId} />
       <div className="min-w-0 flex items-baseline gap-2 flex-wrap max-bp620:col-span-2">
-        <button
+        <Button
+          variant="unstyled"
           className="border-0 bg-transparent p-0 text-left text-md text-text min-w-0 break-words disabled:cursor-default"
           disabled={busy || Boolean(editLock)}
           title={editLock || undefined}
           onClick={() => onEdit(t)}
         >
           {t.description}
-        </button>
+        </Button>
         {t.tags.map((tag) => (
-          <button
+          <Button
+            variant="unstyled"
             key={tag}
             className="border-0 bg-transparent p-0 text-xs text-text-muted @hover:text-text [overflow-wrap:anywhere]"
             onClick={() => onTag(tag)}
           >
             #{tag}
-          </button>
+          </Button>
         ))}
         {status && <span className="text-xs text-text-muted">{status}</span>}
       </div>

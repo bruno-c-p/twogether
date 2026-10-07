@@ -1,3 +1,6 @@
+import { Button } from "@/components/ui/button";
+import { Radio } from "@base-ui/react/radio";
+import { RadioGroup } from "@base-ui/react/radio-group";
 import { useState } from "react";
 import { chipTrigger } from "@/components/ui/chip-trigger";
 import { Check, ChevronDown } from "lucide-react";
@@ -46,16 +49,23 @@ export function MemberFilter({
       }
     >
       <SheetHeader title="Filtrar por pessoa" />
-      <div role="radiogroup" aria-label="Pessoa" className="grid gap-1.5">
+      <RadioGroup<string>
+        value={current.id}
+        aria-label="Pessoa"
+        className="grid gap-1.5"
+        onValueChange={(next) => {
+          onChange(next);
+          setOpen(false);
+        }}
+      >
         {options.map((option) => (
-          <button
+          <Radio.Root
+            nativeButton
+            render={<Button variant="unstyled" />}
             key={option.id}
-            type="button"
-            role="radio"
-            aria-checked={option.id === current.id}
+            value={option.id}
             onClick={() => {
-              onChange(option.id);
-              setOpen(false);
+              if (option.id === current.id) setOpen(false);
             }}
             className={cx(
               "flex items-center justify-between gap-2 cursor-pointer",
@@ -67,9 +77,9 @@ export function MemberFilter({
           >
             <span className="truncate">{option.label}</span>
             {option.id === current.id && <Check size={16} aria-hidden="true" />}
-          </button>
+          </Radio.Root>
         ))}
-      </div>
+      </RadioGroup>
     </Sheet>
   );
 }

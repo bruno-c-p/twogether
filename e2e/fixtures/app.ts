@@ -170,7 +170,7 @@ export async function openCouple(page: Page) {
 
 export async function dismissToast(page: Page, message: string) {
   const close = page
-    .locator("[data-sonner-toast]")
+    .locator('[data-slot="toast"]')
     .filter({ hasText: message })
     .getByRole("button", { name: "Fechar aviso" });
 
@@ -179,7 +179,7 @@ export async function dismissToast(page: Page, message: string) {
 
 export async function expectToast(page: Page, message: string) {
   await expect(
-    page.locator("[data-sonner-toast]").filter({ hasText: message }),
+    page.locator('[data-slot="toast"]').filter({ hasText: message }),
   ).toBeVisible();
   await dismissToast(page, message);
 }

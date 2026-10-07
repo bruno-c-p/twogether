@@ -1,3 +1,5 @@
+import { Toggle } from "@base-ui/react/toggle";
+import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import type { TransactionKind } from "@/features/budget/domain/types";
 import styles from "@/features/budget/components/kind-toggle/kind-toggle.module.css";
@@ -12,25 +14,33 @@ export function KindToggle({
   onChange: (kind: TransactionKind) => void;
 }) {
   return (
-    <div className={styles.kindToggle} aria-label="Tipo da transação">
-      <button
+    <ToggleGroup
+      className={styles.kindToggle}
+      aria-label="Tipo da transação"
+      value={[kind]}
+      disabled={disabled}
+      onValueChange={(values) => {
+        const next = values[0];
+
+        if (next === "income" || next === "expense") onChange(next);
+      }}
+    >
+      <Toggle
         type="button"
         disabled={disabled}
         className={kind === "expense" ? styles.active : ""}
-        aria-pressed={kind === "expense"}
-        onClick={() => onChange("expense")}
+        value="expense"
       >
         <ArrowUpRight size={17} /> Despesa
-      </button>
-      <button
+      </Toggle>
+      <Toggle
         type="button"
         disabled={disabled}
         className={kind === "income" ? styles.active : ""}
-        aria-pressed={kind === "income"}
-        onClick={() => onChange("income")}
+        value="income"
       >
         <ArrowDownLeft size={17} /> Receita
-      </button>
-    </div>
+      </Toggle>
+    </ToggleGroup>
   );
 }

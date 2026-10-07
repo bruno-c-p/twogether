@@ -1,10 +1,16 @@
+import { Input } from "@/components/ui/input";
 import { useState, type FormEvent } from "react";
 import { formText } from "@/features/budget/domain/format";
 import { inviteFormSchema } from "@/features/budget/domain/schemas";
 import { fieldErrors } from "@/lib/zod-errors";
 import { inviteToken } from "@/features/auth/invite-token";
 import { Button } from "@/components/ui/button";
-import { FieldError, Form } from "@/components/ui/field/field";
+import {
+  FieldError,
+  FieldLabel,
+  FieldRoot,
+  Form,
+} from "@/components/ui/field/field";
 
 export function InviteForm({
   busy,
@@ -36,22 +42,24 @@ export function InviteForm({
 
   return (
     <Form onSubmit={(event) => void submit(event)}>
-      <label>
-        Link de convite
-        <input
-          name="invite"
-          autoCapitalize="none"
-          autoCorrect="off"
-          spellCheck={false}
-          enterKeyHint="go"
-          placeholder="Cole o link do seu par"
-          required
-          aria-describedby={errors.invite ? "invite-error" : undefined}
-          aria-invalid={errors.invite ? true : undefined}
-        />
-        <FieldError id="invite-error">{errors.invite}</FieldError>
-      </label>
-      <Button variant="secondary" disabled={busy}>
+      <FieldRoot>
+        <FieldLabel>
+          Link de convite
+          <Input
+            name="invite"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
+            placeholder="Cole o link do seu par"
+            required
+            aria-describedby={errors.invite ? "invite-error" : undefined}
+            aria-invalid={errors.invite ? true : undefined}
+          />
+          <FieldError id="invite-error">{errors.invite}</FieldError>
+        </FieldLabel>
+      </FieldRoot>
+      <Button type="submit" variant="secondary" disabled={busy}>
         Aceitar convite
       </Button>
     </Form>

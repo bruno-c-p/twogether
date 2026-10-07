@@ -1,3 +1,4 @@
+import { Avatar } from "@base-ui/react/avatar";
 import type { ComponentPropsWithoutRef } from "react";
 import { cx } from "@/lib/cx";
 
@@ -14,7 +15,8 @@ export function PersonAvatar({
   position: number;
 }) {
   return (
-    <span
+    <Avatar.Root
+      render={<span />}
       className={cx(
         "rounded-full inline-flex items-center justify-center shrink-0 font-700",
         position === -1 && "bg-surface-2 text-text-muted",
@@ -25,13 +27,15 @@ export function PersonAvatar({
       )}
       {...props}
     >
-      {position === -1
-        ? "?"
-        : graphemes
-            .segment(name?.trim() ?? "")
-            [Symbol.iterator]()
-            .next()
-            .value?.segment.toLocaleUpperCase("pt-BR") || "?"}
-    </span>
+      <Avatar.Fallback>
+        {position === -1
+          ? "?"
+          : graphemes
+              .segment(name?.trim() ?? "")
+              [Symbol.iterator]()
+              .next()
+              .value?.segment.toLocaleUpperCase("pt-BR") || "?"}
+      </Avatar.Fallback>
+    </Avatar.Root>
   );
 }

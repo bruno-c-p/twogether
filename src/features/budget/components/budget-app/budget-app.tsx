@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast-manager";
 import { Outlet } from "@tanstack/react-router";
 import {
   useBudget,
@@ -65,7 +65,7 @@ export function BudgetWorkspace({
 
   useEffect(
     () => () => {
-      toast.dismiss();
+      toastManager.close();
     },
     [],
   );

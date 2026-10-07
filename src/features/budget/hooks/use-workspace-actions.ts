@@ -1,5 +1,5 @@
 import { usePostHog } from "posthog-js/react";
-import { toast } from "sonner";
+import { toastManager } from "@/components/ui/toast-manager";
 import type {
   GoalPercentages,
   Transaction,
@@ -52,7 +52,10 @@ export function useWorkspaceActions({
     });
     dialogs.setTransaction(null);
     setMonth(transaction.date.slice(0, 7));
-    toast.success(savedMessage(isUpdate, occurrences));
+    toastManager.add({
+      title: savedMessage(isUpdate, occurrences),
+      type: "success",
+    });
   }
 
   async function remove(transaction: Transaction) {
@@ -69,10 +72,12 @@ export function useWorkspaceActions({
   }
 
   function notifyDeleted(transaction: Transaction) {
-    const id = toast.success("Transação excluída.", {
-      duration: Infinity,
-      action: {
-        label: "Desfazer",
+    const id = toastManager.add({
+      title: "Transação excluída.",
+      type: "success",
+      timeout: 0,
+      actionProps: {
+        children: "Desfazer",
         onClick: (event) => {
           event.preventDefault();
           void restoreDeleted(transaction, id);
@@ -81,7 +86,7 @@ export function useWorkspaceActions({
     });
   }
 
-  async function restoreDeleted(transaction: Transaction, id: string | number) {
+  async function restoreDeleted(transaction: Transaction, id: string) {
     const restored = await restoreTx.run({
       id: transaction.id,
       revision: (transaction.revision ?? 0) + 1,
@@ -90,8 +95,8 @@ export function useWorkspaceActions({
 
     if (!restored) return;
 
-    toast.dismiss(id);
-    toast.success("Alteração desfeita.");
+    toastManager.close(id);
+    toastManager.add({ title: "Alteração desfeita.", type: "success" });
   }
 
   function openTransaction(transaction: Transaction | null) {
@@ -121,10 +126,12 @@ export function useWorkspaceActions({
     posthog.capture("split_settled");
     dialogs.setSettling(null);
 
-    const id = toast.success("Pagamento registrado.", {
-      duration: Infinity,
-      action: {
-        label: "Desfazer",
+    const id = toastManager.add({
+      title: "Pagamento registrado.",
+      type: "success",
+      timeout: 0,
+      actionProps: {
+        children: "Desfazer",
         onClick: (event) => {
           event.preventDefault();
           void unsettle(
@@ -137,15 +144,15 @@ export function useWorkspaceActions({
   }
 
   // Closes the transaction dialog it may have been started from.
-  async function unsettle(transaction: Transaction, toastId?: string | number) {
+  async function unsettle(transaction: Transaction, toastId?: string) {
     if (!(await unsettleTx.run(versioned(transaction)))) return;
 
     posthog.capture("split_unsettled");
     dialogs.setTransaction(null);
 
-    if (toastId !== undefined) toast.dismiss(toastId);
+    if (toastId !== undefined) toastManager.close(toastId);
 
-    toast.success("Pagamento desmarcado.");
+    toastManager.add({ title: "Pagamento desmarcado.", type: "success" });
   }
 
   async function saveGoalPercentages(values: GoalPercentages) {
@@ -157,7 +164,7 @@ export function useWorkspaceActions({
 
     posthog.capture("goal_percentages_saved");
     dialogs.setPercentagesRevision(null);
-    toast.success("Percentuais atualizados.");
+    toastManager.add({ title: "Percentuais atualizados.", type: "success" });
   }
 
   // `following` lists the later occurrences to delete too; empty deletes
@@ -180,7 +187,11 @@ export function useWorkspaceActions({
       deleted_count: count,
     });
 
-    if (following.length) toast.success(`${count} transações excluídas.`);
+    if (following.length)
+      toastManager.add({
+        title: `${count} transações excluídas.`,
+        type: "success",
+      });
     else notifyDeleted(transaction);
     dialogs.setDeleting(null);
   }

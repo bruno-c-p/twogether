@@ -101,7 +101,9 @@ test.describe("transactions", () => {
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
       // The backdrop is above the sheet on mobile.
-      await mobileDialog.click({ position: { x: 16, y: -12 } });
+      await page
+        .locator('[data-slot="dialog-backdrop"]')
+        .click({ position: { x: 16, y: 12 } });
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toHaveCount(0);
@@ -213,7 +215,7 @@ test.describe("transactions", () => {
     await page.getByRole("button", { name: "Excluir Mercado" }).click();
 
     const toast = page
-      .locator("[data-sonner-toast]")
+      .locator('[data-slot="toast"]')
       .filter({ hasText: "Transação excluída." });
 
     await expect(toast).toBeVisible();

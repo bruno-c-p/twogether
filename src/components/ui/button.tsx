@@ -1,9 +1,10 @@
-import type { ButtonHTMLAttributes } from "react";
+import { Button as BaseButton } from "@base-ui/react/button";
 import { cx } from "@/lib/cx";
 
-type Variant = "primary" | "secondary" | "text" | "icon" | "tag";
+type Variant = "primary" | "secondary" | "text" | "icon" | "tag" | "unstyled";
 
 const variants: Record<Variant, string> = {
+  unstyled: "",
   primary: cx(
     "inline-flex items-center justify-center gap-2",
     "bg-brand text-on-brand border border-solid border-transparent",
@@ -38,6 +39,9 @@ export function Button({
   variant = "primary",
   className,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant }) {
-  return <button className={cx(variants[variant], className)} {...props} />;
+}: Omit<BaseButton.Props, "className"> & {
+  variant?: Variant;
+  className?: string;
+}) {
+  return <BaseButton className={cx(variants[variant], className)} {...props} />;
 }

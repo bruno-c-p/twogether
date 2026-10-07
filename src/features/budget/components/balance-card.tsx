@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { useHydrated } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
 import { currentMonth, monthName } from "@/features/budget/domain/format";
@@ -68,7 +69,8 @@ export function BalanceCard({
                 {closingLabel(days)}
               </span>
             )}
-            <button
+            <Button
+              variant="unstyled"
               type="button"
               onClick={onToggleHidden}
               aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
@@ -80,7 +82,7 @@ export function BalanceCard({
               )}
             >
               {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-            </button>
+            </Button>
           </div>
         </div>
         <p
