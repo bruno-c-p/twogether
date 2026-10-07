@@ -140,7 +140,7 @@ function GoalCard({
                 <span className="text-text font-600">
                   {displayMoney(share.planned)}
                 </span>
-                ({share.percentage}%)
+                ({percentLabel(share.percentage)})
               </span>
             );
           })}

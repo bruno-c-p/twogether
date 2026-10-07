@@ -38,8 +38,8 @@ export function SplitDebtCard({
     <OverviewCard
       aria-labelledby="split-debt-title"
       className={cx(
-        "grid gap-x-4 content-start",
-        "max-bp1000:grid-cols-[1fr_auto] max-bp1000:items-center",
+        "grid grid-cols-[minmax(0,1fr)] min-w-0 gap-x-4 content-start",
+        "max-bp1000:grid-cols-[minmax(0,1fr)_auto] max-bp1000:items-center",
         "max-bp620:grid-cols-1 max-bp620:px-4 max-bp620:py-4",
       )}
     >
@@ -59,13 +59,16 @@ export function SplitDebtCard({
         {headline}
       </p>
       {unpaid.length ? (
-        <ul className="list-none m-0 mt-4 p-0 flex flex-col max-bp1000:hidden">
+        <ul className="list-none min-w-0 m-0 mt-4 p-0 flex flex-col max-bp1000:hidden">
           {unpaid.map((transaction) => (
             <li
               key={transaction.id}
               className="flex items-baseline justify-between gap-3 py-3 text-md [border-top:1px_solid_var(--border)]"
             >
-              <span className="min-w-0 truncate">
+              <span
+                className="min-w-0 truncate"
+                title={transaction.description}
+              >
                 {transaction.description}
                 <span className="text-text-muted text-sm">
                   {" · "}

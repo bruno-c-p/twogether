@@ -52,7 +52,7 @@ function PayerAvatar({
       title={name ?? "Pessoa do casal"}
       name={name}
       position={index}
-      className="w-[26px] h-[26px] text-xs max-bp1000:row-span-2"
+      className="w-[26px] h-[26px] text-xs max-bp1000:row-span-2 max-bp620:row-span-1"
     />
   );
 }
@@ -87,11 +87,11 @@ export function TransactionRow({
       className={cx(
         "grid items-center gap-x-4 px-6 py-3 border-0 border-t border-solid border-border",
         "grid-cols-[26px_minmax(0,1fr)_210px_130px_64px]",
-        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-0.5 max-bp1000:px-4",
+        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-0.5 max-bp1000:px-4 max-bp620:gap-y-2",
       )}
     >
       <PayerAvatar members={members} memberId={t.memberId} />
-      <div className="min-w-0 flex items-baseline gap-2 flex-wrap">
+      <div className="min-w-0 flex items-baseline gap-2 flex-wrap max-bp620:col-span-2">
         <Button
           variant="unstyled"
           className="border-0 bg-transparent p-0 text-left text-md text-text min-w-0 break-words disabled:cursor-default"
@@ -105,7 +105,7 @@ export function TransactionRow({
           <Button
             variant="unstyled"
             key={tag}
-            className="border-0 bg-transparent p-0 text-xs text-text-muted @hover:text-text"
+            className="border-0 bg-transparent p-0 text-xs text-text-muted @hover:text-text [overflow-wrap:anywhere]"
             onClick={() => onTag(tag)}
           >
             #{tag}
@@ -116,7 +116,7 @@ export function TransactionRow({
       <div
         className={cx(
           "contents text-sm text-text-muted",
-          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-1.5 max-bp1000:min-w-0",
+          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-1.5 max-bp1000:min-w-0 max-bp620:col-span-2",
         )}
       >
         {goal ? (
@@ -137,12 +137,12 @@ export function TransactionRow({
       <span
         className={cx(
           "text-right text-md font-600 whitespace-nowrap tabular-nums text-text",
-          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-md",
+          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-md max-bp620:col-start-2 max-bp620:row-start-3 max-bp620:text-left",
         )}
       >
         {amountLabel(t, hidden)}
       </span>
-      <div className="flex justify-end max-bp1000:col-start-3 max-bp1000:row-start-2">
+      <div className="flex justify-end max-bp1000:col-start-3 max-bp1000:row-start-2 max-bp620:row-start-3">
         <Button
           variant="icon"
           className="w-[28px] h-[28px] text-text-muted max-bp1000:hidden"

@@ -2,6 +2,8 @@ import { Avatar } from "@base-ui/react/avatar";
 import type { ComponentPropsWithoutRef } from "react";
 import { cx } from "@/lib/cx";
 
+const graphemes = new Intl.Segmenter("pt-BR", { granularity: "grapheme" });
+
 /** Members keep one color by join order: the first is lime, the second ink. */
 export function PersonAvatar({
   name,
@@ -28,7 +30,11 @@ export function PersonAvatar({
       <Avatar.Fallback>
         {position === -1
           ? "?"
-          : name?.trim().charAt(0).toLocaleUpperCase("pt-BR") || "?"}
+          : graphemes
+              .segment(name?.trim() ?? "")
+              [Symbol.iterator]()
+              .next()
+              .value?.segment.toLocaleUpperCase("pt-BR") || "?"}
       </Avatar.Fallback>
     </Avatar.Root>
   );

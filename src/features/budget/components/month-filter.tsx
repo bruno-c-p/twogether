@@ -22,7 +22,7 @@ function MonthGrid({
   month: string;
   onPick: (month: string) => void;
 }) {
-  const [year, setYear] = useState(() => Number(month.slice(0, 4)) || 0);
+  const [year, setYear] = useState(() => Number(month.slice(0, 4)));
   const today = useHydrated() ? currentMonth() : null;
 
   return (
@@ -31,6 +31,7 @@ function MonthGrid({
         <Button
           variant="icon"
           aria-label="Ano anterior"
+          disabled={year <= 1900}
           onClick={() => setYear(year - 1)}
         >
           <ChevronLeft size={18} />
@@ -41,6 +42,7 @@ function MonthGrid({
         <Button
           variant="icon"
           aria-label="Próximo ano"
+          disabled={year >= 9999}
           onClick={() => setYear(year + 1)}
         >
           <ChevronRight size={18} />
@@ -55,7 +57,7 @@ function MonthGrid({
         }}
       >
         {MONTHS.map((number) => {
-          const value = `${year}-${String(number).padStart(2, "0")}`;
+          const value = `${String(year).padStart(4, "0")}-${String(number).padStart(2, "0")}`;
 
           return (
             <Toggle

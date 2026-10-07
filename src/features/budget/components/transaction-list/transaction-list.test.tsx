@@ -203,6 +203,38 @@ describe("TransactionList", () => {
     expect(onAdd).toHaveBeenCalled();
   });
 
+  test("pagination bounds rows, preserves full-day totals and searches every page", async () => {
+    const transactions = Array.from({ length: 51 }, (_, index) =>
+      transaction({
+        id: String(index).padStart(3, "0"),
+        description: `Compra ${index}`,
+        date: "2026-09-10",
+        amount: 100,
+      }),
+    );
+
+    const { screen, user } = renderPlain(<List transactions={transactions} />);
+    expect(rowNames(screen)).toHaveLength(50);
+    expect(screen.getByText(/−\sR\$\s51,00/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Anterior" }).hasAttribute("disabled"),
+    ).toBe(true);
+    await user.click(screen.getByRole("button", { name: "Próxima" }));
+    expect(rowNames(screen)).toEqual(["Editar Compra 0"]);
+    expect(screen.getByText(/−\sR\$\s51,00/)).toBeTruthy();
+    expect(
+      screen.getByRole("button", { name: "Próxima" }).hasAttribute("disabled"),
+    ).toBe(true);
+    await user.type(screen.getByLabelText("Buscar transações"), "Compra 50");
+    expect(rowNames(screen)).toEqual(["Editar Compra 50"]);
+    expect(
+      screen.queryByRole("navigation", { name: "Páginas de transações" }),
+    ).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Limpar busca" }));
+    expect(rowNames(screen)).toHaveLength(50);
+    expect(screen.getByText(/Página 1 de 2/)).toBeTruthy();
+  });
+
   test("row actions edit and delete, and hidden values mask amounts", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
