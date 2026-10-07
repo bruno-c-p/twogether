@@ -34,8 +34,10 @@
   color: var(--goal-color);
 }
 
-.goalOption:hover {
-  background: var(--goal-bg);
+@media (hover: hover) and (pointer: fine) {
+  .goalOption:hover {
+    background: var(--goal-bg);
+  }
 }
 
 .goalOption.selected {

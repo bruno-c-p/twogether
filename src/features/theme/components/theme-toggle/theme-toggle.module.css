@@ -23,8 +23,10 @@
   font-size: 12px;
 }
 
-.themeToggle button:hover {
-  background: var(--surface-soft);
+@media (hover: hover) and (pointer: fine) {
+  .themeToggle button:hover {
+    background: var(--surface-soft);
+  }
 }
 
 .themeToggle button[aria-pressed="true"] {

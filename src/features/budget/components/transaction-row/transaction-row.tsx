@@ -103,7 +103,7 @@ export function TransactionRow({
         {t.tags.map((tag) => (
           <button
             key={tag}
-            className="border-0 bg-transparent p-0 text-xs text-text-muted hover:text-text"
+            className="border-0 bg-transparent p-0 text-xs text-text-muted @hover:text-text"
             onClick={() => onTag(tag)}
           >
             #{tag}
@@ -152,7 +152,7 @@ export function TransactionRow({
         </Button>
         <Button
           variant="icon"
-          className="w-[28px] h-[28px] text-text-muted hover:text-danger"
+          className="w-[28px] h-[28px] text-text-muted @hover:text-danger"
           disabled={busy || Boolean(removeLock)}
           aria-label={withLock(`Excluir ${t.description}`, removeLock)}
           onClick={() => onDelete(t)}
