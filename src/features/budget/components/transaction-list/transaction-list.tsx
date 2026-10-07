@@ -142,6 +142,8 @@ export function TransactionSearch({
       />
       <input
         aria-label="Buscar transações"
+        inputMode="search"
+        enterKeyHint="search"
         placeholder="Buscar…"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
@@ -175,7 +177,7 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
             "px-4 py-2 rounded-full border border-solid text-sm",
             kindFilter === chip.value
               ? "bg-green text-on-brand border-green"
-              : "bg-surface text-text border-border hover:bg-surface-soft",
+              : "bg-surface text-text border-border @hover:bg-surface-soft",
           )}
         >
           {chip.label}
@@ -194,7 +196,7 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
           className={cx(
             "appearance-none pl-4 pr-9 py-2 rounded-full border border-solid text-sm max-w-full cursor-pointer",
             goalFilter === "all"
-              ? "bg-surface text-text border-border hover:bg-surface-soft"
+              ? "bg-surface text-text border-border @hover:bg-surface-soft"
               : "bg-green text-on-brand border-green",
           )}
         >

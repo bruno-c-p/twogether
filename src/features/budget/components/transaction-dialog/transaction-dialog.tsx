@@ -273,6 +273,7 @@ function AmountInput({
           autoFocus
           type="text"
           inputMode="numeric"
+          enterKeyHint="next"
           placeholder="0,00"
           maxLength={14}
           required

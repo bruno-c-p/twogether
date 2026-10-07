@@ -21,7 +21,7 @@ export function DesktopNavigation() {
           activeOptions={activeOptions}
           className={cx(
             "px-3 py-2 rounded-md text-sm",
-            "hover:bg-surface-soft",
+            "@hover:bg-surface-soft active:bg-surface-soft",
           )}
           activeProps={{ className: "bg-surface-soft text-text" }}
           inactiveProps={{ className: "text-text-muted" }}
@@ -39,7 +39,7 @@ function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
       to={item.to}
       activeOptions={activeOptions}
       className={cx(
-        "flex flex-col items-center gap-1 shrink-0 py-0.5 text-center text-xs leading-[1.2]",
+        "select-none [-webkit-touch-callout:none] flex flex-col items-center gap-1 shrink-0 min-h-[48px] min-w-[44px] justify-center rounded-md active:bg-surface-soft py-0.5 text-center text-xs leading-[1.2]",
       )}
       activeProps={{ className: "text-green" }}
       inactiveProps={{ className: "text-text-muted" }}
@@ -67,7 +67,7 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
       className={cx(
         "hidden max-bp1000:grid grid-cols-[1fr_auto_1fr] fixed bottom-0 inset-x-0 z-30 items-center",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
-        "px-2 pt-2 pb-[max(20px,env(safe-area-inset-bottom))]",
+        "pl-[max(8px,env(safe-area-inset-left,0px))] pr-[max(8px,env(safe-area-inset-right,0px))] pt-2 pb-[max(20px,env(safe-area-inset-bottom,0px))]",
       )}
     >
       <div className="flex justify-around">

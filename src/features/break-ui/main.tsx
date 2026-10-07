@@ -20,6 +20,7 @@ import { AccountSettingsView } from "@/features/auth/components/account-settings
 import { NameForm } from "@/features/auth/components/name-form";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import { Toaster } from "@/components/ui/toaster";
 import { ThemeToggle } from "@/features/theme";
 import { useBudget } from "@/features/budget/hooks/use-budget";
 import {
@@ -193,6 +194,7 @@ function Root() {
     <>
       <Outlet />
       <DataToggle />
+      <Toaster />
     </>
   );
 }

@@ -76,7 +76,7 @@ export function BalanceCard({
               className={cx(
                 "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
                 "border-0 bg-transparent p-0 rounded-sm text-on-balance-muted",
-                "hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
+                "@hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
               )}
             >
               {hidden ? <EyeOff size={19} /> : <Eye size={19} />}

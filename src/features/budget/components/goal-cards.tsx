@@ -84,7 +84,7 @@ function GoalCard({
       search={{ goal: goal.id }}
       className={cx(
         "flex flex-col gap-3 p-5 bg-surface text-text rounded-lg",
-        "border border-solid border-border hover:border-line-strong",
+        "border border-solid border-border @hover:border-line-strong",
       )}
       aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
     >

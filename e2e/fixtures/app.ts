@@ -168,17 +168,20 @@ export async function openCouple(page: Page) {
   await waitForHydrated(page);
 }
 
-export async function dismissToast(page: Page) {
-  const close = page.getByRole("button", { name: "Fechar aviso" });
+export async function dismissToast(page: Page, message: string) {
+  const close = page
+    .locator("[data-sonner-toast]")
+    .filter({ hasText: message })
+    .getByRole("button", { name: "Fechar aviso" });
 
   if (await close.isVisible()) await close.click();
 }
 
 export async function expectToast(page: Page, message: string) {
   await expect(
-    page.getByRole("status").filter({ hasText: message }),
+    page.locator("[data-sonner-toast]").filter({ hasText: message }),
   ).toBeVisible();
-  await dismissToast(page);
+  await dismissToast(page, message);
 }
 
 export async function expectNoHorizontalOverflow(page: Page) {
