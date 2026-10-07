@@ -26,6 +26,22 @@ function applyTheme(theme: Theme, media: MediaQueryList) {
   document.head.appendChild(style);
   document.documentElement.dataset.theme =
     theme === "system" ? (media.matches ? "dark" : "light") : theme;
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute(
+      "content",
+      getComputedStyle(document.documentElement)
+        .getPropertyValue("--page")
+        .trim(),
+    );
+  document
+    .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+    ?.setAttribute(
+      "content",
+      document.documentElement.dataset.theme === "dark"
+        ? "black-translucent"
+        : "default",
+    );
   void document.body.offsetHeight;
   requestAnimationFrame(() => style.remove());
 }
@@ -99,4 +115,4 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
   );
 }
 
-export const themeScript = `(()=>{let t="system";try{const s=localStorage.getItem("${THEME_STORAGE_KEY}");if(s==="light"||s==="dark")t=s}catch{}const d=document.documentElement;d.dataset.themePreference=t;d.dataset.theme=t==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t})()`;
+export const themeScript = `(()=>{let t="system";try{const s=localStorage.getItem("${THEME_STORAGE_KEY}");if(s==="light"||s==="dark")t=s}catch{}const d=document.documentElement;d.dataset.themePreference=t;d.dataset.theme=t==="system"?(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"):t;document.querySelector('meta[name="theme-color"]')?.setAttribute("content",getComputedStyle(d).getPropertyValue("--page").trim());document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')?.setAttribute("content",d.dataset.theme==="dark"?"black-translucent":"default")})()`;

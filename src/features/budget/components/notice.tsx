@@ -40,8 +40,8 @@ export function NoticeToast({
         "w-max max-w-[calc(100%_-_40px)]",
         "animate-[toast-in_0.2s_ease]",
         "max-bp1190:left-[calc(50%_+_100px)]",
-        "max-bp1000:left-[calc(50%_+_38px)]",
-        "max-bp620:bottom-[85px] max-bp620:left-1/2 max-bp620:text-xs",
+        "max-bp1000:left-1/2 max-bp1000:bottom-[calc(68px+max(20px,env(safe-area-inset-bottom,0px)))]",
+        "max-bp620:text-xs",
         "max-bp620:p-3 max-bp620:gap-2",
         "max-bp620:max-w-[calc(100%_-_24px)]",
       ].join(" ")}
