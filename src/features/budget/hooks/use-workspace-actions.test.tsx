@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { describe, expect, test, vi } from "vitest";
-import type { Notice } from "@/features/budget/components/notice";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { fireEvent } from "@testing-library/react";
+import { toastManager } from "@/components/ui/toast-manager";
+import { Toaster } from "@/components/ui/toaster";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
-import type { Transaction } from "@/features/budget/domain/types";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
@@ -45,22 +45,13 @@ const series = [0, 1, 2].map((index) =>
   }),
 );
 
-function Harness({
-  mutations,
-  initialNotice = null,
-}: {
-  mutations: BudgetMutations;
-  initialNotice?: Notice | null;
-}) {
+function Harness({ mutations }: { mutations: BudgetMutations }) {
   const dialogs = useWorkspaceDialogs(mutations);
-  const [notice, setNotice] = useState<Notice | null>(initialNotice);
 
   const actions = useWorkspaceActions({
     budget,
     dialogs,
     mutations,
-    notice,
-    setNotice,
     setMonth: vi.fn(),
   });
 
@@ -76,8 +67,7 @@ function Harness({
         delete following
       </button>
       <button onClick={actions.openPercentages}>edit percentages</button>
-      <button onClick={() => void actions.undoNotice()}>undo</button>
-      <p role="status">{notice?.message ?? ""}</p>
+      <Toaster />
       <p data-testid="deleting">{dialogs.deleting?.id ?? "none"}</p>
       <p data-testid="percentages">{dialogs.percentagesRevision ?? "closed"}</p>
     </>
@@ -89,6 +79,7 @@ function setup(props: Parameters<typeof Harness>[0]) {
 }
 
 describe("useWorkspaceActions", () => {
+  afterEach(() => toastManager.close());
   test("deleting one occurrence offers undo and closes the dialog", async () => {
     const mutations = fakeMutations(true);
     const { screen, user } = await setup({ mutations });
@@ -97,7 +88,7 @@ describe("useWorkspaceActions", () => {
     await user.click(screen.getByRole("button", { name: "delete one" }));
 
     await vi.waitFor(() =>
-      expect(screen.getByRole("status").textContent).toBe(
+      expect(screen.getByText("Transação excluída.").textContent).toBe(
         "Transação excluída.",
       ),
     );
@@ -117,7 +108,7 @@ describe("useWorkspaceActions", () => {
     await user.click(screen.getByRole("button", { name: "delete following" }));
 
     await vi.waitFor(() =>
-      expect(screen.getByRole("status").textContent).toBe(
+      expect(screen.getByText("3 transações excluídas.").textContent).toBe(
         "3 transações excluídas.",
       ),
     );
@@ -139,7 +130,7 @@ describe("useWorkspaceActions", () => {
     await user.click(screen.getByRole("button", { name: "delete one" }));
     await vi.waitFor(() => expect(mutations.deleteTx.run).toHaveBeenCalled());
     expect(screen.getByTestId("deleting").textContent).toBe("r0");
-    expect(screen.getByRole("status").textContent).toBe("");
+    expect(screen.queryByText("Transação excluída.")).toBeNull();
   });
 
   test("percentages open at the person's own revision", async () => {
@@ -151,37 +142,33 @@ describe("useWorkspaceActions", () => {
 
   test("undo restores the deleted transaction at the next revision", async () => {
     const mutations = fakeMutations(true);
-    const undo: Transaction = transaction({ id: "t9", revision: 4 });
+    const { screen, user } = await setup({ mutations });
 
-    const { screen, user } = await setup({
-      mutations,
-      initialNotice: { message: "Transação excluída.", undo },
-    });
+    await user.click(screen.getByRole("button", { name: "delete one" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Desfazer" }));
 
-    await user.click(screen.getByRole("button", { name: "undo" }));
-
-    await vi.waitFor(() =>
-      expect(screen.getByRole("status").textContent).toBe(
-        "Alteração desfeita.",
-      ),
-    );
+    await screen.findByText("Alteração desfeita.");
     expect(mutations.restoreTx.run).toHaveBeenCalledWith({
-      id: "t9",
-      revision: 5,
-      transaction: undo,
+      id: "r0",
+      revision: 1,
+      transaction: series[0],
     });
   });
 
-  test("undo without anything to restore does nothing", async () => {
+  test("failed undo keeps its action available for retry", async () => {
     const mutations = fakeMutations(true);
+    vi.mocked(mutations.restoreTx.run).mockResolvedValueOnce(false);
+    const { screen, user } = await setup({ mutations });
 
-    const { screen, user } = await setup({
-      mutations,
-      initialNotice: { message: "Oi." },
-    });
+    await user.click(screen.getByRole("button", { name: "delete one" }));
+    fireEvent.click(await screen.findByRole("button", { name: "Desfazer" }));
+    await vi.waitFor(() =>
+      expect(mutations.restoreTx.run).toHaveBeenCalledTimes(1),
+    );
+    expect(screen.queryByText("Alteração desfeita.")).toBeNull();
 
-    await user.click(screen.getByRole("button", { name: "undo" }));
-    expect(mutations.restoreTx.run).not.toHaveBeenCalled();
-    expect(screen.getByRole("status").textContent).toBe("Oi.");
+    fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
+    await screen.findByText("Alteração desfeita.");
+    expect(mutations.restoreTx.run).toHaveBeenCalledTimes(2);
   });
 });

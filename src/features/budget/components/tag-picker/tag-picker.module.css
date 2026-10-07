@@ -61,6 +61,8 @@
   padding: 4px 0;
 }
 
-.tagSuggestions button:hover {
-  text-decoration: underline;
+@media (hover: hover) and (pointer: fine) {
+  .tagSuggestions button:hover {
+    text-decoration: underline;
+  }
 }

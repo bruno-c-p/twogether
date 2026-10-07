@@ -47,6 +47,10 @@ export function InviteForm({
           Link de convite
           <Input
             name="invite"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            enterKeyHint="go"
             placeholder="Cole o link do seu par"
             required
             aria-describedby={errors.invite ? "invite-error" : undefined}

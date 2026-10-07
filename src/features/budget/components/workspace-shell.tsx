@@ -4,25 +4,10 @@ import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/features/budget/components/workspace-navigation";
-import { NoticeToast } from "@/features/budget/components/notice";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
-
-function WorkspaceNotice() {
-  const { notice, setNotice, actions } = useWorkspace();
-
-  if (!notice) return null;
-
-  return (
-    <NoticeToast
-      notice={notice}
-      onUndo={() => void actions.undoNotice()}
-      onDismiss={() => setNotice(null)}
-    />
-  );
-}
 
 export function WorkspaceShell({
   controls,
@@ -36,7 +21,7 @@ export function WorkspaceShell({
   const { actions } = useWorkspace();
 
   return (
-    <div className="min-h-[100dvh]">
+    <div className="min-h-[100dvh] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
       <a
         href="#main-content"
         className="absolute z-40 top-[16px] [inset-inline-start:-999px] focus:[inset-inline-start:16px] bg-surface text-text px-3 py-2 rounded-md"
@@ -45,7 +30,7 @@ export function WorkspaceShell({
       </a>
       <header
         className={cx(
-          "sticky top-0 z-20 bg-topbar backdrop-blur",
+          "sticky top-0 z-20 bg-topbar backdrop-blur pt-[env(safe-area-inset-top,0px)]",
           "[border-width:0_0_1px] border-solid border-border max-bp1000:static",
         )}
       >
@@ -81,12 +66,11 @@ export function WorkspaceShell({
         {children}
       </main>
       {/* Clears the fixed mobile nav: pt-2 + ~49px of content + its bottom padding. */}
-      <div className="max-bp1000:pb-[calc(60px+max(20px,env(safe-area-inset-bottom)))]">
+      <div className="max-bp1000:pb-[calc(60px+max(20px,env(safe-area-inset-bottom,0px)))]">
         <AppFooter />
       </div>
       <MobileNavigation onRegister={() => actions.openTransaction(null)} />
       <TransactionFlows />
-      <WorkspaceNotice />
     </div>
   );
 }

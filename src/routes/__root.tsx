@@ -13,6 +13,7 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
+import { Toaster } from "@/components/ui/toaster";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 import { syncIdentity } from "@/lib/posthog-identity";
@@ -58,13 +59,22 @@ export const Route = createRootRouteWithContext<{
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      {
+        name: "viewport",
+        content:
+          "width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content",
+      },
       { title: "twogether — Orçamento a dois" },
       {
         name: "description",
         content: "Organize transações, metas e tags em um orçamento pessoal.",
       },
-      { name: "theme-color", content: "#0d0d12" },
+      { name: "theme-color", content: "#f2f2f4" },
+      { name: "color-scheme", content: "light dark" },
+      {
+        name: "apple-mobile-web-app-status-bar-style",
+        content: "default",
+      },
       { name: "mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-title", content: "twogether" },
@@ -89,8 +99,8 @@ export const Route = createRootRouteWithContext<{
   component: () => (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
-        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
         <ClerkProvider
@@ -136,6 +146,7 @@ export const Route = createRootRouteWithContext<{
           ) : (
             <Outlet />
           )}
+          <Toaster />
           <Scripts />
         </ClerkProvider>
       </body>

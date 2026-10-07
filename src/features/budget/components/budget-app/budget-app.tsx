@@ -1,4 +1,5 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import { toastManager } from "@/components/ui/toast-manager";
 import { Outlet } from "@tanstack/react-router";
 import {
   useBudget,
@@ -20,7 +21,6 @@ import { money } from "@/features/budget/domain/format";
 import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { MonthFilter } from "@/features/budget/components/month-filter";
-import { useNotice } from "@/features/budget/components/notice";
 import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 
@@ -60,16 +60,20 @@ export function BudgetWorkspace({
   const mutations = useBudgetMutations();
   const search = useWorkspaceSearch();
   const dialogs = useWorkspaceDialogs(mutations);
-  const { notice, setNotice } = useNotice();
   const [hidden, setHidden] = useState(false);
   const data = useWorkspaceData(budget, month, search.memberFilter);
+
+  useEffect(
+    () => () => {
+      toastManager.close();
+    },
+    [],
+  );
 
   const actions = useWorkspaceActions({
     budget,
     dialogs,
     mutations,
-    notice,
-    setNotice,
     setMonth: search.setMonth,
   });
 
@@ -88,8 +92,6 @@ export function BudgetWorkspace({
     mutations,
     dialogs,
     actions,
-    notice,
-    setNotice,
   };
 
   return (

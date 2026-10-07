@@ -11,7 +11,7 @@
   width: min(540px, 100%);
   max-width: 100%;
   height: fit-content;
-  max-height: calc(100dvh - 24px);
+  max-height: calc(100dvh - max(24px, env(safe-area-inset-top, 0px)));
   background: var(--surface);
   overflow: auto;
   overscroll-behavior: contain;
@@ -84,7 +84,9 @@
 }
 
 .content {
-  padding: 8px 24px 24px;
+  padding: 8px max(24px, env(safe-area-inset-right, 0px))
+    calc(24px + env(safe-area-inset-bottom, 0px))
+    max(24px, env(safe-area-inset-left, 0px));
 }
 
 .header {
@@ -129,7 +131,9 @@
 
 @media (max-width: 620px) {
   .content {
-    padding: 4px 16px 16px;
+    padding: 4px max(16px, env(safe-area-inset-right, 0px))
+      calc(16px + env(safe-area-inset-bottom, 0px))
+      max(16px, env(safe-area-inset-left, 0px));
   }
 
   .grabber::before {

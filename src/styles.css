@@ -35,8 +35,6 @@
   --on-person-a: #0d0d12;
   --person-b: var(--text);
   --on-person-b: var(--page);
-  --toast: #0d0d12;
-  --on-toast: #fff;
   --topbar: color-mix(in srgb, var(--page) 90%, transparent);
   --mobile-nav: color-mix(in srgb, var(--surface) 96%, transparent);
   --dialog-backdrop: rgb(13 13 18 / 45%);
@@ -90,8 +88,6 @@
   --danger: #ff7a76;
   --danger-soft: #3a1d1f;
   --on-danger: #0d0d12;
-  --toast: #2c2c38;
-  --on-toast: #f4f4f6;
   --dialog-backdrop: rgb(0 0 0 / 60%);
   --category-fixed: #5fd3a0;
   --category-pleasure: #ffad73;
@@ -112,27 +108,44 @@
 * {
   box-sizing: border-box;
 }
+/* App scrolling stays inside the page instead of triggering pull-to-refresh. */
+html,
+body {
+  overscroll-behavior: none;
+}
+html {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
+}
 body {
   margin: 0;
 }
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
 }
+/* Controls respond immediately and keep their labels out of text selection. */
 button,
-a,
-input,
-select {
-  -webkit-tap-highlight-color: transparent;
+[role="button"],
+[role="tab"],
+[role="radio"] {
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+a {
+  touch-action: manipulation;
 }
 button {
   cursor: pointer;
   color: inherit;
   transition:
-    background 0.18s,
-    transform 0.18s,
-    box-shadow 0.18s;
+    background 120ms ease-out,
+    transform 120ms ease-out,
+    box-shadow 120ms ease-out;
 }
 button:disabled {
   cursor: not-allowed;
@@ -150,6 +163,9 @@ a:focus-visible {
 button:active:not(:disabled) {
   transform: translateY(1px);
 }
+a:active {
+  opacity: 0.72;
+}
 a {
   color: inherit;
   text-decoration: none;
@@ -160,11 +176,11 @@ select {
   color: inherit;
 }
 /* iOS Safari zooms the page when a focused field is under 16px. */
-@supports (-webkit-touch-callout: none) {
-  input,
+@media (pointer: coarse) {
+  input:not([type="checkbox"]):not([type="radio"]),
   select,
   textarea {
-    font-size: 16px !important;
+    font-size: max(16px, var(--amount-font-size, 1em)) !important;
   }
 }
 :where(input, select):focus {
