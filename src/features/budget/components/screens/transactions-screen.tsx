@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 function countNote(count: number, month: string) {
   const noun = count === 1 ? "transação" : "transações";
 
-  return `${count} ${noun} em ${monthName(month)}`;
+  return `${count.toLocaleString("pt-BR")} ${noun} em ${monthName(month)}`;
 }
 
 export function TransactionsScreen() {

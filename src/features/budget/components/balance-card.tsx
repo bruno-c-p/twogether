@@ -56,42 +56,41 @@ export function BalanceCard({
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3 flex-wrap">
-        <div className="min-w-0">
+      <div className="min-w-0 [container-type:inline-size]">
+        <div className="flex items-start justify-between gap-3">
           <p className="m-0 text-md text-on-balance-muted max-bp620:text-sm">
             {memberFilter === "all" ? "Sobra de" : "Sobra desta pessoa em"}{" "}
             {monthName(month)}
           </p>
-          <p
-            className={cx(
-              "m-0 mt-2 font-heading font-800 tracking-[-0.045em] leading-none",
-              "text-[52px] max-bp620:text-3xl max-bp620:mt-2",
-              "break-words tabular-nums",
+          <div className="flex items-center gap-2 shrink-0">
+            {days !== null && (
+              <span className="rounded-full px-4 py-1.5 text-xs bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)] text-on-balance-muted max-bp1000:hidden">
+                {closingLabel(days)}
+              </span>
             )}
-          >
-            {displayMoney(summary.balance)}
-          </p>
+            <button
+              type="button"
+              onClick={onToggleHidden}
+              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
+              title={hidden ? "Mostrar valores" : "Ocultar valores"}
+              className={cx(
+                "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
+                "border-0 bg-transparent p-0 rounded-sm text-on-balance-muted",
+                "@hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
+              )}
+            >
+              {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
+            </button>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          {days !== null && (
-            <span className="rounded-full px-4 py-1.5 text-xs bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)] text-on-balance-muted max-bp1000:hidden">
-              {closingLabel(days)}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={onToggleHidden}
-            aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
-            title={hidden ? "Mostrar valores" : "Ocultar valores"}
-            className={cx(
-              "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
-              "border-0 bg-transparent p-0 rounded-sm text-on-balance-muted",
-              "@hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
-            )}
-          >
-            {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-          </button>
-        </div>
+        <p
+          className="m-0 mt-2 font-heading font-800 tracking-[-0.045em] leading-none whitespace-nowrap tabular-nums [--balance-size:52px] max-bp620:[--balance-size:30px]"
+          style={{
+            fontSize: `min(var(--balance-size), ${160 / displayMoney(summary.balance).length}cqi)`,
+          }}
+        >
+          {displayMoney(summary.balance)}
+        </p>
       </div>
       <dl
         className={cx(

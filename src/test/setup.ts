@@ -30,6 +30,8 @@ if (!window.matchMedia) {
 // jsdom has no scrolling; the test router's scroll restoration calls this.
 window.scrollTo = () => undefined;
 
+HTMLElement.prototype.scrollIntoView = () => undefined;
+
 afterEach(() => {
   cleanup();
 });
