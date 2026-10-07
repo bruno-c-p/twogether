@@ -1,4 +1,8 @@
-import { ChevronDown, Search, X } from "lucide-react";
+import { Select } from "@/components/ui/select";
+import { Toggle } from "@base-ui/react/toggle";
+import { ToggleGroup } from "@base-ui/react/toggle-group";
+import { Input } from "@/components/ui/input";
+import { Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import type {
@@ -138,7 +142,7 @@ export function TransactionSearch({
         aria-hidden="true"
         className="absolute left-[13px] text-text-muted pointer-events-none"
       />
-      <input
+      <Input
         aria-label="Buscar transações"
         placeholder="Buscar…"
         value={query}
@@ -164,54 +168,46 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
 
   return (
     <div className="flex items-center gap-2 flex-wrap mb-4">
-      {KIND_CHIPS.map((chip) => (
-        <button
-          key={chip.value}
-          aria-pressed={kindFilter === chip.value}
-          onClick={() => filters.setKindFilter(chip.value)}
-          className={cx(
-            "px-4 py-2 rounded-full border border-solid text-sm",
-            kindFilter === chip.value
-              ? "bg-green text-on-brand border-green"
-              : "bg-surface text-text border-border hover:bg-surface-soft",
-          )}
-        >
-          {chip.label}
-        </button>
-      ))}
-      {/* A native select keeps the phone's own picker; it is only dressed as a chip. */}
-      <div className="relative inline-flex max-w-full">
-        <select
-          aria-label="Filtrar por meta"
-          value={goalFilter}
-          onChange={(event) => {
-            const found = GOALS.find((g) => g.id === event.target.value);
+      <ToggleGroup
+        className="flex items-center gap-2 flex-wrap"
+        aria-label="Tipo de transação"
+        value={[kindFilter]}
+        onValueChange={(values) => {
+          const chip = KIND_CHIPS.find((item) => item.value === values[0]);
 
-            filters.setGoalFilter(found?.id ?? "all");
-          }}
-          className={cx(
-            "appearance-none pl-4 pr-9 py-2 rounded-full border border-solid text-sm max-w-full cursor-pointer",
-            goalFilter === "all"
-              ? "bg-surface text-text border-border hover:bg-surface-soft"
-              : "bg-green text-on-brand border-green",
-          )}
-        >
-          <option value="all">Todas as metas</option>
-          {GOALS.map((goal) => (
-            <option key={goal.id} value={goal.id}>
-              {goal.name}
-            </option>
-          ))}
-        </select>
-        <ChevronDown
-          size={14}
-          aria-hidden="true"
-          className={cx(
-            "absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none",
-            goalFilter === "all" ? "text-text-muted" : "text-on-brand",
-          )}
-        />
-      </div>
+          if (chip) filters.setKindFilter(chip.value);
+        }}
+      >
+        {KIND_CHIPS.map((chip) => (
+          <Toggle
+            key={chip.value}
+            value={chip.value}
+            className={cx(
+              "px-4 py-2 rounded-full border border-solid text-sm",
+              kindFilter === chip.value
+                ? "bg-green text-on-brand border-green"
+                : "bg-surface text-text border-border hover:bg-surface-soft",
+            )}
+          >
+            {chip.label}
+          </Toggle>
+        ))}
+      </ToggleGroup>
+      <Select
+        label="Filtrar por meta"
+        value={goalFilter}
+        onValueChange={filters.setGoalFilter}
+        items={[
+          { value: "all", label: "Todas as metas" },
+          ...GOALS.map((goal) => ({ value: goal.id, label: goal.name })),
+        ]}
+        className={cx(
+          "px-4 py-2 rounded-full border border-solid text-sm cursor-pointer",
+          goalFilter === "all"
+            ? "bg-surface text-text border-border hover:bg-surface-soft"
+            : "bg-green text-on-brand border-green",
+        )}
+      />
       {tagFilter && (
         <>
           <span className="sr-only">Filtrando por</span>

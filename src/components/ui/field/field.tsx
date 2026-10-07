@@ -1,3 +1,6 @@
+import { Field as BaseField } from "@base-ui/react/field";
+import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
+import { Form as BaseForm } from "@base-ui/react/form";
 import type {
   ComponentPropsWithoutRef,
   LabelHTMLAttributes,
@@ -10,10 +13,11 @@ export function Field({
   ...props
 }: LabelHTMLAttributes<HTMLLabelElement>) {
   return (
-    <label
+    <BaseField.Root
       className={className ? `${styles.field} ${className}` : styles.field}
-      {...props}
-    />
+    >
+      <BaseField.Label {...props} />
+    </BaseField.Root>
   );
 }
 
@@ -40,9 +44,9 @@ export function AmountField({
 }) {
   return (
     <>
-      <label className={styles.amountLabel} htmlFor={htmlFor}>
+      <BaseField.Label className={styles.amountLabel} htmlFor={htmlFor}>
         {label}
-      </label>
+      </BaseField.Label>
       <div className={styles.amount}>
         <span>R$</span>
         {children}
@@ -56,7 +60,7 @@ export function Fieldset({
   ...props
 }: ComponentPropsWithoutRef<"fieldset">) {
   return (
-    <fieldset
+    <BaseFieldset.Root
       className={className ? `${styles.fields} ${className}` : styles.fields}
       {...props}
     />
@@ -80,7 +84,7 @@ export function Form({
   ...props
 }: ComponentPropsWithoutRef<"form">) {
   return (
-    <form
+    <BaseForm
       className={className ? `${styles.stack} ${className}` : styles.stack}
       {...props}
     />
@@ -108,7 +112,9 @@ export function FieldError({
   if (!children) return null;
 
   return (
-    <span
+    <BaseField.Error
+      match
+      render={<span />}
       role="alert"
       className={
         className ? `${styles.fieldError} ${className}` : styles.fieldError
@@ -116,7 +122,7 @@ export function FieldError({
       {...props}
     >
       {children}
-    </span>
+    </BaseField.Error>
   );
 }
 
@@ -144,3 +150,7 @@ export function Note({ className, ...props }: ComponentPropsWithoutRef<"p">) {
     />
   );
 }
+
+export const FieldRoot = BaseField.Root;
+
+export const FieldLabel = BaseField.Label;

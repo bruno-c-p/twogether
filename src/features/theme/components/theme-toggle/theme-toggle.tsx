@@ -1,3 +1,5 @@
+import { Toggle } from "@base-ui/react/toggle";
+import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import {
@@ -61,41 +63,45 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
   const theme = useSyncExternalStore(subscribe, preference, () => "system");
 
   return (
-    <div
+    <ToggleGroup
       className={
         className ? `${styles.themeToggle} ${className}` : styles.themeToggle
       }
-      role="group"
+      value={[theme]}
+      onValueChange={(values) => {
+        const next = values[0];
+
+        if (!next) return;
+        const value = themePreferenceSchema.parse(next);
+        document.documentElement.dataset.themePreference = value;
+
+        try {
+          localStorage.setItem(THEME_STORAGE_KEY, value);
+        } catch {
+          /* Session-only when storage is unavailable. */
+        }
+
+        window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
+      }}
       aria-label="Aparência"
     >
       {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-        <button
+        <Toggle
           key={value}
           type="button"
           aria-label={`Tema ${label.toLowerCase()}`}
-          aria-pressed={theme === value}
+          value={value}
           title={
             value === "system"
               ? "Seguir tema do sistema"
               : `Tema ${label.toLowerCase()}`
           }
-          onClick={() => {
-            document.documentElement.dataset.themePreference = value;
-
-            try {
-              localStorage.setItem(THEME_STORAGE_KEY, value);
-            } catch {
-              /* Session-only when storage is unavailable. */
-            }
-
-            window.dispatchEvent(new Event(THEME_CHANGE_EVENT));
-          }}
         >
           <Icon size={16} aria-hidden="true" />
           <span>{label}</span>
-        </button>
+        </Toggle>
       ))}
-    </div>
+    </ToggleGroup>
   );
 }
 

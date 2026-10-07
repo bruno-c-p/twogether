@@ -78,7 +78,9 @@ export function GoalPercentagesDialog({
           >
             Restaurar padrão
           </Button>
-          <Button disabled={!valid || busy}>Salvar percentuais</Button>
+          <Button type="submit" disabled={!valid || busy}>
+            Salvar percentuais
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1,10 +1,16 @@
+import { Input } from "@/components/ui/input";
 import { useState, type FormEvent, type ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { formText } from "@/features/budget/domain/format";
 import { nameFormSchema } from "@/features/budget/domain/schemas";
 import { fieldErrors } from "@/lib/zod-errors";
 import { Button } from "@/components/ui/button";
-import { FieldError, Form } from "@/components/ui/field/field";
+import {
+  FieldError,
+  FieldLabel,
+  FieldRoot,
+  Form,
+} from "@/components/ui/field/field";
 
 const CONTINUE = (
   <>
@@ -47,24 +53,30 @@ export function NameForm({
     await onSubmit(parsed.data.name);
   }
 
-  const button = <Button disabled={busy}>{submitLabel}</Button>;
+  const button = (
+    <Button type="submit" disabled={busy}>
+      {submitLabel}
+    </Button>
+  );
 
   return (
     <Form onSubmit={(event) => void submit(event)}>
-      <label>
-        Seu nome
-        <input
-          name="name"
-          autoComplete="given-name"
-          maxLength={50}
-          defaultValue={defaultName}
-          placeholder="Como você quer aparecer?"
-          required
-          aria-describedby={errors.name ? "name-error" : undefined}
-          aria-invalid={errors.name ? true : undefined}
-        />
-        <FieldError id="name-error">{errors.name}</FieldError>
-      </label>
+      <FieldRoot>
+        <FieldLabel>
+          Seu nome
+          <Input
+            name="name"
+            autoComplete="given-name"
+            maxLength={50}
+            defaultValue={defaultName}
+            placeholder="Como você quer aparecer?"
+            required
+            aria-describedby={errors.name ? "name-error" : undefined}
+            aria-invalid={errors.name ? true : undefined}
+          />
+          <FieldError id="name-error">{errors.name}</FieldError>
+        </FieldLabel>
+      </FieldRoot>
       {status === undefined ? (
         button
       ) : (

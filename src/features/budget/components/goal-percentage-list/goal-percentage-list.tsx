@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { GOALS } from "@/features/budget/constants";
 import type { GoalId, GoalPercentages } from "@/features/budget/domain/types";
 import styles from "@/features/budget/components/goal-percentage-list/goal-percentage-list.module.css";
@@ -17,7 +18,7 @@ export function GoalPercentageList({
         <label key={goal.id} htmlFor={`percentage-${goal.id}`}>
           <span>{goal.name}</span>
           <span>
-            <input
+            <Input
               id={`percentage-${goal.id}`}
               type="number"
               inputMode="decimal"

@@ -1,3 +1,5 @@
+import { Form as BaseForm } from "@base-ui/react/form";
+import { Input } from "@/components/ui/input";
 import { useState, type FormEvent } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -74,7 +76,7 @@ export function SettleDialog({
             <h2 id="settle-dialog-title">Marcar como pago</h2>
           </div>
         </DialogHeader>
-        <form onSubmit={submit}>
+        <BaseForm onSubmit={submit}>
           <Fieldset disabled={busy}>
             <div className="mb-4">
               <FieldHint>
@@ -85,7 +87,7 @@ export function SettleDialog({
             </div>
             <Field>
               Data do pagamento
-              <input
+              <Input
                 type="date"
                 name="date"
                 aria-label="Data do pagamento"
@@ -107,7 +109,7 @@ export function SettleDialog({
               </Button>
             </DialogFooter>
           </Fieldset>
-        </form>
+        </BaseForm>
       </DialogContent>
     </Dialog>
   );

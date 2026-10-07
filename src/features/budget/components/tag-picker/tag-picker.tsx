@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Optional } from "@/components/ui/field/field";
@@ -29,7 +30,7 @@ export function TagPicker({
       </label>
       <div className={styles.tagInputWrapper}>
         <span>#</span>
-        <input
+        <Input
           id="tag-input"
           placeholder="Digite uma tag e pressione Enter"
           value={input}
@@ -73,9 +74,14 @@ export function TagPicker({
         <div className={styles.tagSuggestions}>
           <span>Sugestões</span>
           {suggestions.slice(0, 5).map((tag) => (
-            <button type="button" key={tag} onClick={() => onAdd(tag)}>
+            <Button
+              variant="unstyled"
+              type="button"
+              key={tag}
+              onClick={() => onAdd(tag)}
+            >
               #{tag}
-            </button>
+            </Button>
           ))}
         </div>
       )}

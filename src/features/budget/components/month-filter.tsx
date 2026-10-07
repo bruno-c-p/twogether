@@ -1,3 +1,5 @@
+import { Toggle } from "@base-ui/react/toggle";
+import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { useHydrated } from "@tanstack/react-router";
 import { useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
@@ -44,17 +46,26 @@ function MonthGrid({
           <ChevronRight size={18} />
         </Button>
       </div>
-      <div className="grid grid-cols-3 gap-2">
+      <ToggleGroup
+        className="grid grid-cols-3 gap-2"
+        aria-label="Mês"
+        value={[month]}
+        onValueChange={(values) => {
+          if (values[0]) onPick(values[0]);
+        }}
+      >
         {MONTHS.map((number) => {
           const value = `${year}-${String(number).padStart(2, "0")}`;
 
           return (
-            <button
+            <Toggle
               key={value}
               type="button"
               aria-label={monthLabel(value)}
-              aria-pressed={value === month}
-              onClick={() => onPick(value)}
+              value={value}
+              onClick={() => {
+                if (value === month) onPick(value);
+              }}
               className={cx(
                 "capitalize cursor-pointer border border-solid rounded-md",
                 "py-4 text-md text-text",
@@ -64,10 +75,10 @@ function MonthGrid({
               )}
             >
               {monthName(value, true)}
-            </button>
+            </Toggle>
           );
         })}
-      </div>
+      </ToggleGroup>
       {today && month !== today && (
         <Button
           variant="secondary"

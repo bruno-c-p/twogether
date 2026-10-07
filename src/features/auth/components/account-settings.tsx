@@ -1,3 +1,4 @@
+import { Input } from "@/components/ui/input";
 import { useState } from "react";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useQueryClient } from "@tanstack/react-query";
@@ -134,7 +135,7 @@ function SharedLink({ invite }: { invite: InviteLinkState }) {
     <>
       <label>
         Link para seu par
-        <input
+        <Input
           readOnly
           value={invite.link}
           onFocus={(event) => event.target.select()}

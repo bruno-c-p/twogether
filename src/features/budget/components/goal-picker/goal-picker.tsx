@@ -1,3 +1,6 @@
+import { Toggle } from "@base-ui/react/toggle";
+import { ToggleGroup } from "@base-ui/react/toggle-group";
+import { Fieldset } from "@base-ui/react/fieldset";
 import { Check } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import type { GoalId } from "@/features/budget/domain/types";
@@ -12,11 +15,20 @@ export function GoalPicker({
   onChange: (goal: GoalId) => void;
 }) {
   return (
-    <fieldset className={styles.goalField}>
-      <legend>Para qual meta?</legend>
-      <div className={styles.goalOptions}>
+    <Fieldset.Root className={styles.goalField}>
+      <Fieldset.Legend render={<legend />}>Para qual meta?</Fieldset.Legend>
+      <ToggleGroup
+        className={styles.goalOptions}
+        aria-label="Para qual meta?"
+        value={value ? [value] : []}
+        onValueChange={(values) => {
+          const next = GOALS.find((goal) => goal.id === values[0]);
+
+          if (next) onChange(next.id);
+        }}
+      >
         {GOALS.map((item) => (
-          <button
+          <Toggle
             key={item.id}
             type="button"
             className={`${styles.goalOption} ${value === item.id ? styles.selected : ""}`}
@@ -24,15 +36,14 @@ export function GoalPicker({
               "--goal-color": item.color,
               "--goal-bg": item.background,
             }}
-            aria-pressed={value === item.id}
-            onClick={() => onChange(item.id)}
+            value={item.id}
           >
             <GoalIcon goal={item.id} size={19} />
             <span>{item.name}</span>
             {value === item.id && <Check size={14} />}
-          </button>
+          </Toggle>
         ))}
-      </div>
-    </fieldset>
+      </ToggleGroup>
+    </Fieldset.Root>
   );
 }

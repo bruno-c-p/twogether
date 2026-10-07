@@ -140,12 +140,17 @@ describe("TransactionList", () => {
     expect(rowNames(screen)).toEqual(["Editar Salário"]);
     await user.click(screen.getByRole("button", { name: "Todas" }));
 
-    await user.selectOptions(
-      screen.getByLabelText("Filtrar por meta"),
-      "fixed",
+    await user.click(
+      screen.getByRole("combobox", { name: "Filtrar por meta" }),
     );
+    await user.click(await screen.findByRole("option", { name: "Custo fixo" }));
     expect(rowNames(screen)).toEqual(["Editar Mercado"]);
-    await user.selectOptions(screen.getByLabelText("Filtrar por meta"), "all");
+    await user.click(
+      screen.getByRole("combobox", { name: "Filtrar por meta" }),
+    );
+    await user.click(
+      await screen.findByRole("option", { name: "Todas as metas" }),
+    );
 
     await user.click(screen.getByRole("button", { name: "#casa" }));
     expect(screen.getByText("Filtrando por")).toBeTruthy();

@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
 import { WORKSPACE_NAVIGATION } from "@/features/budget/constants";
@@ -75,7 +76,8 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
         <MobileLink item={second} />
       </div>
       <div className="shrink-0 flex justify-center">
-        <button
+        <Button
+          variant="unstyled"
           type="button"
           aria-label="Registrar transação"
           onClick={onRegister}
@@ -86,7 +88,7 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
           )}
         >
           <Plus size={22} />
-        </button>
+        </Button>
       </div>
       <div className="flex justify-around">
         <MobileLink item={third} />

@@ -1,3 +1,5 @@
+import { Form as BaseForm } from "@base-ui/react/form";
+import { Input } from "@/components/ui/input";
 import {
   useEffect,
   useRef,
@@ -37,6 +39,8 @@ import {
 import {
   AmountField,
   FieldError,
+  FieldRoot,
+  FieldLabel,
   FieldHint,
   FieldRow,
   Fieldset,
@@ -264,9 +268,9 @@ function AmountInput({
   }, [amountInput, form.amountValue]);
 
   return (
-    <>
+    <FieldRoot>
       <AmountField label="Valor" htmlFor="amount">
-        <input
+        <Input
           id="amount"
           ref={amountInput}
           name="amount"
@@ -285,7 +289,7 @@ function AmountInput({
         />
       </AmountField>
       <FieldError id="amount-error">{form.errors.amount}</FieldError>
-    </>
+    </FieldRoot>
   );
 }
 
@@ -300,31 +304,35 @@ function DescriptionAndDate({
 }) {
   return (
     <FieldRow>
-      <label>
-        Descrição
-        <input
-          name="description"
-          placeholder="Ex.: supermercado"
-          maxLength={80}
-          defaultValue={transaction?.description}
-          required
-          {...invalidProps(errors, "description", "description-error")}
-        />
-        <FieldError id="description-error">{errors.description}</FieldError>
-      </label>
-      <label>
-        Data
-        <input
-          type="date"
-          name="date"
-          defaultValue={transaction?.date ?? defaultDate}
-          min="1900-01-01"
-          max="9999-12-31"
-          required
-          {...invalidProps(errors, "date", "date-error")}
-        />
-        <FieldError id="date-error">{errors.date}</FieldError>
-      </label>
+      <FieldRoot>
+        <FieldLabel>
+          Descrição
+          <Input
+            name="description"
+            placeholder="Ex.: supermercado"
+            maxLength={80}
+            defaultValue={transaction?.description}
+            required
+            {...invalidProps(errors, "description", "description-error")}
+          />
+          <FieldError id="description-error">{errors.description}</FieldError>
+        </FieldLabel>
+      </FieldRoot>
+      <FieldRoot>
+        <FieldLabel>
+          Data
+          <Input
+            type="date"
+            name="date"
+            defaultValue={transaction?.date ?? defaultDate}
+            min="1900-01-01"
+            max="9999-12-31"
+            required
+            {...invalidProps(errors, "date", "date-error")}
+          />
+          <FieldError id="date-error">{errors.date}</FieldError>
+        </FieldLabel>
+      </FieldRoot>
     </FieldRow>
   );
 }
@@ -457,14 +465,13 @@ export function TransactionDialog({
 
   const amountInput = useRef<HTMLInputElement>(null);
 
-  // Runs after <Dialog> calls showModal(), which would otherwise move focus
-  // to the close button.
-  useEffect(() => {
-    amountInput.current?.focus();
-  }, []);
-
   return (
-    <Dialog labelledBy="dialog-title" onClose={onClose} closeOnBackdrop>
+    <Dialog
+      labelledBy="dialog-title"
+      onClose={onClose}
+      closeOnBackdrop
+      initialFocus={amountInput}
+    >
       <DialogContent>
         <DialogHeader onClose={onClose}>
           <div>
@@ -473,7 +480,7 @@ export function TransactionDialog({
             </h2>
           </div>
         </DialogHeader>
-        <form onSubmit={form.submit}>
+        <BaseForm onSubmit={form.submit}>
           <Fieldset disabled={busy}>
             <KindToggle
               kind={form.kind}
@@ -512,7 +519,7 @@ export function TransactionDialog({
               </Button>
             </DialogFooter>
           </Fieldset>
-        </form>
+        </BaseForm>
       </DialogContent>
     </Dialog>
   );

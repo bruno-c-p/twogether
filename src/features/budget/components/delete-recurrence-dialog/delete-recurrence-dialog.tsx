@@ -1,3 +1,6 @@
+import { Radio } from "@base-ui/react/radio";
+import { RadioGroup } from "@base-ui/react/radio-group";
+import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
 import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import type { Transaction } from "@/features/budget/domain/types";
@@ -36,9 +39,7 @@ export function DeleteRecurrenceDialog({
       className={styles.deleteDialog}
       labelledBy="delete-title"
       onClose={onClose}
-      onCancel={(event) => {
-        if (busy) event.preventDefault();
-      }}
+      dismissDisabled={busy}
     >
       <DialogContent>
         <DialogHeader onClose={onClose} closeDisabled={busy}>
@@ -46,39 +47,50 @@ export function DeleteRecurrenceDialog({
         </DialogHeader>
         <p className={styles.deleteDescription}>{transaction.description}</p>
         <Fieldset disabled={busy}>
-          <fieldset className={styles.deleteOptions}>
-            <legend>O que você deseja excluir?</legend>
-            <label
-              className={`${styles.deleteOption} ${!following ? styles.isSelected : ""}`}
+          <BaseFieldset.Root className={styles.deleteOptions}>
+            <BaseFieldset.Legend render={<legend />}>
+              O que você deseja excluir?
+            </BaseFieldset.Legend>
+            <RadioGroup
+              name="delete-scope"
+              value={following ? "following" : "one"}
+              disabled={busy}
+              onValueChange={(next) => setFollowing(next === "following")}
             >
-              <input
-                type="radio"
-                name="delete-scope"
-                checked={!following}
-                onChange={() => setFollowing(false)}
-              />
-              <span>
-                <strong>Só esta transação</strong>
-                <small>As outras ocorrências serão mantidas.</small>
-              </span>
-            </label>
-            {count > 1 && (
               <label
-                className={`${styles.deleteOption} ${following ? styles.isSelected : ""}`}
+                className={`${styles.deleteOption} ${!following ? styles.isSelected : ""}`}
               >
-                <input
-                  type="radio"
-                  name="delete-scope"
-                  checked={following}
-                  onChange={() => setFollowing(true)}
-                />
+                <Radio.Root
+                  value="one"
+                  aria-label="Só esta transação"
+                  className="shrink-0 w-4 h-4 rounded-full border border-solid border-border data-[checked]:border-accent flex items-center justify-center"
+                >
+                  <Radio.Indicator className="w-2 h-2 rounded-full bg-accent" />
+                </Radio.Root>
                 <span>
-                  <strong>Esta e as seguintes</strong>
-                  <small>{count} transações desta recorrência.</small>
+                  <strong>Só esta transação</strong>
+                  <small>As outras ocorrências serão mantidas.</small>
                 </span>
               </label>
-            )}
-          </fieldset>
+              {count > 1 && (
+                <label
+                  className={`${styles.deleteOption} ${following ? styles.isSelected : ""}`}
+                >
+                  <Radio.Root
+                    value="following"
+                    aria-label="Esta e as seguintes"
+                    className="shrink-0 w-4 h-4 rounded-full border border-solid border-border data-[checked]:border-accent flex items-center justify-center"
+                  >
+                    <Radio.Indicator className="w-2 h-2 rounded-full bg-accent" />
+                  </Radio.Root>
+                  <span>
+                    <strong>Esta e as seguintes</strong>
+                    <small>{count} transações desta recorrência.</small>
+                  </span>
+                </label>
+              )}
+            </RadioGroup>
+          </BaseFieldset.Root>
           {following && (
             <p className={styles.deleteWarning}>
               As anteriores serão mantidas. Esta exclusão não pode ser desfeita.

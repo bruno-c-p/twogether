@@ -1,3 +1,4 @@
+import { Switch } from "@/components/ui/switch";
 import { useId } from "react";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -136,24 +137,12 @@ export function SplitPanel({
             })}
           </span>
         </span>
-        <input
+        <Switch
           id={`${id}-switch`}
           aria-describedby={`${id}-hint`}
-          type="checkbox"
-          role="switch"
           checked={checked}
           disabled={Boolean(paidAt)}
-          onChange={(event) => onChange(event.target.checked)}
-          className={cx(
-            "appearance-none shrink-0 w-[38px] h-[22px] rounded-full relative cursor-pointer m-0",
-            "border border-solid border-border bg-surface",
-            "after:content-empty after:absolute after:top-[3px] after:left-[3px]",
-            "after:w-[14px] after:h-[14px] after:rounded-full after:bg-text-muted",
-            "after:transition-transform after:duration-150",
-            "checked:bg-accent checked:border-accent",
-            "checked:after:translate-x-[16px] checked:after:bg-on-brand",
-            "disabled:opacity-60 disabled:cursor-not-allowed",
-          )}
+          onCheckedChange={(next) => onChange(next)}
         />
       </div>
       {transaction?.split && (

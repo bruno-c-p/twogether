@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
@@ -49,7 +50,10 @@ export function LatestTransactionsCard({
   return (
     <OverviewCard aria-labelledby="latest-title" className="max-bp1000:hidden">
       <div className="flex items-center justify-between gap-3 mb-2">
-        <h2 id="latest-title" className="m-0 font-heading text-lg font-700 tracking-[-0.02em]">
+        <h2
+          id="latest-title"
+          className="m-0 font-heading text-lg font-700 tracking-[-0.02em]"
+        >
           Últimas transações
         </h2>
         {/* Month and person carry over through retainSearchParams. */}
@@ -68,7 +72,8 @@ export function LatestTransactionsCard({
 
             return (
               <li key={transaction.id}>
-                <button
+                <Button
+                  variant="unstyled"
                   type="button"
                   className="flex w-full items-center gap-4 py-2 p-0 border-0 bg-transparent text-left text-text cursor-pointer"
                   aria-label={`Editar ${transaction.description}`}
@@ -88,7 +93,7 @@ export function LatestTransactionsCard({
                   <span className="text-md font-600 tabular-nums shrink-0">
                     {income ? "+" : "–"} {displayMoney(transaction.amount)}
                   </span>
-                </button>
+                </Button>
               </li>
             );
           })}

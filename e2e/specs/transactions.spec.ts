@@ -101,7 +101,9 @@ test.describe("transactions", () => {
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
       // The backdrop is above the sheet on mobile.
-      await mobileDialog.click({ position: { x: 16, y: -12 } });
+      await page
+        .locator('[data-slot="dialog-backdrop"]')
+        .click({ position: { x: 16, y: 12 } });
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toHaveCount(0);

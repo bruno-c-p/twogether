@@ -1,190 +1,81 @@
 import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useLayoutEffect,
   useRef,
   useState,
   type ComponentPropsWithoutRef,
   type ReactNode,
-  type SyntheticEvent,
 } from "react";
+import { Dialog as BaseDialog } from "@base-ui/react/dialog";
+import { Form as BaseForm } from "@base-ui/react/form";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { cx } from "@/lib/cx";
 import styles from "@/components/ui/dialog/dialog.module.css";
 
-// A dialog is named by a visible heading (labelledBy) or, without one, by
-// a label.
 type DialogName =
   { labelledBy: string; label?: never } | { label: string; labelledBy?: never };
-
-const DialogCloseContext = createContext<(() => void) | null>(null);
-
-// onClose unmounts the dialog, so the exit transition has to finish first.
-// A zero computed duration (reduced motion, unstyled, jsdom) closes now.
-function transitionMs(element: HTMLElement): number {
-  const raw =
-    getComputedStyle(element).transitionDuration.split(",")[0]?.trim() ?? "";
-
-  const value = Number.parseFloat(raw);
-
-  if (!Number.isFinite(value) || value <= 0) return 0;
-
-  return raw.endsWith("ms") ? value : value * 1000;
-}
-
-function watchClose(element: HTMLElement, finish: () => void) {
-  let finished = false;
-
-  const done = () => {
-    if (finished) return;
-
-    finished = true;
-    finish();
-  };
-
-  const onEnd = (event: TransitionEvent) => {
-    if (event.target !== element || event.propertyName !== "transform") return;
-
-    done();
-  };
-
-  element.addEventListener("transitionend", onEnd);
-  const timer = setTimeout(done, transitionMs(element) + 40);
-
-  return () => {
-    finished = true;
-    clearTimeout(timer);
-    element.removeEventListener("transitionend", onEnd);
-  };
-}
-
-function useDialogClose(onClose: () => void) {
-  const dialog = useRef<HTMLDialogElement>(null);
-  const closingRef = useRef(false);
-  const onCloseRef = useRef(onClose);
-  const [closing, setClosing] = useState(false);
-
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  }, [onClose]);
-
-  const requestClose = useCallback(() => {
-    const element = dialog.current;
-
-    if (!element || closingRef.current) return;
-
-    if (transitionMs(element) === 0) {
-      onCloseRef.current();
-
-      return;
-    }
-
-    closingRef.current = true;
-    setClosing(true);
-  }, []);
-
-  useLayoutEffect(() => {
-    const element = dialog.current;
-
-    if (!closing || !element) return;
-
-    return watchClose(element, () => onCloseRef.current());
-  }, [closing]);
-
-  useEffect(() => {
-    const element = dialog.current;
-    const previous = document.activeElement;
-
-    element?.showModal();
-    // showModal moves focus onto the dialog after React's autoFocus, which
-    // never writes the autofocus attribute. A marked control is the one
-    // that should end up focused (the least destructive action).
-    element?.querySelector<HTMLElement>("[data-initial-focus]")?.focus();
-
-    const overflow = document.body.style.overflow;
-
-    document.body.style.overflow = "hidden";
-
-    return () => {
-      element?.close();
-      document.body.style.overflow = overflow;
-
-      if (previous instanceof HTMLElement) previous.focus();
-    };
-  }, []);
-
-  return { dialog, closing, requestClose };
-}
-
-function dialogClassName(
-  unstyled: boolean,
-  narrow: boolean | undefined,
-  closing: boolean,
-  className: string | undefined,
-) {
-  return [
-    unstyled ? "" : styles.dialog,
-    narrow && !unstyled ? styles.narrow : "",
-    closing && !unstyled ? styles.closing : "",
-    className,
-  ]
-    .filter(Boolean)
-    .join(" ");
-}
 
 export function Dialog({
   children,
   className,
   narrow,
-  unstyled = false,
   labelledBy,
   label,
   onClose,
   closeOnBackdrop = false,
-  onCancel,
+  dismissDisabled = false,
+  initialFocus,
 }: DialogName & {
   children: ReactNode;
   className?: string;
   narrow?: boolean;
-  // Skips the module's box styles so className can lay the dialog out
-  // from scratch; the modal behavior stays the same.
-  unstyled?: boolean;
   onClose: () => void;
   closeOnBackdrop?: boolean;
-  onCancel?: (event: SyntheticEvent<HTMLDialogElement>) => void;
+  dismissDisabled?: boolean;
+  initialFocus?: BaseDialog.Popup.Props["initialFocus"];
 }) {
-  const { dialog, closing, requestClose } = useDialogClose(onClose);
-  const classes = dialogClassName(unstyled, narrow, closing, className);
+  const [open, setOpen] = useState(true);
+  const popup = useRef<HTMLDivElement>(null);
 
   return (
-    <DialogCloseContext.Provider value={requestClose}>
-      <dialog
-        ref={dialog}
-        className={classes}
-        aria-labelledby={labelledBy}
-        aria-label={label}
-        onCancel={(event) => {
-          onCancel?.(event);
+    <BaseDialog.Root
+      open={open}
+      disablePointerDismissal={!closeOnBackdrop}
+      onOpenChange={(next, details) => {
+        if (!next && dismissDisabled) {
+          details.cancel();
 
-          if (event.defaultPrevented) return;
-
-          event.preventDefault();
-          requestClose();
-        }}
-        onClick={
-          closeOnBackdrop
-            ? (event) => {
-                if (event.target === event.currentTarget) requestClose();
-              }
-            : undefined
+          return;
         }
-      >
-        {!unstyled && <div className={styles.grabber} aria-hidden="true" />}
-        {children}
-      </dialog>
-    </DialogCloseContext.Provider>
+
+        setOpen(next);
+      }}
+      onOpenChangeComplete={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <BaseDialog.Portal>
+        <BaseDialog.Backdrop
+          data-slot="dialog-backdrop"
+          className={styles.backdrop}
+        />
+        <BaseDialog.Popup
+          ref={popup}
+          className={cx(styles.dialog, narrow && styles.narrow, className)}
+          aria-labelledby={labelledBy}
+          aria-label={label}
+          initialFocus={
+            initialFocus ??
+            (() =>
+              popup.current?.querySelector<HTMLElement>(
+                "[data-initial-focus]",
+              ) ?? true)
+          }
+        >
+          <div className={styles.grabber} aria-hidden="true" />
+          {children}
+        </BaseDialog.Popup>
+      </BaseDialog.Portal>
+    </BaseDialog.Root>
   );
 }
 
@@ -195,18 +86,13 @@ export function DialogDismiss({
   children: ReactNode;
   autoFocus?: boolean;
 }) {
-  const requestClose = useContext(DialogCloseContext);
-
   return (
-    <Button
-      type="button"
-      variant="text"
-      autoFocus={autoFocus}
+    <BaseDialog.Close
+      render={<Button type="button" variant="text" />}
       data-initial-focus={autoFocus ? "" : undefined}
-      onClick={() => requestClose?.()}
     >
       {children}
-    </Button>
+    </BaseDialog.Close>
   );
 }
 
@@ -222,7 +108,7 @@ export function DialogContent({
 
   switch (as) {
     case "form":
-      return <form className={classes} {...props} />;
+      return <BaseForm className={classes} {...props} />;
     case "div":
       return <div className={classes} {...props} />;
     default: {
@@ -235,7 +121,6 @@ export function DialogContent({
 
 export function DialogHeader({
   children,
-  onClose,
   closeLabel = "Fechar",
   closeDisabled,
 }: {
@@ -244,20 +129,17 @@ export function DialogHeader({
   closeLabel?: string;
   closeDisabled?: boolean;
 }) {
-  const requestClose = useContext(DialogCloseContext);
-
   return (
     <header className={styles.header}>
       {children}
-      <Button
+      <BaseDialog.Close
+        render={<Button variant="icon" />}
         type="button"
-        variant="icon"
         aria-label={closeLabel}
         disabled={closeDisabled}
-        onClick={requestClose ?? onClose}
       >
         <X size={22} />
-      </Button>
+      </BaseDialog.Close>
     </header>
   );
 }

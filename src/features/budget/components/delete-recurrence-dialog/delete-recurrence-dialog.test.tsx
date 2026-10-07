@@ -30,7 +30,9 @@ describe("DeleteRecurrenceDialog", () => {
   test("warns and deletes the following occurrences when chosen", async () => {
     const { screen, user, props } = setup();
 
-    await user.click(screen.getByLabelText(/Esta e as seguintes/));
+    await user.click(
+      screen.getByRole("radio", { name: /Esta e as seguintes/ }),
+    );
     expect(screen.getByText(/não pode ser desfeita/)).toBeTruthy();
     await user.click(
       screen.getByRole("button", { name: "Excluir 3 transações" }),
@@ -41,29 +43,27 @@ describe("DeleteRecurrenceDialog", () => {
   test("the last occurrence offers no 'following' option", () => {
     const { screen } = setup({ count: 1 });
 
-    expect(screen.queryByLabelText(/Esta e as seguintes/)).toBeNull();
+    expect(
+      screen.queryByRole("radio", { name: /Esta e as seguintes/ }),
+    ).toBeNull();
   });
 
-  test("while busy it shows progress, the error, and ignores Escape", () => {
-    const { screen, props, container } = setup({
+  test("while busy it shows progress, the error, and ignores Escape", async () => {
+    const { screen, props, user } = setup({
       busy: true,
       error: "Falhou.",
     });
 
-    const dialog = container.ownerDocument.querySelector("dialog");
-
     expect(screen.getByText("Excluindo…")).toBeTruthy();
     expect(screen.getByText("Falhou.")).toBeTruthy();
-    dialog?.dispatchEvent(new Event("cancel", { cancelable: true }));
+    await user.keyboard("{Escape}");
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
   test("Escape closes it when idle", async () => {
-    const { props, container } = setup();
+    const { props, user } = setup();
 
-    container.ownerDocument
-      .querySelector("dialog")
-      ?.dispatchEvent(new Event("cancel", { cancelable: true }));
+    await user.keyboard("{Escape}");
     await vi.waitFor(() => expect(props.onClose).toHaveBeenCalled());
   });
 });
