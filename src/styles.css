@@ -35,8 +35,6 @@
   --on-person-a: #0d0d12;
   --person-b: var(--text);
   --on-person-b: var(--page);
-  --toast: #0d0d12;
-  --on-toast: #fff;
   --topbar: color-mix(in srgb, var(--page) 90%, transparent);
   --mobile-nav: color-mix(in srgb, var(--surface) 96%, transparent);
   --dialog-backdrop: rgb(13 13 18 / 45%);
@@ -90,8 +88,6 @@
   --danger: #ff7a76;
   --danger-soft: #3a1d1f;
   --on-danger: #0d0d12;
-  --toast: #2c2c38;
-  --on-toast: #f4f4f6;
   --dialog-backdrop: rgb(0 0 0 / 60%);
   --category-fixed: #5fd3a0;
   --category-pleasure: #ffad73;

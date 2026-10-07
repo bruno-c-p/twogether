@@ -73,8 +73,12 @@ function subscribe(notify: () => void) {
   };
 }
 
+export function useThemePreference() {
+  return useSyncExternalStore(subscribe, preference, (): Theme => "system");
+}
+
 export function ThemeToggle({ className }: { className?: string } = {}) {
-  const theme = useSyncExternalStore(subscribe, preference, () => "system");
+  const theme = useThemePreference();
 
   return (
     <div
