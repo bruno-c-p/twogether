@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { ChevronDown, Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
@@ -49,10 +50,11 @@ const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
   month: "short",
   weekday: "long",
+  timeZone: "UTC",
 });
 
 function dayLabel(date: string) {
-  const parts = dayFormatter.formatToParts(new Date(`${date}T12:00:00`));
+  const parts = dayFormatter.formatToParts(new Date(`${date}T12:00:00Z`));
 
   const part = (type: string) =>
     parts.find((item) => item.type === type)?.value ?? "";
@@ -271,6 +273,89 @@ function NoTransactions({
   );
 }
 
+const PAGE_SIZE = 50;
+
+function TransactionPages({
+  transactions,
+  onTag,
+  ...row
+}: RowActions & {
+  transactions: Transaction[];
+  onTag: (tag: string) => void;
+}) {
+  const [selectedPage, setPage] = useState(0);
+  const list = useRef<HTMLDivElement>(null);
+  const pages = Math.ceil(transactions.length / PAGE_SIZE);
+  const page = Math.min(selectedPage, pages - 1);
+  const start = page * PAGE_SIZE;
+
+  const visibleIds = new Set(
+    transactions.slice(start, start + PAGE_SIZE).map((t) => t.id),
+  );
+
+  const groups = groupByDay(transactions)
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((t) => visibleIds.has(t.id)),
+    }))
+    .filter((group) => group.items.length);
+
+  function pickPage(next: number) {
+    setPage(next);
+    list.current?.scrollIntoView({ block: "start" });
+  }
+
+  return (
+    <div ref={list}>
+      {groups.map((group) => (
+        <div key={group.date}>
+          <div className="flex items-center justify-between gap-3 px-6 max-bp1000:px-4 py-2 bg-surface-soft border-0 border-t border-solid border-border first:border-t-0 text-xs">
+            <time dateTime={group.date} className="font-500">
+              {dayLabel(group.date)}
+            </time>
+            <span
+              className="text-text-muted"
+              title="Total do dia nos resultados filtrados"
+            >
+              {netLabel(group.net, row.hidden)}
+            </span>
+          </div>
+          {group.items.map((t) => (
+            <TransactionRow key={t.id} transaction={t} {...row} onTag={onTag} />
+          ))}
+        </div>
+      ))}
+      {pages > 1 && (
+        <nav
+          aria-label="Páginas de transações"
+          className="flex items-center justify-between flex-wrap gap-3 p-4 border-0 border-t border-solid border-border"
+        >
+          <p
+            aria-live="polite"
+            className="m-0 text-sm text-text-muted basis-full"
+          >
+            {`${(start + 1).toLocaleString("pt-BR")}–${Math.min(start + PAGE_SIZE, transactions.length).toLocaleString("pt-BR")} de ${transactions.length.toLocaleString("pt-BR")} transações · Página ${page + 1} de ${pages}`}
+          </p>
+          <Button
+            variant="secondary"
+            disabled={page === 0}
+            onClick={() => pickPage(page - 1)}
+          >
+            Anterior
+          </Button>
+          <Button
+            variant="secondary"
+            disabled={page === pages - 1}
+            onClick={() => pickPage(page + 1)}
+          >
+            Próxima
+          </Button>
+        </nav>
+      )}
+    </div>
+  );
+}
+
 export function TransactionList({
   transactions,
   filters,
@@ -281,31 +366,28 @@ export function TransactionList({
     .filter((t) => matchesFilters(t, filters))
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 
+  const context = JSON.stringify([
+    filters.query,
+    filters.goalFilter,
+    filters.tagFilter,
+    filters.kindFilter,
+    transactions[0]?.date.slice(0, 7),
+    [...new Set(transactions.map((t) => t.memberId))].sort((a, b) =>
+      (a ?? "").localeCompare(b ?? ""),
+    ),
+  ]);
+
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
       <div className="rounded-lg border border-solid border-border bg-surface overflow-hidden">
         {filtered.length ? (
-          groupByDay(filtered).map((group) => (
-            <div key={group.date}>
-              <div className="flex items-center justify-between gap-3 px-6 max-bp1000:px-4 py-2 bg-surface-soft border-0 border-t border-solid border-border first:border-t-0 text-xs">
-                <time dateTime={group.date} className="font-500">
-                  {dayLabel(group.date)}
-                </time>
-                <span className="text-text-muted">
-                  {netLabel(group.net, row.hidden)}
-                </span>
-              </div>
-              {group.items.map((t) => (
-                <TransactionRow
-                  key={t.id}
-                  transaction={t}
-                  {...row}
-                  onTag={filters.setTag}
-                />
-              ))}
-            </div>
-          ))
+          <TransactionPages
+            key={context}
+            transactions={filtered}
+            {...row}
+            onTag={filters.setTag}
+          />
         ) : (
           <NoTransactions filters={filters} onAdd={onAdd} />
         )}

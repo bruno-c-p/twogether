@@ -11,6 +11,23 @@ describe("PersonAvatar", () => {
     expect(screen.getByTitle("Ágata").textContent).toBe("Á");
   });
 
+  test.each(["👩🏽‍💻", "🇧🇷", "a\u0301"])(
+    "keeps the complete first grapheme %s",
+    (initial) => {
+      const { screen } = renderPlain(
+        <PersonAvatar
+          name={`${initial} Aleksandra`}
+          position={0}
+          title="member"
+        />,
+      );
+
+      expect(screen.getByTitle("member").textContent).toBe(
+        initial.toLocaleUpperCase("pt-BR"),
+      );
+    },
+  );
+
   test("falls back to ? for an unknown member or a blank name", () => {
     const { screen } = renderPlain(
       <>

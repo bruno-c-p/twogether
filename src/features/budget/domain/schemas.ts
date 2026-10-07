@@ -27,7 +27,9 @@ export const idSchema = z
 
 export const monthSchema = z
   .string({ error: "Escolha um mês válido." })
-  .regex(/^\d{4}-(0[1-9]|1[0-2])$/, { error: "Escolha um mês válido." });
+  .regex(/^(19\d{2}|[2-9]\d{3})-(0[1-9]|1[0-2])$/, {
+    error: "Escolha um mês entre 1900 e 9999.",
+  });
 
 // A real calendar day: "2026-02-30" does not survive the round trip.
 export const dateSchema = z
