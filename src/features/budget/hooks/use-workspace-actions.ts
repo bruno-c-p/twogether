@@ -1,5 +1,5 @@
 import { usePostHog } from "posthog-js/react";
-import type { Notice } from "@/features/budget/components/notice";
+import { toast } from "sonner";
 import type {
   GoalPercentages,
   Transaction,
@@ -27,15 +27,11 @@ export function useWorkspaceActions({
   budget,
   dialogs,
   mutations,
-  notice,
-  setNotice,
   setMonth,
 }: {
   budget: BudgetController;
   dialogs: WorkspaceDialogs;
   mutations: BudgetMutations;
-  notice: Notice | null;
-  setNotice: (notice: Notice | null) => void;
   setMonth: (month: string) => void;
 }) {
   const posthog = usePostHog();
@@ -56,7 +52,7 @@ export function useWorkspaceActions({
     });
     dialogs.setTransaction(null);
     setMonth(transaction.date.slice(0, 7));
-    setNotice({ message: savedMessage(isUpdate, occurrences) });
+    toast.success(savedMessage(isUpdate, occurrences));
   }
 
   async function remove(transaction: Transaction) {
@@ -69,7 +65,33 @@ export function useWorkspaceActions({
     if (!(await deleteTx.run(versioned(transaction)))) return;
 
     posthog.capture("transaction_deleted", { delete_scope: "single" });
-    setNotice({ message: "Transação excluída.", undo: transaction });
+    notifyDeleted(transaction);
+  }
+
+  function notifyDeleted(transaction: Transaction) {
+    const id = toast.success("Transação excluída.", {
+      duration: Infinity,
+      action: {
+        label: "Desfazer",
+        onClick: (event) => {
+          event.preventDefault();
+          void restoreDeleted(transaction, id);
+        },
+      },
+    });
+  }
+
+  async function restoreDeleted(transaction: Transaction, id: string | number) {
+    const restored = await restoreTx.run({
+      id: transaction.id,
+      revision: (transaction.revision ?? 0) + 1,
+      transaction,
+    });
+
+    if (!restored) return;
+
+    toast.dismiss(id);
+    toast.success("Alteração desfeita.");
   }
 
   function openTransaction(transaction: Transaction | null) {
@@ -98,39 +120,32 @@ export function useWorkspaceActions({
 
     posthog.capture("split_settled");
     dialogs.setSettling(null);
-    setNotice({
-      message: "Pagamento registrado.",
-      undoSettle: { ...source, revision: (source.revision ?? 0) + 1 },
+
+    const id = toast.success("Pagamento registrado.", {
+      duration: Infinity,
+      action: {
+        label: "Desfazer",
+        onClick: (event) => {
+          event.preventDefault();
+          void unsettle(
+            { ...source, revision: (source.revision ?? 0) + 1 },
+            id,
+          );
+        },
+      },
     });
   }
 
   // Closes the transaction dialog it may have been started from.
-  async function unsettle(transaction: Transaction) {
+  async function unsettle(transaction: Transaction, toastId?: string | number) {
     if (!(await unsettleTx.run(versioned(transaction)))) return;
 
     posthog.capture("split_unsettled");
     dialogs.setTransaction(null);
-    setNotice({ message: "Pagamento desmarcado." });
-  }
 
-  async function undoNotice() {
-    if (notice?.undoSettle) {
-      await unsettle(notice.undoSettle);
+    if (toastId !== undefined) toast.dismiss(toastId);
 
-      return;
-    }
-
-    const undo = notice?.undo;
-
-    if (!undo) return;
-
-    const restored = await restoreTx.run({
-      id: undo.id,
-      revision: (undo.revision ?? 0) + 1,
-      transaction: undo,
-    });
-
-    if (restored) setNotice({ message: "Alteração desfeita." });
+    toast.success("Pagamento desmarcado.");
   }
 
   async function saveGoalPercentages(values: GoalPercentages) {
@@ -142,7 +157,7 @@ export function useWorkspaceActions({
 
     posthog.capture("goal_percentages_saved");
     dialogs.setPercentagesRevision(null);
-    setNotice({ message: "Percentuais atualizados." });
+    toast.success("Percentuais atualizados.");
   }
 
   // `following` lists the later occurrences to delete too; empty deletes
@@ -164,11 +179,9 @@ export function useWorkspaceActions({
       delete_scope: following.length ? "following" : "single",
       deleted_count: count,
     });
-    setNotice(
-      following.length
-        ? { message: `${count} transações excluídas.` }
-        : { message: "Transação excluída.", undo: transaction },
-    );
+
+    if (following.length) toast.success(`${count} transações excluídas.`);
+    else notifyDeleted(transaction);
     dialogs.setDeleting(null);
   }
 
@@ -177,7 +190,6 @@ export function useWorkspaceActions({
     remove,
     openTransaction,
     openPercentages,
-    undoNotice,
     saveGoalPercentages,
     deleteRecurring,
     openSettle,

@@ -4,25 +4,10 @@ import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/features/budget/components/workspace-navigation";
-import { NoticeToast } from "@/features/budget/components/notice";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
-
-function WorkspaceNotice() {
-  const { notice, setNotice, actions } = useWorkspace();
-
-  if (!notice) return null;
-
-  return (
-    <NoticeToast
-      notice={notice}
-      onUndo={() => void actions.undoNotice()}
-      onDismiss={() => setNotice(null)}
-    />
-  );
-}
 
 export function WorkspaceShell({
   controls,
@@ -86,7 +71,6 @@ export function WorkspaceShell({
       </div>
       <MobileNavigation onRegister={() => actions.openTransaction(null)} />
       <TransactionFlows />
-      <WorkspaceNotice />
     </div>
   );
 }

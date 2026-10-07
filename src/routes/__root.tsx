@@ -13,6 +13,7 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
+import { Toaster } from "@/components/ui/toaster";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 import { syncIdentity } from "@/lib/posthog-identity";
@@ -136,6 +137,7 @@ export const Route = createRootRouteWithContext<{
           ) : (
             <Outlet />
           )}
+          <Toaster />
           <Scripts />
         </ClerkProvider>
       </body>

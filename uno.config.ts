@@ -54,9 +54,6 @@ export default defineConfig({
       "balance-border": "var(--balance-border)",
       "on-balance": "var(--on-balance)",
       "on-balance-muted": "var(--on-balance-muted)",
-      toast: "var(--toast)",
-      "on-toast": "var(--on-toast)",
-      "on-toast-soft": "color-mix(in srgb, var(--on-toast) 78%, transparent)",
       "category-fixed": "var(--category-fixed)",
       "category-fixed-bg": "var(--category-fixed-bg)",
       "category-pleasure": "var(--category-pleasure)",
@@ -108,10 +105,4 @@ export default defineConfig({
     },
   }),
   transformers: [transformerDirectives()],
-  preflights: [
-    {
-      getCSS: () =>
-        "@keyframes toast-in{from{opacity:0;translate:0 10px}to{opacity:1;translate:0 0}}",
-    },
-  ],
 });
