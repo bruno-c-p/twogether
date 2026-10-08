@@ -18,6 +18,10 @@ const resultText = z.object({
   isError: z.boolean().optional(),
 });
 
+const versioned = z.object({ id: z.string(), revision: z.number() });
+
+type Versioned = z.infer<typeof versioned>;
+
 const savedRow = z.object({
   id: z.string(),
   revision: z.number(),
@@ -38,7 +42,13 @@ async function connect(store: BudgetStore, userId: string) {
     name: string,
     args: Record<
       string,
-      string | number | boolean | string[] | null | Record<string, number>
+      | string
+      | number
+      | boolean
+      | string[]
+      | null
+      | Record<string, number>
+      | Versioned[]
     > = {},
   ) {
     const result = resultText.parse(
@@ -144,18 +154,81 @@ describe("budget MCP tools", () => {
 
     const deleted = await ok(
       "delete_transaction",
-      z.object({ undo: z.object({ id: z.string(), revision: z.number() }) }),
+      z.object({ undo: z.array(versioned) }),
       { id: edited.id, revision: edited.revision },
     );
 
     expect((await view(store, a.user)).budget.transactions).toHaveLength(0);
 
-    await ok("restore_transaction", z.object({ restored: savedRow }), {
-      id: deleted.undo.id,
-      revision: deleted.undo.revision,
-    });
+    await ok(
+      "restore_transaction",
+      z.object({ restored: savedRow }),
+      deleted.undo[0],
+    );
 
     expect((await view(store, a.user)).budget.transactions).toHaveLength(1);
+  });
+
+  test("deletes and restores the later occurrences the agent saw", async () => {
+    const { store } = ctx;
+    const { a, b } = await couple(store);
+    const ana = await connect(store, a.user.id);
+    const bia = await connect(store, b.user.id);
+    const row = savedRow.extend({ recurrence: z.object({ id: z.string() }) });
+    const listed = z.object({ count: z.number(), transactions: z.array(row) });
+
+    const { saved } = await ana.ok(
+      "save_transaction",
+      z.object({ saved: row }),
+      { ...groceries, occurrences: 3 },
+    );
+
+    const series = await ana.ok("list_transactions", listed, {
+      recurrence: saved.recurrence.id,
+    });
+
+    expect(series.count).toBe(3);
+
+    const later = series.transactions
+      .filter((item) => item.id !== saved.id)
+      .map(({ id, revision }) => ({ id, revision }));
+
+    await bia.ok("save_transaction", z.object({ saved: row }), {
+      ...later[0],
+      amount: 999,
+    });
+
+    const stale = await ana.call("delete_transaction", {
+      id: saved.id,
+      revision: saved.revision,
+      following: later,
+    });
+
+    expect(stale.error).toBe(true);
+    expect(stale.text).toContain("mudou no outro dispositivo");
+    expect((await view(store, a.user)).budget.transactions).toHaveLength(3);
+
+    const fresh = await ana.ok("list_transactions", listed, {
+      recurrence: saved.recurrence.id,
+    });
+
+    const following = fresh.transactions
+      .filter((item) => item.id !== saved.id)
+      .map(({ id, revision }) => ({ id, revision }));
+
+    const { undo } = await ana.ok(
+      "delete_transaction",
+      z.object({ undo: z.array(versioned) }),
+      { id: saved.id, revision: saved.revision, following },
+    );
+
+    expect(undo).toHaveLength(3);
+    expect((await view(store, a.user)).budget.transactions).toHaveLength(0);
+
+    for (const item of undo)
+      await ana.ok("restore_transaction", z.object({ restored: row }), item);
+
+    expect((await view(store, a.user)).budget.transactions).toHaveLength(3);
   });
 
   test("rejects invalid input with the app's messages", async () => {

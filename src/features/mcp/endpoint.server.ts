@@ -13,6 +13,8 @@ import {
 } from "@/features/budget/budget.server";
 import { createBudgetMcpServer } from "@/features/mcp/tools.server";
 
+type OAuthSession = Parameters<typeof verifyClerkToken>[0];
+
 const MCP_PATH = "/mcp";
 
 const RESOURCE_METADATA_PATH = "/.well-known/oauth-protected-resource/mcp";
@@ -74,17 +76,22 @@ export async function serveMcp(
 
 // Clerk issues and verifies the OAuth access token; its user is the same
 // account the person signs in with on the web.
-export async function handleMcpPost(request: Request) {
+export async function handleMcpPost(
+  request: Request,
+  authenticate: () => Promise<OAuthSession> = () =>
+    auth({ acceptsToken: "oauth_token" }),
+  loadStore: () => BudgetStore = getBudgetStore,
+) {
   const token = bearerToken(request);
 
   if (!token) return unauthorized(request);
 
-  const session = await auth({ acceptsToken: "oauth_token" });
+  const session = await authenticate();
   const authInfo = verifyClerkToken(session, token);
 
   if (!authInfo || !session.isAuthenticated) return unauthorized(request);
 
-  return serveMcp(request, getBudgetStore(), session.userId, authInfo);
+  return serveMcp(request, loadStore(), session.userId, authInfo);
 }
 
 export function protectedResourceMetadata(

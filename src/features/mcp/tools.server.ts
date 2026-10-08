@@ -10,6 +10,7 @@ import {
 } from "@/features/budget/domain/format";
 import {
   dateSchema,
+  followingSchema,
   goalIdSchema,
   goalPercentagesSchema,
   idSchema,
@@ -187,21 +188,6 @@ function editedTransaction(
   };
 }
 
-function following(snapshot: WorkspaceSnapshot, source: Transaction) {
-  const index = source.recurrenceIndex;
-
-  if (!source.recurrenceId || index === undefined)
-    throw new RequestError("Esta transação não faz parte de uma recorrência.");
-
-  return snapshot.budget.transactions
-    .filter(
-      (t) =>
-        t.recurrenceId === source.recurrenceId &&
-        (t.recurrenceIndex ?? -1) > index,
-    )
-    .map((t) => ({ id: t.id, revision: t.revision ?? 0 }));
-}
-
 export function createBudgetMcpServer(store: BudgetStore, userId: string) {
   const server = new McpServer(
     { name: "twogether", version: "1.0.0" },
@@ -265,6 +251,11 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
           .max(200)
           .optional()
           .describe("Text to find in the description, tags, or goal name."),
+        recurrence: idSchema
+          .optional()
+          .describe(
+            "A recurrence id: lists that whole series across every month instead of one month.",
+          ),
       },
       annotations: readOnly,
     },
@@ -348,35 +339,33 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
     {
       title: "Delete a transaction",
       description:
-        "Deletes a transaction. Returns the id and revision to pass to restore_transaction to undo it.",
+        "Deletes a transaction. Returns the id and revision of every deleted transaction to pass to restore_transaction to undo it.",
       inputSchema: {
         id: idSchema,
         revision: revisionSchema,
-        includeFollowing: z
-          .boolean()
+        following: followingSchema
           .optional()
-          .describe("Also delete the later occurrences of a recurring series."),
+          .describe(
+            "Also delete the later occurrences of its recurring series: every one of them with the revision from list_transactions with recurrence.",
+          ),
       },
       annotations: { ...write, destructiveHint: true, idempotentHint: false },
     },
-    ({ id, revision, includeFollowing }) =>
+    ({ id, revision, following }) =>
       run(async () => {
-        const { snapshot, user, householdId } = await writable();
-        const source = findTransaction(snapshot, id);
-
-        const later = includeFollowing
-          ? following(snapshot, source)
-          : undefined;
+        const { user, householdId } = await writable();
 
         await store.deleteTransaction(user, householdId, {
           id,
           revision,
-          following: later,
+          following,
         });
 
         return {
-          deleted: [id, ...(later ?? []).map((item) => item.id)],
-          undo: { id, revision: revision + 1 },
+          undo: [{ id, revision }, ...(following ?? [])].map((item) => ({
+            id: item.id,
+            revision: item.revision + 1,
+          })),
         };
       }),
   );

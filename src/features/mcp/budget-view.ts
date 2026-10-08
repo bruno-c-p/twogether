@@ -25,6 +25,7 @@ export interface TransactionFilters {
   goal?: GoalId;
   tag?: string;
   query?: string;
+  recurrence?: string;
 }
 
 const goalName = (id: GoalId | null) =>
@@ -114,16 +115,28 @@ export function describeTransaction(
   };
 }
 
+function listed(snapshot: WorkspaceSnapshot, filters: TransactionFilters) {
+  if (!filters.recurrence)
+    return monthly(snapshot, filters.month, filters.member);
+
+  assertMember(snapshot, filters.member);
+
+  return viewFor(snapshot, filters.member).filter(
+    (t) => t.recurrenceId === filters.recurrence,
+  );
+}
+
 export function listTransactions(
   snapshot: WorkspaceSnapshot,
   filters: TransactionFilters,
 ) {
-  const rows = monthly(snapshot, filters.month, filters.member)
+  const rows = listed(snapshot, filters)
     .filter((t) => matches(t, filters))
     .sort((a, b) => b.date.localeCompare(a.date));
 
   return {
-    month: filters.month,
+    month: filters.recurrence ? undefined : filters.month,
+    recurrence: filters.recurrence,
     count: rows.length,
     transactions: rows.map((t) => describeTransaction(snapshot, t)),
   };
