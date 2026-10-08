@@ -20,6 +20,7 @@ export function GoalPercentageList({
           <span>
             <Input
               id={`percentage-${goal.id}`}
+              className="tabular-nums"
               type="number"
               inputMode="decimal"
               min="0"

@@ -75,7 +75,7 @@ export function SplitDebtCard({
                   {shortDay(transaction.date)}
                 </span>
               </span>
-              <span className="shrink-0">
+              <span className="shrink-0 tabular-nums">
                 {displayMoney(partnerShare(transaction.amount))}
               </span>
             </li>

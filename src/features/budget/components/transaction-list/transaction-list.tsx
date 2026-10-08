@@ -156,7 +156,7 @@ export function TransactionSearch({
       {query && (
         <Button
           variant="icon"
-          className="absolute right-[5px]"
+          className="!absolute right-[5px]"
           onClick={() => setQuery("")}
           aria-label="Limpar busca"
         >
@@ -330,7 +330,7 @@ function TransactionPages({
         >
           <p
             aria-live="polite"
-            className="m-0 text-sm text-text-muted basis-full"
+            className="m-0 text-sm text-text-muted tabular-nums basis-full"
           >
             {`${(start + 1).toLocaleString("pt-BR")}–${Math.min(start + PAGE_SIZE, transactions.length).toLocaleString("pt-BR")} de ${transactions.length.toLocaleString("pt-BR")} transações · Página ${page + 1} de ${pages}`}
           </p>
@@ -378,7 +378,7 @@ export function TransactionList({
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
-      <div className="rounded-lg border border-solid border-border bg-surface overflow-hidden">
+      <div className="rounded-lg border border-solid border-border bg-surface overflow-clip">
         {filtered.length ? (
           <TransactionPages
             key={context}

@@ -84,7 +84,7 @@ export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
           className={cx(
             "w-[48px] h-[48px] rounded-full border-0 cursor-pointer",
             "bg-green text-on-brand inline-flex items-center justify-center",
-            "shadow-[0_6px_14px_-6px_rgba(13,13,18,.55)]",
+            "shadow-[0_6px_14px_-6px_color-mix(in_srgb,var(--shadow-ink)_55%,transparent)]",
           )}
         >
           <Plus size={22} />

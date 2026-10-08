@@ -1,6 +1,5 @@
 :root {
   font-family: "Inter Tight", sans-serif;
-  font-variant-numeric: tabular-nums;
   color-scheme: light;
   color: var(--text);
   background: var(--page);
@@ -9,6 +8,7 @@
   -moz-osx-font-smoothing: grayscale;
   font-weight: 400;
   font-size: 14px;
+  text-wrap: pretty;
   /* Bold Duo roles. Surfaces separate by fill (page → surface → surface-2 → surface-3), not outline. */
   --page: #f2f2f4;
   --surface: #fff;
@@ -38,6 +38,9 @@
   --topbar: color-mix(in srgb, var(--page) 90%, transparent);
   --mobile-nav: color-mix(in srgb, var(--surface) 96%, transparent);
   --dialog-backdrop: rgb(13 13 18 / 45%);
+  --shadow-ink: #0d0d12;
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   --category-fixed: #23875c;
   --category-pleasure: #d9661a;
   --category-comfort: #3366e6;
@@ -143,9 +146,16 @@ button {
   cursor: pointer;
   color: inherit;
   transition:
-    background 120ms ease-out,
-    transform 120ms ease-out,
-    box-shadow 120ms ease-out;
+    background 120ms var(--ease-out),
+    box-shadow 120ms var(--ease-out);
+}
+@media (prefers-reduced-motion: no-preference) {
+  button {
+    transition:
+      background 120ms var(--ease-out),
+      transform 120ms var(--ease-out),
+      box-shadow 120ms var(--ease-out);
+  }
 }
 button:disabled {
   cursor: not-allowed;
@@ -161,7 +171,7 @@ a:focus-visible {
     0 0 0 9px var(--page);
 }
 button:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: scale(0.97);
 }
 a:active {
   opacity: 0.72;
@@ -201,6 +211,11 @@ h2,
 h3,
 p {
   margin: 0;
+}
+h1,
+h2,
+h3 {
+  text-wrap: balance;
 }
 svg {
   flex-shrink: 0;
@@ -250,15 +265,5 @@ h1 {
   }
   h1 {
     font-size: 24px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *:before,
-  *:after {
-    animation: none !important;
-    transition: none !important;
-    scroll-behavior: auto !important;
   }
 }

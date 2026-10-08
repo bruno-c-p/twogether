@@ -32,7 +32,7 @@ function Progress({
   return (
     <>
       <span
-        className="block h-[10px] rounded-full overflow-hidden"
+        className="block h-[10px] rounded-full overflow-clip"
         style={{ background: over ? "var(--danger-soft)" : goal.background }}
       >
         <span

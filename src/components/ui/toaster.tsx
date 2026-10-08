@@ -18,7 +18,7 @@ function ToastViewport() {
             key={toast.id}
             toast={toast}
             data-slot="toast"
-            className="flex items-center gap-3 rounded-md bg-surface text-text border border-solid border-border p-4 text-sm shadow-lg transition-[opacity,transform] duration-200 data-[starting-style]:opacity-0 data-[starting-style]:translate-y-2 data-[ending-style]:opacity-0 data-[ending-style]:translate-y-2 data-[limited]:hidden motion-reduce:transition-none"
+            className="flex items-center gap-3 rounded-md bg-surface text-text border border-solid border-border p-4 text-sm shadow-lg transition-opacity motion-safe:transition-[opacity,transform] duration-200 ease-[var(--ease-out)] data-[starting-style]:opacity-0 motion-safe:data-[starting-style]:translate-y-2 data-[ending-style]:opacity-0 motion-safe:data-[ending-style]:translate-y-2 data-[limited]:hidden"
           >
             <Check size={18} className="shrink-0 text-text-muted" />
             <Toast.Title className="flex-1 min-w-0 break-words text-sm font-500 tracking-normal m-0">

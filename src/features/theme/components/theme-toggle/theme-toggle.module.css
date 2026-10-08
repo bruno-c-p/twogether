@@ -9,6 +9,7 @@
 }
 
 .themeToggle button {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -21,6 +22,12 @@
   background: transparent;
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.themeToggle button::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - 44px) / 2);
 }
 
 @media (hover: hover) and (pointer: fine) {

@@ -24,7 +24,8 @@ const variants: Record<Variant, string> = {
     "@hover:text-text",
   ),
   icon: cx(
-    "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
+    "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0 relative",
+    "after:content-[''] after:absolute after:[inset:min(0px,(100%_-_44px)/2)]",
     "border-none bg-transparent p-0 rounded-md",
     "@hover:bg-surface-2",
   ),

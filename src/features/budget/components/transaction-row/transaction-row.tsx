@@ -142,7 +142,7 @@ export function TransactionRow({
       >
         {amountLabel(t, hidden)}
       </span>
-      <div className="flex justify-end max-bp1000:col-start-3 max-bp1000:row-start-2 max-bp620:row-start-3">
+      <div className="flex justify-end gap-2 max-bp1000:col-start-3 max-bp1000:row-start-2 max-bp620:row-start-3">
         <Button
           variant="icon"
           className="w-[28px] h-[28px] text-text-muted max-bp1000:hidden"
