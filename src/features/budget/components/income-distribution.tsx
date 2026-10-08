@@ -29,7 +29,7 @@ export function IncomeDistribution({
         </h2>
         <span
           className={cx(
-            "text-md max-bp620:text-sm",
+            "text-md tabular-nums max-bp620:text-sm",
             total === 100 ? "text-green" : "text-warning",
           )}
         >
@@ -37,7 +37,7 @@ export function IncomeDistribution({
         </span>
       </div>
       <div
-        className="flex h-[14px] rounded-full overflow-hidden bg-surface-soft gap-0.5"
+        className="flex h-[14px] rounded-full overflow-clip bg-surface-soft gap-0.5"
         role="img"
         aria-label={GOALS.map(
           (goal) =>
@@ -63,7 +63,7 @@ export function IncomeDistribution({
               style={{ background: goal.color }}
             />
             {goal.name}
-            <strong className="font-600 text-text">
+            <strong className="font-600 text-text tabular-nums">
               {percentLabel(percentages.get(goal.id) ?? null)}
             </strong>
           </li>

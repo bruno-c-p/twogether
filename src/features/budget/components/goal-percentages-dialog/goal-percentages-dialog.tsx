@@ -62,7 +62,7 @@ export function GoalPercentagesDialog({
           onChange={(goal, value) => setValues({ ...values, [goal]: value })}
         />
         <p
-          className={`${styles.percentageTotal} ${valid ? "" : styles.invalid}`}
+          className={`${styles.percentageTotal} tabular-nums ${valid ? "" : styles.invalid}`}
           role="status"
         >
           Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%

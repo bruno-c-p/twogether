@@ -22,7 +22,7 @@
   flex: 1;
   border: 0;
   background: transparent;
-  outline: none;
+  outline: 2px solid transparent;
   color: var(--text);
   font-size: 14px;
 }

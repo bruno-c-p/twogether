@@ -76,7 +76,8 @@ export function BalanceCard({
               aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
               title={hidden ? "Mostrar valores" : "Ocultar valores"}
               className={cx(
-                "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0",
+                "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0 relative",
+                "after:content-[''] after:absolute after:[inset:min(0px,(100%_-_44px)/2)]",
                 "border-0 bg-transparent p-0 rounded-sm text-on-balance-muted",
                 "@hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
               )}

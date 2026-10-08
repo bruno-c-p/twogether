@@ -54,20 +54,20 @@ function BudgetRow({
               aria-hidden="true"
             />
             <span className="truncate">{goal.name}</span>
-            <span className="text-xs text-text-muted max-bp620:hidden">
+            <span className="text-xs text-text-muted tabular-nums max-bp620:hidden">
               {percentageLabel(plan.percentage)}
             </span>
           </span>
           <span className="ml-auto flex items-baseline gap-2">
-            <strong className="font-600 max-bp620:hidden">
+            <strong className="font-600 tabular-nums max-bp620:hidden">
               {displayMoney(goal.amount)}
             </strong>
-            <span className="text-xs text-text-muted max-bp1000:hidden">
+            <span className="text-xs text-text-muted tabular-nums max-bp1000:hidden">
               de {displayMoney(plan.planned)}
             </span>
             <span
               className={cx(
-                "text-xs min-w-[96px] text-right max-bp620:min-w-0",
+                "text-xs tabular-nums min-w-[96px] text-right max-bp620:min-w-0",
                 over ? "text-danger" : "text-text-muted",
               )}
             >
@@ -78,7 +78,7 @@ function BudgetRow({
           </span>
         </span>
         <span
-          className="block h-[4px] rounded-full mt-2 overflow-hidden"
+          className="block h-[4px] rounded-full mt-2 overflow-clip"
           style={{ background: goal.background }}
           aria-hidden="true"
         >

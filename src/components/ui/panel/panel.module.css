@@ -3,7 +3,7 @@
   border: 1px solid var(--line);
   border-radius: 14px;
   background: var(--surface);
-  overflow: hidden;
+  overflow: clip;
 }
 
 .panel > .heading {

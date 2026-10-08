@@ -52,7 +52,7 @@ export function Sheet({
               "h-full max-w-full border-l",
               "max-bp620:h-auto max-bp620:w-full max-bp620:max-h-[88dvh]",
               "max-bp620:border-l-0 max-bp620:border-t max-bp620:rounded-t-lg",
-              "transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)]",
+              "motion-safe:transition-transform duration-300 ease-[var(--ease-drawer)]",
               "data-[swipe-direction=right]:[transform:translateX(var(--drawer-swipe-movement-x))]",
               "data-[swipe-direction=down]:[transform:translateY(var(--drawer-swipe-movement-y))]",
               "data-[swiping]:duration-0",
