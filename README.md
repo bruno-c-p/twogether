@@ -39,6 +39,15 @@ Clerk owns credentials, sessions, and e-mail delivery; the instance enables e-ma
 - Split expenses: turn on **Dividir com …** on an expense and the other person owes half (rounded down). The payer keeps the full expense. Only the person who owes can mark it paid, picking the date; that records an income for the payer and an expense for the partner. Those repayment entries count in individual views but not in **Us**, and undoing the payment removes them. A paid split locks its amount, type, split, and deletion until it is unmarked.
 - Each change is a validated `createServerFn`. The workspace seeds TanStack Query from the loader snapshot; saving, deleting, or undoing a transaction updates that cache immediately, then reconciles with the server. Focus, visibility, and reconnect refetch the snapshot so you see your partner's changes. Concurrent edits to the same entry or to the percentages are rejected with guidance to review the current version; independent additions do not overwrite each other. The month lives in the URL (`?month=YYYY-MM`); the first visit without it redirects to the current month.
 
+## AI agents (MCP)
+
+The app serves a [Model Context Protocol](https://modelcontextprotocol.io) endpoint at `/mcp`, so an agent (Claude, Cursor, ChatGPT, etc.) can read and manage the budget as the signed-in person.
+
+- Add `https://<app>/mcp` as a remote MCP server in the agent. On first use it opens the Clerk sign-in; use the same e-mail as in the app. The account needs a name and a household first.
+- Tools: `get_overview`, `list_transactions`, `save_transaction`, `delete_transaction`, `restore_transaction`, `settle_split`, `unsettle_split`, `get_goal_percentages`, and `save_goal_percentages`. They call the same store as the app, so revisions, split locks, household isolation, and the per-person rate limit apply.
+- Clerk is the OAuth authorization server. Enable **Dynamic client registration** under OAuth applications in the Clerk Dashboard (development and production instances) so agents can register themselves.
+- Clients that only speak stdio can bridge with `npx mcp-remote https://<app>/mcp`.
+
 ## Persistence and deployment
 
 Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Clerk stores identities and sessions; the local database stores each profile name, household membership, percentages, and invite hashes. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Secrets are not part of the client bundle.

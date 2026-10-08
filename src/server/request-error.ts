@@ -11,7 +11,7 @@ export class RequestError extends Error {
   }
 }
 
-function errorForLogs(cause: unknown) {
+export function errorForLogs(cause: unknown) {
   if (!(cause instanceof Error)) return "non-Error value";
 
   return process.env.NODE_ENV === "production" ? cause.name : cause;

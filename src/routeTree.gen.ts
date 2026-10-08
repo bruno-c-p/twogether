@@ -11,8 +11,11 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as EntrarRouteImport } from './routes/entrar'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as DotwellKnownOauthAuthorizationServerRouteImport } from './routes/[.]well-known.oauth-authorization-server'
 import { Route as AuthenticatedWorkspaceRouteRouteImport } from './routes/_authenticated/_workspace/route'
 import { Route as ConviteTokenRouteImport } from './routes/convite.$token'
+import { Route as DotwellKnownOauthProtectedResourceMcpRouteImport } from './routes/[.]well-known.oauth-protected-resource.mcp'
 import { Route as AuthenticatedWorkspaceIndexRouteImport } from './routes/_authenticated/_workspace/index'
 import { Route as AuthenticatedWorkspaceOrcamentoRouteImport } from './routes/_authenticated/_workspace/orcamento'
 import { Route as AuthenticatedWorkspaceTransacoesRouteImport } from './routes/_authenticated/_workspace/transacoes'
@@ -26,6 +29,17 @@ const EntrarRoute = EntrarRouteImport.update({
   path: '/entrar',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotwellKnownOauthAuthorizationServerRoute =
+  DotwellKnownOauthAuthorizationServerRouteImport.update({
+    id: '/.well-known/oauth-authorization-server',
+    path: '/.well-known/oauth-authorization-server',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedWorkspaceRouteRoute =
   AuthenticatedWorkspaceRouteRouteImport.update({
     id: '/_workspace',
@@ -36,6 +50,12 @@ const ConviteTokenRoute = ConviteTokenRouteImport.update({
   path: '/convite/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DotwellKnownOauthProtectedResourceMcpRoute =
+  DotwellKnownOauthProtectedResourceMcpRouteImport.update({
+    id: '/.well-known/oauth-protected-resource/mcp',
+    path: '/.well-known/oauth-protected-resource/mcp',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const AuthenticatedWorkspaceIndexRoute =
   AuthenticatedWorkspaceIndexRouteImport.update({
     id: '/',
@@ -58,14 +78,20 @@ const AuthenticatedWorkspaceTransacoesRoute =
 export interface FileRoutesByFullPath {
   '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/.well-known/oauth-protected-resource/mcp': typeof DotwellKnownOauthProtectedResourceMcpRoute
   '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
 export interface FileRoutesByTo {
   '/': typeof AuthenticatedWorkspaceIndexRoute
   '/entrar': typeof EntrarRoute
+  '/mcp': typeof McpRoute
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/.well-known/oauth-protected-resource/mcp': typeof DotwellKnownOauthProtectedResourceMcpRoute
   '/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
 }
@@ -73,23 +99,45 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/entrar': typeof EntrarRoute
+  '/mcp': typeof McpRoute
   '/_authenticated/_workspace': typeof AuthenticatedWorkspaceRouteRouteWithChildren
+  '/.well-known/oauth-authorization-server': typeof DotwellKnownOauthAuthorizationServerRoute
   '/convite/$token': typeof ConviteTokenRoute
+  '/.well-known/oauth-protected-resource/mcp': typeof DotwellKnownOauthProtectedResourceMcpRoute
   '/_authenticated/_workspace/orcamento': typeof AuthenticatedWorkspaceOrcamentoRoute
   '/_authenticated/_workspace/transacoes': typeof AuthenticatedWorkspaceTransacoesRoute
   '/_authenticated/_workspace/': typeof AuthenticatedWorkspaceIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/entrar' | '/convite/$token' | '/orcamento' | '/transacoes'
+  fullPaths:
+    | '/'
+    | '/entrar'
+    | '/mcp'
+    | '/.well-known/oauth-authorization-server'
+    | '/convite/$token'
+    | '/.well-known/oauth-protected-resource/mcp'
+    | '/orcamento'
+    | '/transacoes'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/entrar' | '/convite/$token' | '/orcamento' | '/transacoes'
+  to:
+    | '/'
+    | '/entrar'
+    | '/mcp'
+    | '/.well-known/oauth-authorization-server'
+    | '/convite/$token'
+    | '/.well-known/oauth-protected-resource/mcp'
+    | '/orcamento'
+    | '/transacoes'
   id:
     | '__root__'
     | '/_authenticated'
     | '/entrar'
+    | '/mcp'
     | '/_authenticated/_workspace'
+    | '/.well-known/oauth-authorization-server'
     | '/convite/$token'
+    | '/.well-known/oauth-protected-resource/mcp'
     | '/_authenticated/_workspace/orcamento'
     | '/_authenticated/_workspace/transacoes'
     | '/_authenticated/_workspace/'
@@ -98,7 +146,10 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   EntrarRoute: typeof EntrarRoute
+  McpRoute: typeof McpRoute
+  DotwellKnownOauthAuthorizationServerRoute: typeof DotwellKnownOauthAuthorizationServerRoute
   ConviteTokenRoute: typeof ConviteTokenRoute
+  DotwellKnownOauthProtectedResourceMcpRoute: typeof DotwellKnownOauthProtectedResourceMcpRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -117,6 +168,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EntrarRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-authorization-server': {
+      id: '/.well-known/oauth-authorization-server'
+      path: '/.well-known/oauth-authorization-server'
+      fullPath: '/.well-known/oauth-authorization-server'
+      preLoaderRoute: typeof DotwellKnownOauthAuthorizationServerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/_workspace': {
       id: '/_authenticated/_workspace'
       path: ''
@@ -129,6 +194,13 @@ declare module '@tanstack/react-router' {
       path: '/convite/$token'
       fullPath: '/convite/$token'
       preLoaderRoute: typeof ConviteTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/.well-known/oauth-protected-resource/mcp': {
+      id: '/.well-known/oauth-protected-resource/mcp'
+      path: '/.well-known/oauth-protected-resource/mcp'
+      fullPath: '/.well-known/oauth-protected-resource/mcp'
+      preLoaderRoute: typeof DotwellKnownOauthProtectedResourceMcpRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_workspace/': {
@@ -189,7 +261,12 @@ const AuthenticatedRouteRouteWithChildren =
 const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   EntrarRoute: EntrarRoute,
+  McpRoute: McpRoute,
+  DotwellKnownOauthAuthorizationServerRoute:
+    DotwellKnownOauthAuthorizationServerRoute,
   ConviteTokenRoute: ConviteTokenRoute,
+  DotwellKnownOauthProtectedResourceMcpRoute:
+    DotwellKnownOauthProtectedResourceMcpRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
