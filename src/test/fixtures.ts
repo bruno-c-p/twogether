@@ -16,7 +16,6 @@ export function transaction(overrides: Partial<Transaction> = {}): Transaction {
     kind: "expense",
     date: "2026-09-10",
     goal: "fixed",
-    tags: ["casa"],
     memberId: "ana",
     revision: 1,
     ...overrides,

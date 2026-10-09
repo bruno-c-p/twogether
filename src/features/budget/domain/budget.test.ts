@@ -9,7 +9,6 @@ import {
   formatAmountInput,
   money,
   newId,
-  normalizeTag,
   parseAmount,
   monthLabel,
   monthName,
@@ -30,7 +29,6 @@ const transactions: Transaction[] = [
     kind: "income",
     date: "2026-09-01",
     goal: null,
-    tags: [],
   },
   {
     id: "fixed",
@@ -39,7 +37,6 @@ const transactions: Transaction[] = [
     kind: "expense",
     date: "2026-09-05",
     goal: "fixed",
-    tags: ["casa"],
   },
   {
     id: "pleasure",
@@ -48,7 +45,6 @@ const transactions: Transaction[] = [
     kind: "expense",
     date: "2026-09-11",
     goal: "pleasure",
-    tags: ["a dois"],
   },
 ];
 
@@ -170,15 +166,19 @@ describe("tipo da transação", () => {
       transactionSchema.safeParse({ ...transactions[1], goal: null }).success,
     ).toBe(false);
   });
-  it("aceita transações salvas antes da remoção das contas", () => {
+  it("aceita transações salvas antes da remoção das contas e das tags", () => {
     expect(
-      transactionSchema.safeParse({ ...transactions[0], accountId: "nubank" })
+      transactionSchema.safeParse({
+        ...transactions[0],
+        accountId: "nubank",
+        tags: ["casa"],
+      })
         .success,
     ).toBe(true);
   });
 });
 
-describe("mês e tags", () => {
+describe("mês", () => {
   it("escreve o nome do mês por extenso ou abreviado", () => {
     expect(monthName("2026-09")).toBe("setembro");
     expect(monthName("2026-05", true)).toBe("mai");
@@ -195,10 +195,6 @@ describe("mês e tags", () => {
   });
   it("usa o calendário local para o mês atual", () => {
     expect(currentMonth(new Date(2026, 8, 17))).toBe("2026-09");
-  });
-  it("normaliza tags para evitar duplicatas por espaços e letras maiúsculas", () => {
-    expect(normalizeTag(" #Casa ")).toBe("casa");
-    expect(normalizeTag("A   DOIS")).toBe("a dois");
   });
 });
 
@@ -251,7 +247,6 @@ describe("individual goal planning", () => {
     description: "Salário",
     date: "2026-09-14",
     goal: null,
-    tags: [],
   });
 
   const monthly = [income("a", 500000), income("b", 300000)];
@@ -314,7 +309,6 @@ describe("memberTotals", () => {
     description: "x",
     date: "2026-09-14",
     goal: kind === "expense" ? "fixed" : null,
-    tags: [],
   });
 
   it("splits income and expenses by who recorded them, in member order", () => {

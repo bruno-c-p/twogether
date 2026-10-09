@@ -1,7 +1,7 @@
 import { Button as BaseButton } from "@base-ui/react/button";
 import { cx } from "@/lib/cx";
 
-type Variant = "primary" | "secondary" | "text" | "icon" | "tag" | "unstyled";
+type Variant = "primary" | "secondary" | "text" | "icon" | "unstyled";
 
 const variants: Record<Variant, string> = {
   unstyled: "",
@@ -28,11 +28,6 @@ const variants: Record<Variant, string> = {
     "after:content-[''] after:absolute after:[inset:min(0px,(100%_-_44px)/2)]",
     "border-none bg-transparent p-0 rounded-md",
     "@hover:bg-surface-2",
-  ),
-  tag: cx(
-    "inline-flex items-center gap-1.5 px-2 py-1",
-    "border border-solid border-transparent rounded-sm bg-surface-2",
-    "text-text-muted text-xs font-500",
   ),
 };
 

@@ -17,7 +17,6 @@ function rent(memberId: string): Transaction {
     id: "rent",
     description: "Aluguel",
     amount: 200001,
-    tags: ["casa"],
     split: {},
   };
 }
@@ -82,7 +81,6 @@ describe("split transactions", () => {
       memberId: bia.user.id,
       date: "2026-09-20",
       goal: "fixed",
-      tags: ["casa"],
     });
     expect((await find()).amount).toBe(200001);
   });

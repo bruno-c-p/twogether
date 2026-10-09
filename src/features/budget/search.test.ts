@@ -18,13 +18,12 @@ describe("validateWorkspaceSearch", () => {
 });
 
 describe("validateTransactionFilters", () => {
-  it("drops junk kind and blank query", () => {
+  it("drops junk kind, blank query and the retired tag filter", () => {
     expect(
       validateTransactionFilters({ kind: "transfer", query: "  " }),
     ).toEqual({
       query: undefined,
       goal: undefined,
-      tag: undefined,
       kind: undefined,
     });
     expect(
@@ -35,7 +34,7 @@ describe("validateTransactionFilters", () => {
         query: "aluguel",
         month: "2026-09",
       }),
-    ).toEqual({ kind: "income", goal: "fixed", tag: "casa", query: "aluguel" });
+    ).toEqual({ kind: "income", goal: "fixed", query: "aluguel" });
   });
 });
 
@@ -43,10 +42,10 @@ describe("withDefaultMonthHref", () => {
   it("builds a redirect to the same page with the month added", () => {
     expect(
       withDefaultMonthHref(
-        { pathname: "/transacoes", searchStr: "?tag=casa" },
+        { pathname: "/transacoes", searchStr: "?goal=fixed" },
         "2026-09",
       ),
-    ).toBe("/transacoes?tag=casa&month=2026-09");
+    ).toBe("/transacoes?goal=fixed&month=2026-09");
     expect(
       withDefaultMonthHref({ pathname: "/", searchStr: "" }, "2026-09"),
     ).toBe("/?month=2026-09");
@@ -55,8 +54,8 @@ describe("withDefaultMonthHref", () => {
 
 describe("legacyViewHref", () => {
   it("sends old /?view= links to the page's own path", () => {
-    expect(legacyViewHref("?view=transactions&month=2026-09&tag=casa")).toBe(
-      "/transacoes?month=2026-09&tag=casa",
+    expect(legacyViewHref("?view=transactions&month=2026-09&goal=fixed")).toBe(
+      "/transacoes?month=2026-09&goal=fixed",
     );
     expect(legacyViewHref("?view=overview")).toBe("/");
   });

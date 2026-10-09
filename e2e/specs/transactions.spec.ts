@@ -50,12 +50,6 @@ test.describe("transactions", () => {
     await expense
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
-    await expense
-      .getByPlaceholder("Digite uma tag e pressione Enter")
-      .fill("casa");
-    await expense
-      .getByPlaceholder("Digite uma tag e pressione Enter")
-      .press("Enter");
     await expense.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
@@ -70,7 +64,6 @@ test.describe("transactions", () => {
     await expect(
       list.locator("span").getByText("Custo fixo", { exact: true }),
     ).toBeVisible();
-    await expect(page.getByRole("button", { name: "#casa" })).toBeVisible();
 
     await openView(page, "Visão geral");
     await expect(summary(page).getByText(/^Sobra de /)).toBeVisible();

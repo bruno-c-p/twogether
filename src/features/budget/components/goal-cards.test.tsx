@@ -10,7 +10,6 @@ const salary = transaction({
   kind: "income",
   goal: null,
   amount: 100000,
-  tags: [],
 });
 
 const rent = transaction({ id: "r", goal: "fixed", amount: 40000 });
@@ -93,7 +92,6 @@ describe("GoalCards", () => {
       kind: "income",
       goal: null,
       amount: 50000,
-      tags: [],
     });
 
     const monthly = [salary, biaSalary, rent];

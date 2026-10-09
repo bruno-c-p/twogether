@@ -20,7 +20,6 @@ export function useTransactionFilters() {
   return {
     query: search.query ?? "",
     goalFilter,
-    tagFilter: search.tag ?? "",
     kindFilter,
     // Typing replaces the entry so each keystroke does not fill history.
     setQuery: (query: string) =>
@@ -30,7 +29,6 @@ export function useTransactionFilters() {
       ),
     setGoalFilter: (goal: GoalId | "all") =>
       void setSearch({ goal: goal === "all" ? null : goal, page: null }),
-    setTag: (tag: string) => void setSearch({ tag: tag || null, page: null }),
     setKindFilter: (kind: KindFilter | "all") =>
       void setSearch({ kind: kind === "all" ? null : kind, page: null }),
   };
