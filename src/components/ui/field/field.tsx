@@ -126,6 +126,28 @@ export function FieldError({
   );
 }
 
+// The error of a choice group (buttons, not a form control), which has no
+// Field.Root to report to.
+export function GroupError({
+  className,
+  children,
+  ...props
+}: ComponentPropsWithoutRef<"p">) {
+  if (!children) return null;
+
+  return (
+    <p
+      role="alert"
+      className={
+        className ? `${styles.fieldError} ${className}` : styles.fieldError
+      }
+      {...props}
+    >
+      {children}
+    </p>
+  );
+}
+
 export function FieldHint({
   className,
   ...props

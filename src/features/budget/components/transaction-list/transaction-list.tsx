@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { useQueryState } from "nuqs";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
@@ -11,7 +12,7 @@ import type {
   Transaction,
   Member,
 } from "@/features/budget/domain/types";
-import type { KindFilter } from "@/features/budget/search";
+import { pageParam, type KindFilter } from "@/features/budget/search";
 import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/features/budget/components/empty-state";
@@ -281,7 +282,11 @@ function TransactionPages({
   transactions: Transaction[];
   onTag: (tag: string) => void;
 }) {
-  const [selectedPage, setPage] = useState(0);
+  const [selectedPage, setPage] = useQueryState(
+    "page",
+    pageParam.withOptions({ history: "push" }),
+  );
+
   const list = useRef<HTMLDivElement>(null);
   const pages = Math.ceil(transactions.length / PAGE_SIZE);
   const page = Math.min(selectedPage, pages - 1);
@@ -299,7 +304,7 @@ function TransactionPages({
     .filter((group) => group.items.length);
 
   function pickPage(next: number) {
-    setPage(next);
+    void setPage(next);
     list.current?.scrollIntoView({ block: "start" });
   }
 
@@ -364,24 +369,12 @@ export function TransactionList({
     .filter((t) => matchesFilters(t, filters))
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 
-  const context = JSON.stringify([
-    filters.query,
-    filters.goalFilter,
-    filters.tagFilter,
-    filters.kindFilter,
-    transactions[0]?.date.slice(0, 7),
-    [...new Set(transactions.map((t) => t.memberId))].sort((a, b) =>
-      (a ?? "").localeCompare(b ?? ""),
-    ),
-  ]);
-
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
       <div className="rounded-lg border border-solid border-border bg-surface overflow-clip">
         {filtered.length ? (
           <TransactionPages
-            key={context}
             transactions={filtered}
             {...row}
             onTag={filters.setTag}

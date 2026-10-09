@@ -1,9 +1,14 @@
-import { useState } from "react";
+import { useRef } from "react";
 import { useClerk } from "@clerk/tanstack-react-start";
 import { AccountSettings } from "@/features/auth/components/account-settings";
 import { ThemeToggle } from "@/features/theme";
 import type { Member } from "@/features/budget/domain/types";
-import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTrigger,
+  type SheetActions,
+} from "@/components/ui/sheet";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
@@ -15,20 +20,19 @@ export function AccountDrawer({
   user: Member;
   members: Member[];
 }) {
-  const [open, setOpen] = useState(false);
+  const sheet = useRef<SheetActions>(null);
   const { openUserProfile } = useClerk();
   const memberLabel = `${members.length} ${members.length === 1 ? "pessoa" : "pessoas"}`;
 
   // Clerk's modal lives outside the drawer's focus trap, so close first.
   function manage() {
-    setOpen(false);
+    sheet.current?.close();
     openUserProfile();
   }
 
   return (
     <Sheet
-      open={open}
-      onOpenChange={setOpen}
+      actions={sheet}
       trigger={
         <SheetTrigger
           aria-label={`Abrir nosso espaço: ${memberLabel}`}

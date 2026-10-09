@@ -1,7 +1,8 @@
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { useHydrated } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   currentMonth,
@@ -9,7 +10,12 @@ import {
   monthName,
 } from "@/features/budget/domain/format";
 import { chipTrigger } from "@/components/ui/chip-trigger";
-import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTrigger,
+  type SheetActions,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/lib/cx";
 
@@ -22,7 +28,12 @@ function MonthGrid({
   month: string;
   onPick: (month: string) => void;
 }) {
-  const [year, setYear] = useState(() => Number(month.slice(0, 4)));
+  // The year being browsed starts at the picked month's year.
+  const { control, setValue } = useForm({
+    defaultValues: { year: Number(month.slice(0, 4)) },
+  });
+
+  const year = useWatch({ control, name: "year" });
   const today = useHydrated() ? currentMonth() : null;
 
   return (
@@ -32,7 +43,7 @@ function MonthGrid({
           variant="icon"
           aria-label="Ano anterior"
           disabled={year <= 1900}
-          onClick={() => setYear(year - 1)}
+          onClick={() => setValue("year", year - 1)}
         >
           <ChevronLeft size={18} />
         </Button>
@@ -43,7 +54,7 @@ function MonthGrid({
           variant="icon"
           aria-label="Próximo ano"
           disabled={year >= 9999}
-          onClick={() => setYear(year + 1)}
+          onClick={() => setValue("year", year + 1)}
         >
           <ChevronRight size={18} />
         </Button>
@@ -101,12 +112,11 @@ export function MonthFilter({
   month: string;
   setMonth: (month: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const sheet = useRef<SheetActions>(null);
 
   return (
     <Sheet
-      open={open}
-      onOpenChange={setOpen}
+      actions={sheet}
       narrow
       trigger={
         <SheetTrigger
@@ -128,7 +138,7 @@ export function MonthFilter({
         month={month}
         onPick={(next) => {
           setMonth(next);
-          setOpen(false);
+          sheet.current?.close();
         }}
       />
     </Sheet>

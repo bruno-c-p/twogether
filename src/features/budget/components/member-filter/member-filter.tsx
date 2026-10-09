@@ -1,10 +1,15 @@
 import { Button } from "@/components/ui/button";
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
-import { useState } from "react";
+import { useRef } from "react";
 import { chipTrigger } from "@/components/ui/chip-trigger";
 import { Check, ChevronDown } from "lucide-react";
-import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTrigger,
+  type SheetActions,
+} from "@/components/ui/sheet";
 import type { Member } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
@@ -19,7 +24,7 @@ export function MemberFilter({
   value: string;
   onChange: (memberId: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const sheet = useRef<SheetActions>(null);
 
   const options = [
     { id: "all", label: "Nós" },
@@ -35,8 +40,7 @@ export function MemberFilter({
 
   return (
     <Sheet
-      open={open}
-      onOpenChange={setOpen}
+      actions={sheet}
       narrow
       trigger={
         <SheetTrigger
@@ -55,7 +59,7 @@ export function MemberFilter({
         className="grid gap-1.5"
         onValueChange={(next) => {
           onChange(next);
-          setOpen(false);
+          sheet.current?.close();
         }}
       >
         {options.map((option) => (
@@ -65,7 +69,7 @@ export function MemberFilter({
             key={option.id}
             value={option.id}
             onClick={() => {
-              if (option.id === current.id) setOpen(false);
+              if (option.id === current.id) sheet.current?.close();
             }}
             className={cx(
               "flex items-center justify-between gap-2 cursor-pointer",

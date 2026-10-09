@@ -1,6 +1,7 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter, stringifySearchWith } from "@tanstack/react-router";
 import { setupRouterSsrQueryIntegration } from "@tanstack/react-router-ssr-query";
+import posthog from "posthog-js";
 import { routeTree } from "@/routeTree.gen";
 import { RouteError } from "@/components/route-error/route-error";
 import { reportError } from "@/lib/errors";
@@ -34,10 +35,14 @@ export function getRouter() {
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
     defaultErrorComponent: RouteError,
+    // Every route error boundary reports here once, as it catches the error.
     defaultOnCatch: (error, errorInfo) => {
       reportError(error, {
         componentStack: errorInfo.componentStack ?? undefined,
       });
+
+      // PostHogProvider initializes this instance only when it is configured.
+      if (posthog.__loaded) posthog.captureException(error);
     },
   });
 

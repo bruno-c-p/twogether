@@ -1,3 +1,4 @@
+import { createParser, parseAsIndex, parseAsInteger, parseAsString } from "nuqs";
 import { z } from "zod";
 import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import {
@@ -36,6 +37,43 @@ const transactionFiltersSchema = z.object({
   tag: drop(tagSchema),
   kind: drop(kindFilterSchema),
 });
+
+// nuqs reads and writes the same params in components; each parser accepts
+// exactly what the route schema keeps and treats anything else as absent.
+function urlParam<Value extends string>(schema: z.ZodType<Value, string>) {
+  return createParser({
+    parse: (value) => schema.safeParse(value).data ?? null,
+    serialize: (value: Value) => value,
+  });
+}
+
+export const workspaceParams = {
+  month: urlParam(monthSchema),
+  member: urlParam(memberSchema),
+};
+
+export const transactionFilterParams = {
+  query: urlParam(querySchema),
+  goal: urlParam(goalIdSchema),
+  tag: urlParam(tagSchema),
+  kind: urlParam(kindFilterSchema),
+};
+
+// The transactions list page, 1-based in the URL. Any filter, month or
+// person change drops it so the list starts over.
+export const pageParam = parseAsIndex.withDefault(0);
+
+// Workspace dialogs: `transaction` is "new" or the id being edited,
+// `percentages` the revision the editor opened at, `delete` and `settle`
+// the transaction they act on.
+export const NEW_TRANSACTION = "new";
+
+export const dialogParams = {
+  transaction: parseAsString,
+  percentages: parseAsInteger,
+  delete: parseAsString,
+  settle: parseAsString,
+};
 
 export type KindFilter = z.infer<typeof kindFilterSchema>;
 

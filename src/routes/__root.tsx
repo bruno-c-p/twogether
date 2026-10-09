@@ -1,8 +1,9 @@
 import { useUser, ClerkProvider } from "@clerk/tanstack-react-start";
 import { ptBR } from "@clerk/localizations";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import type { QueryClient } from "@tanstack/react-query";
 import { PostHogProvider, usePostHog } from "posthog-js/react";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
   createRootRouteWithContext,
   HeadContent,
@@ -17,6 +18,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 import { syncIdentity } from "@/lib/posthog-identity";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 
 const clientEnv = parseClientEnv(import.meta.env, { dev: import.meta.env.DEV });
 
@@ -25,9 +27,7 @@ const posthogApiKey = clientEnv.VITE_PUBLIC_POSTHOG_PROJECT_TOKEN;
 const posthogHost = clientEnv.VITE_PUBLIC_POSTHOG_HOST;
 
 function TimeZoneCookie() {
-  useEffect(() => {
-    rememberTimeZone(browserTimeZone());
-  }, []);
+  useBrowserSync(["time-zone"], () => rememberTimeZone(browserTimeZone()));
 
   return null;
 }
@@ -40,14 +40,17 @@ function PostHogIdentity() {
   const email = user?.primaryEmailAddress?.emailAddress;
   const name = user?.fullName;
 
-  useEffect(() => {
-    identifiedUserId.current = syncIdentity(posthog, identifiedUserId.current, {
-      isLoaded,
-      userId,
-      email,
-      name,
-    });
-  }, [email, isLoaded, name, posthog, userId]);
+  useBrowserSync(
+    ["posthog-identity", userId, email, name],
+    () => {
+      identifiedUserId.current = syncIdentity(
+        posthog,
+        identifiedUserId.current,
+        { isLoaded, userId, email, name },
+      );
+    },
+    isLoaded,
+  );
 
   return null;
 }
@@ -125,27 +128,29 @@ export const Route = createRootRouteWithContext<{
             },
           }}
         >
-          <TimeZoneCookie />
-          {posthogApiKey && posthogHost ? (
-            <PostHogProvider
-              apiKey={posthogApiKey}
-              options={{
-                api_host: posthogHost,
-                defaults: "2025-05-24",
-                capture_exceptions: true,
-                debug: import.meta.env.DEV,
-                tracing_headers:
-                  typeof window !== "undefined"
-                    ? [window.location.hostname]
-                    : [],
-              }}
-            >
-              <PostHogIdentity />
+          <NuqsAdapter>
+            <TimeZoneCookie />
+            {posthogApiKey && posthogHost ? (
+              <PostHogProvider
+                apiKey={posthogApiKey}
+                options={{
+                  api_host: posthogHost,
+                  defaults: "2025-05-24",
+                  capture_exceptions: true,
+                  debug: import.meta.env.DEV,
+                  tracing_headers:
+                    typeof window !== "undefined"
+                      ? [window.location.hostname]
+                      : [],
+                }}
+              >
+                <PostHogIdentity />
+                <Outlet />
+              </PostHogProvider>
+            ) : (
               <Outlet />
-            </PostHogProvider>
-          ) : (
-            <Outlet />
-          )}
+            )}
+          </NuqsAdapter>
           <Toaster />
           <Scripts />
         </ClerkProvider>

@@ -71,6 +71,37 @@ const antiSlop: DummyRuleMap = {
   "anti-slop/require-safety-comment-for-type-assertion": "error",
 };
 
+// State lives in React Query (server data and client side effects), React
+// Hook Form (form state) and nuqs (URL state). The reducer and layout or
+// insertion effect variants would only reopen the same escape hatches.
+const STATE_HOOKS = ["useState", "useReducer"];
+
+const EFFECT_HOOKS = ["useEffect", "useLayoutEffect", "useInsertionEffect"];
+
+const STATE_MESSAGE =
+  "Local component state is banned: use React Query for server data, React Hook Form for form fields, nuqs for URL state, or an uncontrolled component.";
+
+const EFFECT_MESSAGE =
+  "Effects are banned: derive values during render, act in the event handler, use a route lifecycle hook, or sync through React Query.";
+
+const bannedReactHooks = [
+  { name: "react", importNames: STATE_HOOKS, message: STATE_MESSAGE },
+  { name: "react", importNames: EFFECT_HOOKS, message: EFFECT_MESSAGE },
+];
+
+const bannedReactMembers = [
+  ...STATE_HOOKS.map((property) => ({
+    object: "React",
+    property,
+    message: STATE_MESSAGE,
+  })),
+  ...EFFECT_HOOKS.map((property) => ({
+    object: "React",
+    property,
+    message: EFFECT_MESSAGE,
+  })),
+];
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "oxc"],
   categories: { correctness: "error" },
@@ -113,9 +144,11 @@ export default defineConfig({
       files: ["**/*.{ts,tsx}"],
       rules: {
         ...typeChecked,
+        "no-restricted-properties": ["error", ...bannedReactMembers],
         "no-restricted-imports": [
           "error",
           {
+            paths: bannedReactHooks,
             patterns: [
               {
                 group: ["./*", "../*", "./**", "../**"],

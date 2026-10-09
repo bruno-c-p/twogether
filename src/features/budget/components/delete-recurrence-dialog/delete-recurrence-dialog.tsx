@@ -1,7 +1,7 @@
 import { Radio } from "@base-ui/react/radio";
 import { RadioGroup } from "@base-ui/react/radio-group";
 import { Fieldset as BaseFieldset } from "@base-ui/react/fieldset";
-import { useState } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { Trash2 } from "lucide-react";
 import type { Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,11 @@ export function DeleteRecurrenceDialog({
   onClose,
   onDelete,
 }: Props) {
-  const [following, setFollowing] = useState(false);
+  const { control, setValue } = useForm<{ scope: "one" | "following" }>({
+    defaultValues: { scope: "one" },
+  });
+
+  const following = useWatch({ control, name: "scope" }) === "following";
 
   return (
     <Dialog
@@ -55,7 +59,9 @@ export function DeleteRecurrenceDialog({
               name="delete-scope"
               value={following ? "following" : "one"}
               disabled={busy}
-              onValueChange={(next) => setFollowing(next === "following")}
+              onValueChange={(next) =>
+                setValue("scope", next === "following" ? "following" : "one")
+              }
             >
               <label
                 className={`${styles.deleteOption} ${!following ? styles.isSelected : ""}`}
