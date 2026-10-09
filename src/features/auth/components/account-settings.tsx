@@ -1,7 +1,6 @@
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
 import { useUser } from "@clerk/tanstack-react-start";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
@@ -28,6 +27,8 @@ const OFFLINE_MESSAGE = "Sem conexão. Tente novamente.";
 
 const PANEL_BODY = "px-6 pb-6 max-bp620:px-4 max-bp620:pb-4";
 
+// The confirmation shows once the name is saved and goes when the next
+// save starts.
 export function useNameForm({
   run,
   saveName,
@@ -37,22 +38,25 @@ export function useNameForm({
   saveName: (name: string) => ReturnType<typeof setName>;
   onSaved: () => void;
 }) {
-  const [notice, setNotice] = useState("");
+  const save = useMutation({
+    mutationFn: (name: string) => run(() => saveName(name)),
+    onSuccess: (result) => {
+      if (result) onSaved();
+    },
+  });
 
-  async function save(name: string) {
-    setNotice("");
-
-    if (!(await run(() => saveName(name)))) return;
-
-    onSaved();
-    setNotice("Nome atualizado.");
-  }
-
-  return { notice, save };
+  return {
+    notice: save.data ? "Nome atualizado." : "",
+    save: async (name: string) => {
+      await save.mutateAsync(name);
+    },
+  };
 }
 
 export type NameFormState = ReturnType<typeof useNameForm>;
 
+// The link comes from the last invite created; cancelling the pending
+// invites, or a new invite, clears what the earlier steps reported.
 export function useInviteLink({
   run,
   create,
@@ -64,39 +68,58 @@ export function useInviteLink({
   revoke: () => ReturnType<typeof revokeInvite>;
   onCreated: () => void;
 }) {
-  const [link, setLink] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [status, setStatus] = useState("");
+  const copy = useMutation({
+    mutationFn: (link: string) => navigator.clipboard.writeText(link),
+  });
 
-  async function makeInvite() {
-    const result = await run(create);
+  const cancel = useMutation({
+    mutationFn: () => run(revoke),
+    onSuccess: (result) => {
+      if (!result) return;
+      invite.reset();
+      copy.reset();
+    },
+  });
 
-    if (!result) return;
+  // Resolves to the shareable link, or null when the invite failed.
+  const invite = useMutation({
+    mutationFn: async () => {
+      const result = await run(create);
 
-    onCreated();
-    setLink(`${window.location.origin}/convite/${result.data.inviteToken}`);
-    setCopied(false);
-    setStatus("");
+      return result
+        ? `${window.location.origin}/convite/${result.data.inviteToken}`
+        : null;
+    },
+    onSuccess: (created) => {
+      if (!created) return;
+      onCreated();
+      copy.reset();
+      cancel.reset();
+    },
+  });
+
+  const link = invite.data ?? "";
+
+  function status() {
+    if (copy.isError) return "Selecione e copie o link acima.";
+
+    return cancel.data ? "Convites anteriores cancelados." : "";
   }
 
-  async function copyInvite() {
-    try {
-      await navigator.clipboard.writeText(link);
-      setCopied(true);
-      setStatus("");
-    } catch {
-      setStatus("Selecione e copie o link acima.");
-    }
-  }
-
-  async function cancelInvites() {
-    if (!(await run(revoke))) return;
-
-    setLink("");
-    setStatus("Convites anteriores cancelados.");
-  }
-
-  return { link, copied, status, makeInvite, copyInvite, cancelInvites };
+  return {
+    link,
+    copied: copy.isSuccess,
+    status: status(),
+    makeInvite: async () => {
+      await invite.mutateAsync();
+    },
+    copyInvite: async () => {
+      await copy.mutateAsync(link).catch(() => undefined);
+    },
+    cancelInvites: async () => {
+      await cancel.mutateAsync();
+    },
+  };
 }
 
 export type InviteLinkState = ReturnType<typeof useInviteLink>;

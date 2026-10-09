@@ -1,20 +1,23 @@
-import type { ReactNode } from "react";
+import type { ReactNode, RefObject } from "react";
 import { Drawer } from "@base-ui/react/drawer";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cx } from "@/lib/cx";
 import { usePhone } from "@/lib/use-phone";
 
-/** Side panel on wide screens, bottom sheet on phones. */
+export type SheetActions = Drawer.Root.Actions;
+
+/**
+ * Side panel on wide screens, bottom sheet on phones. The trigger opens it;
+ * `actions.current.close()` closes it from inside, e.g. after a pick.
+ */
 export function Sheet({
-  open,
-  onOpenChange,
+  actions,
   trigger,
   narrow = false,
   children,
 }: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  actions?: RefObject<SheetActions | null>;
   trigger: ReactNode;
   narrow?: boolean;
   children: ReactNode;
@@ -23,8 +26,7 @@ export function Sheet({
 
   return (
     <Drawer.Root
-      open={open}
-      onOpenChange={onOpenChange}
+      actionsRef={actions}
       swipeDirection={phone ? "down" : "right"}
     >
       {trigger}

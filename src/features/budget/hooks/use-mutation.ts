@@ -1,9 +1,10 @@
 import {
+  useMutation as useQueryMutation,
   useQueryClient,
   type QueryClient,
   type QueryKey,
 } from "@tanstack/react-query";
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useRef } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { workspaceQueryKey } from "@/features/budget/workspace";
@@ -31,8 +32,9 @@ export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
     : offline;
 }
 
-// run() resolves to whether the server accepted the change; failures are
-// reported through `error`.
+// A React Query mutation over the workspace snapshot. run() resolves to
+// whether the server accepted the change; failures are reported through
+// `error`, and an optimistic update is rolled back when the server refuses.
 export function useMutation<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
   optimistic?: (
@@ -42,72 +44,64 @@ export function useMutation<TArgs extends unknown[], TResult>(
 ) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const fnRef = useRef(fn);
-  const optimisticRef = useRef(optimistic);
-  useLayoutEffect(() => {
-    fnRef.current = fn;
-    optimisticRef.current = optimistic;
-  });
-  const [error, setError] = useState("");
-  const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
 
-  const run = useCallback(
-    async (...args: TArgs): Promise<boolean> => {
-      if (inFlight.current) return false;
-      inFlight.current = true;
-      setPending(true);
-      setError("");
-
+  const mutation = useQueryMutation({
+    mutationFn: (args: TArgs) => fn(...args),
+    onMutate: async (args): Promise<CachedWorkspace | undefined> => {
       const cached = cachedWorkspace(queryClient);
-      const applyOptimistic = optimisticRef.current;
 
-      const restore = () => {
-        if (cached) queryClient.setQueryData(cached.key, cached.previous);
-      };
+      if (!optimistic || !cached) return cached;
 
-      if (applyOptimistic && cached) {
-        await queryClient.cancelQueries({ queryKey: cached.key });
-        queryClient.setQueryData(
-          cached.key,
-          applyOptimistic(cached.previous, ...args),
-        );
-      }
+      await queryClient.cancelQueries({ queryKey: cached.key });
+      queryClient.setQueryData(
+        cached.key,
+        optimistic(cached.previous, ...args),
+      );
 
-      try {
-        await fnRef.current(...args);
-
-        const refresh = queryClient.invalidateQueries({
-          queryKey: workspaceQueryKey,
-        });
-
-        if (applyOptimistic) void refresh;
-        else await refresh;
-
-        return true;
-      } catch (cause) {
-        if (applyOptimistic) restore();
-
-        if (isRedirect(cause)) {
-          await router.navigate(router.resolveRedirect(cause).options);
-
-          return false;
-        }
-
-        setError(failureMessage(cause));
-
-        return false;
-      } finally {
-        inFlight.current = false;
-        setPending(false);
-      }
+      return cached;
     },
-    [queryClient, router],
-  );
+    // Without an optimistic update the change only shows once the snapshot
+    // is fresh, so the mutation stays pending until then.
+    onSuccess: async () => {
+      const refresh = queryClient.invalidateQueries({
+        queryKey: workspaceQueryKey,
+      });
 
-  // Dialogs call this when they open or close so an old failure never
-  // shows up on the next attempt.
-  const reset = useCallback(() => setError(""), []);
+      if (!optimistic) await refresh;
+    },
+    onError: async (cause, _args, cached) => {
+      if (optimistic && cached)
+        queryClient.setQueryData(cached.key, cached.previous);
 
-  return { run, reset, pending, error };
+      if (isRedirect(cause))
+        await router.navigate(router.resolveRedirect(cause).options);
+    },
+  });
+
+  async function run(...args: TArgs): Promise<boolean> {
+    if (inFlight.current) return false;
+    inFlight.current = true;
+
+    try {
+      await mutation.mutateAsync(args);
+
+      return true;
+    } catch {
+      return false;
+    } finally {
+      inFlight.current = false;
+    }
+  }
+
+  const { error } = mutation;
+
+  return {
+    run,
+    // Dialogs call this when they open or close so an old failure never
+    // shows up on the next attempt.
+    reset: mutation.reset,
+    pending: mutation.isPending,
+    error: error && !isRedirect(error) ? failureMessage(error) : "",
+  };
 }

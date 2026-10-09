@@ -227,4 +227,28 @@ describe("TransactionDialog", () => {
     await user.click(screen.getByRole("button", { name: "Receita" }));
     expect(screen.queryByRole("region", { name: "Divisão" })).toBeNull();
   });
+
+  test("an expense without a goal says so next to the goals", async () => {
+    const { screen, user, onSave } = setup();
+
+    await user.type(screen.getByLabelText("Valor"), "4590");
+    await user.type(screen.getByLabelText("Descrição"), "Feira");
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar transação" }),
+    );
+
+    expect(
+      await screen.findByText("Escolha uma das seis metas para esta despesa."),
+    ).toBeTruthy();
+    expect(onSave).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole("button", { name: "Prazeres" }));
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar transação" }),
+    );
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ goal: "pleasure" }),
+      1,
+    );
+  });
 });

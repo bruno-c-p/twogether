@@ -1,9 +1,4 @@
-import {
-  useRef,
-  useState,
-  type ComponentPropsWithoutRef,
-  type ReactNode,
-} from "react";
+import { useRef, type ComponentPropsWithoutRef, type ReactNode } from "react";
 import { Dialog as BaseDialog } from "@base-ui/react/dialog";
 import { Form as BaseForm } from "@base-ui/react/form";
 import { X } from "lucide-react";
@@ -33,21 +28,16 @@ export function Dialog({
   dismissDisabled?: boolean;
   initialFocus?: BaseDialog.Popup.Props["initialFocus"];
 }) {
-  const [open, setOpen] = useState(true);
   const popup = useRef<HTMLDivElement>(null);
 
+  // Mounted means open: Base UI owns the closing animation, then the caller
+  // unmounts the dialog in onClose.
   return (
     <BaseDialog.Root
-      open={open}
+      defaultOpen
       disablePointerDismissal={!closeOnBackdrop}
       onOpenChange={(next, details) => {
-        if (!next && dismissDisabled) {
-          details.cancel();
-
-          return;
-        }
-
-        setOpen(next);
+        if (!next && dismissDisabled) details.cancel();
       }}
       onOpenChangeComplete={(next) => {
         if (!next) onClose();

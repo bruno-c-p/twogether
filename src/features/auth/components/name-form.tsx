@@ -1,9 +1,9 @@
 import { Input } from "@/components/ui/input";
-import { useState, type FormEvent, type ReactNode } from "react";
+import type { ReactNode } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
-import { formText } from "@/features/budget/domain/format";
 import { nameFormSchema } from "@/features/budget/domain/schemas";
-import { fieldErrors } from "@/lib/zod-errors";
 import { Button } from "@/components/ui/button";
 import {
   FieldError,
@@ -34,24 +34,16 @@ export function NameForm({
   // it (even empty) to keep the button at its own width beside it.
   status?: string;
 }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(nameFormSchema),
+    defaultValues: { name: defaultName ?? "" },
+  });
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const parsed = nameFormSchema.safeParse({
-      name: formText(new FormData(event.currentTarget), "name"),
-    });
-
-    if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
-
-      return;
-    }
-
-    setErrors({});
-    await onSubmit(parsed.data.name);
-  }
+  const error = errors.name?.message;
 
   const button = (
     <Button type="submit" disabled={busy}>
@@ -60,21 +52,24 @@ export function NameForm({
   );
 
   return (
-    <Form onSubmit={(event) => void submit(event)}>
+    <Form
+      onSubmit={(event) =>
+        void handleSubmit((values) => onSubmit(values.name))(event)
+      }
+    >
       <FieldRoot>
         <FieldLabel>
           Seu nome
           <Input
-            name="name"
+            {...register("name")}
             autoComplete="given-name"
             maxLength={50}
-            defaultValue={defaultName}
             placeholder="Como você quer aparecer?"
             required
-            aria-describedby={errors.name ? "name-error" : undefined}
-            aria-invalid={errors.name ? true : undefined}
+            aria-describedby={error ? "name-error" : undefined}
+            aria-invalid={error ? true : undefined}
           />
-          <FieldError id="name-error">{errors.name}</FieldError>
+          <FieldError id="name-error">{error}</FieldError>
         </FieldLabel>
       </FieldRoot>
       {status === undefined ? (

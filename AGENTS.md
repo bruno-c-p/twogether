@@ -58,6 +58,25 @@
 - Do not use the repository's git as a substitute for storing that media
   elsewhere.
 
+## State without useState or useEffect
+
+- `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, and
+  `useInsertionEffect` are banned by `bun run lint` (imports from `react`
+  and `React.*` access). Do not disable the rule.
+- Server data and async results: React Query (`useQuery`, `useMutation`).
+  Track pending, error, and success through the mutation instead of flags.
+- Form fields and local picker values: React Hook Form (`useForm`,
+  `useWatch`, `setValue`), with `zodResolver` when a schema exists.
+- URL state (month, person, filters, list page, open dialogs): nuqs, with
+  parsers in `src/features/budget/search.ts` built from the route schemas.
+- Open/closed UI (sheets, dialogs): let Base UI own it uncontrolled; close
+  from code through the `actions` ref.
+- Side effects: run them in the event handler, a route lifecycle hook
+  (`onLeave`, `beforeLoad`), the router's `defaultOnCatch`, or
+  `useBrowserSync` (`src/lib/use-browser-sync.ts`) for browser-only syncs.
+- Tab-only client state that must stay out of the URL lives in the React
+  Query cache, as `useHiddenValues` does.
+
 ## Component folders
 
 - A component that owns a CSS module lives in its own folder:
