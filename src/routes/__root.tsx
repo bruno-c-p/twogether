@@ -70,7 +70,7 @@ export const Route = createRootRouteWithContext<{
       { title: "twogether — Orçamento a dois" },
       {
         name: "description",
-        content: "Organize transações, metas e tags em um orçamento pessoal.",
+        content: "Organize transações e metas em um orçamento pessoal.",
       },
       { name: "theme-color", content: "#f2f2f4" },
       { name: "color-scheme", content: "light dark" },

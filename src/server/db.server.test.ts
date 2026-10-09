@@ -19,7 +19,7 @@ async function householdCount(ctx: ReturnType<typeof createStoreContext>) {
 }
 
 describe("createStoreContext", () => {
-  test("drops the old bank accounts and their ids from transactions", async () => {
+  test("drops the old bank accounts, their ids and tags from transactions", async () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-db-"));
     const file = join(dir, "legacy.sqlite");
     const legacy = createClient({ url: `file:${file}` });
@@ -29,7 +29,7 @@ describe("createStoreContext", () => {
         "CREATE TABLE accounts (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
         "CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
         `INSERT INTO accounts VALUES ('nubank', 'home', '{"id":"nubank"}', 1, 0)`,
-        `INSERT INTO transactions VALUES ('t1', 'home', '{"id":"t1","accountId":"nubank"}', 3, 0)`,
+        `INSERT INTO transactions VALUES ('t1', 'home', '{"id":"t1","accountId":"nubank","tags":["casa"]}', 3, 0)`,
       ],
       "write",
     );

@@ -20,7 +20,6 @@ const mercado: Transaction = {
   kind: "expense",
   date: "2026-09-14",
   goal: "fixed",
-  tags: ["casa"],
   revision: 1,
   memberId: "ana",
   createdBy: "ana",
@@ -67,7 +66,6 @@ describe("optimisticSave", () => {
       kind: "income",
       date: "2026-09-01",
       goal: null,
-      tags: [],
     };
 
     const next = optimisticSave(snapshot, { transaction: salary });

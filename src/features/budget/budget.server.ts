@@ -78,7 +78,6 @@ function canonical(value: Transaction, user: UserRow): Transaction {
     date: value.date,
     kind: value.kind,
     goal: value.goal,
-    tags: [...new Set(value.tags)],
     split: value.split ? {} : undefined,
     updatedBy: user.id,
     updatedAt: new Date().toISOString(),
@@ -174,16 +173,11 @@ async function snapshot(
 // the stored row already matches the submission.
 const RETRY_FIELDS = ["description", "amount", "date", "kind", "goal"] as const;
 
-function sameTags(a: string[], b: string[]) {
-  return a.length === b.length && a.every((tag, index) => tag === b[index]);
-}
-
 function isRetriedCreate(stored: Transaction, t: Transaction, userId: string) {
   return (
     RETRY_FIELDS.every((field) => stored[field] === t[field]) &&
     Boolean(stored.split) === Boolean(t.split) &&
-    stored.memberId === userId &&
-    sameTags(stored.tags, t.tags)
+    stored.memberId === userId
   );
 }
 
@@ -539,7 +533,6 @@ async function settleSplit(
       description: `Reembolso: ${stored.description}`.slice(0, 80),
       kind: "income",
       goal: null,
-      tags: [],
       memberId: stored.memberId,
     };
 
@@ -549,7 +542,6 @@ async function settleSplit(
       description: `${stored.description} (sua parte)`.slice(0, 80),
       kind: "expense",
       goal: stored.goal,
-      tags: stored.tags,
       memberId: user.id,
     };
 

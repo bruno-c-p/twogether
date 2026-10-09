@@ -17,8 +17,6 @@ const querySchema = z
   .refine((value) => value.trim().length > 0)
   .transform((value) => value.slice(0, 200));
 
-const tagSchema = z.string({ error: "Tag inválida." }).min(1).max(100);
-
 // The list also filters by split expenses, which are not a stored kind.
 const kindFilterSchema = z.enum(["expense", "income", "split"], {
   error: "Tipo inválido.",
@@ -30,11 +28,10 @@ const workspaceSearchSchema = z.object({
   member: drop(memberSchema),
 });
 
-// Search, goal, tag and kind only narrow the transactions list.
+// Search, goal and kind only narrow the transactions list.
 const transactionFiltersSchema = z.object({
   query: drop(querySchema),
   goal: drop(goalIdSchema),
-  tag: drop(tagSchema),
   kind: drop(kindFilterSchema),
 });
 
@@ -55,7 +52,6 @@ export const workspaceParams = {
 export const transactionFilterParams = {
   query: urlParam(querySchema),
   goal: urlParam(goalIdSchema),
-  tag: urlParam(tagSchema),
   kind: urlParam(kindFilterSchema),
 };
 

@@ -89,15 +89,6 @@ export function parseAmount(value: string): number | null {
   return parseCents(value, 1);
 }
 
-export function normalizeTag(value: string) {
-  return value
-    .trim()
-    .replace(/^#+/, "")
-    .toLocaleLowerCase("pt-BR")
-    .replace(/\s+/g, " ")
-    .slice(0, 24);
-}
-
 export function newId(): string {
   if (crypto.randomUUID !== undefined) return crypto.randomUUID();
   const bytes = new Uint8Array(16);

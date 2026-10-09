@@ -160,10 +160,6 @@ export function FieldHint({
   );
 }
 
-export function Optional({ children }: { children: ReactNode }) {
-  return <span className={styles.optional}>{children}</span>;
-}
-
 export function Note({ className, ...props }: ComponentPropsWithoutRef<"p">) {
   return (
     <p

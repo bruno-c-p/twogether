@@ -61,14 +61,6 @@ export function useWorkspaceData(
     [monthly, members, memberFilter],
   );
 
-  const allTags = useMemo(
-    () =>
-      [...new Set(transactions.flatMap((t) => t.tags))].sort((a, b) =>
-        a.localeCompare(b, "pt-BR"),
-      ),
-    [transactions],
-  );
-
   const debt = useMemo(
     () => splitDebt(transactions, budget.user.id),
     [transactions, budget.user.id],
@@ -84,7 +76,6 @@ export function useWorkspaceData(
     summary,
     plans,
     partners,
-    allTags,
     debt,
     partner,
     // Each person edits only their own percentages.

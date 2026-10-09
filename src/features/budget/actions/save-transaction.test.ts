@@ -8,7 +8,6 @@ const transaction = {
   kind: "expense" as const,
   date: "2026-09-14",
   goal: "fixed" as const,
-  tags: ["casa"],
   accountId: "account-1",
 };
 

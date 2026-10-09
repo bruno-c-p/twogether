@@ -13,7 +13,6 @@ const month = [
     id: "t1",
     description: "Mercado",
     date: "2026-09-10",
-    tags: ["casa"],
   }),
   transaction({
     id: "t2",
@@ -22,7 +21,6 @@ const month = [
     goal: null,
     amount: 500000,
     date: "2026-09-05",
-    tags: [],
     memberId: "someone-else",
   }),
   transaction({
@@ -30,7 +28,6 @@ const month = [
     description: "Cinema",
     goal: "pleasure",
     date: "2026-09-12",
-    tags: [],
   }),
 ];
 
@@ -116,7 +113,7 @@ describe("TransactionList", () => {
     expect(screen.getAllByText(/\+\sR\$\s20,00/)).toHaveLength(1);
   });
 
-  test("search, goal, kind and tag filters narrow the rows", async () => {
+  test("search, goal and kind filters narrow the rows", async () => {
     const { screen, user } = renderPlain(<List />);
 
     await user.type(screen.getByLabelText("Buscar transações"), "prazer");
@@ -138,10 +135,7 @@ describe("TransactionList", () => {
     await user.click(
       await screen.findByRole("option", { name: "Todas as metas" }),
     );
-
-    await user.click(screen.getByRole("button", { name: "#casa" }));
-    expect(screen.getByText("Filtrando por")).toBeTruthy();
-    expect(rowNames(screen)).toEqual(["Editar Mercado"]);
+    expect(rowNames(screen)).toHaveLength(3);
   });
 
   test("the split chip keeps only divided transactions", async () => {

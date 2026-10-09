@@ -35,17 +35,6 @@ const goals = [
 
 const worstAmounts = [99999999999, 99999999999, 99999999999, 1];
 
-const worstTags = [
-  "manutencao-eletrica-2026",
-  "impermeabilização",
-  "casa",
-  "urgente",
-  "2026",
-  "東京",
-  "🦊",
-  "café",
-];
-
 function baseTransaction(index: number, dataset: Dataset): Transaction {
   const income = index === 0 || (dataset === "huge" && index % 20 === 0);
 
@@ -56,7 +45,6 @@ function baseTransaction(index: number, dataset: Dataset): Transaction {
     date: `${fixtureMonth}-${String(28 - (index % 28)).padStart(2, "0")}`,
     kind: income ? "income" : "expense",
     goal: income ? null : goals[index % goals.length],
-    tags: index % 3 ? [] : ["casa"],
     memberId: index % 2 ? "person-b" : "person-a",
     revision: 1,
   };
@@ -69,7 +57,6 @@ function worstTransaction(index: number): Transaction {
     ...transaction,
     description: descriptions[index % descriptions.length],
     amount: worstAmounts[index] ?? 128401,
-    tags: index === 1 ? worstTags : transaction.tags,
     split:
       index === 1
         ? {}

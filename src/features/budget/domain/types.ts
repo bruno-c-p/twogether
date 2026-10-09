@@ -24,7 +24,6 @@ export interface Transaction {
   kind: TransactionKind;
   date: string;
   goal: GoalId | null;
-  tags: string[];
   recurrenceId?: string;
   recurrenceIndex?: number;
   memberId?: string;

@@ -26,7 +26,6 @@ function setup({
     <TransactionDialog
       transaction={editing}
       defaultDate="2026-09-15"
-      existingTags={["casa", "mercado"]}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
       currentUserId={currentUserId}
       busy={busy}
@@ -43,13 +42,12 @@ function setup({
 }
 
 describe("TransactionDialog", () => {
-  test("adds an expense with goal and typed tag", async () => {
+  test("adds an expense with a goal", async () => {
     const { screen, user, onSave, onClose } = setup();
 
     await user.type(screen.getByLabelText("Valor"), "4590");
     await user.type(screen.getByLabelText("Descrição"), "Feira");
     await user.click(screen.getByRole("button", { name: "Prazeres" }));
-    await user.type(screen.getByLabelText(/Tags/), "sábado");
     await user.click(
       screen.getByRole("button", { name: "Adicionar transação" }),
     );
@@ -61,7 +59,6 @@ describe("TransactionDialog", () => {
         date: "2026-09-15",
         kind: "expense",
         goal: "pleasure",
-        tags: ["sábado"],
         memberId: "ana",
       }),
       1,
@@ -120,7 +117,6 @@ describe("TransactionDialog", () => {
     expect(
       screen.queryByRole("switch", { name: "Repetir mensalmente" }),
     ).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Remover tag casa" }));
     await user.click(screen.getByRole("button", { name: "Salvar alterações" }));
 
     expect(onSave).toHaveBeenCalledWith(
@@ -128,7 +124,6 @@ describe("TransactionDialog", () => {
         id: "t1",
         memberId: "bia",
         revision: 1,
-        tags: [],
       }),
       1,
     );
@@ -149,24 +144,6 @@ describe("TransactionDialog", () => {
 
     expect(error.id).toBe("amount-error");
     expect(onSave).not.toHaveBeenCalled();
-  });
-
-  test("adds a suggested tag and ignores duplicates", async () => {
-    const { screen, user, onSave } = setup();
-
-    await user.click(screen.getByRole("button", { name: "#mercado" }));
-    await user.type(screen.getByLabelText(/Tags/), "mercado{Enter}");
-    await user.type(screen.getByLabelText("Valor"), "100");
-    await user.type(screen.getByLabelText("Descrição"), "Pão");
-    await user.click(screen.getByRole("button", { name: "Custo fixo" }));
-    await user.click(
-      screen.getByRole("button", { name: "Adicionar transação" }),
-    );
-
-    expect(onSave).toHaveBeenCalledWith(
-      expect.objectContaining({ tags: ["mercado"] }),
-      1,
-    );
   });
 
   test("splitting a new expense with the partner saves an open split", async () => {

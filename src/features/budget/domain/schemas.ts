@@ -78,14 +78,6 @@ const amountInputSchema = z
   .transform((value) => parseAmount(value))
   .pipe(centsSchema);
 
-const tagSchema = z
-  .string({ error: "Cada tag deve ter no máximo 24 caracteres." })
-  .max(24, { error: "Cada tag deve ter no máximo 24 caracteres." });
-
-const tagsSchema = z
-  .array(tagSchema, { error: "Use no máximo 8 tags." })
-  .max(8, { error: "Use no máximo 8 tags." });
-
 export const occurrencesSchema = z
   .int({ error: "Escolha entre 1 e 120 ocorrências." })
   .min(1, { error: "Escolha entre 1 e 120 ocorrências." })
@@ -160,7 +152,6 @@ export const transactionSchema = withGoalRules(
     kind: transactionKindSchema,
     date: dateSchema,
     goal: goalIdSchema.nullable(),
-    tags: tagsSchema,
     recurrenceId: optionalText,
     recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
     memberId: optionalText,

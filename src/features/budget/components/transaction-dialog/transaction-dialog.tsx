@@ -6,7 +6,6 @@ import { Check } from "lucide-react";
 import {
   formatAmountInput,
   newId,
-  normalizeTag,
   parseAmount,
 } from "@/features/budget/domain/format";
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
@@ -21,7 +20,6 @@ import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { SplitPanel } from "@/features/budget/components/split-panel";
 import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
-import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,7 +43,6 @@ import {
 interface Props {
   transaction: Transaction | null;
   defaultDate: string;
-  existingTags: string[];
   members: Member[];
   currentUserId: string;
   // The save is in flight; the caller closes the dialog when it succeeds,
@@ -69,8 +66,6 @@ interface TransactionFormValues {
   description: string;
   date: string;
   goal: GoalId | null;
-  tags: string[];
-  tagInput: string;
   recurring: boolean;
   occurrences: number;
   split: boolean;
@@ -88,8 +83,6 @@ const VALIDATED_FIELDS = [
 
 type ValidatedField = (typeof VALIDATED_FIELDS)[number];
 
-const MAX_TAGS = 8;
-
 const SOMEONE = "uma pessoa do casal";
 
 function invalidProps(error: string | undefined, id: string) {
@@ -97,14 +90,6 @@ function invalidProps(error: string | undefined, id: string) {
     "aria-describedby": error ? id : undefined,
     "aria-invalid": error ? true : undefined,
   };
-}
-
-function withPendingTag(tags: string[], input: string) {
-  const pending = normalizeTag(input);
-
-  if (!pending || tags.includes(pending)) return tags;
-
-  return [...tags, pending].slice(0, MAX_TAGS);
 }
 
 function memberName(members: Member[], id: string | undefined) {
@@ -127,8 +112,6 @@ function defaultValues(
     description: transaction?.description ?? "",
     date: transaction?.date ?? defaultDate,
     goal: transaction?.goal ?? null,
-    tags: transaction?.tags ?? [],
-    tagInput: "",
     recurring: false,
     occurrences: 12,
     split: Boolean(transaction?.split),
@@ -156,22 +139,12 @@ function useTransactionForm({
     defaultValues: defaultValues(transaction, defaultDate),
   });
 
-  const { control, setValue, getValues, setError, clearErrors } = form;
+  const { control, setValue, setError, clearErrors } = form;
 
-  const [kind, amount, goal, tags, tagInput, recurring, occurrences, split] =
-    useWatch({
-      control,
-      name: [
-        "kind",
-        "amount",
-        "goal",
-        "tags",
-        "tagInput",
-        "recurring",
-        "occurrences",
-        "split",
-      ],
-    });
+  const [kind, amount, goal, recurring, occurrences, split] = useWatch({
+    control,
+    name: ["kind", "amount", "goal", "recurring", "occurrences", "split"],
+  });
 
   const errors: FieldErrors = {};
 
@@ -188,23 +161,6 @@ function useTransactionForm({
     setValue("kind", next);
 
     if (next === "income") setValue("goal", null);
-  }
-
-  function addTag(value: string) {
-    const tag = normalizeTag(value);
-    const current = getValues("tags");
-
-    if (tag && !current.includes(tag) && current.length < MAX_TAGS)
-      setValue("tags", [...current, tag]);
-
-    setValue("tagInput", "");
-  }
-
-  function removeTag(tag: string) {
-    setValue(
-      "tags",
-      getValues("tags").filter((t) => t !== tag),
-    );
   }
 
   function save(values: TransactionFormValues) {
@@ -239,7 +195,6 @@ function useTransactionForm({
       date: parsed.data.date,
       kind: parsed.data.kind,
       goal: parsed.data.kind === "income" ? null : parsed.data.goal,
-      tags: withPendingTag(values.tags, values.tagInput),
       memberId,
       revision: values.revision,
     };
@@ -262,11 +217,6 @@ function useTransactionForm({
     changeKind,
     goal,
     setGoal: (next: GoalId) => setValue("goal", next),
-    tags,
-    tagInput,
-    setTagInput: (next: string) => setValue("tagInput", next),
-    addTag,
-    removeTag,
     amount,
     recurring,
     setRecurring: (next: boolean) => setValue("recurring", next),
@@ -420,12 +370,10 @@ function SplitSection({
 function ClassificationFields({
   form,
   transaction,
-  existingTags,
   split,
 }: {
   form: TransactionFormState;
   transaction: Transaction | null;
-  existingTags: string[];
   split: ReactNode;
 }) {
   return (
@@ -446,14 +394,6 @@ function ClassificationFields({
         </>
       )}
       {split}
-      <TagPicker
-        tags={form.tags}
-        input={form.tagInput}
-        existingTags={existingTags}
-        onInput={form.setTagInput}
-        onAdd={form.addTag}
-        onRemove={form.removeTag}
-      />
     </>
   );
 }
@@ -461,7 +401,6 @@ function ClassificationFields({
 export function TransactionDialog({
   transaction,
   defaultDate,
-  existingTags,
   members,
   currentUserId,
   busy,
@@ -503,7 +442,6 @@ export function TransactionDialog({
             <ClassificationFields
               form={form}
               transaction={transaction}
-              existingTags={existingTags}
               split={
                 <SplitSection
                   form={form}

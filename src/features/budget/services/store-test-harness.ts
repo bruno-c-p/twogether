@@ -15,7 +15,6 @@ export function transaction(memberId: string): Transaction {
     kind: "expense",
     date: "2026-09-14",
     goal: "fixed",
-    tags: ["casa"],
     memberId,
   };
 }
