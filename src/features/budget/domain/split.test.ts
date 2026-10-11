@@ -13,7 +13,6 @@ const base: Transaction = {
   kind: "expense",
   date: "2026-09-05",
   goal: "fixed",
-  tags: [],
   memberId: "ana",
 };
 

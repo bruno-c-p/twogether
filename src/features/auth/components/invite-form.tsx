@@ -1,8 +1,8 @@
 import { Input } from "@/components/ui/input";
-import { useState, type FormEvent } from "react";
-import { formText } from "@/features/budget/domain/format";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { inviteFormSchema } from "@/features/budget/domain/schemas";
-import { fieldErrors } from "@/lib/zod-errors";
 import { inviteToken } from "@/features/auth/invite-token";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,11 @@ import {
   Form,
 } from "@/components/ui/field/field";
 
+// People paste the whole link; the token inside it is what gets checked.
+const pastedInviteSchema = z.object({
+  invite: z.string().transform(inviteToken).pipe(inviteFormSchema.shape.invite),
+});
+
 export function InviteForm({
   busy,
   onJoin,
@@ -19,44 +24,38 @@ export function InviteForm({
   busy: boolean;
   onJoin: (invite: string) => Promise<void>;
 }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(pastedInviteSchema),
+    defaultValues: { invite: "" },
+  });
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    const parsed = inviteFormSchema.safeParse({
-      invite: inviteToken(
-        formText(new FormData(event.currentTarget), "invite"),
-      ),
-    });
-
-    if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
-
-      return;
-    }
-
-    setErrors({});
-    await onJoin(parsed.data.invite);
-  }
+  const error = errors.invite?.message;
 
   return (
-    <Form onSubmit={(event) => void submit(event)}>
+    <Form
+      onSubmit={(event) =>
+        void handleSubmit((values) => onJoin(values.invite))(event)
+      }
+    >
       <FieldRoot>
         <FieldLabel>
           Link de convite
           <Input
-            name="invite"
+            {...register("invite")}
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
             enterKeyHint="go"
             placeholder="Cole o link do seu par"
             required
-            aria-describedby={errors.invite ? "invite-error" : undefined}
-            aria-invalid={errors.invite ? true : undefined}
+            aria-describedby={error ? "invite-error" : undefined}
+            aria-invalid={error ? true : undefined}
           />
-          <FieldError id="invite-error">{errors.invite}</FieldError>
+          <FieldError id="invite-error">{error}</FieldError>
         </FieldLabel>
       </FieldRoot>
       <Button type="submit" variant="secondary" disabled={busy}>

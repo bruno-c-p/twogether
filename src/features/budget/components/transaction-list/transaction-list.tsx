@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useRef } from "react";
+import { useQueryState } from "nuqs";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
@@ -11,7 +12,7 @@ import type {
   Transaction,
   Member,
 } from "@/features/budget/domain/types";
-import type { KindFilter } from "@/features/budget/search";
+import { pageParam, type KindFilter } from "@/features/budget/search";
 import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/features/budget/components/empty-state";
@@ -20,11 +21,9 @@ import { cx } from "@/lib/cx";
 interface TransactionFilters {
   query: string;
   goalFilter: GoalId | "all";
-  tagFilter: string;
   kindFilter: KindFilter | "all";
   setQuery: (value: string) => void;
   setGoalFilter: (value: GoalId | "all") => void;
-  setTag: (value: string) => void;
   setKindFilter: (value: KindFilter | "all") => void;
 }
 
@@ -71,9 +70,7 @@ function dayLabel(date: string) {
 function searchableText(transaction: Transaction) {
   const goal = GOALS.find((g) => g.id === transaction.goal)?.name ?? "";
 
-  return `${transaction.description} ${transaction.tags.join(" ")} ${goal}`.toLocaleLowerCase(
-    "pt-BR",
-  );
+  return `${transaction.description} ${goal}`.toLocaleLowerCase("pt-BR");
 }
 
 function matchesKind(transaction: Transaction, kind: KindFilter | "all") {
@@ -85,7 +82,7 @@ function matchesKind(transaction: Transaction, kind: KindFilter | "all") {
 }
 
 function matchesFilters(transaction: Transaction, filters: TransactionFilters) {
-  const { query, goalFilter, tagFilter, kindFilter } = filters;
+  const { query, goalFilter, kindFilter } = filters;
 
   if (
     query &&
@@ -95,8 +92,6 @@ function matchesFilters(transaction: Transaction, filters: TransactionFilters) {
 
   if (goalFilter !== "all" && transaction.goal !== goalFilter) return false;
 
-  if (tagFilter && !transaction.tags.includes(tagFilter)) return false;
-
   return matchesKind(transaction, kindFilter);
 }
 
@@ -104,7 +99,6 @@ function hasActiveFilters(filters: TransactionFilters) {
   return (
     !!filters.query ||
     filters.goalFilter !== "all" ||
-    !!filters.tagFilter ||
     filters.kindFilter !== "all"
   );
 }
@@ -168,7 +162,7 @@ export function TransactionSearch({
 }
 
 function FilterBar({ filters }: { filters: TransactionFilters }) {
-  const { goalFilter, kindFilter, tagFilter } = filters;
+  const { goalFilter, kindFilter } = filters;
 
   return (
     <div className="flex items-center gap-2 flex-wrap mb-4">
@@ -212,15 +206,6 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
             : "bg-green text-on-brand border-green",
         )}
       />
-      {tagFilter && (
-        <>
-          <span className="sr-only">Filtrando por</span>
-          <Button variant="tag" onClick={() => filters.setTag("")}>
-            #{tagFilter}
-            <X size={13} />
-          </Button>
-        </>
-      )}
     </div>
   );
 }
@@ -237,7 +222,6 @@ function NoTransactions({
   function clearFilters() {
     filters.setQuery("");
     filters.setGoalFilter("all");
-    filters.setTag("");
     filters.setKindFilter("all");
   }
 
@@ -275,13 +259,15 @@ const PAGE_SIZE = 50;
 
 function TransactionPages({
   transactions,
-  onTag,
   ...row
 }: RowActions & {
   transactions: Transaction[];
-  onTag: (tag: string) => void;
 }) {
-  const [selectedPage, setPage] = useState(0);
+  const [selectedPage, setPage] = useQueryState(
+    "page",
+    pageParam.withOptions({ history: "push" }),
+  );
+
   const list = useRef<HTMLDivElement>(null);
   const pages = Math.ceil(transactions.length / PAGE_SIZE);
   const page = Math.min(selectedPage, pages - 1);
@@ -299,7 +285,7 @@ function TransactionPages({
     .filter((group) => group.items.length);
 
   function pickPage(next: number) {
-    setPage(next);
+    void setPage(next);
     list.current?.scrollIntoView({ block: "start" });
   }
 
@@ -319,7 +305,7 @@ function TransactionPages({
             </span>
           </div>
           {group.items.map((t) => (
-            <TransactionRow key={t.id} transaction={t} {...row} onTag={onTag} />
+            <TransactionRow key={t.id} transaction={t} {...row} />
           ))}
         </div>
       ))}
@@ -364,28 +350,12 @@ export function TransactionList({
     .filter((t) => matchesFilters(t, filters))
     .sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
 
-  const context = JSON.stringify([
-    filters.query,
-    filters.goalFilter,
-    filters.tagFilter,
-    filters.kindFilter,
-    transactions[0]?.date.slice(0, 7),
-    [...new Set(transactions.map((t) => t.memberId))].sort((a, b) =>
-      (a ?? "").localeCompare(b ?? ""),
-    ),
-  ]);
-
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
       <div className="rounded-lg border border-solid border-border bg-surface overflow-clip">
         {filtered.length ? (
-          <TransactionPages
-            key={context}
-            transactions={filtered}
-            {...row}
-            onTag={filters.setTag}
-          />
+          <TransactionPages transactions={filtered} {...row} />
         ) : (
           <NoTransactions filters={filters} onAdd={onAdd} />
         )}

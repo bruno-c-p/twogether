@@ -1,9 +1,8 @@
-import { useEffect } from "react";
 import {
   createFileRoute,
+  Navigate,
   redirect,
   retainSearchParams,
-  useNavigate,
 } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
@@ -14,6 +13,7 @@ import {
 } from "@/features/budget/search";
 import { loadCachedWorkspace } from "@/features/budget/workspace";
 import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
+import { toastManager } from "@/components/ui/toast-manager";
 import {
   browserTimeZone,
   isValidTimeZone,
@@ -43,6 +43,8 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
     throw redirect({ href: withDefaultMonthHref(location, monthIn(timeZone)) });
   },
   loader: ({ context }) => loadCachedWorkspace(context.queryClient),
+  // Undo toasts act on this workspace; they go when the reader leaves it.
+  onLeave: () => toastManager.close(),
   pendingComponent: WorkspaceSkeleton,
   pendingMs: 300,
   pendingMinMs: 0,
@@ -50,22 +52,21 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
 
 function WorkspaceRoute() {
   const search = Route.useSearch();
-  const navigate = useNavigate();
-  const missing = !search.month;
 
   // Without a time zone cookie the server could not pick the month; the
   // browser fills in its own current month.
-  useEffect(() => {
-    if (!missing) return;
-    void navigate({
-      to: ".",
-      search: (prev) => ({ ...prev, month: monthIn(browserTimeZone()) }),
-      replace: true,
-      resetScroll: false,
-    });
-  }, [missing, navigate]);
-
-  if (!search.month) return <WorkspaceSkeleton />;
+  if (!search.month)
+    return (
+      <>
+        <WorkspaceSkeleton />
+        <Navigate
+          to="."
+          search={(prev) => ({ ...prev, month: monthIn(browserTimeZone()) })}
+          replace
+          resetScroll={false}
+        />
+      </>
+    );
 
   return <BudgetApp month={search.month} />;
 }

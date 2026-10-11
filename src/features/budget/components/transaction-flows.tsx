@@ -30,7 +30,7 @@ function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
 }
 
 export function TransactionFlows() {
-  const { budget, data, month, dialogs, mutations, actions } = useWorkspace();
+  const { budget, month, dialogs, mutations, actions } = useWorkspace();
 
   return (
     <>
@@ -47,7 +47,6 @@ export function TransactionFlows() {
         <TransactionDialog
           transaction={dialogs.transaction.transaction}
           defaultDate={transactionDefaultDate(month)}
-          existingTags={data.allTags}
           members={budget.household.members}
           currentUserId={budget.user.id}
           busy={mutations.saveTx.pending}

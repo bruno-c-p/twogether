@@ -37,6 +37,18 @@
         "rules": ["react-doctor/no-autofocus"]
       },
       {
+        // These mutations hold no query data. Server actions refresh what
+        // they change with router.invalidate(), which reruns the route
+        // loaders (the rule only counts queryClient calls); the invite copy
+        // writes to the clipboard; the break-ui fixture echoes a string.
+        "files": [
+          "src/features/auth/hooks/use-action-run.ts",
+          "src/features/auth/components/account-settings.tsx",
+          "src/features/break-ui/main.tsx"
+        ],
+        "rules": ["react-doctor/query-mutation-missing-invalidation"]
+      },
+      {
         // The test harness replays a user story against a single in-memory
         // SQLite connection, so its steps run in order on purpose.
         "files": ["src/features/budget/services/store-test-harness.ts"],

@@ -46,7 +46,7 @@ const series = [0, 1, 2].map((index) =>
 );
 
 function Harness({ mutations }: { mutations: BudgetMutations }) {
-  const dialogs = useWorkspaceDialogs(mutations);
+  const dialogs = useWorkspaceDialogs(mutations, series);
 
   const actions = useWorkspaceActions({
     budget,

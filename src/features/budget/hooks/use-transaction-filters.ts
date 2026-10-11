@@ -1,25 +1,18 @@
-import { getRouteApi } from "@tanstack/react-router";
-import type {
-  KindFilter,
-  TransactionFilterSearch,
+import { useQueryStates } from "nuqs";
+import {
+  pageParam,
+  transactionFilterParams,
+  type KindFilter,
 } from "@/features/budget/search";
 import type { GoalId } from "@/features/budget/domain/types";
 
-const transactionsRoute = getRouteApi("/_authenticated/_workspace/transacoes");
-
+// Filters narrow the list in place, keep the reader where they are, and
+// send the list back to its first page.
 export function useTransactionFilters() {
-  const search = transactionsRoute.useSearch();
-  const navigate = transactionsRoute.useNavigate();
-
-  function update(next: TransactionFilterSearch, replace = false) {
-    void navigate({
-      to: ".",
-      search: (prev) => ({ ...prev, ...next }),
-      replace,
-      // Filters narrow the list in place; keep the reader where they are.
-      resetScroll: false,
-    });
-  }
+  const [search, setSearch] = useQueryStates(
+    { ...transactionFilterParams, page: pageParam },
+    { history: "push" },
+  );
 
   const goalFilter: GoalId | "all" = search.goal ?? "all";
   const kindFilter: KindFilter | "all" = search.kind ?? "all";
@@ -27,14 +20,16 @@ export function useTransactionFilters() {
   return {
     query: search.query ?? "",
     goalFilter,
-    tagFilter: search.tag ?? "",
     kindFilter,
     // Typing replaces the entry so each keystroke does not fill history.
-    setQuery: (query: string) => update({ query: query || undefined }, true),
+    setQuery: (query: string) =>
+      void setSearch(
+        { query: query || null, page: null },
+        { history: "replace" },
+      ),
     setGoalFilter: (goal: GoalId | "all") =>
-      update({ goal: goal === "all" ? undefined : goal }),
-    setTag: (tag: string) => update({ tag: tag || undefined }),
+      void setSearch({ goal: goal === "all" ? null : goal, page: null }),
     setKindFilter: (kind: KindFilter | "all") =>
-      update({ kind: kind === "all" ? undefined : kind }),
+      void setSearch({ kind: kind === "all" ? null : kind, page: null }),
   };
 }

@@ -53,14 +53,6 @@
   --category-targets-bg: color-mix(in srgb, var(--category-targets) 14%, var(--surface));
   --category-knowledge-bg: color-mix(in srgb, var(--category-knowledge) 14%, var(--surface));
   --category-freedom-bg: color-mix(in srgb, var(--category-freedom) 14%, var(--surface));
-  --tag-1: #4f7cac;
-  --tag-2: #bc8a5f;
-  --tag-3: #8e7cc3;
-  --tag-4: #b56576;
-  --tag-5: #2a9d8f;
-  --tag-6: #c9a227;
-  --tag-7: #6d6875;
-  --tag-8: #7f9c96;
   /* Legacy names, kept until components move to the roles above. */
   --green: var(--brand);
   --accent: var(--brand);
@@ -98,14 +90,6 @@
   --category-targets: #ff8aa7;
   --category-knowledge: #bf98ff;
   --category-freedom: #4fd9cc;
-  --tag-1: #8fb4d9;
-  --tag-2: #d9b08c;
-  --tag-3: #b8a6e3;
-  --tag-4: #d98c99;
-  --tag-5: #7ccbc0;
-  --tag-6: #e3c565;
-  --tag-7: #a39fab;
-  --tag-8: #a7c4bf;
 }
 
 * {

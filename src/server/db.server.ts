@@ -42,6 +42,8 @@ const schema = [
   // Bank accounts were removed; the revision stays because no client reads accountId.
   `DROP TABLE IF EXISTS accounts`,
   `UPDATE transactions SET payload = json_remove(payload, '$.accountId') WHERE json_extract(payload, '$.accountId') IS NOT NULL`,
+  // Tags were removed; strip them from stored payloads the same way.
+  `UPDATE transactions SET payload = json_remove(payload, '$.tags') WHERE json_type(payload, '$.tags') IS NOT NULL`,
 ] as const;
 
 export async function execute(

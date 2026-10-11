@@ -1,24 +1,17 @@
 import { Form as BaseForm } from "@base-ui/react/form";
 import { Input } from "@/components/ui/input";
-import {
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-  type ReactNode,
-  type RefObject,
-} from "react";
+import type { FormEvent, ReactNode } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { Check } from "lucide-react";
 import {
   formatAmountInput,
-  formText,
   newId,
-  normalizeTag,
   parseAmount,
 } from "@/features/budget/domain/format";
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
 import { fieldErrors } from "@/lib/zod-errors";
 import type {
+  GoalId,
   Transaction,
   TransactionKind,
   Member,
@@ -27,7 +20,6 @@ import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { SplitPanel } from "@/features/budget/components/split-panel";
 import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
-import { TagPicker } from "@/features/budget/components/tag-picker/tag-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,12 +37,12 @@ import {
   FieldRow,
   Fieldset,
   FormError,
+  GroupError,
 } from "@/components/ui/field/field";
 
 interface Props {
   transaction: Transaction | null;
   defaultDate: string;
-  existingTags: string[];
   members: Member[];
   currentUserId: string;
   // The save is in flight; the caller closes the dialog when it succeeds,
@@ -64,25 +56,40 @@ interface Props {
   onClose: () => void;
 }
 
-type FieldErrors = Record<string, string>;
+type FieldErrors = Partial<Record<ValidatedField, string>>;
 
-const MAX_TAGS = 8;
+// Everything the dialog edits. `revision` is the version the dialog opened
+// at, so a save never overwrites changes it did not show.
+interface TransactionFormValues {
+  kind: TransactionKind;
+  amount: string;
+  description: string;
+  date: string;
+  goal: GoalId | null;
+  recurring: boolean;
+  occurrences: number;
+  split: boolean;
+  revision: number | undefined;
+}
+
+// Fields whose schema errors show next to them.
+const VALIDATED_FIELDS = [
+  "amount",
+  "description",
+  "date",
+  "goal",
+  "occurrences",
+] as const;
+
+type ValidatedField = (typeof VALIDATED_FIELDS)[number];
 
 const SOMEONE = "uma pessoa do casal";
 
-function invalidProps(errors: FieldErrors, field: string, id: string) {
+function invalidProps(error: string | undefined, id: string) {
   return {
-    "aria-describedby": errors[field] ? id : undefined,
-    "aria-invalid": errors[field] ? true : undefined,
+    "aria-describedby": error ? id : undefined,
+    "aria-invalid": error ? true : undefined,
   };
-}
-
-function withPendingTag(tags: string[], input: string) {
-  const pending = normalizeTag(input);
-
-  if (!pending || tags.includes(pending)) return tags;
-
-  return [...tags, pending].slice(0, MAX_TAGS);
 }
 
 function memberName(members: Member[], id: string | undefined) {
@@ -95,185 +102,148 @@ function submitLabel(saving: boolean, editing: boolean) {
   return editing ? "Salvar alterações" : "Adicionar transação";
 }
 
-function useSplitChoice({
-  transaction,
-  members,
-  kind,
-  currentUserId,
-}: {
-  transaction: Transaction | null;
-  members: Member[];
-  kind: TransactionKind;
-  currentUserId: string;
-}) {
-  const [split, setSplit] = useState(Boolean(transaction?.split));
-
-  // Only expenses between the two partners split; repayments never do.
-  const canSplit =
-    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
-
+function defaultValues(
+  transaction: Transaction | null,
+  defaultDate: string,
+): TransactionFormValues {
   return {
-    split,
-    setSplit,
-    canSplit,
-    paid: Boolean(transaction?.split?.paidAt),
-    memberId: transaction?.memberId ?? currentUserId,
+    kind: transaction?.kind ?? "expense",
+    amount: transaction ? formatAmountInput(String(transaction.amount)) : "",
+    description: transaction?.description ?? "",
+    date: transaction?.date ?? defaultDate,
+    goal: transaction?.goal ?? null,
+    recurring: false,
+    occurrences: 12,
+    split: Boolean(transaction?.split),
+    revision: transaction?.revision,
   };
 }
 
 function useTransactionForm({
   transaction,
+  defaultDate,
   members,
   currentUserId,
   busy,
   onSave,
 }: Pick<
   Props,
-  "transaction" | "members" | "currentUserId" | "busy" | "onSave"
+  | "transaction"
+  | "defaultDate"
+  | "members"
+  | "currentUserId"
+  | "busy"
+  | "onSave"
 >) {
-  const [kind, setKind] = useState<TransactionKind>(
-    transaction?.kind ?? "expense",
-  );
-
-  const [goal, setGoal] = useState(transaction?.goal ?? null);
-  const [tags, setTags] = useState(transaction?.tags ?? []);
-  const [tagInput, setTagInput] = useState("");
-
-  const [amountValue, setAmountValue] = useState(
-    transaction ? formatAmountInput(String(transaction.amount)) : "",
-  );
-
-  const [recurring, setRecurring] = useState(false);
-  const [occurrences, setOccurrences] = useState(12);
-  const [errors, setErrors] = useState<FieldErrors>({});
-
-  const { split, setSplit, canSplit, paid, memberId } = useSplitChoice({
-    transaction,
-    members,
-    kind,
-    currentUserId,
+  const form = useForm<TransactionFormValues>({
+    defaultValues: defaultValues(transaction, defaultDate),
   });
 
+  const { control, setValue, setError, clearErrors } = form;
+
+  const [kind, amount, goal, recurring, occurrences, split] = useWatch({
+    control,
+    name: ["kind", "amount", "goal", "recurring", "occurrences", "split"],
+  });
+
+  const errors: FieldErrors = {};
+
+  for (const field of VALIDATED_FIELDS)
+    errors[field] = form.formState.errors[field]?.message;
+
+  // Only expenses between the two partners split; repayments never do.
+  const canSplit =
+    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+
+  const memberId = transaction?.memberId ?? currentUserId;
+
   function changeKind(next: TransactionKind) {
-    setKind(next);
+    setValue("kind", next);
 
-    if (next === "income") setGoal(null);
+    if (next === "income") setValue("goal", null);
   }
 
-  function addTag(value: string) {
-    const tag = normalizeTag(value);
-
-    if (tag && !tags.includes(tag) && tags.length < MAX_TAGS)
-      setTags([...tags, tag]);
-
-    setTagInput("");
-  }
-
-  function removeTag(tag: string) {
-    setTags(tags.filter((t) => t !== tag));
-  }
-
-  function save(parsed: TransactionForm, completeTags: string[]) {
-    setErrors({});
-
-    const next: Transaction = {
-      id: transaction?.id ?? newId(),
-      amount: parsed.amount,
-      description: parsed.description,
-      date: parsed.date,
-      kind: parsed.kind,
-      goal: parsed.kind === "income" ? null : parsed.goal,
-      tags: completeTags,
-      memberId,
-      revision: transaction?.revision,
-    };
-
-    if (canSplit && split) next.split = transaction?.split ?? {};
-
-    void onSave(next, parsed.occurrences);
-  }
-
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
+  function save(values: TransactionFormValues) {
     if (busy) return;
 
-    const form = new FormData(event.currentTarget);
-
     const parsed = transactionFormSchema.safeParse({
-      amount: formText(form, "amount"),
-      description: formText(form, "description"),
-      date: formText(form, "date"),
-      goal,
-      kind,
-      occurrences: recurring && !transaction ? occurrences : 1,
-      split: canSplit && split,
+      amount: values.amount,
+      description: values.description,
+      date: values.date,
+      goal: values.goal,
+      kind: values.kind,
+      occurrences: values.recurring && !transaction ? values.occurrences : 1,
+      split: canSplit && values.split,
     });
 
     if (!parsed.success) {
-      setErrors(fieldErrors(parsed.error));
+      const messages = fieldErrors(parsed.error);
+
+      for (const field of VALIDATED_FIELDS) {
+        const message = messages[field];
+
+        if (message) setError(field, { message });
+      }
 
       return;
     }
 
-    save(parsed.data, withPendingTag(tags, tagInput));
+    const next: Transaction = {
+      id: transaction?.id ?? newId(),
+      amount: parsed.data.amount,
+      description: parsed.data.description,
+      date: parsed.data.date,
+      kind: parsed.data.kind,
+      goal: parsed.data.kind === "income" ? null : parsed.data.goal,
+      memberId,
+      revision: values.revision,
+    };
+
+    if (canSplit && parsed.data.split) next.split = transaction?.split ?? {};
+
+    void onSave(next, parsed.data.occurrences);
   }
 
   return {
+    register: form.register,
+    // The schema's errors are set by hand on fields with no input (goal,
+    // occurrences), so each submit starts clean before validating again.
+    submit: (event: FormEvent<HTMLFormElement>) => {
+      clearErrors();
+
+      return form.handleSubmit(save)(event);
+    },
     kind,
     changeKind,
     goal,
-    setGoal,
-    tags,
-    tagInput,
-    setTagInput,
-    addTag,
-    removeTag,
-    amountValue,
-    setAmountValue,
+    setGoal: (next: GoalId) => setValue("goal", next),
+    amount,
     recurring,
-    setRecurring,
+    setRecurring: (next: boolean) => setValue("recurring", next),
     occurrences,
-    setOccurrences,
+    setOccurrences: (next: number) => setValue("occurrences", next),
     errors,
-    submit,
     split,
-    setSplit,
+    setSplit: (next: boolean) => setValue("split", next),
     canSplit,
-    paid,
+    paid: Boolean(transaction?.split?.paidAt),
     memberId,
   };
 }
 
 type TransactionFormState = ReturnType<typeof useTransactionForm>;
 
-type TransactionForm = Extract<
-  ReturnType<typeof transactionFormSchema.safeParse>,
-  { success: true }
->["data"];
 
-function AmountInput({
-  form,
-  amountInput,
-}: {
-  form: TransactionFormState;
-  amountInput: RefObject<HTMLInputElement | null>;
-}) {
-  useEffect(() => {
-    const input = amountInput.current;
-
-    if (!input) return;
-
-    input.setSelectionRange(input.value.length, input.value.length);
-  }, [amountInput, form.amountValue]);
+function AmountInput({ form }: { form: TransactionFormState }) {
+  const field = form.register("amount");
 
   return (
     <FieldRoot>
       <AmountField label="Valor" htmlFor="amount">
         <Input
+          {...field}
           id="amount"
-          ref={amountInput}
-          name="amount"
+          data-initial-focus=""
           autoFocus
           type="text"
           inputMode="numeric"
@@ -282,11 +252,15 @@ function AmountInput({
           maxLength={14}
           required
           readOnly={form.paid}
-          value={form.amountValue}
-          onChange={(event) =>
-            form.setAmountValue(formatAmountInput(event.currentTarget.value))
-          }
-          {...invalidProps(form.errors, "amount", "amount-error")}
+          // Digits fill in from the cents, so the caret stays at the end.
+          onChange={(event) => {
+            const input = event.currentTarget;
+
+            input.value = formatAmountInput(input.value);
+            input.setSelectionRange(input.value.length, input.value.length);
+            void field.onChange(event);
+          }}
+          {...invalidProps(form.errors.amount, "amount-error")}
         />
       </AmountField>
       <FieldError id="amount-error">{form.errors.amount}</FieldError>
@@ -294,27 +268,20 @@ function AmountInput({
   );
 }
 
-function DescriptionAndDate({
-  transaction,
-  defaultDate,
-  errors,
-}: {
-  transaction: Transaction | null;
-  defaultDate: string;
-  errors: FieldErrors;
-}) {
+function DescriptionAndDate({ form }: { form: TransactionFormState }) {
+  const { errors, register } = form;
+
   return (
     <FieldRow>
       <FieldRoot>
         <FieldLabel>
           Descrição
           <Input
-            name="description"
+            {...register("description")}
             placeholder="Ex.: supermercado"
             maxLength={80}
-            defaultValue={transaction?.description}
             required
-            {...invalidProps(errors, "description", "description-error")}
+            {...invalidProps(errors.description, "description-error")}
           />
           <FieldError id="description-error">{errors.description}</FieldError>
         </FieldLabel>
@@ -323,13 +290,12 @@ function DescriptionAndDate({
         <FieldLabel>
           Data
           <Input
+            {...register("date")}
             type="date"
-            name="date"
-            defaultValue={transaction?.date ?? defaultDate}
             min="1900-01-01"
             max="9999-12-31"
             required
-            {...invalidProps(errors, "date", "date-error")}
+            {...invalidProps(errors.date, "date-error")}
           />
           <FieldError id="date-error">{errors.date}</FieldError>
         </FieldLabel>
@@ -379,7 +345,7 @@ function SplitSection({
   return (
     <SplitPanel
       checked={form.split}
-      amount={parseAmount(form.amountValue) ?? 0}
+      amount={parseAmount(form.amount) ?? 0}
       transaction={transaction}
       title={
         userIsDebtor
@@ -404,12 +370,10 @@ function SplitSection({
 function ClassificationFields({
   form,
   transaction,
-  existingTags,
   split,
 }: {
   form: TransactionFormState;
   transaction: Transaction | null;
-  existingTags: string[];
   split: ReactNode;
 }) {
   return (
@@ -426,18 +390,10 @@ function ClassificationFields({
       {form.kind === "expense" && (
         <>
           <GoalPicker value={form.goal} onChange={form.setGoal} />
-          <FieldError id="goal-error">{form.errors.goal}</FieldError>
+          <GroupError id="goal-error">{form.errors.goal}</GroupError>
         </>
       )}
       {split}
-      <TagPicker
-        tags={form.tags}
-        input={form.tagInput}
-        existingTags={existingTags}
-        onInput={form.setTagInput}
-        onAdd={form.addTag}
-        onRemove={form.removeTag}
-      />
     </>
   );
 }
@@ -445,7 +401,6 @@ function ClassificationFields({
 export function TransactionDialog({
   transaction,
   defaultDate,
-  existingTags,
   members,
   currentUserId,
   busy,
@@ -458,21 +413,15 @@ export function TransactionDialog({
 }: Props) {
   const form = useTransactionForm({
     transaction,
+    defaultDate,
     members,
     currentUserId,
     busy,
     onSave,
   });
 
-  const amountInput = useRef<HTMLInputElement>(null);
-
   return (
-    <Dialog
-      labelledBy="dialog-title"
-      onClose={onClose}
-      closeOnBackdrop
-      initialFocus={amountInput}
-    >
+    <Dialog labelledBy="dialog-title" onClose={onClose} closeOnBackdrop>
       <DialogContent>
         <DialogHeader onClose={onClose}>
           <div>
@@ -481,23 +430,18 @@ export function TransactionDialog({
             </h2>
           </div>
         </DialogHeader>
-        <BaseForm onSubmit={form.submit}>
+        <BaseForm onSubmit={(event) => void form.submit(event)}>
           <Fieldset disabled={busy}>
             <KindToggle
               kind={form.kind}
               disabled={form.paid}
               onChange={form.changeKind}
             />
-            <AmountInput form={form} amountInput={amountInput} />
-            <DescriptionAndDate
-              transaction={transaction}
-              defaultDate={defaultDate}
-              errors={form.errors}
-            />
+            <AmountInput form={form} />
+            <DescriptionAndDate form={form} />
             <ClassificationFields
               form={form}
               transaction={transaction}
-              existingTags={existingTags}
               split={
                 <SplitSection
                   form={form}

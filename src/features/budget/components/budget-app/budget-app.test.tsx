@@ -242,7 +242,7 @@ describe("BudgetWorkspace", () => {
   test("page links keep month and person and drop transaction filters", async () => {
     const { screen, user, router } = await renderWorkspace(
       budget(),
-      "/transacoes?month=2026-08&member=ana&tag=casa",
+      "/transacoes?month=2026-08&member=ana&goal=fixed",
     );
 
     const nav = screen.getByRole("navigation", {

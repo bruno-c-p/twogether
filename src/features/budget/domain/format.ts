@@ -5,12 +5,6 @@ const moneyFormatter = new Intl.NumberFormat("pt-BR", {
 
 export const money = (cents: number) => moneyFormatter.format(cents / 100);
 
-export function formText(form: FormData, name: string): string {
-  const value = form.get(name);
-
-  return value instanceof File ? "" : (value ?? "");
-}
-
 export function formatAmountInput(value: string): string {
   const digits = value.replace(/\D/g, "");
 
@@ -93,15 +87,6 @@ function parseCents(value: string, min: number): number | null {
 
 export function parseAmount(value: string): number | null {
   return parseCents(value, 1);
-}
-
-export function normalizeTag(value: string) {
-  return value
-    .trim()
-    .replace(/^#+/, "")
-    .toLocaleLowerCase("pt-BR")
-    .replace(/\s+/g, " ")
-    .slice(0, 24);
 }
 
 export function newId(): string {

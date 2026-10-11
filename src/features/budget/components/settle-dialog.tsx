@@ -1,6 +1,8 @@
 import { Form as BaseForm } from "@base-ui/react/form";
 import { Input } from "@/components/ui/input";
-import { useState, type FormEvent } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +19,14 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import { formText, localDate, money } from "@/features/budget/domain/format";
+import { localDate, money } from "@/features/budget/domain/format";
 import { dateSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 
-export interface SettleInput {
-  date: string;
-}
+const settleFormSchema = z.object({ date: dateSchema });
+
+export type SettleInput = z.infer<typeof settleFormSchema>;
 
 export function SettleDialog({
   transaction,
@@ -42,7 +44,16 @@ export function SettleDialog({
   onConfirm: (input: SettleInput) => Promise<void>;
   onClose: () => void;
 }) {
-  const [errors, setErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(settleFormSchema),
+    defaultValues: { date: localDate() },
+  });
+
+  const dateError = errors.date?.message;
 
   const payer =
     members.find((member) => member.id === transaction.memberId)?.name ??
@@ -50,22 +61,8 @@ export function SettleDialog({
 
   const share = partnerShare(transaction.amount);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (busy) return;
-    const form = new FormData(event.currentTarget);
-
-    const input = { date: formText(form, "date") };
-
-    const next: Record<string, string> = {};
-
-    if (!dateSchema.safeParse(input.date).success)
-      next.date = "Escolha uma data válida.";
-    setErrors(next);
-
-    if (Object.keys(next).length) return;
-    void onConfirm(input);
+  function confirm(input: SettleInput) {
+    if (!busy) void onConfirm(input);
   }
 
   return (
@@ -76,7 +73,7 @@ export function SettleDialog({
             <h2 id="settle-dialog-title">Marcar como pago</h2>
           </div>
         </DialogHeader>
-        <BaseForm onSubmit={submit}>
+        <BaseForm onSubmit={(event) => void handleSubmit(confirm)(event)}>
           <Fieldset disabled={busy}>
             <div className="mb-4">
               <FieldHint>
@@ -88,17 +85,16 @@ export function SettleDialog({
             <Field>
               Data do pagamento
               <Input
+                {...register("date")}
                 type="date"
-                name="date"
                 aria-label="Data do pagamento"
-                defaultValue={localDate()}
                 min="1900-01-01"
                 max="9999-12-31"
                 required
-                aria-describedby={errors.date ? "date-error" : undefined}
-                aria-invalid={errors.date ? true : undefined}
+                aria-describedby={dateError ? "date-error" : undefined}
+                aria-invalid={dateError ? true : undefined}
               />
-              <FieldError id="date-error">{errors.date}</FieldError>
+              <FieldError id="date-error">{dateError}</FieldError>
             </Field>
             {serverError && <FormError>{serverError}</FormError>}
             <DialogFooter>

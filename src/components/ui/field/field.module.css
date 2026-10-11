@@ -156,13 +156,6 @@
   margin: 20px 0 0;
 }
 
-.optional {
-  color: var(--text-muted);
-  font-size: 12px;
-  font-weight: 400;
-  margin-left: 4px;
-}
-
 .note {
   background: var(--surface-2);
   color: var(--text);

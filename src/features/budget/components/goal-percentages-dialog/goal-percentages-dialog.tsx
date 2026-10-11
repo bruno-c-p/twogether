@@ -1,4 +1,5 @@
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
+import { useForm, useWatch } from "react-hook-form";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { goalPercentagesSchema } from "@/features/budget/domain/schemas";
 import type { GoalPercentages } from "@/features/budget/domain/types";
@@ -27,7 +28,8 @@ export function GoalPercentagesDialog({
   onSave: (values: GoalPercentages) => Promise<void>;
   onClose: () => void;
 }) {
-  const [values, setValues] = useState(percentages);
+  const { control, setValue, reset } = useForm({ defaultValues: percentages });
+  const values: GoalPercentages = { ...percentages, ...useWatch({ control }) };
   const parsed = goalPercentagesSchema.safeParse(values);
   const valid = parsed.success;
   const invalidMessage = parsed.success ? "" : parsed.error.issues[0].message;
@@ -59,7 +61,7 @@ export function GoalPercentagesDialog({
         <GoalPercentageList
           values={values}
           disabled={busy}
-          onChange={(goal, value) => setValues({ ...values, [goal]: value })}
+          onChange={(goal, value) => setValue(goal, value)}
         />
         <p
           className={`${styles.percentageTotal} tabular-nums ${valid ? "" : styles.invalid}`}
@@ -74,7 +76,7 @@ export function GoalPercentagesDialog({
             type="button"
             variant="text"
             disabled={busy}
-            onClick={() => setValues({ ...DEFAULT_PERCENTAGES })}
+            onClick={() => reset({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
           </Button>

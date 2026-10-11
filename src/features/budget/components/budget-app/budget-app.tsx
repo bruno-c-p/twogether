@@ -1,5 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { toastManager } from "@/components/ui/toast-manager";
+import type { ReactNode } from "react";
 import { Outlet } from "@tanstack/react-router";
 import {
   useBudget,
@@ -16,6 +15,7 @@ import {
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import { useWorkspaceData } from "@/features/budget/hooks/use-workspace-data";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
+import { useHiddenValues } from "@/features/budget/hooks/use-hidden-values";
 import { useWorkspaceSearch } from "@/features/budget/hooks/use-workspace-search";
 import { money } from "@/features/budget/domain/format";
 import { AccountDrawer } from "@/features/auth/components/account-drawer";
@@ -59,16 +59,9 @@ export function BudgetWorkspace({
 }) {
   const mutations = useBudgetMutations();
   const search = useWorkspaceSearch();
-  const dialogs = useWorkspaceDialogs(mutations);
-  const [hidden, setHidden] = useState(false);
+  const dialogs = useWorkspaceDialogs(mutations, budget.state.transactions);
+  const { hidden, toggle } = useHiddenValues();
   const data = useWorkspaceData(budget, month, search.memberFilter);
-
-  useEffect(
-    () => () => {
-      toastManager.close();
-    },
-    [],
-  );
 
   const actions = useWorkspaceActions({
     budget,
@@ -87,7 +80,7 @@ export function BudgetWorkspace({
     memberFilter: search.memberFilter,
     busy: mutations.busy,
     hidden,
-    onToggleHidden: () => setHidden(!hidden),
+    onToggleHidden: toggle,
     displayMoney: (value) => (hidden ? "R$ ••••" : money(value)),
     mutations,
     dialogs,

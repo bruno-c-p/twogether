@@ -1,3 +1,4 @@
+import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import {
   SettleDialog,
@@ -78,7 +79,7 @@ describe("SettleDialog", () => {
 
     date?.removeAttribute("required");
 
-    if (date) date.value = "";
+    if (date) fireEvent.change(date, { target: { value: "" } });
     container.ownerDocument.querySelector("form")?.requestSubmit();
 
     expect(await screen.findByText("Escolha uma data válida.")).toBeTruthy();

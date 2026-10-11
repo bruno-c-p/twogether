@@ -1,5 +1,5 @@
-import { useEffect } from "react";
 import type { ComponentProps, ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { usePostHog } from "posthog-js/react";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
@@ -48,7 +48,7 @@ function gateHeadline(user: GateUser) {
 
 function gateIntro(user: GateUser) {
   return user
-    ? "Tudo compartilhado: transações, tags e as seis metas de vocês."
+    ? "Tudo compartilhado: transações e as seis metas de vocês."
     : "Seu e-mail é a única chave. Sem senha: enviamos um código de acesso.";
 }
 
@@ -262,18 +262,19 @@ export function AccountGate({
   const actions = useGateActions(run, invite);
 
   // Clerk signs in before the server session exists; poll until it does.
-  useEffect(() => {
-    if (!isSignedIn || user) return;
+  useQuery({
+    queryKey: ["session-sync"],
+    queryFn: async () => {
+      await router.invalidate();
 
-    void router.invalidate();
-
-    const timer = setInterval(
-      () => void router.invalidate(),
-      SESSION_SYNC_INTERVAL_MS,
-    );
-
-    return () => clearInterval(timer);
-  }, [isSignedIn, router, user]);
+      return null;
+    },
+    enabled: Boolean(isSignedIn) && !user,
+    refetchInterval: SESSION_SYNC_INTERVAL_MS,
+    staleTime: 0,
+    gcTime: 0,
+    retry: false,
+  });
 
   return (
     <AccountGateView

@@ -1,11 +1,10 @@
-import { useState } from "react";
 import { describe, expect, test, vi } from "vitest";
 import {
   TransactionList,
   TransactionSearch,
 } from "@/features/budget/components/transaction-list/transaction-list";
-import type { GoalId, Transaction } from "@/features/budget/domain/types";
-import type { KindFilter } from "@/features/budget/search";
+import type { Transaction } from "@/features/budget/domain/types";
+import { useTransactionFilters } from "@/features/budget/hooks/use-transaction-filters";
 import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
@@ -14,7 +13,6 @@ const month = [
     id: "t1",
     description: "Mercado",
     date: "2026-09-10",
-    tags: ["casa"],
   }),
   transaction({
     id: "t2",
@@ -23,7 +21,6 @@ const month = [
     goal: null,
     amount: 500000,
     date: "2026-09-05",
-    tags: [],
     memberId: "someone-else",
   }),
   transaction({
@@ -31,7 +28,6 @@ const month = [
     description: "Cinema",
     goal: "pleasure",
     date: "2026-09-12",
-    tags: [],
   }),
 ];
 
@@ -48,26 +44,14 @@ function List({
   onDelete?: (t: Transaction) => void;
   onAdd?: () => void;
 }) {
-  const [query, setQuery] = useState("");
-  const [goalFilter, setGoalFilter] = useState<GoalId | "all">("all");
-  const [tagFilter, setTag] = useState("");
-  const [kindFilter, setKindFilter] = useState<KindFilter | "all">("all");
+  const filters = useTransactionFilters();
 
   return (
     <>
-      <TransactionSearch query={query} setQuery={setQuery} />
+      <TransactionSearch query={filters.query} setQuery={filters.setQuery} />
       <TransactionList
         transactions={transactions}
-        filters={{
-          query,
-          goalFilter,
-          tagFilter,
-          kindFilter,
-          setQuery,
-          setGoalFilter,
-          setTag,
-          setKindFilter,
-        }}
+        filters={filters}
         members={[ana]}
         userId="ana"
         busy={false}
@@ -129,7 +113,7 @@ describe("TransactionList", () => {
     expect(screen.getAllByText(/\+\sR\$\s20,00/)).toHaveLength(1);
   });
 
-  test("search, goal, kind and tag filters narrow the rows", async () => {
+  test("search, goal and kind filters narrow the rows", async () => {
     const { screen, user } = renderPlain(<List />);
 
     await user.type(screen.getByLabelText("Buscar transações"), "prazer");
@@ -151,10 +135,7 @@ describe("TransactionList", () => {
     await user.click(
       await screen.findByRole("option", { name: "Todas as metas" }),
     );
-
-    await user.click(screen.getByRole("button", { name: "#casa" }));
-    expect(screen.getByText("Filtrando por")).toBeTruthy();
-    expect(rowNames(screen)).toEqual(["Editar Mercado"]);
+    expect(rowNames(screen)).toHaveLength(3);
   });
 
   test("the split chip keeps only divided transactions", async () => {
@@ -233,6 +214,24 @@ describe("TransactionList", () => {
     await user.click(screen.getByRole("button", { name: "Limpar busca" }));
     expect(rowNames(screen)).toHaveLength(50);
     expect(screen.getByText(/Página 1 de 2/)).toBeTruthy();
+  });
+
+  test("the page comes from the URL, so a shared link opens on it", () => {
+    const transactions = Array.from({ length: 51 }, (_, index) =>
+      transaction({
+        id: String(index).padStart(3, "0"),
+        description: `Compra ${index}`,
+        date: "2026-09-10",
+      }),
+    );
+
+    const { screen } = renderPlain(
+      <List transactions={transactions} />,
+      "?page=2",
+    );
+
+    expect(screen.getByText(/Página 2 de 2/)).toBeTruthy();
+    expect(rowNames(screen)).toEqual(["Editar Compra 0"]);
   });
 
   test("row actions edit and delete, and hidden values mask amounts", async () => {

@@ -1,6 +1,11 @@
 import { createRoot } from "react-dom/client";
-import { useState } from "react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useRef } from "react";
+import {
+  QueryClient,
+  QueryClientProvider,
+  useMutation,
+} from "@tanstack/react-query";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
   createRootRoute,
   createRoute,
@@ -16,11 +21,22 @@ import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
-import { AccountSettingsView } from "@/features/auth/components/account-settings";
+import {
+  AccountSettingsView,
+  useInviteLink,
+  useNameForm,
+} from "@/features/auth/components/account-settings";
+import { useActionRun } from "@/features/auth/hooks/use-action-run";
 import { NameForm } from "@/features/auth/components/name-form";
 import { InviteForm } from "@/features/auth/components/invite-form";
-import { Sheet, SheetHeader, SheetTrigger } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetHeader,
+  SheetTrigger,
+  type SheetActions,
+} from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/toaster";
+import { toastManager } from "@/components/ui/toast-manager";
 import { ThemeToggle } from "@/features/theme";
 import { useBudget } from "@/features/budget/hooks/use-budget";
 import {
@@ -55,16 +71,28 @@ const workspaceApi = getRouteApi("/_authenticated/_workspace");
 
 function FixtureAccount() {
   const budget = useBudget();
-  const [open, setOpen] = useState(false);
-  const [notice, setNotice] = useState("");
-  const [link, setLink] = useState("");
+  const sheet = useRef<SheetActions>(null);
+  const { run, busy, error } = useActionRun();
+
+  const name = useNameForm({
+    run,
+    saveName: async (value) => {
+      await setName({ data: { name: value } });
+    },
+    onSaved: () =>
+      void queryClient.invalidateQueries({ queryKey: workspaceQueryKey }),
+  });
+
+  const invite = useInviteLink({
+    run,
+    create: () =>
+      Promise.resolve({ inviteToken: "0123456789abcdef".repeat(4) }),
+    revoke: () => Promise.resolve(),
+    onCreated: () => undefined,
+  });
 
   return (
-    <Sheet
-      open={open}
-      onOpenChange={setOpen}
-      trigger={<SheetTrigger>Conta</SheetTrigger>}
-    >
+    <Sheet actions={sheet} trigger={<SheetTrigger>Conta</SheetTrigger>}>
       <SheetHeader title="Sua conta" description="Dados isolados de teste" />
       <ThemeToggle />
       <AccountSettingsView
@@ -75,38 +103,14 @@ function FixtureAccount() {
             ? "bartholomew.fitzgerald@northwind-industries-holdings.example.com"
             : "ana@example.com"
         }
-        busy={false}
-        error=""
-        name={{
-          notice,
-          save: async (name) => {
-            await setName({ data: { name } });
-            await queryClient.invalidateQueries({
-              queryKey: workspaceQueryKey,
-            });
-            setNotice("Nome atualizado.");
-          },
-        }}
-        invite={{
-          link,
-          copied: false,
-          status: "",
-          makeInvite: () => {
-            setLink(
-              `${location.origin}/convite/${"0123456789abcdef".repeat(4)}`,
-            );
-
-            return Promise.resolve();
-          },
-          copyInvite: () => navigator.clipboard.writeText(link),
-          cancelInvites: () => {
-            setLink("");
-
-            return Promise.resolve();
-          },
-        }}
-        onLeave={() => setOpen(false)}
-        onManage={() => setNotice("Clerk fora deste ambiente isolado.")}
+        busy={busy}
+        error={error}
+        name={name}
+        invite={invite}
+        onLeave={() => sheet.current?.close()}
+        onManage={() =>
+          toastManager.add({ title: "Clerk fora deste ambiente isolado." })
+        }
       />
     </Sheet>
   );
@@ -126,28 +130,27 @@ function FixtureLayout() {
 }
 
 function GateForms() {
-  const [status, setStatus] = useState("");
+  // Each form reports what it would have sent, without a server.
+  const step = useMutation({
+    mutationFn: (status: string) => Promise.resolve(status),
+  });
 
   return (
     <main className="max-w-[440px] mx-auto p-6">
       <h1>Onboarding</h1>
       <NameForm
         busy={false}
-        onSubmit={(name) => {
-          setStatus(name);
-
-          return Promise.resolve();
+        onSubmit={async (name) => {
+          await step.mutateAsync(name);
         }}
       />
       <InviteForm
         busy={false}
-        onJoin={() => {
-          setStatus("Convite validado localmente.");
-
-          return Promise.resolve();
+        onJoin={async () => {
+          await step.mutateAsync("Convite validado localmente.");
         }}
       />
-      <p role="status">{status}</p>
+      <p role="status">{step.data ?? ""}</p>
       <ThemeToggle />
     </main>
   );
@@ -191,11 +194,11 @@ function DataToggle() {
 
 function Root() {
   return (
-    <>
+    <NuqsAdapter>
       <Outlet />
       <DataToggle />
       <Toaster />
-    </>
+    </NuqsAdapter>
   );
 }
 

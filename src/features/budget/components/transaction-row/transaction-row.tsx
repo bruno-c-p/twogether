@@ -65,7 +65,6 @@ export function TransactionRow({
   hidden,
   onEdit,
   onDelete,
-  onTag,
 }: {
   transaction: Transaction;
   members: Member[];
@@ -74,7 +73,6 @@ export function TransactionRow({
   hidden: boolean;
   onEdit: (transaction: Transaction) => void;
   onDelete: (transaction: Transaction) => void;
-  onTag: (tag: string) => void;
 }) {
   const t = transaction;
   const goal = GOALS.find((g) => g.id === t.goal);
@@ -101,16 +99,6 @@ export function TransactionRow({
         >
           {t.description}
         </Button>
-        {t.tags.map((tag) => (
-          <Button
-            variant="unstyled"
-            key={tag}
-            className="border-0 bg-transparent p-0 text-xs text-text-muted @hover:text-text [overflow-wrap:anywhere]"
-            onClick={() => onTag(tag)}
-          >
-            #{tag}
-          </Button>
-        ))}
         {status && <span className="text-xs text-text-muted">{status}</span>}
       </div>
       <div

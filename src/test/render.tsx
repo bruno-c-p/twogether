@@ -1,6 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
-  createMemoryHistory,
+  createBrowserHistory,
   createRootRoute,
   createRoute,
   createRouter,
@@ -11,6 +11,8 @@ import {
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
+import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
@@ -28,7 +30,13 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
     defaultOptions: { queries: { retry: false } },
   });
 
-  const root = createRootRoute({ component: Outlet });
+  const root = createRootRoute({
+    component: () => (
+      <NuqsAdapter>
+        <Outlet />
+      </NuqsAdapter>
+    ),
+  });
 
   const authenticated = createRoute({
     getParentRoute: () => root,
@@ -67,9 +75,13 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
     }),
   ]);
 
+  // nuqs reads the search string from window.location, so the router drives
+  // jsdom's real history instead of an in-memory one.
+  window.history.replaceState(null, "", path);
+
   const router = createRouter({
     routeTree,
-    history: createMemoryHistory({ initialEntries: [path] }),
+    history: createBrowserHistory(),
     scrollRestoration: true,
   });
 
@@ -86,6 +98,15 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
   return { ...view, user, router, queryClient, screen };
 }
 
-export function renderPlain(ui: ReactNode) {
-  return { ...render(ui), user: userEvent.setup(), screen };
+// URL state lives in memory, starting from `search` (e.g. "?page=2").
+export function renderPlain(ui: ReactNode, search = "") {
+  const view = render(ui, {
+    wrapper: ({ children }) => (
+      <NuqsTestingAdapter searchParams={search} hasMemory>
+        {children}
+      </NuqsTestingAdapter>
+    ),
+  });
+
+  return { ...view, user: userEvent.setup(), screen };
 }
