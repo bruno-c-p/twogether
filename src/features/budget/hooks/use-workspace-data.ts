@@ -4,17 +4,9 @@ import {
   planGoals,
   summarize,
 } from "@/features/budget/domain/calc";
-import { splitDebt, usTransactions } from "@/features/budget/domain/split";
-import type { Transaction } from "@/features/budget/domain/types";
+import { splitDebt } from "@/features/budget/domain/split";
+import { transactionsFor } from "@/features/budget/domain/view";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
-
-// "Nós" shows the couple's shared view (repayments between the two
-// net out); a person filter shows that person's own transactions.
-function viewFor(transactions: Transaction[], memberFilter: string) {
-  if (memberFilter === "all") return usTransactions(transactions);
-
-  return transactions.filter((t) => t.memberId === memberFilter);
-}
 
 export function useWorkspaceData(
   budget: BudgetController,
@@ -26,9 +18,10 @@ export function useWorkspaceData(
 
   const monthly = useMemo(
     () =>
-      viewFor(transactions, memberFilter).filter((t) =>
-        t.date.startsWith(month),
-      ),
+      transactionsFor(
+        transactions,
+        memberFilter === "all" ? undefined : memberFilter,
+      ).filter((t) => t.date.startsWith(month)),
     [transactions, memberFilter, month],
   );
 

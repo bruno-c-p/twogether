@@ -2,6 +2,11 @@ import { isRedirect } from "@tanstack/react-router";
 import { setResponseStatus } from "@tanstack/react-start/server";
 import { reportError } from "@/lib/errors";
 
+export const UNEXPECTED_MESSAGE = "Não foi possível concluir. Tente novamente.";
+
+export const RATE_LIMITED_MESSAGE =
+  "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.";
+
 export class RequestError extends Error {
   constructor(
     message: string,
@@ -26,5 +31,5 @@ export function throwHttpError(cause: unknown): never {
   }
 
   reportError(errorForLogs(cause), { context: "Budget mutation failed" });
-  throw new Error("Não foi possível concluir. Tente novamente.");
+  throw new Error(UNEXPECTED_MESSAGE);
 }

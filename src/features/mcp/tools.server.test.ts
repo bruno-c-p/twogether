@@ -28,7 +28,8 @@ const savedRow = z.object({
   description: z.string(),
   amount: z.object({ cents: z.number(), formatted: z.string() }),
   memberName: z.string().optional(),
-  tags: z.array(z.string()),
+  kind: z.enum(["expense", "income"]),
+  goal: z.string().nullable(),
   split: z.object({ paid: z.boolean() }).optional(),
 });
 
@@ -80,7 +81,6 @@ const groceries = {
   amount: 12345,
   date: "2026-09-14",
   goal: "fixed",
-  tags: ["#Casa", "casa"],
 };
 
 describe("budget MCP tools", () => {
@@ -129,7 +129,6 @@ describe("budget MCP tools", () => {
 
     const created = (await ok("save_transaction", saved, groceries)).saved;
     expect(created.memberName).toBe("Ana");
-    expect(created.tags).toEqual(["casa"]);
     expect(created.amount.formatted).toContain("123,45");
 
     const edited = (
@@ -167,6 +166,31 @@ describe("budget MCP tools", () => {
     );
 
     expect((await view(store, a.user)).budget.transactions).toHaveLength(1);
+  });
+
+  test("drops the goal and split when an expense becomes income", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { ok } = await connect(store, a.user.id);
+    const saved = z.object({ saved: savedRow });
+
+    const shared = (
+      await ok("save_transaction", saved, { ...groceries, split: true })
+    ).saved;
+
+    expect(shared.split?.paid).toBe(false);
+
+    const income = (
+      await ok("save_transaction", saved, {
+        id: shared.id,
+        revision: shared.revision,
+        kind: "income",
+      })
+    ).saved;
+
+    expect(income.kind).toBe("income");
+    expect(income.goal).toBeNull();
+    expect(income.split).toBeUndefined();
   });
 
   test("deletes and restores the later occurrences the agent saw", async () => {
@@ -282,7 +306,6 @@ describe("budget MCP tools", () => {
       ...groceries,
       description: "Cinema",
       goal: "pleasure",
-      tags: ["lazer"],
     });
     await bia.ok("save_transaction", saved, {
       ...groceries,
@@ -328,14 +351,12 @@ describe("budget MCP tools", () => {
             spent: z.object({ cents: z.number() }),
           }),
         ),
-        tags: z.array(z.string()),
       }),
       { month: "2026-09" },
     );
 
     expect(overview.income.cents).toBe(100000);
     expect(overview.expenses.cents).toBe(24690);
-    expect(overview.tags).toEqual(["casa", "lazer"]);
 
     const fixed = overview.goals.find((goal) => goal.id === "fixed");
     expect(fixed?.planned.cents).toBe(30000);
@@ -416,6 +437,31 @@ describe("budget MCP tools", () => {
     });
 
     expect((await view(store, a.user)).budget.transactions).toHaveLength(1);
+  });
+
+  test("drops the goal and split when an expense becomes income", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { ok } = await connect(store, a.user.id);
+    const saved = z.object({ saved: savedRow });
+
+    const shared = (
+      await ok("save_transaction", saved, { ...groceries, split: true })
+    ).saved;
+
+    expect(shared.split?.paid).toBe(false);
+
+    const income = (
+      await ok("save_transaction", saved, {
+        id: shared.id,
+        revision: shared.revision,
+        kind: "income",
+      })
+    ).saved;
+
+    expect(income.kind).toBe("income");
+    expect(income.goal).toBeNull();
+    expect(income.split).toBeUndefined();
   });
 
   test("changes only your own goal percentages", async () => {

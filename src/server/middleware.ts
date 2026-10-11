@@ -7,7 +7,11 @@ import {
   consumeRateLimit,
   rememberRetryAfter,
 } from "@/server/rate-limit.server";
-import { RequestError, throwHttpError } from "@/server/request-error";
+import {
+  RATE_LIMITED_MESSAGE,
+  RequestError,
+  throwHttpError,
+} from "@/server/request-error";
 
 // Global and outermost: store errors reach the client as HTTP errors with a
 // safe message, whatever middleware or handler threw them.
@@ -31,12 +35,7 @@ export const rateLimitMiddleware = createMiddleware({
 
   if (!verdict.ok) {
     rememberRetryAfter(getRequest(), verdict.retryAfterSeconds);
-    throwHttpError(
-      new RequestError(
-        "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.",
-        429,
-      ),
-    );
+    throwHttpError(new RequestError(RATE_LIMITED_MESSAGE, 429));
   }
 
   return next();

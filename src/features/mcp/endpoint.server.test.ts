@@ -1,8 +1,11 @@
 import { describe, expect, test } from "bun:test";
 import { z } from "zod";
 import {
+  authorizationServerMetadataHandler,
   bearerToken,
+  clerkPublishableKey,
   handleMcpPost,
+  mcpPreflight,
   methodNotAllowed,
   protectedResourceMetadata,
   serveMcp,
@@ -84,6 +87,8 @@ describe("MCP endpoint", () => {
 
     expect(bearerToken(request("Bearer abc"))).toBe("abc");
     expect(bearerToken(request("bearer abc"))).toBe("abc");
+    expect(bearerToken(request("Bearer  abc "))).toBe("abc");
+    expect(bearerToken(request("Bearer"))).toBeUndefined();
     expect(bearerToken(request("Basic abc"))).toBeUndefined();
     expect(bearerToken(new Request(`${ORIGIN}/mcp`))).toBeUndefined();
   });
@@ -119,6 +124,95 @@ describe("MCP endpoint", () => {
 
   test("rejects the stateless transport's unsupported methods", () => {
     expect(methodNotAllowed().status).toBe(405);
+  });
+
+  test("lets browser clients send a token and read the OAuth challenge", async () => {
+    const preflight = mcpPreflight();
+
+    expect(preflight.status).toBe(204);
+    expect(preflight.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(preflight.headers.get("Access-Control-Allow-Methods")).toContain(
+      "POST",
+    );
+    expect(preflight.headers.get("Access-Control-Allow-Headers")).toContain(
+      "Authorization",
+    );
+
+    const challenge = await handleMcpPost(
+      rpc({ method: "tools/list" }),
+      signedOut,
+      () => ctx.store,
+    );
+
+    expect(challenge.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(challenge.headers.get("Access-Control-Expose-Headers")).toContain(
+      "WWW-Authenticate",
+    );
+  });
+
+  test("caches Clerk's authorization server metadata", async () => {
+    const metadata = {
+      issuer: "https://fake-clerk.example.com",
+      authorization_endpoint: "https://fake-clerk.example.com/oauth/authorize",
+      token_endpoint: "https://fake-clerk.example.com/oauth/token",
+    };
+
+    const urls: string[] = [];
+    let clock = 0;
+
+    const fetcher = Object.assign(
+      async (input: string | URL | Request) => {
+        urls.push(input instanceof Request ? input.url : input.toString());
+
+        return Response.json(metadata);
+      },
+      { preconnect: fetch.preconnect },
+    );
+
+    const serve = authorizationServerMetadataHandler(fetcher, () => clock);
+
+    const first = await serve(PUBLISHABLE_KEY);
+    await serve(PUBLISHABLE_KEY);
+
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual(metadata);
+    expect(first.headers.get("Access-Control-Allow-Origin")).toBe("*");
+    expect(urls).toEqual([
+      "https://fake-clerk.example.com/.well-known/oauth-authorization-server",
+    ]);
+
+    clock = 2 * 60 * 60 * 1000;
+    await serve(PUBLISHABLE_KEY);
+
+    expect(urls).toHaveLength(2);
+  });
+
+  test("answers 503 when Clerk's metadata is unavailable", async () => {
+    const failing = (response: () => Response) =>
+      authorizationServerMetadataHandler(
+        Object.assign(async () => response(), { preconnect: fetch.preconnect }),
+      );
+
+    const down = await failing(() =>
+      Response.json({ error: "nope" }, { status: 502 }),
+    )(PUBLISHABLE_KEY);
+
+    expect(down.status).toBe(503);
+    expect(down.headers.get("Retry-After")).toBe("60");
+
+    const html = await failing(() => new Response("<html>"))(PUBLISHABLE_KEY);
+
+    expect(html.status).toBe(503);
+  });
+
+  test("reads the Clerk key from the server or the client environment", () => {
+    expect(clerkPublishableKey(PUBLISHABLE_KEY, undefined)).toBe(
+      PUBLISHABLE_KEY,
+    );
+    expect(clerkPublishableKey("", PUBLISHABLE_KEY)).toBe(PUBLISHABLE_KEY);
+    expect(() => clerkPublishableKey(undefined, undefined)).toThrow(
+      "VITE_CLERK_PUBLISHABLE_KEY",
+    );
   });
 
   test("answers JSON-RPC over HTTP for the signed-in person", async () => {

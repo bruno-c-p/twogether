@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
+import { matchesKind, matchesQuery } from "@/features/budget/domain/view";
 import type {
   GoalId,
   Transaction,
@@ -67,32 +68,14 @@ function dayLabel(date: string) {
   return `${part("day")} ${part("month").replace(".", "")} · ${weekday}`;
 }
 
-function searchableText(transaction: Transaction) {
-  const goal = GOALS.find((g) => g.id === transaction.goal)?.name ?? "";
-
-  return `${transaction.description} ${goal}`.toLocaleLowerCase("pt-BR");
-}
-
-function matchesKind(transaction: Transaction, kind: KindFilter | "all") {
-  if (kind === "all") return true;
-
-  if (kind === "split") return Boolean(transaction.split);
-
-  return transaction.kind === kind;
-}
-
 function matchesFilters(transaction: Transaction, filters: TransactionFilters) {
   const { query, goalFilter, kindFilter } = filters;
 
-  if (
-    query &&
-    !searchableText(transaction).includes(query.toLocaleLowerCase("pt-BR"))
-  )
-    return false;
+  if (query && !matchesQuery(transaction, query)) return false;
 
   if (goalFilter !== "all" && transaction.goal !== goalFilter) return false;
 
-  return matchesKind(transaction, kindFilter);
+  return kindFilter === "all" || matchesKind(transaction, kindFilter);
 }
 
 function hasActiveFilters(filters: TransactionFilters) {

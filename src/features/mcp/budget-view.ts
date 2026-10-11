@@ -6,16 +6,17 @@ import {
 } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import { goalProgress } from "@/features/budget/domain/goal-progress";
-import {
-  partnerShare,
-  splitDebt,
-  usTransactions,
-} from "@/features/budget/domain/split";
+import { partnerShare, splitDebt } from "@/features/budget/domain/split";
 import type {
   GoalId,
   Transaction,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
+import {
+  matchesKind,
+  matchesQuery,
+  transactionsFor,
+} from "@/features/budget/domain/view";
 import { RequestError } from "@/server/request-error";
 
 export interface TransactionFilters {
@@ -23,7 +24,6 @@ export interface TransactionFilters {
   member?: string;
   kind?: "expense" | "income" | "split";
   goal?: GoalId;
-  tag?: string;
   query?: string;
   recurrence?: string;
 }
@@ -44,16 +44,6 @@ function assertMember(snapshot: WorkspaceSnapshot, member: string | undefined) {
     );
 }
 
-// Without a member, the couple's shared view: repayments between the two net
-// out. With one, that person's own transactions, as the app's filters do.
-function viewFor(snapshot: WorkspaceSnapshot, member: string | undefined) {
-  const { transactions } = snapshot.budget;
-
-  if (!member) return usTransactions(transactions);
-
-  return transactions.filter((t) => t.memberId === member);
-}
-
 function monthly(
   snapshot: WorkspaceSnapshot,
   month: string,
@@ -61,27 +51,19 @@ function monthly(
 ) {
   assertMember(snapshot, member);
 
-  return viewFor(snapshot, member).filter((t) => t.date.startsWith(month));
-}
-
-function searchableText(transaction: Transaction) {
-  return `${transaction.description} ${transaction.tags.join(" ")} ${goalName(transaction.goal) ?? ""}`.toLocaleLowerCase(
-    "pt-BR",
+  return transactionsFor(snapshot.budget.transactions, member).filter((t) =>
+    t.date.startsWith(month),
   );
 }
 
 function matches(transaction: Transaction, filters: TransactionFilters) {
-  const query = filters.query?.trim().toLocaleLowerCase("pt-BR");
+  const query = filters.query?.trim();
 
-  if (query && !searchableText(transaction).includes(query)) return false;
+  if (query && !matchesQuery(transaction, query)) return false;
 
   if (filters.goal && transaction.goal !== filters.goal) return false;
 
-  if (filters.tag && !transaction.tags.includes(filters.tag)) return false;
-
-  if (filters.kind === "split") return Boolean(transaction.split);
-
-  return !filters.kind || transaction.kind === filters.kind;
+  return !filters.kind || matchesKind(transaction, filters.kind);
 }
 
 export function describeTransaction(
@@ -99,7 +81,6 @@ export function describeTransaction(
     amount: amount(transaction.amount),
     goal: transaction.goal,
     goalName: goalName(transaction.goal),
-    tags: transaction.tags,
     memberId: transaction.memberId,
     memberName: memberName(snapshot, transaction.memberId),
     split: split && {
@@ -121,7 +102,7 @@ function listed(snapshot: WorkspaceSnapshot, filters: TransactionFilters) {
 
   assertMember(snapshot, filters.member);
 
-  return viewFor(snapshot, filters.member).filter(
+  return transactionsFor(snapshot.budget.transactions, filters.member).filter(
     (t) => t.recurrenceId === filters.recurrence,
   );
 }
@@ -217,9 +198,6 @@ export function overview(
           }))
         : undefined,
     splitBalance: splitBalance(snapshot),
-    tags: [
-      ...new Set(snapshot.budget.transactions.flatMap((t) => t.tags)),
-    ].sort((a, b) => a.localeCompare(b, "pt-BR")),
   };
 }
 

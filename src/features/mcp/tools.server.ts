@@ -3,11 +3,7 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { BudgetStore } from "@/features/budget/budget.server";
-import {
-  currentMonth,
-  localDate,
-  normalizeTag,
-} from "@/features/budget/domain/format";
+import { currentMonth, localDate } from "@/features/budget/domain/format";
 import {
   dateSchema,
   followingSchema,
@@ -31,18 +27,17 @@ import {
   overview,
 } from "@/features/mcp/budget-view";
 import { reportError } from "@/lib/errors";
-import { firstIssueMessage } from "@/lib/zod-errors";
-import type { UserRow } from "@/server/db.server";
+import { parseInput } from "@/server/action-input";
 import { consumeRateLimit } from "@/server/rate-limit.server";
-import { errorForLogs, RequestError } from "@/server/request-error";
-
-const UNEXPECTED = "Não foi possível concluir. Tente novamente.";
+import {
+  errorForLogs,
+  RATE_LIMITED_MESSAGE,
+  RequestError,
+  UNEXPECTED_MESSAGE,
+} from "@/server/request-error";
 
 const SETUP_REQUIRED =
   "Termine o cadastro no twogether antes de usar o agente: escolha seu nome e crie um orçamento ou aceite um convite.";
-
-const RATE_LIMITED =
-  "Muitas alterações em pouco tempo. Aguarde um instante e tente novamente.";
 
 const INSTRUCTIONS = `twogether is a shared budget for a couple. Amounts are integer cents in BRL (R$ 45,90 = 4590). Dates are YYYY-MM-DD and months YYYY-MM.
 Expenses belong to one of six goals (fixed, pleasure, comfort, targets, knowledge, freedom); income has no goal. Each person's income is split across the goals by their own percentages, which sum to 100.
@@ -66,12 +61,6 @@ const readOnly = { readOnlyHint: true, openWorldHint: false } as const;
 
 const write = { readOnlyHint: false, openWorldHint: false } as const;
 
-interface Workspace {
-  snapshot: WorkspaceSnapshot;
-  user: UserRow;
-  householdId: string;
-}
-
 type SaveInput = {
   id?: string;
   revision?: number;
@@ -80,7 +69,6 @@ type SaveInput = {
   date?: string;
   kind?: Transaction["kind"];
   goal?: Transaction["goal"];
-  tags?: string[];
   split?: boolean;
   occurrences?: number;
 };
@@ -101,16 +89,12 @@ async function run<Result>(task: () => Promise<Result>) {
 
     reportError(errorForLogs(cause), { context: "MCP tool failed" });
 
-    return failure(UNEXPECTED);
+    return failure(UNEXPECTED_MESSAGE);
   }
 }
 
-function validated<Output>(schema: z.ZodType<Output>, value: Output): Output {
-  const result = schema.safeParse(value);
-
-  if (!result.success) throw new RequestError(firstIssueMessage(result.error));
-
-  return result.data;
+function rejected(message: string): never {
+  throw new RequestError(message);
 }
 
 function findTransaction(snapshot: WorkspaceSnapshot, id: string) {
@@ -124,10 +108,6 @@ function findTransaction(snapshot: WorkspaceSnapshot, id: string) {
   return found;
 }
 
-function tagsFrom(values: string[]) {
-  return [...new Set(values.map(normalizeTag))].filter(Boolean);
-}
-
 function createdTransaction(input: SaveInput): Transaction {
   return {
     id: randomUUID(),
@@ -136,7 +116,6 @@ function createdTransaction(input: SaveInput): Transaction {
     date: input.date ?? localDate(),
     kind: input.kind ?? "expense",
     goal: input.goal ?? null,
-    tags: tagsFrom(input.tags ?? []),
     split: input.split ? {} : undefined,
   };
 }
@@ -163,8 +142,14 @@ function editedGoal(
   return kind === "income" ? null : previous.goal;
 }
 
-function editedSplit(previous: Transaction, input: SaveInput) {
-  if (!(input.split ?? previous.split)) return undefined;
+// Like the goal, a split is dropped when an expense becomes income.
+function editedSplit(
+  previous: Transaction,
+  input: SaveInput,
+  kind: Transaction["kind"],
+) {
+  if (!(input.split ?? (kind === "expense" && previous.split)))
+    return undefined;
 
   return previous.split ?? {};
 }
@@ -182,8 +167,7 @@ function editedTransaction(
     date: input.date ?? previous.date,
     kind,
     goal: editedGoal(previous, input, kind),
-    tags: input.tags ? tagsFrom(input.tags) : previous.tags,
-    split: editedSplit(previous, input),
+    split: editedSplit(previous, input, kind),
     revision: editRevision(input),
   };
 }
@@ -194,26 +178,27 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
     { instructions: INSTRUCTIONS },
   );
 
-  async function workspace(): Promise<Workspace> {
+  async function member() {
     const user = await store.ensureUser(userId);
 
     if (!user.name || !user.household_id)
       throw new RequestError(SETUP_REQUIRED);
 
-    return {
-      user,
-      householdId: user.household_id,
-      snapshot: await store.snapshot(user, user.household_id),
-    };
+    return { user, householdId: user.household_id };
   }
 
+  async function workspace() {
+    const { user, householdId } = await member();
+
+    return store.snapshot(user, householdId);
+  }
+
+  // Rate-limited before any read, keyed like the app's rate limit middleware.
   async function writable() {
-    const current = await workspace();
+    if (!consumeRateLimit(userId).ok)
+      throw new RequestError(RATE_LIMITED_MESSAGE, 429);
 
-    if (!consumeRateLimit(current.user.id).ok)
-      throw new RequestError(RATE_LIMITED, 429);
-
-    return current;
+    return member();
   }
 
   server.registerTool(
@@ -221,13 +206,13 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
     {
       title: "Budget overview",
       description:
-        "Month totals, each goal's planned vs. spent amount, the split-expense balance between the couple, the members, and all tags in use.",
+        "Month totals, each goal's planned vs. spent amount, the split-expense balance between the couple, and the members.",
       inputSchema: { month: monthFilter, member: memberFilter },
       annotations: readOnly,
     },
     ({ month, member }) =>
       run(async () =>
-        overview((await workspace()).snapshot, month ?? currentMonth(), member),
+        overview(await workspace(), month ?? currentMonth(), member),
       ),
   );
 
@@ -245,12 +230,11 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
           .optional()
           .describe("Only expenses, income, or split expenses."),
         goal: goalIdSchema.optional(),
-        tag: z.string().max(24).optional(),
         query: z
           .string()
           .max(200)
           .optional()
-          .describe("Text to find in the description, tags, or goal name."),
+          .describe("Text to find in the description or goal name."),
         recurrence: idSchema
           .optional()
           .describe(
@@ -261,7 +245,7 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
     },
     ({ month, ...filters }) =>
       run(async () =>
-        listTransactions((await workspace()).snapshot, {
+        listTransactions(await workspace(), {
           ...filters,
           month: month ?? currentMonth(),
         }),
@@ -291,7 +275,6 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
           .nullable()
           .optional()
           .describe("Required for expenses; null for income."),
-        tags: z.array(z.string().max(24)).max(8).optional(),
         split: z
           .boolean()
           .optional()
@@ -309,13 +292,18 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
         if (!input.id && input.revision !== undefined)
           throw new RequestError("Informe o id da transação para editar.");
 
-        const { snapshot, user, householdId } = await writable();
+        const { user, householdId } = await writable();
 
-        const transaction = validated(
+        const previous = input.id
+          ? findTransaction(await store.snapshot(user, householdId), input.id)
+          : undefined;
+
+        const transaction = parseInput(
           transactionSchema,
-          input.id
-            ? editedTransaction(findTransaction(snapshot, input.id), input)
+          previous
+            ? editedTransaction(previous, input)
             : createdTransaction(input),
+          rejected,
         );
 
         await store.saveTransaction(user, householdId, {
@@ -463,7 +451,7 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
         "Each member's split of their income across the six goals, with the revision needed to change your own.",
       annotations: readOnly,
     },
-    () => run(async () => goalPercentages((await workspace()).snapshot)),
+    () => run(async () => goalPercentages(await workspace())),
   );
 
   server.registerTool(
