@@ -20,9 +20,11 @@
   "dependencies": {
     "@base-ui/react": "^1.8.0",
     "@clerk/localizations": "^4.17.1",
+    "@clerk/mcp-tools": "^0.6.0",
     "@clerk/tanstack-react-start": "^1.5.15",
     "@hookform/resolvers": "5.9.1",
     "@libsql/client": "^0.18.0",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@tanstack/react-query": "5.103.1",
     "@tanstack/react-router": "1.170.41",
     "@tanstack/react-router-ssr-query": "1.167.3",
