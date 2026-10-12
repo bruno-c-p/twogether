@@ -1,4 +1,5 @@
-import { ArrowDownLeft, ArrowUpRight, Check } from "lucide-react";
+import { Collapsible } from "@base-ui/react/collapsible";
+import { ArrowDownLeft, ArrowUpRight, Check, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import { shortDay } from "@/features/budget/domain/format";
@@ -128,38 +129,78 @@ function DebtCard({
         </Button>
       )}
       {unpaid.length > 0 && (
-        <UnpaidList unpaid={unpaid} displayMoney={displayMoney} />
+        <UnpaidList
+          unpaid={unpaid}
+          userId={userId}
+          partner={partner}
+          displayMoney={displayMoney}
+        />
       )}
     </OverviewCard>
   );
 }
 
+// Collapsed by default so a long month doesn't stretch the overview row.
 function UnpaidList({
   unpaid,
+  userId,
+  partner,
   displayMoney,
 }: {
   unpaid: Transaction[];
+  userId: string;
+  partner: Member;
   displayMoney: (value: number) => string;
 }) {
   return (
-    <ul className="col-span-full list-none min-w-0 m-0 mt-4 p-0 flex flex-col max-bp1000:hidden">
-      {unpaid.map((transaction) => (
-        <li
-          key={transaction.id}
-          className="flex items-baseline justify-between gap-3 py-3 text-md [border-top:1px_solid_var(--border)] last:pb-0"
-        >
-          <span className="min-w-0 truncate" title={transaction.description}>
-            {transaction.description}
-            <span className="text-text-muted text-sm">
-              {" · "}
-              {shortDay(transaction.date)}
-            </span>
-          </span>
-          <span className="shrink-0 tabular-nums">
-            {displayMoney(partnerShare(transaction.amount))}
-          </span>
-        </li>
-      ))}
-    </ul>
+    <Collapsible.Root className="col-span-full min-w-0 mt-4">
+      <Collapsible.Trigger
+        className={cx(
+          "group w-full min-h-[44px] flex items-center justify-between gap-3",
+          "[border-width:1px_0_0] border-solid border-border bg-transparent px-0 pt-3",
+          "text-sm font-600 text-text-muted cursor-pointer @hover:text-text",
+        )}
+      >
+        Despesas em aberto
+        <ChevronDown
+          aria-hidden="true"
+          size={18}
+          className="shrink-0 motion-safe:transition-transform duration-200 group-data-[panel-open]:rotate-180"
+        />
+      </Collapsible.Trigger>
+      <Collapsible.Panel
+        className={cx(
+          "overflow-hidden h-[var(--collapsible-panel-height)]",
+          "motion-safe:transition-[height] duration-200 ease-[var(--ease-out)]",
+          "data-[starting-style]:h-0 data-[ending-style]:h-0",
+        )}
+      >
+        <ul className="list-none min-w-0 m-0 p-0 flex flex-col max-h-[272px] overflow-y-auto">
+          {unpaid.map((transaction) => (
+            <li
+              key={transaction.id}
+              className="flex items-center justify-between gap-3 py-2.5 text-md [border-top:1px_solid_var(--border)] first:[border-top:0] last:pb-0"
+            >
+              {/* Who owes sits on its own line so a long description can't truncate it away. */}
+              <span className="min-w-0 flex flex-col">
+                <span className="truncate" title={transaction.description}>
+                  {transaction.description}
+                </span>
+                <span className="truncate text-text-muted text-sm">
+                  {transaction.memberId === userId
+                    ? `${partner.name} deve`
+                    : "Você deve"}
+                  {" · "}
+                  {shortDay(transaction.date)}
+                </span>
+              </span>
+              <span className="shrink-0 tabular-nums">
+                {displayMoney(partnerShare(transaction.amount))}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </Collapsible.Panel>
+    </Collapsible.Root>
   );
 }
