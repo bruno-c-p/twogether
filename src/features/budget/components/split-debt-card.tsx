@@ -175,24 +175,23 @@ function UnpaidList({
           "data-[starting-style]:h-0 data-[ending-style]:h-0",
         )}
       >
-        <ul className="list-none min-w-0 m-0 p-0 flex flex-col max-h-[216px] overflow-y-auto">
+        <ul className="list-none min-w-0 m-0 p-0 flex flex-col max-h-[272px] overflow-y-auto">
           {unpaid.map((transaction) => (
             <li
               key={transaction.id}
-              className="flex items-baseline justify-between gap-3 py-3 text-md [border-top:1px_solid_var(--border)] first:[border-top:0] last:pb-0"
+              className="flex items-center justify-between gap-3 py-2.5 text-md [border-top:1px_solid_var(--border)] first:[border-top:0] last:pb-0"
             >
-              <span
-                className="min-w-0 truncate"
-                title={transaction.description}
-              >
-                {transaction.description}
-                <span className="text-text-muted text-sm">
-                  {" · "}
-                  {shortDay(transaction.date)}
-                  {" · "}
+              {/* Who owes sits on its own line so a long description can't truncate it away. */}
+              <span className="min-w-0 flex flex-col">
+                <span className="truncate" title={transaction.description}>
+                  {transaction.description}
+                </span>
+                <span className="truncate text-text-muted text-sm">
                   {transaction.memberId === userId
                     ? `${partner.name} deve`
-                    : "você deve"}
+                    : "Você deve"}
+                  {" · "}
+                  {shortDay(transaction.date)}
                 </span>
               </span>
               <span className="shrink-0 tabular-nums">

@@ -64,7 +64,7 @@ describe("SplitDebtCard", () => {
     expect(screen.getByText(/Bia deve/).closest("li")?.textContent).toMatch(
       /^Aluguel/,
     );
-    expect(screen.getByText(/você deve/).closest("li")?.textContent).toMatch(
+    expect(screen.getByText(/Você deve/).closest("li")?.textContent).toMatch(
       /^Luz/,
     );
   });
