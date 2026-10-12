@@ -31,13 +31,42 @@ describe("SplitDebtCard", () => {
     ]);
 
     expect(screen.getByText(/Bia te deve R\$\s25,00/)).toBeTruthy();
-    expect(screen.getByText("Mercado", { exact: false })).toBeTruthy();
+    expect(screen.queryByText("Mercado", { exact: false })).toBeNull();
     expect(
       screen.getByText("1 despesa dividida em aberto · aguardando Bia"),
     ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: "Marcar como pago" }),
     ).toBeNull();
+  });
+
+  test("open splits stay collapsed until asked for, with who owes each", async () => {
+    const { screen, user } = renderCard(0, [
+      transaction({
+        id: "a",
+        description: "Aluguel",
+        memberId: "ana",
+        split: {},
+      }),
+      transaction({ id: "b", description: "Luz", memberId: "bia", split: {} }),
+    ]);
+
+    const toggle = screen.getByRole("button", {
+      name: "Despesas em aberto",
+    });
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("false");
+    expect(screen.queryByText("Aluguel", { exact: false })).toBeNull();
+
+    await user.click(toggle);
+
+    expect(toggle.getAttribute("aria-expanded")).toBe("true");
+    expect(screen.getByText(/Bia deve/).closest("li")?.textContent).toMatch(
+      /^Aluguel/,
+    );
+    expect(screen.getByText(/você deve/).closest("li")?.textContent).toMatch(
+      /^Luz/,
+    );
   });
 
   test("lets the person who owes mark a split as paid", async () => {
