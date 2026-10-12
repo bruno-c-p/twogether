@@ -32,11 +32,26 @@ describe("split helpers", () => {
       { ...base, id: "repay", settlementOf: "old", split: {} },
     ];
 
-    const ana = splitDebt(transactions, "ana");
+    const ana = splitDebt(transactions, "ana", "2026-09-30");
     expect(ana.net).toBe(100000 - 15000);
     expect(ana.unpaid.map((t) => t.id).sort()).toEqual(["market", "rent"]);
-    expect(splitDebt(transactions, "bia").net).toBe(15000 - 100000);
-    expect(splitDebt([], "ana")).toEqual({ net: 0, unpaid: [] });
+    expect(splitDebt(transactions, "bia", "2026-09-30").net).toBe(
+      15000 - 100000,
+    );
+    expect(splitDebt([], "ana", "2026-09-30")).toEqual({ net: 0, unpaid: [] });
+  });
+
+  test("splits dated after today are not owed yet", () => {
+    const transactions: Transaction[] = [
+      { ...base, id: "past", date: "2026-09-01", split: {} },
+      { ...base, id: "today", date: "2026-09-05", split: {} },
+      { ...base, id: "tomorrow", date: "2026-09-06", split: {} },
+      { ...base, id: "next-month", date: "2026-10-05", split: {} },
+    ];
+
+    const ana = splitDebt(transactions, "ana", "2026-09-05");
+    expect(ana.unpaid.map((t) => t.id)).toEqual(["past", "today"]);
+    expect(ana.net).toBe(2 * 100000);
   });
 
   test("Us view drops repayment entries", () => {

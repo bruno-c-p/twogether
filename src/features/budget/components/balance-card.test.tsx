@@ -14,17 +14,7 @@ const salary = transaction({
 
 const market = transaction({ id: "m", amount: 4590 });
 
-const partners = [
-  { memberId: "ana", name: "Ana", position: 0, income: 500000, expenses: 1000 },
-  { memberId: "bia", name: "Bia", position: 1, income: 0, expenses: 3590 },
-];
-
-function renderCard(
-  month: string,
-  memberFilter = "all",
-  hidden = false,
-  withPartners = false,
-) {
+function renderCard(month: string, memberFilter = "all", hidden = false) {
   return renderPlain(
     <BalanceCard
       summary={summarize([salary, market])}
@@ -33,7 +23,6 @@ function renderCard(
       displayMoney={(value) => (hidden ? "R$ ••••" : money(value))}
       hidden={hidden}
       onToggleHidden={() => undefined}
-      partners={withPartners ? partners : undefined}
     />,
   );
 }
@@ -51,7 +40,7 @@ describe("BalanceCard", () => {
     expect(screen.getByText(/4\.954,10/)).toBeTruthy();
     expect(screen.getByText(/5\.000,00/)).toBeTruthy();
     expect(screen.getByText(/45,90/)).toBeTruthy();
-    expect(screen.queryByText(/para fechar o mês/)).toBeNull();
+    expect(screen.queryByText(/Faltam/)).toBeNull();
   });
 
   test("the current month counts the days left", () => {
@@ -60,7 +49,7 @@ describe("BalanceCard", () => {
 
     const { screen } = renderCard(currentMonth());
 
-    expect(screen.getByText("Faltam 2 dias para fechar o mês")).toBeTruthy();
+    expect(screen.getByText("Faltam 2 dias")).toBeTruthy();
   });
 
   test("a person filter names the person and hidden values are masked", () => {
@@ -68,22 +57,5 @@ describe("BalanceCard", () => {
 
     expect(screen.getByText(/Sobra desta pessoa em\s+setembro/)).toBeTruthy();
     expect(screen.getAllByText("R$ ••••")).toHaveLength(3);
-  });
-
-  test("as a couple, each partner's part sits under income and expenses", () => {
-    const { screen } = renderCard("2026-09", "all", false, true);
-    const income = screen.getByText("Entradas").parentElement!;
-    const expenses = screen.getByText("Saídas").parentElement!;
-
-    expect(income.textContent).toMatch(/Ana:\s*R\$\s5\.000,00/);
-    expect(income.textContent).toMatch(/Bia:\s*R\$\s0,00/);
-    expect(expenses.textContent).toMatch(/Ana:\s*R\$\s10,00/);
-    expect(expenses.textContent).toMatch(/Bia:\s*R\$\s35,90/);
-  });
-
-  test("hidden values mask each partner's part too", () => {
-    const { screen } = renderCard("2026-09", "all", true, true);
-
-    expect(screen.getAllByText("R$ ••••")).toHaveLength(7);
   });
 });
