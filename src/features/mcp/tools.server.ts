@@ -212,7 +212,12 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
     },
     ({ month, member }) =>
       run(async () =>
-        overview(await workspace(), month ?? currentMonth(), member),
+        overview(
+          await workspace(),
+          month ?? currentMonth(),
+          member,
+          localDate(),
+        ),
       ),
   );
 

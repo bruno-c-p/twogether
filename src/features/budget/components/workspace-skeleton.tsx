@@ -2,8 +2,8 @@ import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
 
 const cards = [
-  ["balance", "h-[180px]"],
-  ["debt", "h-[180px]"],
+  ["balance", "h-[264px]"],
+  ["totals", "h-[264px]"],
   ["budget", "h-[220px]"],
   ["latest", "h-[220px]"],
 ] as const;
@@ -29,10 +29,7 @@ export function WorkspaceSkeleton() {
             <div
               key={id}
               aria-hidden="true"
-              className={cx(
-                "rounded-lg bg-surface-soft animate-pulse",
-                height,
-              )}
+              className={cx("rounded-lg bg-surface-soft animate-pulse", height)}
             />
           ))}
         </div>

@@ -123,10 +123,11 @@ export function listTransactions(
   };
 }
 
-function splitBalance(snapshot: WorkspaceSnapshot) {
+function splitBalance(snapshot: WorkspaceSnapshot, today: string) {
   const { net, unpaid } = splitDebt(
     snapshot.budget.transactions,
     snapshot.user.id,
+    today,
   );
 
   const partner = snapshot.household.members.find(
@@ -152,6 +153,7 @@ export function overview(
   snapshot: WorkspaceSnapshot,
   month: string,
   member: string | undefined,
+  today: string,
 ) {
   const rows = monthly(snapshot, month, member);
   const { members } = snapshot.household;
@@ -197,7 +199,7 @@ export function overview(
             expenses: amount(totals.expenses),
           }))
         : undefined,
-    splitBalance: splitBalance(snapshot),
+    splitBalance: splitBalance(snapshot, today),
   };
 }
 

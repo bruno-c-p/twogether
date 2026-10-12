@@ -70,7 +70,9 @@ test.describe("split expenses", () => {
     await expect(
       debtCard(page).getByText("Bia te deve R$ 1.000,00"),
     ).toBeVisible();
-    await expect(debtCard(page).getByText("Aguardando Bia")).toBeVisible();
+    await expect(
+      debtCard(page).getByText("1 despesa dividida em aberto · aguardando Bia"),
+    ).toBeVisible();
     await expect(
       debtCard(page).getByRole("button", { name: "Marcar como pago" }),
     ).toHaveCount(0);

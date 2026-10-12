@@ -9,19 +9,28 @@ export function usTransactions(transactions: Transaction[]) {
   return transactions.filter((transaction) => !isRepayment(transaction));
 }
 
-function unpaidSplits(transactions: Transaction[]) {
+// Splits dated after `today` (e.g. upcoming recurrences) are not owed yet.
+function unpaidSplits(transactions: Transaction[], today: string) {
   return transactions.filter(
     (transaction) =>
       transaction.kind === "expense" &&
       transaction.split &&
       !transaction.split.paidAt &&
-      !isRepayment(transaction),
+      !isRepayment(transaction) &&
+      transaction.date <= today,
   );
 }
 
-/** Positive: the partner owes `userId`; negative: `userId` owes the partner. */
-export function splitDebt(transactions: Transaction[], userId: string) {
-  const unpaid = unpaidSplits(transactions).sort((a, b) =>
+/**
+ * Positive: the partner owes `userId`; negative: `userId` owes the partner.
+ * `today` is a YYYY-MM-DD date; only splits up to it count.
+ */
+export function splitDebt(
+  transactions: Transaction[],
+  userId: string,
+  today: string,
+) {
+  const unpaid = unpaidSplits(transactions, today).sort((a, b) =>
     a.date.localeCompare(b.date),
   );
 

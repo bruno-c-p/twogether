@@ -1,9 +1,11 @@
 import { useMemo } from "react";
+import { useHydrated } from "@tanstack/react-router";
 import {
   memberTotals,
   planGoals,
   summarize,
 } from "@/features/budget/domain/calc";
+import { localDate } from "@/features/budget/domain/format";
 import { splitDebt } from "@/features/budget/domain/split";
 import { transactionsFor } from "@/features/budget/domain/view";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -54,9 +56,13 @@ export function useWorkspaceData(
     [monthly, members, memberFilter],
   );
 
+  // Future splits are not owed yet. "Today" is the reader's date, which the
+  // server cannot know, so the debt waits for hydration (null until then).
+  const today = useHydrated() ? localDate() : null;
+
   const debt = useMemo(
-    () => splitDebt(transactions, budget.user.id),
-    [transactions, budget.user.id],
+    () => (today ? splitDebt(transactions, budget.user.id, today) : null),
+    [transactions, budget.user.id, today],
   );
 
   const partner =

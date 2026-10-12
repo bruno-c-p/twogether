@@ -85,8 +85,13 @@ test.describe("auth", () => {
     expect(cookie?.value).toBeTruthy();
     const summary = page.getByRole("region", { name: "Resumo mensal" });
     await expect(summary.getByText(/^Sobra de /)).toBeVisible();
-    await expect(summary.getByText("Entradas")).toBeVisible();
-    await expect(summary.getByText("Saídas")).toBeVisible();
+
+    const totals = page.getByRole("region", {
+      name: "Entradas e saídas do mês",
+    });
+
+    await expect(totals.getByText("Entradas")).toBeVisible();
+    await expect(totals.getByText("Saídas")).toBeVisible();
     await expect(page.getByText("Nenhuma transação neste mês.")).toBeVisible();
     await expect(page.getByText("30%").first()).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);

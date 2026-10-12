@@ -18,7 +18,8 @@ function balance(page: Page) {
 }
 
 function expenses(page: Page) {
-  return summary(page)
+  return page
+    .getByRole("region", { name: "Entradas e saídas do mês" })
     .locator("div")
     .filter({ hasText: /^Saídas/ });
 }

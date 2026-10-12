@@ -7,13 +7,12 @@ import { renderPlain } from "@/test/render";
 
 const bia = { id: "bia", name: "Bia" };
 
-function renderCard(net: number, unpaid: Transaction[]) {
+function renderCard(net: number | null, unpaid: Transaction[]) {
   const onSettle = vi.fn();
 
   const view = renderPlain(
     <SplitDebtCard
-      net={net}
-      unpaid={unpaid}
+      debt={net === null ? null : { net, unpaid }}
       userId="ana"
       partner={bia}
       busy={false}
@@ -33,7 +32,9 @@ describe("SplitDebtCard", () => {
 
     expect(screen.getByText(/Bia te deve R\$\s25,00/)).toBeTruthy();
     expect(screen.getByText("Mercado", { exact: false })).toBeTruthy();
-    expect(screen.getByText("Aguardando Bia")).toBeTruthy();
+    expect(
+      screen.getByText("1 despesa dividida em aberto · aguardando Bia"),
+    ).toBeTruthy();
     expect(
       screen.queryByRole("button", { name: "Marcar como pago" }),
     ).toBeNull();
@@ -61,11 +62,21 @@ describe("SplitDebtCard", () => {
     ]);
 
     expect(balanced.screen.getByText("Vocês estão quites")).toBeTruthy();
+    expect(
+      balanced.screen.getByText("2 despesas divididas em aberto"),
+    ).toBeTruthy();
     balanced.unmount();
 
     const empty = renderCard(0, []);
 
     expect(empty.screen.getByText("Nada pendente entre vocês")).toBeTruthy();
-    expect(empty.screen.getByText(/ative “Dividir com Bia”/)).toBeTruthy();
+    expect(empty.screen.getByText(/Ative “Dividir com Bia”/)).toBeTruthy();
+  });
+
+  test("waits for the reader's date before showing any debt", () => {
+    const { screen } = renderCard(null, []);
+
+    expect(screen.getByText("Acerto entre vocês")).toBeTruthy();
+    expect(screen.queryByText(/Nada pendente|deve/)).toBeNull();
   });
 });
