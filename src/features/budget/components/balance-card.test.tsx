@@ -2,6 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { BalanceCard } from "@/features/budget/components/balance-card";
 import { summarize } from "@/features/budget/domain/calc";
 import { currentMonth, money } from "@/features/budget/domain/format";
+import type { Transaction } from "@/features/budget/domain/types";
 import { transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
@@ -25,6 +26,22 @@ function renderCard(month: string, memberFilter = "all", hidden = false) {
       onToggleHidden={() => undefined}
     />,
   );
+}
+
+function spendBar(transactions: Transaction[], hidden = false) {
+  const { container } = renderPlain(
+    <BalanceCard
+      summary={summarize(transactions)}
+      month="2026-09"
+      memberFilter="all"
+      displayMoney={money}
+      hidden={hidden}
+      onToggleHidden={() => undefined}
+    />,
+  );
+
+  // SAFETY: the card always renders the decorative bar track and its fill.
+  return container.querySelector<HTMLElement>('[aria-hidden="true"] > div')!;
 }
 
 afterEach(() => vi.useRealTimers());
@@ -57,5 +74,24 @@ describe("BalanceCard", () => {
 
     expect(screen.getByText(/Sobra desta pessoa em\s+setembro/)).toBeTruthy();
     expect(screen.getAllByText("R$ ••••")).toHaveLength(3);
+  });
+
+  test("the spend bar fills with the share of income spent", () => {
+    expect(spendBar([salary, market]).style.width).toBe("0.918%");
+  });
+
+  test("spending past income fills the bar and turns it red", () => {
+    const overspent = transaction({ id: "big", amount: 900000 });
+
+    const withIncome = spendBar([salary, overspent]);
+    expect(withIncome.style.width).toBe("100%");
+    expect(withIncome.className).toContain("bg-danger");
+
+    expect(spendBar([market]).style.width).toBe("100%");
+  });
+
+  test("hidden values and an empty month leave the bar empty", () => {
+    expect(spendBar([salary, market], true).style.width).toBe("0%");
+    expect(spendBar([salary]).style.width).toBe("0%");
   });
 });
