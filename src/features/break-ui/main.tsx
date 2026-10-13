@@ -15,8 +15,6 @@ import {
   retainSearchParams,
   RouterProvider,
 } from "@tanstack/react-router";
-import { PostHogProvider } from "posthog-js/react";
-import { PostHog } from "posthog-js";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
@@ -266,9 +264,6 @@ const router = createRouter({
 
 const container = document.getElementById("root");
 
-// An uninitialized client keeps production analytics hooks inert in fixtures.
-const analytics = new PostHog();
-
 if (!container) throw new Error("Break UI root missing.");
 
 const reactRoot = createRoot(container);
@@ -277,8 +272,6 @@ import.meta.hot?.dispose(() => reactRoot.unmount());
 
 reactRoot.render(
   <QueryClientProvider client={queryClient}>
-    <PostHogProvider client={analytics}>
-      <RouterProvider router={router} />
-    </PostHogProvider>
+    <RouterProvider router={router} />
   </QueryClientProvider>,
 );

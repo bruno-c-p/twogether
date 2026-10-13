@@ -3,8 +3,6 @@
 declare global {
   interface ImportMetaEnv {
     readonly VITE_CLERK_PUBLISHABLE_KEY: string;
-    readonly VITE_PUBLIC_POSTHOG_PROJECT_TOKEN?: string;
-    readonly VITE_PUBLIC_POSTHOG_HOST?: string;
   }
 
   namespace NodeJS {
