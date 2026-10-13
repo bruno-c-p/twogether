@@ -1,4 +1,3 @@
-import { usePostHog } from "posthog-js/react";
 import { toastManager } from "@/components/ui/toast-manager";
 import type {
   GoalPercentages,
@@ -34,8 +33,6 @@ export function useWorkspaceActions({
   mutations: BudgetMutations;
   setMonth: (month: string) => void;
 }) {
-  const posthog = usePostHog();
-
   const { saveTx, deleteTx, restoreTx, savePct, settleTx, unsettleTx } =
     mutations;
 
@@ -44,12 +41,6 @@ export function useWorkspaceActions({
 
     if (!(await saveTx.run({ transaction, occurrences }))) return;
 
-    posthog.capture(isUpdate ? "transaction_updated" : "transaction_created", {
-      transaction_kind: transaction.kind,
-      has_goal: Boolean(transaction.goal),
-      is_recurring: occurrences > 1,
-      occurrence_count: occurrences,
-    });
     dialogs.setTransaction(null);
     setMonth(transaction.date.slice(0, 7));
     toastManager.add({
@@ -67,7 +58,6 @@ export function useWorkspaceActions({
 
     if (!(await deleteTx.run(versioned(transaction)))) return;
 
-    posthog.capture("transaction_deleted", { delete_scope: "single" });
     notifyDeleted(transaction);
   }
 
@@ -123,7 +113,6 @@ export function useWorkspaceActions({
 
     if (!(await settleTx.run({ ...input, ...versioned(source) }))) return;
 
-    posthog.capture("split_settled");
     dialogs.setSettling(null);
 
     const id = toastManager.add({
@@ -147,7 +136,6 @@ export function useWorkspaceActions({
   async function unsettle(transaction: Transaction, toastId?: string) {
     if (!(await unsettleTx.run(versioned(transaction)))) return;
 
-    posthog.capture("split_unsettled");
     dialogs.setTransaction(null);
 
     if (toastId !== undefined) toastManager.close(toastId);
@@ -162,7 +150,6 @@ export function useWorkspaceActions({
 
     if (!(await savePct.run({ percentages: values, revision }))) return;
 
-    posthog.capture("goal_percentages_saved");
     dialogs.setPercentagesRevision(null);
     toastManager.add({ title: "Percentuais atualizados.", type: "success" });
   }
@@ -181,11 +168,6 @@ export function useWorkspaceActions({
     if (!deleted) return;
 
     const count = following.length + 1;
-
-    posthog.capture("transaction_deleted", {
-      delete_scope: following.length ? "following" : "single",
-      deleted_count: count,
-    });
 
     if (following.length)
       toastManager.add({

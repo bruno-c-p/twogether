@@ -1,7 +1,6 @@
 import type { ComponentProps, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
-import { usePostHog } from "posthog-js/react";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
@@ -140,25 +139,18 @@ function StartChoice({
 }
 
 function useGateActions(run: ActionRun, invitation: string) {
-  const posthog = usePostHog();
   const signOut = useSignOut();
 
   async function joinWith(token: string) {
-    const result = await run(() => joinHousehold({ data: { token } }));
-
-    if (result) posthog.capture("household_joined");
+    await run(() => joinHousehold({ data: { token } }));
   }
 
   async function submitName(name: string) {
-    const result = await run(() => setName({ data: { name } }));
-
-    if (result) posthog.capture("profile_name_completed");
+    await run(() => setName({ data: { name } }));
   }
 
   async function startHousehold() {
-    const result = await run(() => createHousehold());
-
-    if (result) posthog.capture("household_created");
+    await run(() => createHousehold());
   }
 
   return {

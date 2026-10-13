@@ -2,7 +2,6 @@ import { Input } from "@/components/ui/input";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
-import { usePostHog } from "posthog-js/react";
 import { setName } from "@/features/auth/actions";
 import { NameForm } from "@/features/auth/components/name-form";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
@@ -272,7 +271,6 @@ export function AccountSettings({
   onManage: () => void;
 }) {
   const signOut = useSignOut();
-  const posthog = usePostHog();
   const queryClient = useQueryClient();
   const { user: clerkUser } = useUser();
   const { run, busy, error } = useActionRun(OFFLINE_MESSAGE);
@@ -281,7 +279,6 @@ export function AccountSettings({
     run,
     saveName: (value) => setName({ data: { name: value } }),
     onSaved: () => {
-      posthog.capture("profile_name_completed");
       void queryClient.invalidateQueries({ queryKey: workspaceQueryKey });
     },
   });
@@ -290,7 +287,7 @@ export function AccountSettings({
     run,
     create: () => createInvite(),
     revoke: () => revokeInvite(),
-    onCreated: () => posthog.capture("household_invite_generated"),
+    onCreated: () => undefined,
   });
 
   return (
