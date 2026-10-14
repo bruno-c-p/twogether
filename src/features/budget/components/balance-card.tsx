@@ -5,6 +5,7 @@ import { currentMonth, monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
 import { cx } from "@/lib/cx";
+import { percentOf } from "@/lib/decimal";
 
 function daysLeft(month: string, today: Date) {
   if (month !== currentMonth(today)) return null;
@@ -27,7 +28,7 @@ function spentWidth(income: number, expenses: number, hidden: boolean) {
 
   if (income <= 0) return "100%";
 
-  return `${Math.min(100, (expenses / income) * 100)}%`;
+  return `${Math.min(100, percentOf(expenses, income))}%`;
 }
 
 export function BalanceCard({

@@ -1,9 +1,12 @@
+import Big from "big.js";
+
 const moneyFormatter = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
-export const money = (cents: number) => moneyFormatter.format(cents / 100);
+export const money = (cents: number) =>
+  moneyFormatter.format(new Big(cents).div(100).toNumber());
 
 export function formatAmountInput(value: string): string {
   const digits = value.replace(/\D/g, "");
@@ -78,7 +81,11 @@ function parseCents(value: string, min: number): number | null {
   if (!/^(?:\d+|\d{1,3}(?:\.\d{3})+)(?:,\d{1,2})?$/.test(normalized))
     return null;
   const [whole, decimals = ""] = normalized.replaceAll(".", "").split(",");
-  const cents = Number(whole) * 100 + Number(decimals.padEnd(2, "0"));
+
+  const cents = new Big(whole)
+    .times(100)
+    .plus(decimals.padEnd(2, "0"))
+    .toNumber();
 
   return Number.isSafeInteger(cents) && cents >= min && cents <= 99999999999
     ? cents

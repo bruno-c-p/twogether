@@ -12,6 +12,7 @@ import {
   DialogHeader,
 } from "@/components/ui/dialog/dialog";
 import { FormError } from "@/components/ui/field/field";
+import { sum } from "@/lib/decimal";
 import styles from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
@@ -34,10 +35,10 @@ export function GoalPercentagesDialog({
   const valid = parsed.success;
   const invalidMessage = parsed.success ? "" : parsed.error.issues[0].message;
 
-  const total = GOALS.reduce(
-    (sum, goal) =>
-      sum + (Number.isFinite(values[goal.id]) ? values[goal.id] : 0),
-    0,
+  const total = sum(
+    GOALS.map((goal) =>
+      Number.isFinite(values[goal.id]) ? values[goal.id] : 0,
+    ),
   );
 
   function submit(event: FormEvent) {
