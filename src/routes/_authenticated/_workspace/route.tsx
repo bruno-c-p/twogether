@@ -35,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
   component: WorkspaceRoute,
   validateSearch: validateWorkspaceSearch,
   search: { middlewares: [retainSearchParams(["month", "member"])] },
+  loaderDeps: ({ search }) => ({ month: search.month }),
   beforeLoad: ({ search, location }) => {
     if (search.month) return;
     const timeZone = requestTimeZone();
@@ -42,7 +43,10 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
     if (!timeZone) return;
     throw redirect({ href: withDefaultMonthHref(location, monthIn(timeZone)) });
   },
-  loader: ({ context }) => loadCachedWorkspace(context.queryClient),
+  loader: ({ context, deps }) =>
+    deps.month
+      ? loadCachedWorkspace(context.queryClient, deps.month)
+      : undefined,
   // Undo toasts act on this workspace; they go when the reader leaves it.
   onLeave: () => toastManager.close(),
   pendingComponent: WorkspaceSkeleton,

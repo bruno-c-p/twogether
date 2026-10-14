@@ -12,18 +12,13 @@ import { workspaceQueryKey } from "@/features/budget/workspace";
 const OFFLINE_MESSAGE =
   "Sem conexão. Confira o orçamento antes de tentar novamente.";
 
-type CachedWorkspace = { key: QueryKey; previous: WorkspaceSnapshot };
+type CachedWorkspaces = [QueryKey, WorkspaceSnapshot | undefined][];
 
-function cachedWorkspace(
-  queryClient: QueryClient,
-): CachedWorkspace | undefined {
-  const [entry] = queryClient.getQueriesData<WorkspaceSnapshot>({
+// Every cached month, since unpaid splits and series reach across months.
+function cachedWorkspaces(queryClient: QueryClient): CachedWorkspaces {
+  return queryClient.getQueriesData<WorkspaceSnapshot>({
     queryKey: workspaceQueryKey,
   });
-
-  if (!entry?.[1]) return undefined;
-
-  return { key: entry[0], previous: entry[1] };
 }
 
 export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
@@ -48,16 +43,19 @@ export function useMutation<TArgs extends unknown[], TResult>(
 
   const mutation = useQueryMutation({
     mutationFn: (args: TArgs) => fn(...args),
-    onMutate: async (args): Promise<CachedWorkspace | undefined> => {
-      const cached = cachedWorkspace(queryClient);
+    onMutate: async (args): Promise<CachedWorkspaces> => {
+      if (!optimistic) return [];
 
-      if (!optimistic || !cached) return cached;
+      // A month still on its first load is left alone: nothing to update.
+      await queryClient.cancelQueries({
+        queryKey: workspaceQueryKey,
+        predicate: (query) => query.state.data !== undefined,
+      });
+      const cached = cachedWorkspaces(queryClient);
 
-      await queryClient.cancelQueries({ queryKey: cached.key });
-      queryClient.setQueryData(
-        cached.key,
-        optimistic(cached.previous, ...args),
-      );
+      for (const [key, previous] of cached)
+        if (previous)
+          queryClient.setQueryData(key, optimistic(previous, ...args));
 
       return cached;
     },
@@ -71,8 +69,8 @@ export function useMutation<TArgs extends unknown[], TResult>(
       if (!optimistic) await refresh;
     },
     onError: async (cause, _args, cached) => {
-      if (optimistic && cached)
-        queryClient.setQueryData(cached.key, cached.previous);
+      for (const [key, previous] of cached ?? [])
+        queryClient.setQueryData(key, previous);
 
       if (isRedirect(cause))
         await router.navigate(router.resolveRedirect(cause).options);

@@ -12,6 +12,7 @@ import {
   parseAmount,
   monthLabel,
   monthName,
+  shiftMonth,
   shortDay,
 } from "@/features/budget/domain/format";
 import {
@@ -195,6 +196,11 @@ describe("mês", () => {
   });
   it("usa o calendário local para o mês atual", () => {
     expect(currentMonth(new Date(2026, 8, 17))).toBe("2026-09");
+  });
+  it("anda meses para trás e para frente atravessando o ano", () => {
+    expect(shiftMonth("2026-01", -1)).toBe("2025-12");
+    expect(shiftMonth("2026-12", 1)).toBe("2027-01");
+    expect(shiftMonth("2026-09", 0)).toBe("2026-09");
   });
 });
 

@@ -8,8 +8,8 @@ const SYNC_OFFLINE_MESSAGE =
 
 // The workspace loader runs ensureQueryData first, so the snapshot is
 // already cached; a failed background refetch keeps it and reports why.
-export function useBudget() {
-  const query = useSuspenseQuery(workspaceQueryOptions);
+export function useBudget(month: string) {
+  const query = useSuspenseQuery(workspaceQueryOptions(month));
 
   const syncError =
     query.error && !isRedirect(query.error)

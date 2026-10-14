@@ -11,6 +11,7 @@ import {
   optimisticRestore,
   optimisticSave,
   workspaceQueryKey,
+  workspaceQueryOptions,
 } from "@/features/budget/workspace";
 
 const mercado: Transaction = {
@@ -50,9 +51,12 @@ describe("loadCachedWorkspace", () => {
       defaultOptions: { queries: { staleTime: 30_000, retry: false } },
     });
 
-    queryClient.setQueryData(workspaceQueryKey, snapshot);
+    queryClient.setQueryData(
+      workspaceQueryOptions("2026-09").queryKey,
+      snapshot,
+    );
 
-    expect(loadCachedWorkspace(queryClient)).toBe(snapshot);
+    expect(loadCachedWorkspace(queryClient, "2026-09")).toBe(snapshot);
     expect(queryClient.isFetching({ queryKey: workspaceQueryKey })).toBe(0);
   });
 });

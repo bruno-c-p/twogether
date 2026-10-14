@@ -3,7 +3,7 @@ import { describe, expect, test, vi } from "vitest";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
-import { workspaceQueryKey } from "@/features/budget/workspace";
+import { workspaceQueryOptions } from "@/features/budget/workspace";
 import { ana } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
@@ -57,11 +57,22 @@ async function setup(fn: Run, optimistic?: typeof renamed) {
     "/?month=2026-09",
   );
 
-  view.queryClient.setQueryData(workspaceQueryKey, snapshot);
+  // Two cached months: an optimistic change reaches both.
+  const months = ["2026-08", "2026-09"].map(
+    (month) => workspaceQueryOptions(month).queryKey,
+  );
 
-  const cachedName = () =>
-    view.queryClient.getQueryData<WorkspaceSnapshot>(workspaceQueryKey)?.user
-      .name;
+  for (const key of months) view.queryClient.setQueryData(key, snapshot);
+
+  const cachedName = () => {
+    const [august, september] = months.map(
+      (key) => view.queryClient.getQueryData(key)?.user.name,
+    );
+
+    expect(august).toBe(september);
+
+    return september;
+  };
 
   return { ...view, onResult, cachedName };
 }
