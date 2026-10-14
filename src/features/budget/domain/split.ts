@@ -1,6 +1,9 @@
+import Big from "big.js";
 import type { Transaction } from "@/features/budget/domain/types";
+import { sum } from "@/lib/decimal";
 
-export const partnerShare = (amount: number) => Math.floor(amount / 2);
+export const partnerShare = (amount: number) =>
+  new Big(amount).div(2).round(0, Big.roundDown).toNumber();
 
 const isRepayment = (transaction: Transaction) =>
   Boolean(transaction.settlementOf);
@@ -34,12 +37,12 @@ export function splitDebt(
     a.date.localeCompare(b.date),
   );
 
-  const net = unpaid.reduce(
-    (sum, transaction) =>
-      sum +
-      (transaction.memberId === userId ? 1 : -1) *
-        partnerShare(transaction.amount),
-    0,
+  const net = sum(
+    unpaid.map((transaction) => {
+      const share = partnerShare(transaction.amount);
+
+      return transaction.memberId === userId ? share : -share;
+    }),
   );
 
   return { net, unpaid };

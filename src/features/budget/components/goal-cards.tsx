@@ -9,6 +9,7 @@ import {
 } from "@/features/budget/domain/goal-progress";
 import type { Member } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
+import { sum } from "@/lib/decimal";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
 
@@ -212,9 +213,7 @@ export function GoalCards({
         <span className="text-sm text-text-muted">
           Planejado{" "}
           <span className="text-lg font-800 text-text">
-            {displayMoney(
-              rows.reduce((sum, { plan }) => sum + plan.planned, 0),
-            )}
+            {displayMoney(sum(rows.map(({ plan }) => plan.planned)))}
           </span>
         </span>
         <span className="text-sm text-text-muted">

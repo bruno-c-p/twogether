@@ -1,5 +1,7 @@
+import Big from "big.js";
 import { z } from "zod";
 import { localDate, parseAmount } from "@/features/budget/domain/format";
+import { sum } from "@/lib/decimal";
 
 const HEX64 = /^[0-9a-f]{64}$/;
 
@@ -176,12 +178,9 @@ const percentageValueSchema = z
   .number({ error: "Informe um percentual entre 0 e 100." })
   .min(0, { error: "Informe um percentual entre 0 e 100." })
   .max(100, { error: "Informe um percentual entre 0 e 100." })
-  .refine(
-    (value) => Math.abs(value * 100 - Math.round(value * 100)) < 0.000001,
-    {
-      error: "Use no máximo duas casas decimais.",
-    },
-  );
+  .refine((value) => new Big(value).times(100).mod(1).eq(0), {
+    error: "Use no máximo duas casas decimais.",
+  });
 
 export const goalPercentagesSchema = z
   .looseObject({
@@ -195,12 +194,9 @@ export const goalPercentagesSchema = z
     z.infer<typeof goalIdSchema>,
     typeof percentageValueSchema
   >)
-  .refine(
-    (values) =>
-      Math.round(GOAL_IDS.reduce((sum, id) => sum + values[id] * 100, 0)) ===
-      10000,
-    { error: "Os percentuais devem somar 100%." },
-  );
+  .refine((values) => sum(GOAL_IDS.map((id) => values[id])) === 100, {
+    error: "Os percentuais devem somar 100%.",
+  });
 
 export const transactionFormSchema = withGoalRules(
   z

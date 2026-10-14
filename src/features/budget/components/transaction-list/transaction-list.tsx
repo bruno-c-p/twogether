@@ -1,4 +1,5 @@
 import { useRef } from "react";
+import Big from "big.js";
 import { useQueryState } from "nuqs";
 import { Select } from "@/components/ui/select";
 import { Toggle } from "@base-ui/react/toggle";
@@ -95,7 +96,7 @@ function groupByDay(transactions: Transaction[]) {
 
     if (last?.date === t.date) {
       last.items.push(t);
-      last.net += signed;
+      last.net = new Big(last.net).plus(signed).toNumber();
     } else {
       groups.push({ date: t.date, items: [t], net: signed });
     }

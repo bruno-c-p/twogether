@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
+import Big from "big.js";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
 import { cx } from "@/lib/cx";
+import { percentOf } from "@/lib/decimal";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
 
@@ -18,7 +20,7 @@ function percentageLabel(percentage: number | null) {
 function progressWidth(amount: number, planned: number, hidden: boolean) {
   if (hidden) return "0%";
 
-  if (planned > 0) return `${Math.min(100, (amount / planned) * 100)}%`;
+  if (planned > 0) return `${Math.min(100, percentOf(amount, planned))}%`;
 
   return amount > 0 ? "100%" : "0%";
 }
@@ -72,8 +74,8 @@ function BudgetRow({
               )}
             >
               {over
-                ? `${displayMoney(goal.amount - plan.planned)} acima`
-                : `restam ${displayMoney(plan.planned - goal.amount)}`}
+                ? `${displayMoney(new Big(goal.amount).minus(plan.planned).toNumber())} acima`
+                : `restam ${displayMoney(new Big(plan.planned).minus(goal.amount).toNumber())}`}
             </span>
           </span>
         </span>

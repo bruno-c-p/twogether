@@ -1,3 +1,6 @@
+import Big from "big.js";
+import { percentOf, sum } from "@/lib/decimal";
+
 export interface GoalProgress {
   /** Rounded share of the plan already spent, or null when nothing is planned. */
   percent: number | null;
@@ -8,16 +11,19 @@ export interface GoalProgress {
 }
 
 export function goalProgress(amount: number, planned: number): GoalProgress {
-  const over = Math.max(0, amount - planned);
-  const remaining = Math.max(0, planned - amount);
+  const difference = new Big(amount).minus(planned).toNumber();
+  const over = Math.max(0, difference);
+  const remaining = Math.max(0, -difference);
 
   if (planned <= 0) {
     return { percent: null, fill: amount > 0 ? 100 : 0, over, remaining };
   }
 
   return {
-    percent: Math.round((amount / planned) * 100),
-    fill: Math.min(100, (amount / planned) * 100),
+    percent: new Big(percentOf(amount, planned))
+      .round(0, Big.roundHalfUp)
+      .toNumber(),
+    fill: Math.min(100, percentOf(amount, planned)),
     over,
     remaining,
   };
@@ -42,9 +48,9 @@ export function progressText(
 }
 
 export function sumPercentages(values: Array<number | null>) {
-  return (
-    Math.round(values.reduce<number>((sum, v) => sum + (v ?? 0), 0) * 100) / 100
-  );
+  return new Big(sum(values.map((v) => v ?? 0)))
+    .round(2, Big.roundHalfUp)
+    .toNumber();
 }
 
 export function percentLabel(value: number | null) {

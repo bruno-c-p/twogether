@@ -261,6 +261,15 @@ describe("individual goal planning", () => {
       planGoals(monthly, [members[1]]).find((goal) => goal.id === "targets"),
     ).toMatchObject({ id: "targets", planned: 30000, percentage: 10 });
   });
+  it("rounds a half cent up with exact decimal math", () => {
+    // 250 × 64,6% = 161,5 cents; binary floats land just under and round to 161.
+    const member = {
+      ...members[0],
+      percentages: { ...DEFAULT_PERCENTAGES, fixed: 64.6 },
+    };
+
+    expect(planGoals([income("a", 250)], [member])[0].planned).toBe(162);
+  });
   it("keeps each person's share of a goal's plan", () => {
     expect(
       planGoals(monthly, members).find((goal) => goal.id === "targets")?.shares,
