@@ -324,3 +324,69 @@ test("deletes only the selected series from its original occurrence onward and r
       .map((item) => item.id),
   ).toEqual([series[0].id]);
 });
+
+describe("month snapshot", () => {
+  test("carries the month, unpaid splits and later occurrences of its series", async () => {
+    const { store } = ctx;
+    const { a, b } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
+
+    const save = (id: string, date: string, extra: Partial<Transaction> = {}) =>
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...transaction(ana.user.id), id, date, ...extra },
+      });
+
+    await save("august", "2026-08-31");
+    await save("september", "2026-09-01");
+    await save("late-september", "2026-09-30");
+    await save("october", "2026-10-01");
+    await save("open-split", "2026-01-10", { split: {} });
+    await save("paid-split", "2026-02-10", { split: {} });
+    await store.settleSplit(bia.user, bia.householdId, {
+      id: "paid-split",
+      revision: 1,
+      date: "2026-02-11",
+    });
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: {
+        ...transaction(ana.user.id),
+        id: "rent",
+        date: "2026-08-05",
+      },
+      occurrences: 3,
+    });
+
+    // Server-minted ids (series occurrences, repayments) read as their origin.
+    const label = (row: Transaction) =>
+      row.settlementOf
+        ? `repayment-${row.kind}`
+        : row.recurrenceId
+          ? "rent"
+          : row.id;
+
+    const ids = async (month: string) =>
+      (
+        await store.snapshot(ana.user, ana.householdId, month)
+      ).budget.transactions
+        .map((row) => `${label(row)}:${row.date}`)
+        .sort();
+
+    expect(await ids("2026-09")).toEqual([
+      "late-september:2026-09-30",
+      "open-split:2026-01-10",
+      "rent:2026-09-05",
+      "rent:2026-10-05",
+      "september:2026-09-01",
+    ]);
+    expect(await ids("2026-02")).toEqual([
+      "open-split:2026-01-10",
+      "paid-split:2026-02-10",
+      "repayment-expense:2026-02-11",
+      "repayment-income:2026-02-11",
+    ]);
+    expect(
+      (await store.snapshot(ana.user, ana.householdId)).budget.transactions,
+    ).toHaveLength(11);
+  });
+});

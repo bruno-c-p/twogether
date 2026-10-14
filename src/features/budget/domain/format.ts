@@ -24,6 +24,14 @@ export function currentMonth(date = new Date()): string {
   return localDate(date).slice(0, 7);
 }
 
+// "2026-01", -1 → "2025-12".
+export function shiftMonth(month: string, by: number): string {
+  const [year, number] = month.split("-").map(Number);
+  const date = new Date(Date.UTC(year, number - 1 + by, 1));
+
+  return date.toISOString().slice(0, 7);
+}
+
 // Calendar values carry no time zone, so they are read and formatted as
 // UTC: the day or month shown is always the one written, wherever this runs.
 const longMonthFormatter = new Intl.DateTimeFormat("pt-BR", {

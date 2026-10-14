@@ -21,12 +21,15 @@ import { cx } from "@/lib/cx";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
+// `prefetch` starts loading a month as soon as the reader aims at it.
 function MonthGrid({
   month,
   onPick,
+  prefetch,
 }: {
   month: string;
   onPick: (month: string) => void;
+  prefetch: (month: string) => void;
 }) {
   // The year being browsed starts at the picked month's year.
   const { control, setValue } = useForm({
@@ -76,6 +79,9 @@ function MonthGrid({
               type="button"
               aria-label={monthLabel(value)}
               value={value}
+              onPointerEnter={() => prefetch(value)}
+              onPointerDown={() => prefetch(value)}
+              onFocus={() => prefetch(value)}
               onClick={() => {
                 if (value === month) onPick(value);
               }}
@@ -105,12 +111,17 @@ function MonthGrid({
   );
 }
 
+// `pending` while a picked month loads; the current one stays on screen.
 export function MonthFilter({
   month,
   setMonth,
+  prefetch,
+  pending,
 }: {
   month: string;
   setMonth: (month: string) => void;
+  prefetch: (month: string) => void;
+  pending: boolean;
 }) {
   const sheet = useRef<SheetActions>(null);
 
@@ -121,7 +132,8 @@ export function MonthFilter({
       trigger={
         <SheetTrigger
           aria-label={`Selecionar mês e ano: ${monthLabel(month)}`}
-          className={cx(chipTrigger, "capitalize")}
+          aria-busy={pending}
+          className={cx(chipTrigger, "capitalize", pending && "opacity-60")}
         >
           <span aria-hidden="true" className="max-bp620:hidden">
             {monthLabel(month)}
@@ -136,6 +148,7 @@ export function MonthFilter({
       <SheetHeader title="Escolher mês" />
       <MonthGrid
         month={month}
+        prefetch={prefetch}
         onPick={(next) => {
           setMonth(next);
           sheet.current?.close();

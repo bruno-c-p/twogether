@@ -124,21 +124,44 @@ const memberRowSchema = userRowSchema.pick({
   revision: true,
 });
 
+// Without a month, the whole history. With one, that month plus what its
+// screens need from other months: unpaid splits (the debt card) and the later
+// occurrences of the month's series (deleting "this and the following").
+function transactionsQuery(householdId: string, month?: string): InStatement {
+  if (!month)
+    return {
+      sql: "SELECT payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
+      args: [householdId],
+    };
+
+  return {
+    sql: `SELECT payload, revision FROM transactions
+           WHERE household_id = ?1 AND deleted = 0 AND (
+             json_extract(payload, '$.date') BETWEEN ?2 AND ?3
+             OR (json_extract(payload, '$.split') IS NOT NULL
+                 AND json_extract(payload, '$.split.paidAt') IS NULL)
+             OR (json_extract(payload, '$.date') > ?3
+                 AND json_extract(payload, '$.recurrenceId') IN (
+                   SELECT json_extract(payload, '$.recurrenceId') FROM transactions
+                    WHERE household_id = ?1 AND deleted = 0
+                      AND json_extract(payload, '$.date') BETWEEN ?2 AND ?3)))`,
+    args: [householdId, `${month}-01`, `${month}-31`],
+  };
+}
+
 // The middleware already resolved the user and household for this request,
 // so the snapshot reads only the household data, in a single round trip.
 async function snapshot(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
+  month?: string,
 ): Promise<WorkspaceSnapshot> {
   await ctx.ready;
 
   const [transactions, members] = await ctx.db.batch(
     [
-      {
-        sql: "SELECT payload, revision FROM transactions WHERE household_id = ? AND deleted = 0",
-        args: [householdId],
-      },
+      transactionsQuery(householdId, month),
       {
         sql: "SELECT id, name, percentages, revision FROM users WHERE household_id = ? ORDER BY rowid",
         args: [householdId],

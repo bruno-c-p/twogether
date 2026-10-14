@@ -48,11 +48,7 @@ import {
   readDataset,
   type Dataset,
 } from "@/features/break-ui/fixtures";
-import {
-  readSnapshot,
-  resetFixture,
-  setName,
-} from "@/features/break-ui/actions";
+import { resetFixture, setName } from "@/features/break-ui/actions";
 import { workspaceQueryKey } from "@/features/budget/workspace";
 import "@/styles.css";
 import "virtual:uno.css";
@@ -63,12 +59,11 @@ const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false } },
 });
 
-queryClient.setQueryData(workspaceQueryKey, readSnapshot());
-
 const workspaceApi = getRouteApi("/_authenticated/_workspace");
 
 function FixtureAccount() {
-  const budget = useBudget();
+  const { month } = workspaceApi.useSearch();
+  const budget = useBudget(month ?? fixtureMonth);
   const sheet = useRef<SheetActions>(null);
   const { run, busy, error } = useActionRun();
 
@@ -115,8 +110,8 @@ function FixtureAccount() {
 }
 
 function FixtureLayout() {
-  const budget = useBudget();
   const { month } = workspaceApi.useSearch();
+  const budget = useBudget(month ?? fixtureMonth);
 
   return (
     <BudgetWorkspace
