@@ -96,5 +96,13 @@ export default defineConfig({
       "4xl": { fontSize: "44px" },
     },
   }),
+  shortcuts: {
+    // Phone bar slot, shared by the route links and the account tab.
+    "mobile-tab": [
+      "select-none [-webkit-touch-callout:none] flex flex-col items-center justify-center gap-1 min-w-0 min-h-[52px]",
+      "border-0 bg-transparent p-0 cursor-pointer text-xs leading-[1.2] text-center",
+      "rounded-md active:bg-surface-soft",
+    ].join(" "),
+  },
   transformers: [transformerDirectives()],
 });

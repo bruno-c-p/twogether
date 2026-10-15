@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { Plus } from "lucide-react";
@@ -34,65 +35,92 @@ export function DesktopNavigation() {
   );
 }
 
+export function MobileTabContent({
+  active,
+  label,
+  children,
+}: {
+  active: boolean;
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <>
+      <span
+        className={cx(
+          "w-[56px] h-[30px] rounded-full inline-flex items-center justify-center",
+          "motion-safe:transition-colors duration-150 ease-[var(--ease-out)]",
+          active && "bg-hero text-on-hero",
+        )}
+      >
+        {children}
+      </span>
+      <span
+        className={cx(
+          "whitespace-nowrap",
+          active ? "font-700 text-text" : "text-text-muted",
+        )}
+      >
+        {label}
+      </span>
+    </>
+  );
+}
+
 function MobileLink({ item }: { item: (typeof WORKSPACE_NAVIGATION)[number] }) {
   return (
-    <Link
-      to={item.to}
-      activeOptions={activeOptions}
-      className={cx(
-        "select-none [-webkit-touch-callout:none] flex flex-col items-center gap-1 shrink-0 min-h-[48px] min-w-[44px] justify-center rounded-md active:bg-surface-soft py-0.5 text-center text-xs leading-[1.2]",
-      )}
-      activeProps={{ className: "text-green" }}
-      inactiveProps={{ className: "text-text-muted" }}
-    >
+    <Link to={item.to} activeOptions={activeOptions} className="mobile-tab">
       {({ isActive }) => (
-        <>
+        <MobileTabContent
+          active={isActive}
+          label={"mobileLabel" in item ? item.mobileLabel : item.label}
+        >
           <item.icon
             aria-hidden="true"
             size={20}
             strokeWidth={isActive ? 2.2 : 1.8}
           />
-          <span className="whitespace-normal">{item.label}</span>
-        </>
+        </MobileTabContent>
       )}
     </Link>
   );
 }
 
-export function MobileNavigation({ onRegister }: { onRegister: () => void }) {
+export function MobileNavigation({
+  account,
+  onRegister,
+}: {
+  account: ReactNode;
+  onRegister: () => void;
+}) {
   const [first, second, third] = WORKSPACE_NAVIGATION;
 
   return (
     <nav
       aria-label="Navegação mobile"
       className={cx(
-        "hidden max-bp1000:grid grid-cols-[1fr_auto_1fr] fixed bottom-0 inset-x-0 z-30 items-center",
+        "hidden max-bp1000:grid grid-cols-[1fr_1fr_auto_1fr_1fr] fixed bottom-0 inset-x-0 z-30 items-center",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
         "pl-[max(8px,env(safe-area-inset-left,0px))] pr-[max(8px,env(safe-area-inset-right,0px))] pt-2 pb-[max(20px,env(safe-area-inset-bottom,0px))]",
       )}
     >
-      <div className="flex justify-around">
-        <MobileLink item={first} />
-        <MobileLink item={second} />
-      </div>
-      <div className="shrink-0 flex justify-center">
-        <Button
-          variant="unstyled"
-          type="button"
-          aria-label="Registrar transação"
-          onClick={onRegister}
-          className={cx(
-            "w-[48px] h-[48px] rounded-full border-0 cursor-pointer",
-            "bg-green text-on-brand inline-flex items-center justify-center",
-            "shadow-[0_6px_14px_-6px_color-mix(in_srgb,var(--shadow-ink)_55%,transparent)]",
-          )}
-        >
-          <Plus size={22} />
-        </Button>
-      </div>
-      <div className="flex justify-around">
-        <MobileLink item={third} />
-      </div>
+      <MobileLink item={first} />
+      <MobileLink item={second} />
+      <Button
+        variant="unstyled"
+        type="button"
+        aria-label="Registrar transação"
+        onClick={onRegister}
+        className={cx(
+          "mx-2 w-[52px] h-[52px] -translate-y-3 rounded-full border-0 cursor-pointer",
+          "bg-green text-on-brand inline-flex items-center justify-center",
+          "shadow-[0_8px_16px_-6px_color-mix(in_srgb,var(--shadow-ink)_55%,transparent)]",
+        )}
+      >
+        <Plus size={24} />
+      </Button>
+      <MobileLink item={third} />
+      {account}
     </nav>
   );
 }

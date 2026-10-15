@@ -28,7 +28,10 @@ import { useBrowserSync } from "@/lib/use-browser-sync";
 import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { MonthFilter } from "@/features/budget/components/month-filter";
-import { WorkspaceShell } from "@/features/budget/components/workspace-shell";
+import {
+  WorkspaceShell,
+  type AccountPlacement,
+} from "@/features/budget/components/workspace-shell";
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 
 // The layout route renders this only once the URL carries a month.
@@ -50,9 +53,13 @@ export function BudgetApp({ month }: { month: string }) {
       key={`${budget.household.id}:${budget.user.id}`}
       budget={budget}
       month={month}
-      account={
-        <AccountDrawer user={budget.user} members={budget.household.members} />
-      }
+      account={(placement) => (
+        <AccountDrawer
+          placement={placement}
+          user={budget.user}
+          members={budget.household.members}
+        />
+      )}
     />
   );
 }
@@ -72,7 +79,7 @@ export function BudgetWorkspace({
 }: {
   budget: BudgetController;
   month: string;
-  account: ReactNode;
+  account: (placement: AccountPlacement) => ReactNode;
 }) {
   const queryClient = useQueryClient();
   const mutations = useBudgetMutations();

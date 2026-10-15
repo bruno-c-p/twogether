@@ -15,7 +15,10 @@ import {
   retainSearchParams,
   RouterProvider,
 } from "@tanstack/react-router";
+import { UserRound } from "lucide-react";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
+import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
+import { MobileTabContent } from "@/features/budget/components/workspace-navigation";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
@@ -61,7 +64,7 @@ const queryClient = new QueryClient({
 
 const workspaceApi = getRouteApi("/_authenticated/_workspace");
 
-function FixtureAccount() {
+function FixtureAccount({ placement }: { placement: AccountPlacement }) {
   const { month } = workspaceApi.useSearch();
   const budget = useBudget(month ?? fixtureMonth);
   const sheet = useRef<SheetActions>(null);
@@ -85,7 +88,20 @@ function FixtureAccount() {
   });
 
   return (
-    <Sheet actions={sheet} trigger={<SheetTrigger>Conta</SheetTrigger>}>
+    <Sheet
+      actions={sheet}
+      trigger={
+        placement === "header" ? (
+          <SheetTrigger>Conta</SheetTrigger>
+        ) : (
+          <SheetTrigger className="mobile-tab">
+            <MobileTabContent active={false} label="Conta">
+              <UserRound aria-hidden="true" size={20} strokeWidth={1.8} />
+            </MobileTabContent>
+          </SheetTrigger>
+        )
+      }
+    >
       <SheetHeader title="Sua conta" description="Dados isolados de teste" />
       <ThemeToggle />
       <AccountSettingsView
@@ -117,7 +133,7 @@ function FixtureLayout() {
     <BudgetWorkspace
       budget={budget}
       month={month ?? fixtureMonth}
-      account={<FixtureAccount />}
+      account={(placement) => <FixtureAccount placement={placement} />}
     />
   );
 }

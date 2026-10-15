@@ -122,6 +122,9 @@ test.describe("overview and goals", () => {
         page.getByRole("button", { name: "Voltar para este mês" }),
       ).toBeVisible();
       await page.keyboard.press("Escape");
+      await expect(
+        page.getByRole("heading", { name: "Sua conta" }),
+      ).toHaveCount(0);
       await expect(page.getByRole("dialog")).toHaveCount(0);
     }
 
@@ -168,9 +171,24 @@ test.describe("overview and goals", () => {
     await addExpense(page, "Farmácia", "2026-09-02");
 
     const views = [
-      { name: "Visão geral", heading: "Visão geral", path: "/" },
-      { name: "Transações", heading: "Transações", path: "/transacoes" },
-      { name: "Orçamento", heading: "Orçamento", path: "/orcamento" },
+      {
+        name: "Visão geral",
+        mobileName: "Início",
+        heading: "Visão geral",
+        path: "/",
+      },
+      {
+        name: "Transações",
+        mobileName: "Transações",
+        heading: "Transações",
+        path: "/transacoes",
+      },
+      {
+        name: "Orçamento",
+        mobileName: "Orçamento",
+        heading: "Orçamento",
+        path: "/orcamento",
+      },
     ] as const;
 
     for (const item of views) {
@@ -250,13 +268,22 @@ test.describe("overview and goals", () => {
 
       for (const item of views) {
         await nav(page, "mobile")
-          .getByRole("link", { name: item.name })
+          .getByRole("link", { name: item.mobileName })
           .click();
         await expect(page.locator("#main-content h1")).toHaveText(item.heading);
         await expect(
-          nav(page, "mobile").getByRole("link", { name: item.name }),
+          nav(page, "mobile").getByRole("link", { name: item.mobileName }),
         ).toHaveAttribute("aria-current", "page");
       }
+
+      await nav(page, "mobile").getByRole("button", { name: "Conta" }).click();
+      await expect(
+        page.getByRole("heading", { name: "Sua conta" }),
+      ).toBeVisible();
+      await page.keyboard.press("Escape");
+      await expect(
+        page.getByRole("heading", { name: "Sua conta" }),
+      ).toHaveCount(0);
 
       const clearance = await page
         .locator("footer")

@@ -78,7 +78,13 @@ export const WORKSPACE_PATHS = {
 type WorkspacePath = (typeof WORKSPACE_PATHS)[View];
 
 export const WORKSPACE_NAVIGATION = [
-  { to: WORKSPACE_PATHS.overview, label: "Visão geral", icon: LayoutGrid },
+  {
+    to: WORKSPACE_PATHS.overview,
+    label: "Visão geral",
+    // The phone bar fits four tabs and the add button in 320px.
+    mobileLabel: "Início",
+    icon: LayoutGrid,
+  },
   {
     to: WORKSPACE_PATHS.transactions,
     label: "Transações",
@@ -88,6 +94,7 @@ export const WORKSPACE_NAVIGATION = [
 ] as const satisfies {
   to: WorkspacePath;
   label: string;
+  mobileLabel?: string;
   icon: typeof LayoutGrid;
 }[];
 

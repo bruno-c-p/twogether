@@ -9,13 +9,16 @@ import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { Brand } from "@/components/ui/brand";
 import { cx } from "@/lib/cx";
 
+/** The account entry renders as header avatars on desktop and a tab on phones. */
+export type AccountPlacement = "header" | "tab";
+
 export function WorkspaceShell({
   controls,
   account,
   children,
 }: {
   controls: ReactNode;
-  account: ReactNode;
+  account: (placement: AccountPlacement) => ReactNode;
   children: ReactNode;
 }) {
   const { actions } = useWorkspace();
@@ -57,8 +60,8 @@ export function WorkspaceShell({
           >
             {controls}
           </div>
-          <div className="flex items-center gap-2 max-bp1000:order-3">
-            {account}
+          <div className="flex items-center gap-2 max-bp1000:hidden">
+            {account("header")}
           </div>
         </div>
       </header>
@@ -69,7 +72,10 @@ export function WorkspaceShell({
       <div className="max-bp1000:pb-[calc(60px+max(20px,env(safe-area-inset-bottom,0px)))]">
         <AppFooter />
       </div>
-      <MobileNavigation onRegister={() => actions.openTransaction(null)} />
+      <MobileNavigation
+        account={account("tab")}
+        onRegister={() => actions.openTransaction(null)}
+      />
       <TransactionFlows />
     </div>
   );
