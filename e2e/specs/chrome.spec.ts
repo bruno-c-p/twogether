@@ -126,7 +126,7 @@ test.describe("chrome", () => {
     await expect(page.getByRole("group", { name: "Aparência" })).toBeHidden();
 
     await withMobile(page, async () => {
-      await page.getByRole("button", { name: /Abrir nosso espaço/ }).click();
+      await nav(page, "mobile").getByRole("button", { name: "Conta" }).click();
       await expect(
         page.getByRole("group", { name: "Aparência" }),
       ).toBeVisible();

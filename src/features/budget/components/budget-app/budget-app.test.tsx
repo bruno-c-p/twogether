@@ -39,7 +39,7 @@ function Layout({ controller }: { controller: BudgetController }) {
     <BudgetWorkspace
       budget={controller}
       month={month}
-      account={<span>conta</span>}
+      account={(placement) => <span>conta {placement}</span>}
     />
   );
 }
@@ -61,7 +61,8 @@ describe("BudgetWorkspace", () => {
       screen.getByRole("heading", { level: 1, name: "Visão geral" }),
     ).toBeTruthy();
     expect(screen.getByText(/Sobra de\s+setembro/)).toBeTruthy();
-    expect(screen.getByText("conta")).toBeTruthy();
+    expect(screen.getByText("conta header")).toBeTruthy();
+    expect(screen.getByText("conta tab")).toBeTruthy();
     expect(screen.getByRole("button", { name: "Editar Mercado" })).toBeTruthy();
   });
 

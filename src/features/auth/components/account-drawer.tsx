@@ -11,12 +11,16 @@ import {
 } from "@/components/ui/sheet";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import { PersonAvatar } from "@/components/ui/person-avatar";
+import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
+import { MobileTabContent } from "@/features/budget/components/workspace-navigation";
 import { cx } from "@/lib/cx";
 
 export function AccountDrawer({
+  placement,
   user,
   members,
 }: {
+  placement: AccountPlacement;
   user: Member;
   members: Member[];
 }) {
@@ -34,24 +38,27 @@ export function AccountDrawer({
     <Sheet
       actions={sheet}
       trigger={
-        <SheetTrigger
-          aria-label={`Abrir nosso espaço: ${memberLabel}`}
-          title={`Nosso espaço: ${memberLabel}`}
-          className="flex items-center pl-2 border-0 bg-transparent p-0 cursor-pointer"
-        >
-          {members.slice(0, 2).map((member, index) => (
-            <PersonAvatar
-              key={member.id}
-              aria-hidden="true"
-              name={member.name}
-              position={index}
-              className={cx(
-                "w-[32px] h-[32px] text-xs border-2 border-solid border-page",
-                index > 0 && "-ml-2",
-              )}
+        placement === "header" ? (
+          <SheetTrigger
+            aria-label={`Abrir nosso espaço: ${memberLabel}`}
+            title={`Nosso espaço: ${memberLabel}`}
+            className="flex items-center pl-2 border-0 bg-transparent p-0 cursor-pointer"
+          >
+            <MemberAvatars
+              members={members}
+              className="w-[32px] h-[32px] text-xs border-2 border-page"
             />
-          ))}
-        </SheetTrigger>
+          </SheetTrigger>
+        ) : (
+          <SheetTrigger className="mobile-tab">
+            <MobileTabContent active={false} label="Conta">
+              <MemberAvatars
+                members={members}
+                className="w-[22px] h-[22px] text-xs border-2 border-mobile-nav"
+              />
+            </MobileTabContent>
+          </SheetTrigger>
+        )
       }
     >
       <SheetHeader
@@ -70,5 +77,27 @@ export function AccountDrawer({
       </Panel>
       <AccountSettings user={user} members={members} onManage={manage} />
     </Sheet>
+  );
+}
+
+function MemberAvatars({
+  members,
+  className,
+}: {
+  members: Member[];
+  className: string;
+}) {
+  return (
+    <span className="flex items-center">
+      {members.slice(0, 2).map((member, index) => (
+        <PersonAvatar
+          key={member.id}
+          aria-hidden="true"
+          name={member.name}
+          position={index}
+          className={cx("border-solid", className, index > 0 && "-ml-2")}
+        />
+      ))}
+    </span>
   );
 }
