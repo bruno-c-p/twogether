@@ -93,7 +93,9 @@ test.describe("auth", () => {
     await expect(totals.getByText("Entradas")).toBeVisible();
     await expect(totals.getByText("Saídas")).toBeVisible();
     await expect(page.getByText("Nenhuma transação neste mês.")).toBeVisible();
-    await expect(page.getByText("30%").first()).toBeVisible();
+    await expect(
+      page.getByText("Nenhuma conta dividida neste mês."),
+    ).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);
     expect(
       urls.some((url) => url.includes("_serverFn") || url.includes("serverFn")),

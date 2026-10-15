@@ -197,7 +197,7 @@ test.describe("overview and goals", () => {
       page.getByRole("region", { name: "Acerto entre vocês" }),
     ).toBeVisible();
     await expect(
-      page.getByRole("heading", { name: "Orçamento do mês" }),
+      page.getByRole("heading", { name: "Contas da casa" }),
     ).toBeVisible();
     await expect(
       page.getByRole("heading", { name: "Últimas transações" }),

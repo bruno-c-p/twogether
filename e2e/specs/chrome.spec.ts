@@ -44,6 +44,8 @@ test.describe("chrome", () => {
     await page.getByRole("button", { name: "Ocultar valores" }).click();
     await expect(page.getByText("R$ ••••").first()).toBeVisible();
 
+    await openView(page, "Orçamento");
+
     const barWidth = await page
       .getByRole("link", { name: /Custo fixo:/ })
       .evaluate((card) => {
@@ -56,6 +58,7 @@ test.describe("chrome", () => {
 
     expect(barWidth).toBe("0%");
     expect(new URL(page.url()).search).not.toMatch(/hidden/);
+    await openView(page, "Visão geral");
 
     await page.getByRole("button", { name: "Mostrar valores" }).click();
     await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();

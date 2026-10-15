@@ -1,5 +1,5 @@
 import { BalanceCard } from "@/features/budget/components/balance-card";
-import { BudgetCard } from "@/features/budget/components/budget-card";
+import { HouseholdBillsCard } from "@/features/budget/components/household-bills-card";
 import { LatestTransactionsCard } from "@/features/budget/components/latest-transactions-card";
 import { MonthTotalsCard } from "@/features/budget/components/month-totals-card";
 import { SplitDebtCard } from "@/features/budget/components/split-debt-card";
@@ -51,14 +51,10 @@ export function OverviewScreen() {
             )}
           </div>
         </div>
-        <BudgetCard
-          summary={data.summary}
-          plans={data.plans}
+        <HouseholdBillsCard
+          transactions={data.monthly}
           hidden={hidden}
           displayMoney={displayMoney}
-          canEdit={data.canEditPercentages}
-          busy={busy}
-          onEditPercentages={actions.openPercentages}
         />
         <LatestTransactionsCard
           transactions={data.monthly}
