@@ -30,7 +30,9 @@ export function TransactionsScreen() {
               query={filters.query}
               setQuery={filters.setQuery}
             />
+            {/* Below bp1000 the mobile nav's + button adds instead. */}
             <Button
+              className="max-bp1000:!hidden"
               disabled={busy}
               onClick={() => actions.openTransaction(null)}
             >

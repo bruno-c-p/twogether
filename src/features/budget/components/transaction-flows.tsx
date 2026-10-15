@@ -55,6 +55,10 @@ export function TransactionFlows() {
           onSave={actions.save}
           onSettle={actions.openSettle}
           onUnsettle={actions.unsettle}
+          onDelete={(transaction) => {
+            dialogs.setTransaction(null);
+            void actions.remove(transaction);
+          }}
           onClose={() => dialogs.setTransaction(null)}
         />
       )}

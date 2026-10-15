@@ -82,7 +82,9 @@ describe("TransactionList", () => {
     expect(screen.getByText("12 set · sábado")).toBeTruthy();
     expect(screen.getByText("10 set · quinta")).toBeTruthy();
     expect(screen.getByText("05 set · sábado")).toBeTruthy();
-    expect(screen.getByText("Receita")).toBeTruthy();
+    // The goal renders once for the phone line and once for the desktop
+    // column; CSS shows one of them, jsdom sees both.
+    expect(screen.getAllByText("Receita")).toHaveLength(2);
     expect(screen.getAllByText(/\+\sR\$\s5\.000,00/)).toHaveLength(2);
     expect(screen.getAllByText(/−\sR\$\s45,90/)).toHaveLength(4);
   });

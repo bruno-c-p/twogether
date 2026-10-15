@@ -11,6 +11,8 @@ import {
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
+import { onTestFinished } from "vitest";
+import { defaultRateLimit } from "nuqs";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
@@ -86,6 +88,17 @@ export async function renderWithProviders(ui: ReactNode, path = "/") {
   });
 
   const user = userEvent.setup();
+
+  // nuqs writes the URL on a throttle timer, at most one rate-limit window
+  // after its last flush. Waiting that window out lets a write queued at the
+  // end of a test land while jsdom's `location` still exists, instead of
+  // firing after the environment is torn down.
+  onTestFinished(
+    () =>
+      new Promise((resolve) =>
+        setTimeout(resolve, defaultRateLimit.timeMs + 10),
+      ),
+  );
 
   const view = render(
     <QueryClientProvider client={queryClient}>

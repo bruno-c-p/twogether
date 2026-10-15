@@ -1,6 +1,7 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
+import { REPAYMENT_LOCK, deleteLock } from "@/features/budget/domain/view";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
@@ -23,16 +24,6 @@ function splitLabel(t: Transaction, userId: string) {
   return t.memberId === userId ? "dividida · a receber" : "dividida · a pagar";
 }
 
-const REPAYMENT_LOCK = "reembolso: desmarque o pagamento na transação original";
-
-// Repayments are edited through the original split; a paid split must be
-// unmarked before it can be deleted.
-function deleteLock(t: Transaction) {
-  if (t.settlementOf) return REPAYMENT_LOCK;
-
-  return t.split?.paidAt ? "desmarque o pagamento antes" : "";
-}
-
 function withLock(label: string, lock: string) {
   return lock ? `${label} (${lock})` : label;
 }
@@ -52,11 +43,41 @@ function PayerAvatar({
       title={name ?? "Pessoa do casal"}
       name={name}
       position={index}
-      className="w-[26px] h-[26px] text-xs max-bp1000:row-span-2 max-bp620:row-span-1"
+      className="w-[32px] h-[32px] text-xs"
     />
   );
 }
 
+// The goal with its color; `suffix` joins the same truncating line.
+function GoalLabel({
+  transaction,
+  suffix = "",
+}: {
+  transaction: Transaction;
+  suffix?: string;
+}) {
+  const goal = GOALS.find((g) => g.id === transaction.goal);
+
+  return (
+    <>
+      <ColorDot
+        className="w-[7px] h-[7px]"
+        style={{ background: goal?.color ?? "var(--brand)" }}
+      />
+      <span className="truncate">
+        {goal?.name ?? "Receita"}
+        {suffix && ` · ${suffix}`}
+      </span>
+    </>
+  );
+}
+
+/**
+ * Phones: two lines (description, then goal and split status) with the
+ * amount on the right; the whole row opens the edit dialog, which is also
+ * where delete lives. From bp1000 the row spreads into columns and keeps
+ * the edit and delete icons.
+ */
 export function TransactionRow({
   transaction,
   members,
@@ -75,81 +96,75 @@ export function TransactionRow({
   onDelete: (transaction: Transaction) => void;
 }) {
   const t = transaction;
-  const goal = GOALS.find((g) => g.id === t.goal);
   const status = splitLabel(t, userId);
   const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
   const removeLock = deleteLock(t);
 
   return (
-    <div
+    <li
       className={cx(
-        "grid items-center gap-x-4 px-6 py-3 border-0 border-t border-solid border-border",
-        "grid-cols-[26px_minmax(0,1fr)_210px_130px_64px]",
-        "max-bp1000:grid-cols-[26px_minmax(0,1fr)_auto] max-bp1000:gap-y-0.5 max-bp1000:px-4 max-bp620:gap-y-2",
+        "relative grid items-center gap-x-3 min-h-[62px] px-4 py-2.5 @hover:bg-surface-2 active:bg-surface-2",
+        "grid-cols-[32px_minmax(0,1fr)_auto] bp1000:grid-cols-[32px_minmax(0,1fr)_200px_150px_68px] bp1000:min-h-[56px]",
+        "[&+&]:before:content-[''] [&+&]:before:absolute [&+&]:before:top-0 [&+&]:before:left-[60px] [&+&]:before:right-0 [&+&]:before:h-px [&+&]:before:bg-border",
       )}
     >
       <PayerAvatar members={members} memberId={t.memberId} />
-      <div className="min-w-0 flex items-baseline gap-2 flex-wrap max-bp620:col-span-2">
+      <div className="min-w-0 grid gap-0.5 bp1000:flex bp1000:items-baseline bp1000:gap-2">
+        {/* Stretched over the whole row, so any tap on it edits. The global
+            press scale would make the button the ::after's containing block,
+            shrinking the target mid-press, so this button does not scale. */}
         <Button
           variant="unstyled"
-          className="border-0 bg-transparent p-0 text-left text-md text-text min-w-0 break-words disabled:cursor-default"
+          className={cx(
+            "block max-w-full truncate border-0 bg-transparent p-0 text-left text-md font-500 text-text",
+            "after:content-[''] after:absolute after:inset-0 active:![transform:none] disabled:opacity-100 disabled:cursor-default",
+          )}
           disabled={busy || Boolean(editLock)}
           title={editLock || undefined}
           onClick={() => onEdit(t)}
         >
           {t.description}
         </Button>
-        {status && <span className="text-xs text-text-muted">{status}</span>}
-      </div>
-      <div
-        className={cx(
-          "contents text-sm text-text-muted",
-          "max-bp1000:col-start-2 max-bp1000:row-start-2 max-bp1000:flex max-bp1000:flex-wrap max-bp1000:items-center max-bp1000:gap-x-1.5 max-bp1000:min-w-0 max-bp620:col-span-2",
-        )}
-      >
-        {goal ? (
-          <span className="inline-flex items-center gap-2 min-w-0 text-text max-bp1000:text-text-muted">
-            <ColorDot
-              className="w-[7px] h-[7px]"
-              style={{ background: goal.color }}
-            />
-            <span className="break-words min-w-0">{goal.name}</span>
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-2 min-w-0 text-text max-bp1000:text-text-muted">
-            <ColorDot className="bg-brand" />
-            Receita
+        {status && (
+          <span className="hidden bp1000:inline shrink-0 text-xs text-text-muted">
+            {status}
           </span>
         )}
+        <span className="flex items-center gap-1.5 min-w-0 text-xs text-text-muted bp1000:hidden">
+          <GoalLabel transaction={t} suffix={status} />
+        </span>
       </div>
+      <span className="hidden bp1000:flex items-center gap-2 min-w-0 text-sm text-text">
+        <GoalLabel transaction={t} />
+      </span>
       <span
         className={cx(
-          "text-right text-md font-600 whitespace-nowrap tabular-nums text-text",
-          "max-bp1000:col-start-3 max-bp1000:row-start-1 max-bp1000:text-md max-bp620:col-start-2 max-bp620:row-start-3 max-bp620:text-left",
+          "text-md font-600 whitespace-nowrap tabular-nums bp1000:text-right",
+          t.kind === "income" && !hidden ? "text-positive" : "text-text",
         )}
       >
         {amountLabel(t, hidden)}
       </span>
-      <div className="flex justify-end gap-2 max-bp1000:col-start-3 max-bp1000:row-start-2 max-bp620:row-start-3">
+      <div className="relative hidden bp1000:flex justify-end gap-1">
         <Button
           variant="icon"
-          className="w-[28px] h-[28px] text-text-muted max-bp1000:hidden"
+          className="text-text-muted"
           disabled={busy || Boolean(editLock)}
           aria-label={withLock(`Editar ${t.description}`, editLock)}
           onClick={() => onEdit(t)}
         >
-          <Pencil size={14} />
+          <Pencil size={15} />
         </Button>
         <Button
           variant="icon"
-          className="w-[28px] h-[28px] text-text-muted @hover:text-danger"
+          className="text-text-muted @hover:text-danger"
           disabled={busy || Boolean(removeLock)}
           aria-label={withLock(`Excluir ${t.description}`, removeLock)}
           onClick={() => onDelete(t)}
         >
-          <Trash2 size={14} />
+          <Trash2 size={15} />
         </Button>
       </div>
-    </div>
+    </li>
   );
 }

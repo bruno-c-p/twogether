@@ -21,6 +21,7 @@ function setup({
   >(() => Promise.resolve());
 
   const onClose = vi.fn();
+  const onDelete = vi.fn();
 
   const view = renderPlain(
     <TransactionDialog
@@ -34,11 +35,12 @@ function setup({
       onSave={onSave}
       onSettle={onSettle}
       onUnsettle={onUnsettle}
+      onDelete={onDelete}
       onClose={onClose}
     />,
   );
 
-  return { ...view, onSave, onClose, onSettle, onUnsettle };
+  return { ...view, onSave, onClose, onSettle, onUnsettle, onDelete };
 }
 
 describe("TransactionDialog", () => {
@@ -196,6 +198,35 @@ describe("TransactionDialog", () => {
       screen.getByRole("button", { name: "Desmarcar pagamento" }),
     );
     expect(onUnsettle).toHaveBeenCalledWith(editing);
+  });
+
+  test("editing offers delete; a new transaction does not", async () => {
+    const editing = transaction({ id: "t9", description: "Feira" });
+    const { screen, user, onDelete } = setup({ editing });
+
+    await user.click(screen.getByRole("button", { name: "Excluir transação" }));
+    expect(onDelete).toHaveBeenCalledWith(editing);
+
+    const blank = setup();
+
+    expect(
+      blank.screen.queryByRole("button", { name: "Excluir transação" }),
+    ).toBeNull();
+  });
+
+  test("a paid split cannot be deleted until it is unmarked", () => {
+    const { screen } = setup({
+      editing: transaction({
+        memberId: "ana",
+        split: { paidAt: "2026-09-12T12:00:00.000Z" },
+      }),
+      currentUserId: "bia",
+    });
+
+    const remove = screen.getByRole("button", { name: "Excluir transação" });
+
+    expect(remove.hasAttribute("disabled")).toBe(true);
+    expect(remove.getAttribute("aria-describedby")).toBe("delete-lock");
   });
 
   test("income cannot be split", async () => {

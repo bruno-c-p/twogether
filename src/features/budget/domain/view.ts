@@ -30,3 +30,14 @@ export function matchesKind(
 
   return transaction.kind === kind;
 }
+
+export const REPAYMENT_LOCK =
+  "reembolso: desmarque o pagamento na transação original";
+
+// Repayments are edited through the original split; a paid split must be
+// unmarked before it can be deleted.
+export function deleteLock(t: Transaction) {
+  if (t.settlementOf) return REPAYMENT_LOCK;
+
+  return t.split?.paidAt ? "desmarque o pagamento antes" : "";
+}
