@@ -149,9 +149,14 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
   const { goalFilter, kindFilter } = filters;
 
   return (
-    <div className="flex items-center gap-2 flex-wrap mb-4">
+    <div
+      className={cx(
+        "flex items-center gap-2 flex-wrap mb-4",
+        "max-bp1000:flex-nowrap max-bp1000:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+      )}
+    >
       <ToggleGroup
-        className="flex items-center gap-2 flex-wrap"
+        className="flex items-center gap-2 flex-wrap max-bp1000:flex-nowrap"
         aria-label="Tipo de transação"
         value={[kindFilter]}
         onValueChange={(values) => {
@@ -165,7 +170,7 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
             key={chip.value}
             value={chip.value}
             className={cx(
-              "px-4 py-2 rounded-full border border-solid text-sm",
+              "px-4 py-2 rounded-full border border-solid text-sm whitespace-nowrap",
               kindFilter === chip.value
                 ? "bg-green text-on-brand border-green"
                 : "bg-surface text-text border-border @hover:bg-surface-soft",
@@ -184,7 +189,7 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
           ...GOALS.map((goal) => ({ value: goal.id, label: goal.name })),
         ]}
         className={cx(
-          "px-4 py-2 rounded-full border border-solid text-sm cursor-pointer",
+          "px-4 py-2 rounded-full border border-solid text-sm cursor-pointer shrink-0 whitespace-nowrap",
           goalFilter === "all"
             ? "bg-surface text-text border-border @hover:bg-surface-soft"
             : "bg-green text-on-brand border-green",
@@ -274,29 +279,35 @@ function TransactionPages({
   }
 
   return (
-    <div ref={list}>
+    <div ref={list} className="grid gap-5 bp1000:gap-6">
       {groups.map((group) => (
-        <div key={group.date}>
-          <div className="flex items-center justify-between gap-3 px-6 max-bp1000:px-4 py-2 bg-surface-soft border-0 border-t border-solid border-border first:border-t-0 text-xs">
-            <time dateTime={group.date} className="font-500">
+        <section key={group.date} aria-labelledby={`day-${group.date}`}>
+          <div className="flex items-baseline justify-between gap-3 px-1 pb-2 text-xs">
+            <time
+              id={`day-${group.date}`}
+              dateTime={group.date}
+              className="font-600"
+            >
               {dayLabel(group.date)}
             </time>
             <span
-              className="text-text-muted"
+              className="text-text-muted tabular-nums"
               title="Total do dia nos resultados filtrados"
             >
               {netLabel(group.net, row.hidden)}
             </span>
           </div>
-          {group.items.map((t) => (
-            <TransactionRow key={t.id} transaction={t} {...row} />
-          ))}
-        </div>
+          <ul className="m-0 p-0 list-none rounded-lg bg-surface overflow-clip">
+            {group.items.map((t) => (
+              <TransactionRow key={t.id} transaction={t} {...row} />
+            ))}
+          </ul>
+        </section>
       ))}
       {pages > 1 && (
         <nav
           aria-label="Páginas de transações"
-          className="flex items-center justify-between flex-wrap gap-3 p-4 border-0 border-t border-solid border-border"
+          className="flex items-center justify-between flex-wrap gap-3 px-1"
         >
           <p
             aria-live="polite"
@@ -337,13 +348,13 @@ export function TransactionList({
   return (
     <section aria-label="Transações do mês">
       <FilterBar filters={filters} />
-      <div className="rounded-lg border border-solid border-border bg-surface overflow-clip">
-        {filtered.length ? (
-          <TransactionPages transactions={filtered} {...row} />
-        ) : (
+      {filtered.length ? (
+        <TransactionPages transactions={filtered} {...row} />
+      ) : (
+        <div className="rounded-lg bg-surface overflow-clip">
           <NoTransactions filters={filters} onAdd={onAdd} />
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 }

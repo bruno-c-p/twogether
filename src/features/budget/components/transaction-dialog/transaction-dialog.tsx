@@ -2,13 +2,14 @@ import { Form as BaseForm } from "@base-ui/react/form";
 import { Input } from "@/components/ui/input";
 import type { FormEvent, ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import {
   formatAmountInput,
   newId,
   parseAmount,
 } from "@/features/budget/domain/format";
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
+import { deleteLock } from "@/features/budget/domain/view";
 import { fieldErrors } from "@/lib/zod-errors";
 import type {
   GoalId,
@@ -53,6 +54,7 @@ interface Props {
   onSave: (transaction: Transaction, occurrences?: number) => Promise<void>;
   onSettle: (transaction: Transaction) => void;
   onUnsettle: (transaction: Transaction) => Promise<void>;
+  onDelete: (transaction: Transaction) => void;
   onClose: () => void;
 }
 
@@ -233,7 +235,6 @@ function useTransactionForm({
 
 type TransactionFormState = ReturnType<typeof useTransactionForm>;
 
-
 function AmountInput({ form }: { form: TransactionFormState }) {
   const field = form.register("amount");
 
@@ -367,6 +368,36 @@ function SplitSection({
   );
 }
 
+// On phones the list has no delete icon, so the dialog is where it lives.
+function DeleteButton({
+  transaction,
+  onDelete,
+}: {
+  transaction: Transaction;
+  onDelete: (transaction: Transaction) => void;
+}) {
+  const lock = deleteLock(transaction);
+
+  return (
+    <div className="grid gap-1.5 mt-2">
+      <Button
+        variant="unstyled"
+        className="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-md border-0 bg-danger-soft text-danger text-sm font-600"
+        disabled={Boolean(lock)}
+        aria-describedby={lock ? "delete-lock" : undefined}
+        onClick={() => onDelete(transaction)}
+      >
+        <Trash2 size={16} /> Excluir transação
+      </Button>
+      {lock && (
+        <FieldHint id="delete-lock">
+          Para excluir: {lock}.
+        </FieldHint>
+      )}
+    </div>
+  );
+}
+
 function ClassificationFields({
   form,
   transaction,
@@ -409,6 +440,7 @@ export function TransactionDialog({
   onSave,
   onSettle,
   onUnsettle,
+  onDelete,
   onClose,
 }: Props) {
   const form = useTransactionForm({
@@ -456,6 +488,9 @@ export function TransactionDialog({
             />
             {serverError && <FormError>{serverError}</FormError>}
             <AuditHint transaction={transaction} members={members} />
+            {transaction && (
+              <DeleteButton transaction={transaction} onDelete={onDelete} />
+            )}
             <DialogFooter>
               <DialogDismiss>Cancelar</DialogDismiss>
               <Button type="submit">
