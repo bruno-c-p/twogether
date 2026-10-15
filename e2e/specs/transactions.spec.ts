@@ -63,7 +63,10 @@ test.describe("transactions", () => {
     const list = page.getByRole("region", { name: "Transações do mês" });
     await expect(list.getByTitle("Ana").first()).toBeVisible();
     await expect(
-      list.locator("span").getByText("Custo fixo", { exact: true }),
+      list
+        .locator("span")
+        .getByText("Custo fixo", { exact: true })
+        .filter({ visible: true }),
     ).toBeVisible();
 
     await openView(page, "Visão geral");
@@ -78,19 +81,13 @@ test.describe("transactions", () => {
     await openView(page, "Transações");
 
     await withMobile(page, async () => {
-      await page
-        .getByRole("button", { name: "Adicionar transação" })
-        .first()
-        .click();
+      await page.getByRole("button", { name: "Registrar transação" }).click();
       const mobileDialog = page.getByRole("dialog", { name: "Nova transação" });
       await expect(mobileDialog).toBeVisible();
       await page.keyboard.press("Escape");
       await expect(mobileDialog).toHaveCount(0);
 
-      await page
-        .getByRole("button", { name: "Adicionar transação" })
-        .first()
-        .click();
+      await page.getByRole("button", { name: "Registrar transação" }).click();
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
       ).toBeVisible();
