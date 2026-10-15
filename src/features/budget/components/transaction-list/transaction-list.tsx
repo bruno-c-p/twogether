@@ -153,6 +153,11 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
       className={cx(
         "flex items-center gap-2 flex-wrap mb-4",
         "max-bp1000:flex-nowrap max-bp1000:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+        // Bleed past main's side padding (src/styles.css) so chips run off
+        // the screen edge and the row reads as scrollable.
+        "max-bp1000:mx-[-28px] max-bp1000:px-[28px]",
+        "max-bp800:mx-[-22px] max-bp800:px-[22px]",
+        "max-bp620:mx-[-19px] max-bp620:px-[19px]",
       )}
     >
       <ToggleGroup
