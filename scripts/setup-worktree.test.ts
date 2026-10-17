@@ -83,6 +83,12 @@ describe("setupRefusal", () => {
     expect(message).not.toContain("delete");
   });
 
+  test("refuses when git cannot tell a worktree from the main checkout", () => {
+    expect(refusal({ isMainCheckout: undefined })).toContain(
+      "`git rev-parse` failed",
+    );
+  });
+
   test("refuses the main checkout before touching its real .env.local", () => {
     expect(refusal({ isMainCheckout: true, localEnvIsFile: true })).toContain(
       "setup is for worktrees only",

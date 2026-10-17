@@ -16,7 +16,7 @@ const LOCAL_DATABASE = /^(?::memory:|file:[^$`]*|[^:$`]*)$/;
 const DATABASE_KEYS = new Set(["TURSO_DATABASE_URL", "BUDGET_DATABASE_PATH"]);
 
 export type SetupState = {
-  isMainCheckout: boolean;
+  isMainCheckout: boolean | undefined;
   source: string;
   sourceIsLocalEnv: boolean;
   sourceContents: string | undefined;
@@ -42,6 +42,9 @@ export function setupRefusal({
   sourceContents,
   localEnvIsFile,
 }: SetupState): string | undefined {
+  if (isMainCheckout === undefined)
+    return "`git rev-parse` failed, so setup cannot tell a worktree from the main checkout. Run it from inside a git worktree of this repository.";
+
   if (isMainCheckout)
     return "setup is for worktrees only. This is the main checkout, where .env.local is your real env; run setup in a worktree instead.";
 
@@ -89,23 +92,22 @@ if (import.meta.main) {
   process.chdir(join(import.meta.dir, ".."));
   const localEnv = lstatSync(".env.local", { throwIfNoEntry: false });
 
-  const [gitDir, gitCommonDir] = Bun.spawnSync([
+  const git = Bun.spawnSync([
     "git",
     "rev-parse",
     "--path-format=absolute",
     "--git-dir",
     "--git-common-dir",
-  ])
-    .stdout.toString()
-    .trim()
-    .split("\n");
+  ]);
+
+  const [gitDir, gitCommonDir] = git.stdout.toString().trim().split("\n");
 
   const sourceLocation = existsSync(dirname(source))
     ? join(realpathSync(dirname(source)), basename(source))
     : source;
 
   const refusal = setupRefusal({
-    isMainCheckout: gitDir === gitCommonDir,
+    isMainCheckout: git.exitCode === 0 ? gitDir === gitCommonDir : undefined,
     source,
     sourceIsLocalEnv: sourceLocation === join(realpathSync("."), ".env.local"),
     sourceContents: existsSync(source)
@@ -122,8 +124,10 @@ if (import.meta.main) {
   run(["bun", "install", "--frozen-lockfile"]);
 
   if (localEnv) unlinkSync(".env.local");
-  symlinkSync(realpathSync(source), ".env.local");
+  const target = realpathSync(source);
+
+  symlinkSync(target, ".env.local");
   run(["bunx", "playwright", "install", "chromium"]);
   run(["bun", "scripts/check-env.ts"]);
-  console.log(`setup: ready, .env.local -> ${source}`);
+  console.log(`setup: ready, .env.local -> ${target}`);
 }
