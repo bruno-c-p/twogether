@@ -1,25 +1,42 @@
-import { redirect } from "@tanstack/react-router";
+import { isRedirect, redirect } from "@tanstack/react-router";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { createMiddleware } from "@tanstack/react-start";
-import { getRequest, getRequestIP } from "@tanstack/react-start/server";
+import {
+  getRequest,
+  getRequestIP,
+  setResponseStatus,
+} from "@tanstack/react-start/server";
+import { reportError } from "@/lib/errors";
 import { assertWritable, householdActor } from "@/server/actor.server";
 import { rememberRetryAfter } from "@/server/rate-limit.server";
 import { getStore } from "@/server/store.server";
 import type { UserRow } from "@/server/db.server";
 import {
-  RATE_LIMITED_MESSAGE,
+  errorForLogs,
   RequestError,
-  throwHttpError,
+  UNEXPECTED_MESSAGE,
 } from "@/server/request-error";
 
-// Global and outermost: store errors reach the client as HTTP errors with a
-// safe message, whatever middleware or handler threw them.
+// Global and outermost: the one place a RequestError becomes an HTTP status
+// and a client-safe message. Everything below it throws and lets it propagate.
 export const errorMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {
     try {
       return await next();
     } catch (cause) {
-      throwHttpError(cause);
+      if (isRedirect(cause)) throw cause;
+
+      if (cause instanceof RequestError) {
+        setResponseStatus(cause.status);
+
+        if (cause.retryAfterSeconds !== undefined)
+          rememberRetryAfter(getRequest(), cause.retryAfterSeconds);
+
+        throw new Error(cause.message);
+      }
+
+      reportError(errorForLogs(cause), { context: "Server function failed" });
+      throw new Error(UNEXPECTED_MESSAGE);
     }
   },
 );
@@ -31,10 +48,7 @@ export const rateLimitMiddleware = createMiddleware({
   const { userId } = await auth();
   const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
 
-  assertWritable(key, (retryAfterSeconds) => {
-    rememberRetryAfter(getRequest(), retryAfterSeconds);
-    throwHttpError(new RequestError(RATE_LIMITED_MESSAGE, 429));
-  });
+  assertWritable(key);
 
   return next();
 });
@@ -64,9 +78,7 @@ export const optionalAuthMiddleware = createMiddleware({
 export const householdMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    const { householdId } = householdActor(context.user, (message) =>
-      throwHttpError(new RequestError(message)),
-    );
+    const { householdId } = householdActor(context.user);
 
     return next({ context: { householdId } });
   });

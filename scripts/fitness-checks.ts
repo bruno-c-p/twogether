@@ -368,9 +368,29 @@ export function domainBaselineGrowth(
   );
 }
 
+// A name ban, not a full guard: errorMiddleware alone turns a RequestError
+// into an HTTP status, and an inner layer that calls setResponseStatus is the
+// shape the bug took. Rethrowing a plain Error below it slips past this.
+const HTTP_STATUS_OWNER = "src/server/middleware.ts";
+
+export function httpStatusBoundary(repo: Repo) {
+  return repo
+    .tracked(["src"])
+    .filter(
+      (file) =>
+        file !== HTTP_STATUS_OWNER &&
+        /\bsetResponseStatus\b/.test(repo.read(file)),
+    )
+    .map(
+      (file) =>
+        `${file} mentions setResponseStatus; only errorMiddleware in ${HTTP_STATUS_OWNER} may, so throw a RequestError instead`,
+    );
+}
+
 export function sourceChecks(repo: Repo) {
   return [
     ...noGithubMedia(repo),
+    ...httpStatusBoundary(repo),
     ...noBudgetCommandBus(repo),
     ...cacheControlSource(repo),
     ...cssHouseStyle(repo),
