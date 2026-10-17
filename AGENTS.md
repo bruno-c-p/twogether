@@ -171,6 +171,26 @@
   imports (e.g., TanStack Router's `src/routeTree.gen.ts`). Do not edit them
   to force the alias.
 
+## Import boundaries
+
+- The zone graph lives in `boundaries` in `.fallowrc.json`. Code outside
+  `src/features/<name>/` reaches a feature only through its `index.ts`;
+  `src/server`, `src/lib` and `src/components` never import features;
+  `domain/` imports only `src/lib`. `bun run fallow` enforces it.
+- `oxlint.config.ts` keeps `domain/` free of React, TanStack, server modules
+  and `node:*`, and keeps components and hooks off `*.server` and
+  `@/server/**`.
+- A fallow failure reads
+  `boundary-violation:<file>:<line>:<file> -> <target> (<from zone> -> <to zone>)`.
+  Fix it by importing from the feature's `index.ts` (export the symbol there
+  if needed), moving shared code down into `src/lib` or `domain/`, or passing
+  the value in. Change the zones only when the architecture itself changes.
+- `scripts/boundary-baseline.json` grandfathers violations that predate the
+  gate. It must never grow. When you remove a listed import, `bun run fallow`
+  fails on the stale entry: re-save with
+  `bunx fallow dead-code --save-baseline scripts/boundary-baseline.json` and
+  check that the diff only deletes lines.
+
 ## Merging pull requests
 
 - Merge only with `bun run merge-guard <pr>`. It waits for every check on

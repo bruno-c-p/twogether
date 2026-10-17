@@ -102,6 +102,49 @@ const bannedReactMembers = [
   })),
 ];
 
+const relativeImports = {
+  group: ["./*", "../*", "./**", "../**"],
+  message: "Use the @/ alias (src/) instead of relative imports.",
+};
+
+// Import graph between zones lives in .fallowrc.json `boundaries`; these
+// cover what fallow cannot express: npm packages, node built-ins and the
+// *.server suffix.
+const impureInDomain = {
+  group: [
+    "react",
+    "react/**",
+    "react-dom",
+    "react-dom/**",
+    "@tanstack/**",
+    "**/*.server",
+    "@/server/**",
+    "node:*",
+  ],
+  message:
+    "domain/ is pure: no React, TanStack, server modules or Node built-ins. Pass the value in from the caller or move this code out of domain/.",
+};
+
+const serverOnlyInClient = {
+  group: ["**/*.server", "@/server/**"],
+  message:
+    "Client code cannot import server modules. Call a server function from actions/ instead.",
+};
+
+// An override's no-restricted-imports replaces the base options instead of
+// merging, so every override repeats the shared bans.
+function restrictedImports(
+  ...extra: (typeof relativeImports)[]
+): [
+  "error",
+  { paths: typeof bannedReactHooks; patterns: (typeof relativeImports)[] },
+] {
+  return [
+    "error",
+    { paths: bannedReactHooks, patterns: [relativeImports, ...extra] },
+  ];
+}
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "oxc"],
   categories: { correctness: "error" },
@@ -148,18 +191,23 @@ export default defineConfig({
         ...typeChecked,
         "clock/no-direct-clock": "error",
         "no-restricted-properties": ["error", ...bannedReactMembers],
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: bannedReactHooks,
-            patterns: [
-              {
-                group: ["./*", "../*", "./**", "../**"],
-                message: "Use the @/ alias (src/) instead of relative imports.",
-              },
-            ],
-          },
-        ],
+        "no-restricted-imports": restrictedImports(),
+      },
+    },
+    {
+      files: ["src/features/*/domain/**"],
+      rules: {
+        "no-restricted-imports": restrictedImports(impureInDomain),
+      },
+    },
+    {
+      files: [
+        "src/components/**",
+        "src/features/*/components/**",
+        "src/features/*/hooks/**",
+      ],
+      rules: {
+        "no-restricted-imports": restrictedImports(serverOnlyInClient),
       },
     },
     {

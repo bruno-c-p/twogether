@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
 import {
+  BOUNDARY_BASELINE,
+  boundaryBaselineScope,
   cacheControlSource,
   componentModuleLayout,
   cssHouseStyle,
@@ -34,6 +36,11 @@ const healthyFiles = {
     '<div className="max-bp1000:pb-mobile-nav" />',
   "src/components/ui/toaster.tsx":
     '<div className="[--c:var(--mobile-nav-height)]" />',
+  [BOUNDARY_BASELINE]: JSON.stringify({
+    kind: "dead-code",
+    unused_exports: [],
+    boundary_violations: ["src/lib/a.ts->src/features/b/c.ts"],
+  }),
 };
 
 function repoWith(files: Record<string, string>): Repo {
@@ -149,6 +156,20 @@ describe("fitness source checks", () => {
     ).toEqual([
       "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
       "src/routes/__root.tsx must import virtual:uno.css",
+    ]);
+  });
+
+  test("the boundary baseline may only grandfather boundary violations", () => {
+    const baseline = JSON.stringify({
+      kind: "dead-code",
+      unused_exports: [{ path: "src/a.ts", export_name: "a" }],
+      boundary_violations: ["src/lib/a.ts->src/features/b/c.ts"],
+    });
+
+    expect(
+      boundaryBaselineScope(repoWith({ [BOUNDARY_BASELINE]: baseline })),
+    ).toEqual([
+      `${BOUNDARY_BASELINE} grandfathers 1 unused_exports; it may only hold boundary_violations. Fix those findings and drop them from the file.`,
     ]);
   });
 });

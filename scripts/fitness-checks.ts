@@ -27,6 +27,10 @@ const SELF = [
   "scripts/fitness-checks.test.ts",
 ];
 
+export const BOUNDARY_BASELINE = "scripts/boundary-baseline.json";
+
+const fallowBaselineSchema = z.record(z.string(), z.unknown());
+
 const MEDIA = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;
 
 const GRADIENT =
@@ -204,6 +208,22 @@ export function unoWiring(repo: Repo) {
   return failures;
 }
 
+// `fallow --save-baseline` grandfathers every finding kind, so a careless
+// re-save could hide new dead code behind the boundary ratchet.
+export function boundaryBaselineScope(repo: Repo) {
+  const baseline = fallowBaselineSchema.parse(
+    JSON.parse(repo.read(BOUNDARY_BASELINE)),
+  );
+
+  return Object.entries(baseline).flatMap(([kind, entries]) =>
+    kind !== "boundary_violations" && Array.isArray(entries) && entries.length
+      ? [
+          `${BOUNDARY_BASELINE} grandfathers ${entries.length} ${kind}; it may only hold boundary_violations. Fix those findings and drop them from the file.`,
+        ]
+      : [],
+  );
+}
+
 export function sourceChecks(repo: Repo) {
   return [
     ...noGithubMedia(repo),
@@ -212,6 +232,7 @@ export function sourceChecks(repo: Repo) {
     ...cssHouseStyle(repo),
     ...unoWiring(repo),
     ...componentModuleLayout(repo),
+    ...boundaryBaselineScope(repo),
     ...styleChecks(repo),
   ];
 }

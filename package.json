@@ -17,7 +17,7 @@
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",
     "e2e": "playwright test --config e2e/playwright.config.ts",
     "doctor": "react-doctor --yes --verbose --blocking warning",
-    "fallow": "vitest run --coverage --silent && fallow --format compact"
+    "fallow": "vitest run --coverage --silent && fallow --format compact --baseline scripts/boundary-baseline.json --fail-on-stale-baseline"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
