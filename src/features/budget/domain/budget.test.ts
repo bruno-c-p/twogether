@@ -5,7 +5,6 @@ import {
   summarize,
 } from "@/features/budget/domain/calc";
 import {
-  currentMonth,
   formatAmountInput,
   money,
   newId,
@@ -192,9 +191,6 @@ describe("mês", () => {
     expect(shortDay(new Date(2026, 8, 17, 23, 30).toISOString())).toBe(
       "17 set",
     );
-  });
-  it("usa o calendário local para o mês atual", () => {
-    expect(currentMonth(new Date(2026, 8, 17))).toBe("2026-09");
   });
   it("anda meses para trás e para frente atravessando o ano", () => {
     expect(shiftMonth("2026-01", -1)).toBe("2025-12");

@@ -4,10 +4,11 @@ import {
   SettleDialog,
   type SettleInput,
 } from "@/features/budget/components/settle-dialog";
-import { localDate } from "@/features/budget/domain/format";
 import type { Transaction } from "@/features/budget/domain/types";
 import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
+import { today } from "@/lib/clock";
+import { browserTimeZone } from "@/lib/time-zone";
 
 function setup({
   source = transaction({ amount: 10000, memberId: "ana", split: {} }),
@@ -49,7 +50,7 @@ describe("SettleDialog", () => {
       screen.getByRole("button", { name: "Confirmar pagamento" }),
     );
 
-    expect(onConfirm).toHaveBeenCalledWith({ date: localDate() });
+    expect(onConfirm).toHaveBeenCalledWith({ date: today(browserTimeZone()) });
     // The settle action closes the dialog once it succeeds.
     expect(onClose).not.toHaveBeenCalled();
   });

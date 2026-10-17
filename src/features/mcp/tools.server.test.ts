@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { z } from "zod";
@@ -508,5 +508,37 @@ describe("budget MCP tools", () => {
     });
 
     expect(wrongSum.error).toBe(true);
+  });
+
+  describe("on a server running in UTC at 23:30 in São Paulo", () => {
+    const processZone = process.env.TZ;
+
+    afterEach(() => {
+      setSystemTime();
+      process.env.TZ = processZone;
+    });
+
+    test("defaults to São Paulo's date and month", async () => {
+      process.env.TZ = "UTC";
+      setSystemTime(new Date("2026-10-31T23:30:00-03:00"));
+
+      const { store } = ctx;
+      const { a } = await couple(store);
+      const { ok } = await connect(store, a.user.id);
+
+      const { saved } = await ok(
+        "save_transaction",
+        z.object({ saved: z.object({ date: z.string() }) }),
+        { description: "Padaria", amount: 1500, goal: "fixed" },
+      );
+
+      const { month } = await ok(
+        "get_overview",
+        z.object({ month: z.string() }),
+      );
+
+      expect(saved.date).toBe("2026-10-31");
+      expect(month).toBe("2026-10");
+    });
   });
 });

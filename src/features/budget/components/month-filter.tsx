@@ -4,11 +4,7 @@ import { useHydrated } from "@tanstack/react-router";
 import { useRef } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  currentMonth,
-  monthLabel,
-  monthName,
-} from "@/features/budget/domain/format";
+import { monthLabel, monthName } from "@/features/budget/domain/format";
 import { chipTrigger } from "@/components/ui/chip-trigger";
 import {
   Sheet,
@@ -17,7 +13,9 @@ import {
   type SheetActions,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
+import { currentMonth } from "@/lib/clock";
 import { cx } from "@/lib/cx";
+import { browserTimeZone } from "@/lib/time-zone";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
@@ -37,7 +35,7 @@ function MonthGrid({
   });
 
   const year = useWatch({ control, name: "year" });
-  const today = useHydrated() ? currentMonth() : null;
+  const today = useHydrated() ? currentMonth(browserTimeZone()) : null;
 
   return (
     <>

@@ -130,6 +130,7 @@ export default defineConfig({
   ],
   jsPlugins: [
     { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
+    { name: "clock", specifier: "./tools/oxlint/clock/index.ts" },
   ],
   rules: {
     "no-unused-vars": "error",
@@ -144,6 +145,7 @@ export default defineConfig({
       files: ["**/*.{ts,tsx}"],
       rules: {
         ...typeChecked,
+        "clock/no-direct-clock": "error",
         "no-restricted-properties": ["error", ...bannedReactMembers],
         "no-restricted-imports": [
           "error",
@@ -167,8 +169,12 @@ export default defineConfig({
       },
     },
     {
+      files: ["src/lib/clock.ts"],
+      rules: { "clock/no-direct-clock": "off" },
+    },
+    {
       files: ["e2e/**/*.ts", "scripts/**/*.ts"],
-      rules: { "no-restricted-imports": "off" },
+      rules: { "no-restricted-imports": "off", "clock/no-direct-clock": "off" },
     },
   ],
 });

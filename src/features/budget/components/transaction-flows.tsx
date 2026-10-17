@@ -3,12 +3,15 @@ import { GoalPercentagesDialog } from "@/features/budget/components/goal-percent
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { SettleDialog } from "@/features/budget/components/settle-dialog";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
-import { localDate, currentMonth } from "@/features/budget/domain/format";
 import { laterOccurrences } from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
+import { today } from "@/lib/clock";
+import { browserTimeZone } from "@/lib/time-zone";
 
 function transactionDefaultDate(month: string) {
-  return month === currentMonth() ? localDate() : `${month}-01`;
+  const date = today(browserTimeZone());
+
+  return date.startsWith(month) ? date : `${month}-01`;
 }
 
 function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {

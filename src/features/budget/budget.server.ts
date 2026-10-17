@@ -20,6 +20,7 @@ import {
   memberCount,
   revokeInvite,
 } from "@/features/household/household.server";
+import { now as clockNow } from "@/lib/clock";
 import {
   all,
   createStoreContext,
@@ -80,7 +81,7 @@ function canonical(value: Transaction, user: UserRow): Transaction {
     goal: value.goal,
     split: value.split ? {} : undefined,
     updatedBy: user.id,
-    updatedAt: new Date().toISOString(),
+    updatedAt: clockNow().toISOString(),
   };
 }
 
@@ -100,7 +101,7 @@ function touched(stored: Transaction, user: UserRow) {
   return JSON.stringify({
     ...stored,
     updatedBy: user.id,
-    updatedAt: new Date().toISOString(),
+    updatedAt: clockNow().toISOString(),
   });
 }
 
@@ -538,7 +539,7 @@ async function settleSplit(
 
     if (source.stored.split?.paidAt) throw conflict();
 
-    const now = new Date().toISOString();
+    const now = clockNow().toISOString();
     const { stored } = source;
 
     const common = {

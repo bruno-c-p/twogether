@@ -14,10 +14,10 @@ import {
 import { loadCachedWorkspace } from "@/features/budget/workspace";
 import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
 import { toastManager } from "@/components/ui/toast-manager";
+import { currentMonth } from "@/lib/clock";
 import {
   browserTimeZone,
   isValidTimeZone,
-  monthIn,
   TIME_ZONE_COOKIE,
 } from "@/lib/time-zone";
 
@@ -41,7 +41,9 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
     const timeZone = requestTimeZone();
 
     if (!timeZone) return;
-    throw redirect({ href: withDefaultMonthHref(location, monthIn(timeZone)) });
+    throw redirect({
+      href: withDefaultMonthHref(location, currentMonth(timeZone)),
+    });
   },
   loader: ({ context, deps }) =>
     deps.month
@@ -65,7 +67,10 @@ function WorkspaceRoute() {
         <WorkspaceSkeleton />
         <Navigate
           to="."
-          search={(prev) => ({ ...prev, month: monthIn(browserTimeZone()) })}
+          search={(prev) => ({
+            ...prev,
+            month: currentMonth(browserTimeZone()),
+          })}
           replace
           resetScroll={false}
         />

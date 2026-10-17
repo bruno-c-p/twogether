@@ -1,3 +1,5 @@
+import { now as clockNow } from "@/lib/clock";
+
 const WINDOW_MS = 60_000;
 
 const LIMIT = 60;
@@ -44,7 +46,7 @@ export function consumeRateLimit(
   limit = LIMIT,
   windowMs = WINDOW_MS,
 ): RateLimitVerdict {
-  const now = Date.now();
+  const now = clockNow().getTime();
   const current = windows.get(key);
 
   if (!current || current.resetAt <= now) {

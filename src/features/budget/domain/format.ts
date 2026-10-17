@@ -19,12 +19,8 @@ export function formatAmountInput(value: string): string {
   return `${whole.replace(/\B(?=(\d{3})+(?!\d))/g, ".")},${cents}`;
 }
 
-export function localDate(date = new Date()): string {
+export function localDate(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-export function currentMonth(date = new Date()): string {
-  return localDate(date).slice(0, 7);
 }
 
 // "2026-01", -1 → "2025-12".
