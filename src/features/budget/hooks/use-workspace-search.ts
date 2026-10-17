@@ -3,6 +3,7 @@ import { useQueryStates } from "nuqs";
 import { failureMessage } from "@/features/budget/hooks/use-mutation";
 import { pageParam, workspaceParams } from "@/features/budget/search";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 
 // Month and person are shared by every workspace page, so updates stay on
 // the current page (and at the current scroll position) instead of jumping
@@ -22,6 +23,11 @@ export function useWorkspaceSearch() {
     mutationFn: (month: string) =>
       queryClient.query(workspaceQueryOptions(month)),
   });
+
+  // A failure is about the month it was picked from. Once the URL is on
+  // another month (back/forward, a page link) the message is stale, and a
+  // pick still loading must not land there either.
+  useBrowserSync(["month-load", search.month], monthLoad.reset);
 
   function setMonth(month: string) {
     const show = () => void setSearch({ month, page: null });

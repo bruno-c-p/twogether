@@ -56,6 +56,34 @@ describe("useWorkspaceSearch", () => {
     expect(screen.getByRole("alert").textContent).toBe("");
   });
 
+  test("the failure message goes away once the URL is on another month", async () => {
+    const { screen, user, router, queryClient } = await renderWithProviders(
+      <Harness />,
+      "/?month=2026-09",
+    );
+
+    await user.click(screen.getByRole("button", { name: "outubro" }));
+    await vi.waitFor(() =>
+      expect(queryClient.getQueryState(october)?.status).toBe("error"),
+    );
+    await vi.waitFor(() =>
+      expect(screen.getByRole("alert").textContent).not.toBe(""),
+    );
+
+    // Back/forward or a page link: the URL changes without a pick.
+    await router.navigate({ to: "/", search: { month: "2026-08" } });
+    await vi.waitFor(() =>
+      expect(screen.getByRole("alert").textContent).toBe(""),
+    );
+
+    // Coming back to the month the pick was made from does not revive it.
+    await router.navigate({ to: "/", search: { month: "2026-09" } });
+    await new Promise((resolve) =>
+      setTimeout(resolve, defaultRateLimit.timeMs + 10),
+    );
+    expect(screen.getByRole("alert").textContent).toBe("");
+  });
+
   test("a month already in memory shows at once", async () => {
     const { screen, user, router, queryClient } = await renderWithProviders(
       <Harness />,
