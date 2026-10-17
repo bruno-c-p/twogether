@@ -368,9 +368,29 @@ export function domainBaselineGrowth(
   );
 }
 
+// A RequestError becomes an HTTP status once, in the outermost middleware.
+// A second mapping below it hands errorMiddleware a plain Error, which it
+// reports and replaces with the generic message.
+const HTTP_STATUS_OWNER = "src/server/middleware.ts";
+
+export function httpStatusBoundary(repo: Repo) {
+  return repo
+    .tracked(["src"])
+    .filter(
+      (file) =>
+        file !== HTTP_STATUS_OWNER &&
+        /\bsetResponseStatus\b/.test(repo.read(file)),
+    )
+    .map(
+      (file) =>
+        `${file} calls setResponseStatus; throw a RequestError and let errorMiddleware in ${HTTP_STATUS_OWNER} map it`,
+    );
+}
+
 export function sourceChecks(repo: Repo) {
   return [
     ...noGithubMedia(repo),
+    ...httpStatusBoundary(repo),
     ...noBudgetCommandBus(repo),
     ...cacheControlSource(repo),
     ...cssHouseStyle(repo),

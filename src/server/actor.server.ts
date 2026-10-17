@@ -9,11 +9,8 @@ function reject(message: string, status?: number): never {
   throw new RequestError(message, status);
 }
 
-export function householdActor(
-  user: UserRow,
-  fail: (message: string) => never = reject,
-): ActorFor<"household"> {
-  if (!user.household_id) fail(NO_HOUSEHOLD);
+export function householdActor(user: UserRow): ActorFor<"household"> {
+  if (!user.household_id) reject(NO_HOUSEHOLD);
 
   return { user, householdId: user.household_id };
 }

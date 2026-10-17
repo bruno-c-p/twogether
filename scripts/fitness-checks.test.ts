@@ -9,6 +9,7 @@ import {
   cssHouseStyle,
   headerCheckFailure,
   headerFailures,
+  httpStatusBoundary,
   noApiRouteFiles,
   noComponentBarrels,
   noCommandBusSource,
@@ -162,6 +163,21 @@ describe("fitness source checks", () => {
     ).toEqual([
       "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
       "src/routes/__root.tsx must import virtual:uno.css",
+    ]);
+  });
+
+  test("only errorMiddleware maps a RequestError to an HTTP status", () => {
+    expect(
+      httpStatusBoundary(
+        repoWith({
+          "src/server/middleware.ts": "setResponseStatus(cause.status);",
+          "src/server/request-error.ts":
+            'import { setResponseStatus } from "@tanstack/react-start/server";',
+          "src/features/budget/actions/index.ts": "throw new RequestError(m);",
+        }),
+      ),
+    ).toEqual([
+      "src/server/request-error.ts calls setResponseStatus; throw a RequestError and let errorMiddleware in src/server/middleware.ts map it",
     ]);
   });
 
