@@ -10,6 +10,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
     "fitness": "bun scripts/fitness.ts",
+    "merge-guard": "bun scripts/merge-guard.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run && files=$(find src -name '*.server.test.ts') && test -n \"$files\" && bun test $files",

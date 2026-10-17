@@ -137,6 +137,19 @@
   imports (e.g., TanStack Router's `src/routeTree.gen.ts`). Do not edit them
   to force the alias.
 
+## Merging pull requests
+
+- Merge only with `bun run merge-guard <pr>`. It waits for every check on
+  the PR head with `gh pr checks --watch --fail-fast`, refuses unless all
+  pass, and then squash-merges that exact head commit.
+- Never run `gh pr merge` directly. GitHub branch protection is unavailable
+  on this repository's plan, so nothing server-side stops a merge while CI is
+  pending or red. Claude Code enforces this with a PreToolUse hook
+  (`scripts/merge-guard-hook.ts`). Codex, Grok, and every other agent must
+  follow the rule without a hook.
+- `bun run merge-guard <pr> --dry-run` reports whether the PR would merge
+  without merging it.
+
 ---
 
 <!-- fallow:setup-hooks:start -->
