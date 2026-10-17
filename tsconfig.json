@@ -21,6 +21,7 @@
     "vitest.config.ts",
     "uno.config.ts",
     "oxlint.config.ts",
-    "e2e"
+    "e2e",
+    "tools/oxlint/e2e-locators"
   ]
 }

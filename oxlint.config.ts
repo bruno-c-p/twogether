@@ -131,6 +131,7 @@ export default defineConfig({
   jsPlugins: [
     { name: "anti-slop", specifier: "./tools/oxlint/anti-slop/index.ts" },
     { name: "clock", specifier: "./tools/oxlint/clock/index.ts" },
+    { name: "e2e", specifier: "./tools/oxlint/e2e-locators/index.ts" },
   ],
   rules: {
     "no-unused-vars": "error",
@@ -173,8 +174,12 @@ export default defineConfig({
       rules: { "clock/no-direct-clock": "off" },
     },
     {
-      files: ["e2e/**/*.ts", "scripts/**/*.ts"],
+      files: ["e2e/**/*.ts", "scripts/**/*.ts", "tools/oxlint/e2e-locators/**"],
       rules: { "no-restricted-imports": "off", "clock/no-direct-clock": "off" },
+    },
+    {
+      files: ["e2e/**/*.ts"],
+      rules: { "e2e/no-ambiguous-locator": "error" },
     },
   ],
 });

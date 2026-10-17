@@ -11,6 +11,8 @@ import {
   signInClerk,
   uniqueEmail,
   choosePerson,
+  monthSummary,
+  transactionRow,
 } from "../fixtures/app";
 
 async function joinPartner(page: Page, browser: Browser) {
@@ -64,7 +66,10 @@ test.describe("split expenses", () => {
     ).toBeVisible();
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
-    await expect(page.getByText("dividida · a receber").first()).toBeVisible();
+    await expect(transactionRow(page, "Aluguel")).toContainText(
+      "dividida · a receber",
+      { useInnerText: true },
+    );
 
     await openView(page, "Visão geral");
     await expect(
@@ -90,9 +95,7 @@ test.describe("split expenses", () => {
 
     await reloadApp(partner);
     await expect(partner.getByText(/^Sobra de /)).toBeVisible();
-    await expect(
-      partner.getByText(/[-−]\s?R\$\s*2\.000,00/).first(),
-    ).toBeVisible();
+    await expect(monthSummary(partner)).toContainText(/[-−]\s?R\$\s*2\.000,00/);
     await openView(partner, "Transações");
     await expect(
       partner.getByRole("button", { name: "Reembolso: Aluguel", exact: true }),
@@ -101,9 +104,9 @@ test.describe("split expenses", () => {
     await expect(
       partner.getByRole("button", { name: "Aluguel (sua parte)", exact: true }),
     ).toBeVisible();
-    await expect(
-      partner.getByText(/[-−]\s?R\$\s*1\.000,00/).first(),
-    ).toBeVisible();
+    await expect(transactionRow(partner, "Aluguel (sua parte)")).toContainText(
+      /[-−]\s?R\$\s*1\.000,00/,
+    );
 
     await reloadApp(page);
     await openView(page, "Transações");
@@ -114,7 +117,9 @@ test.describe("split expenses", () => {
     await expect(
       page.getByRole("button", { name: /Editar Reembolso: Aluguel/ }),
     ).toBeDisabled();
-    await expect(page.getByText("dividida · paga").first()).toBeVisible();
+    await expect(
+      page.getByRole("region", { name: "Transações do mês" }),
+    ).toContainText("dividida · paga", { useInnerText: true });
 
     await choosePerson(partner, "Nós");
     await partner.getByRole("button", { name: "Aluguel", exact: true }).click();

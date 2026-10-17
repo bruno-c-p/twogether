@@ -184,13 +184,16 @@ export async function expectToast(page: Page, message: string) {
   await dismissToast(page, message);
 }
 
-export async function expectNoHorizontalOverflow(page: Page) {
+export async function expectNoHorizontalOverflow(page: Page, screen = "page") {
   const box = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
   }));
 
-  expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth);
+  expect(
+    box.scrollWidth,
+    `${screen} overflows at ${box.innerWidth}px`,
+  ).toBeLessThanOrEqual(box.innerWidth);
 }
 
 export async function withMobile(page: Page, run: () => Promise<void>) {
@@ -248,6 +251,22 @@ export function nav(page: Page, kind: "desktop" | "mobile") {
   const label = kind === "desktop" ? "Navegação principal" : "Navegação mobile";
 
   return page.getByRole("navigation", { name: label });
+}
+
+// Phones and desktops render a row's goal and split status in different
+// places, so assert on the row's visible text (useInnerText) instead of
+// picking one copy.
+export function transactionRow(page: Page, description: string) {
+  return page
+    .getByRole("region", { name: "Transações do mês" })
+    .getByRole("listitem")
+    .filter({
+      has: page.getByRole("button", { name: description, exact: true }),
+    });
+}
+
+export function monthSummary(page: Page) {
+  return page.getByRole("region", { name: "Resumo mensal" });
 }
 
 export function personFilter(page: Page) {

@@ -209,7 +209,9 @@ describe("TransactionList", () => {
     expect(
       screen.getByRole("button", { name: "Próxima" }).hasAttribute("disabled"),
     ).toBe(true);
-    await user.type(screen.getByLabelText("Buscar transações"), "Compra 50");
+    // One paste, not nine keystrokes that each re-render 50 rows.
+    await user.click(screen.getByLabelText("Buscar transações"));
+    await user.paste("Compra 50");
     expect(rowNames(screen)).toEqual(["Editar Compra 50"]);
     expect(
       screen.queryByRole("navigation", { name: "Páginas de transações" }),

@@ -183,8 +183,14 @@ describe("mês", () => {
     expect(monthName("2026-09")).toBe("setembro");
     expect(monthName("2026-05", true)).toBe("mai");
     expect(monthLabel("2026-12")).toBe("dezembro 2026");
-    expect(monthLabel("2027-01", true)).toBe("jan 2027");
     expect(monthLabel("2026-13")).toBe("Mês");
+  });
+  it("abrevia cada mês com o começo do nome por extenso", () => {
+    for (let number = 1; number <= 12; number += 1) {
+      const month = `2026-${String(number).padStart(2, "0")}`;
+
+      expect(monthName(month).startsWith(monthName(month, true))).toBe(true);
+    }
   });
   it("mostra o dia curto sem mudar de data entre fusos", () => {
     expect(shortDay("2026-09-17")).toBe("17 set");

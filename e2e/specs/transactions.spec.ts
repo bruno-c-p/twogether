@@ -7,20 +7,21 @@ import {
   reloadApp,
   setMonth,
   withMobile,
+  monthSummary,
+  transactionRow,
 } from "../fixtures/app";
 
-function summary(page: Page) {
-  return page.getByRole("region", { name: "Resumo mensal" });
-}
-
+// The one summary paragraph that is only an amount.
 function balance(page: Page) {
-  return summary(page).locator("p").nth(1);
+  return monthSummary(page)
+    .getByRole("paragraph")
+    .filter({ hasText: /^[−-]?\s?R\$\s*[\d.,]+$/ });
 }
 
 function expenses(page: Page) {
   return page
     .getByRole("region", { name: "Entradas e saídas do mês" })
-    .locator("div")
+    .locator("dl")
     .filter({ hasText: /^Saídas/ });
 }
 
@@ -62,15 +63,12 @@ test.describe("transactions", () => {
     ).toBeVisible();
     const list = page.getByRole("region", { name: "Transações do mês" });
     await expect(list.getByTitle("Ana").first()).toBeVisible();
-    await expect(
-      list
-        .locator("span")
-        .getByText("Custo fixo", { exact: true })
-        .filter({ visible: true }),
-    ).toBeVisible();
+    await expect(transactionRow(page, "Mercado")).toContainText("Custo fixo", {
+      useInnerText: true,
+    });
 
     await openView(page, "Visão geral");
-    await expect(summary(page).getByText(/^Sobra de /)).toBeVisible();
+    await expect(monthSummary(page).getByText(/^Sobra de /)).toBeVisible();
     await expect(balance(page)).toHaveText(/R\$\s*4\.954,10/);
     await expect(
       page.getByRole("button", { name: "Editar Salário", exact: true }),

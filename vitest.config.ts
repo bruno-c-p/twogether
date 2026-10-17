@@ -28,7 +28,11 @@ export default defineConfig({
         test: {
           name: "node",
           environment: "node",
-          include: ["src/**/*.test.ts", "scripts/**/*.test.ts"],
+          include: [
+            "src/**/*.test.ts",
+            "scripts/**/*.test.ts",
+            "tools/oxlint/e2e-locators/*.test.ts",
+          ],
           exclude: ["**/*.server.test.ts"],
         },
       },
@@ -37,6 +41,9 @@ export default defineConfig({
         test: {
           name: "dom",
           environment: "jsdom",
+          // jsdom renders take ~1s idle and past the 5s default when parallel
+          // worktrees load the machine; 15s still catches a hang.
+          testTimeout: 15_000,
           include: ["src/**/*.test.tsx"],
           setupFiles: ["src/test/setup.ts"],
         },

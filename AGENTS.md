@@ -43,13 +43,20 @@
 - `doctor` (React Doctor, `doctor.config.json`) and `fallow`
   (`.fallowrc.json`) fail on any finding. Suppress one only when it is a
   proven false positive, with the reason written next to the suppression.
-- `e2e` runs on its own port (3400) against a throwaway SQLite file and
+- `e2e` runs on the first free port in 3400-3499, from a random start
+  (`E2E_PORT` overrides), against a throwaway SQLite file and
   never reuses a running dev server, so a `bun run dev` on 3000 is safe.
   Do not point it back at 3000 or at `data/twogether.sqlite`.
 - Clerk test accounts are reused across runs. Keep `uniqueEmail` seeded by
   stable values (test title/project), never by file paths, timestamps, or
   worker indexes: every new email burns a user slot and the dev instance
   stops sign-ups at its user quota.
+- E2E specs locate with `getByRole` or `getByLabel`, scoped to the visible
+  region or row. Breakpoints can render the same text twice and hide one
+  copy with CSS, so `bun run lint` bans `locator("span"|"p"|"div")` and
+  `.first()`/`.nth()`/`.last()` after `getByText`. A copy hidden for a
+  breakpoint must be `display: none` (`hidden`, `max-bpN:hidden`) so it
+  leaves the accessibility tree.
 - Automated tests, code analysis, and build do not replace in-browser
   validation. Do not declare the task complete based only on those checks.
 - Use isolated test data; preserve real data and unrelated work.

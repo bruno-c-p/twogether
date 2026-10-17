@@ -110,13 +110,11 @@ describe("BudgetWorkspace", () => {
   test("shows the month in Portuguese on the drawer trigger", async () => {
     const { screen } = await renderWorkspace();
 
-    expect(screen.getByText("setembro 2026")).toBeTruthy();
-    expect(screen.getByText("set 2026")).toBeTruthy();
-    expect(
-      screen.getByRole("button", {
-        name: "Selecionar mês e ano: setembro 2026",
-      }),
-    ).toBeTruthy();
+    const trigger = screen.getByRole("button", {
+      name: "Selecionar mês e ano: setembro 2026",
+    });
+
+    expect(trigger.textContent).toBe("setembro 2026");
   });
 
   test("hides values from the top bar", async () => {
