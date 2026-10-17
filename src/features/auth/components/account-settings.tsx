@@ -2,14 +2,15 @@ import { Input } from "@/components/ui/input";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
-import { setName } from "@/features/auth/actions";
+import { authActions } from "@/features/auth/actions";
+import type { AuthActions } from "@/features/auth/actions/mutations";
 import { NameForm } from "@/features/auth/components/name-form";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import {
   useActionRun,
   type ActionRun,
 } from "@/features/auth/hooks/use-action-run";
-import { createInvite, revokeInvite } from "@/features/household";
+import { householdActions, type HouseholdActions } from "@/features/household";
 import { MemberList } from "@/features/household/components/member-list/member-list";
 import { workspaceQueryKey, type Member } from "@/features/budget";
 import { Button } from "@/components/ui/button";
@@ -33,7 +34,7 @@ export function useNameForm({
   onSaved,
 }: {
   run: ActionRun;
-  saveName: (name: string) => ReturnType<typeof setName>;
+  saveName: (name: string) => ReturnType<AuthActions["setName"]>;
   onSaved: () => void;
 }) {
   const save = useMutation({
@@ -62,8 +63,8 @@ export function useInviteLink({
   onCreated,
 }: {
   run: ActionRun;
-  create: () => ReturnType<typeof createInvite>;
-  revoke: () => ReturnType<typeof revokeInvite>;
+  create: () => ReturnType<HouseholdActions["createInvite"]>;
+  revoke: () => ReturnType<HouseholdActions["revokeInvite"]>;
   onCreated: () => void;
 }) {
   const copy = useMutation({
@@ -276,7 +277,7 @@ export function AccountSettings({
 
   const name = useNameForm({
     run,
-    saveName: (value) => setName({ data: { name: value } }),
+    saveName: (value) => authActions.setName({ data: { name: value } }),
     onSaved: () => {
       void queryClient.invalidateQueries({ queryKey: workspaceQueryKey });
     },
@@ -284,8 +285,8 @@ export function AccountSettings({
 
   const invite = useInviteLink({
     run,
-    create: () => createInvite(),
-    revoke: () => revokeInvite(),
+    create: () => householdActions.createInvite(),
+    revoke: () => householdActions.revokeInvite(),
     onCreated: () => undefined,
   });
 

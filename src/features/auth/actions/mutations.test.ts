@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseSetName } from "@/features/auth/actions/set-name";
+import { authMutations } from "@/features/auth/actions/mutations";
+
+const parseSetName = authMutations.setName.parse;
 
 describe("parseSetName", () => {
   test("requires a name", () => {

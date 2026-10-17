@@ -1,5 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { parseJoinHousehold } from "@/features/household/actions/join-household";
+import { householdMutations } from "@/features/household/actions/mutations";
+
+const parseJoinHousehold = householdMutations.joinHousehold.parse;
 
 const token = "a".repeat(64);
 

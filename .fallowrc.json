@@ -209,8 +209,18 @@
         ]
       },
       {
+        // The dev-only fake stands in for every feature's actions barrel, so it
+        // reads each feature's actions type.
         "from": "break-ui",
-        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget-api",
+          "auth-api",
+          "household-api",
+          "theme-api",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "household",

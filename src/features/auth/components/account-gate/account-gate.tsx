@@ -4,14 +4,14 @@ import { useNavigate, useRouter } from "@tanstack/react-router";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme";
 import { ArrowRight, HeartHandshake } from "lucide-react";
-import { setName } from "@/features/auth/actions";
+import { authActions } from "@/features/auth/actions";
 import type { SessionState } from "@/features/auth/actions/load-session";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
 import {
   useActionRun,
   type ActionRun,
 } from "@/features/auth/hooks/use-action-run";
-import { createHousehold, joinHousehold } from "@/features/household";
+import { householdActions } from "@/features/household";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
@@ -142,15 +142,15 @@ function useGateActions(run: ActionRun, invitation: string) {
   const signOut = useSignOut();
 
   async function joinWith(token: string) {
-    await run(() => joinHousehold({ data: { token } }));
+    await run(() => householdActions.joinHousehold({ data: { token } }));
   }
 
   async function submitName(name: string) {
-    await run(() => setName({ data: { name } }));
+    await run(() => authActions.setName({ data: { name } }));
   }
 
   async function startHousehold() {
-    await run(() => createHousehold());
+    await run(() => householdActions.createHousehold());
   }
 
   return {

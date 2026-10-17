@@ -3,6 +3,10 @@ import type { Repo } from "./fitness-checks";
 
 const REGISTRY = /^src\/features\/([^/]+)\/actions\/mutations\.ts$/;
 
+const DEFINERS = new Set(["define", "defineCommand"]);
+
+type Entry = { gate?: string; command: boolean };
+
 type Statement = {
   post: boolean;
   name?: string;
@@ -242,7 +246,7 @@ const GATE_MIDDLEWARE = new Map([
 function statementFailures(
   file: string,
   { post, name, exported, calls, repeated }: Statement,
-  gates: Map<string, string>,
+  entries: Map<string, Entry>,
 ) {
   if (!name) return [`${file}: a server fn must be a top-level const`];
 
@@ -272,7 +276,12 @@ function statementFailures(
 
   // A dropped or swapped middleware still type-checks when serve() needs no
   // more context than the remaining middleware gives.
-  const gate = gates.get(name);
+  const entry = entries.get(name);
+  const gate = entry?.gate;
+
+  if (entry?.command && calls.has("validator"))
+    failures.push(`${file}: ${name} takes no input; drop its .validator()`);
+
   const middleware = gate ? GATE_MIDDLEWARE.get(gate) : undefined;
 
   if (!middleware || calls.get("middleware") !== middleware)
@@ -288,7 +297,7 @@ function statementFailures(
 function barrelFailures(
   file: string,
   text: string,
-  gates: Map<string, string>,
+  entries: Map<string, Entry>,
 ) {
   const source = parse(file, text);
   const statements = serverFns(source);
@@ -299,7 +308,7 @@ function barrelFailures(
 
   return [
     ...statements.flatMap((statement) =>
-      statementFailures(file, statement, gates),
+      statementFailures(file, statement, entries),
     ),
     ...strayReferences(file, source, names),
     ...actionsObjectFailures(file, source, names),
@@ -317,7 +326,9 @@ function entryFailures(file: string, entry: ts.CallExpression) {
   const failures: string[] = [];
 
   if (!name || !ts.isStringLiteral(name) || name.text !== key)
-    failures.push(`${file}: ${key} must be define("${key}", ...)`);
+    failures.push(
+      `${file}: ${key} must be ${entry.expression.getText()}("${key}", ...)`,
+    );
 
   const run =
     spec && ts.isObjectLiteralExpression(spec)
@@ -350,23 +361,24 @@ function entryGate(entry: ts.CallExpression) {
     : undefined;
 }
 
-function registryGates(file: string, text: string) {
-  const gates = new Map<string, string>();
+function registryEntries(file: string, text: string) {
+  const entries = new Map<string, Entry>();
 
   visitAll(parse(file, text), (node) => {
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      node.expression.text === "define" &&
+      DEFINERS.has(node.expression.text) &&
       ts.isPropertyAssignment(node.parent)
     ) {
-      const gate = entryGate(node);
-
-      if (gate) gates.set(node.parent.name.getText(), gate);
+      entries.set(node.parent.name.getText(), {
+        gate: entryGate(node),
+        command: node.expression.text === "defineCommand",
+      });
     }
   });
 
-  return gates;
+  return entries;
 }
 
 // A copied entry that keeps another entry's name or store call still
@@ -378,7 +390,7 @@ function registryFailures(file: string, text: string) {
     if (
       ts.isCallExpression(node) &&
       ts.isIdentifier(node.expression) &&
-      node.expression.text === "define"
+      DEFINERS.has(node.expression.text)
     )
       failures.push(...entryFailures(file, node));
   });
@@ -413,7 +425,7 @@ export function mutationRules(repo: Repo) {
       ...barrelFailures(
         barrel,
         repo.read(barrel),
-        registryGates(registry, repo.read(registry)),
+        registryEntries(registry, repo.read(registry)),
       ),
       ...strays,
     ];

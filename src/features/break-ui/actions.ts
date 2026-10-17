@@ -8,6 +8,8 @@ import {
   goalPercentagesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
+import type { AuthActions } from "@/features/auth";
+import type { HouseholdActions } from "@/features/household";
 import { nameSchema } from "@/lib/account-schemas";
 import type {
   Transaction,
@@ -64,11 +66,16 @@ type Name = keyof BudgetActions;
 
 // Tagged with its mutation, so `satisfies Fakes` rejects a fake filed under
 // another mutation whose input happens to fit.
-type Fakes = { [K in Name]: BudgetActions[K] & { readonly mutation: K } };
+type Fakes<Actions> = {
+  [K in keyof Actions]: Actions[K] & { readonly mutation: K };
+};
 
-function fake<K extends Name>(mutation: K, run: BudgetActions[K]) {
-  return Object.assign(run, { mutation });
+function fakes<Actions extends Record<keyof Actions, object>>() {
+  return <K extends keyof Actions>(mutation: K, run: Actions[K]) =>
+    Object.assign(run, { mutation });
 }
+
+const fake = fakes<BudgetActions>();
 
 function fromOptimistic<K extends Name, Input>(definition: {
   name: K;
@@ -131,28 +138,39 @@ export const budgetActions = {
       },
     });
   }),
-} satisfies Fakes;
+} satisfies Fakes<BudgetActions>;
 
-export function setName({ data }: { data: { name: string } }) {
-  const snapshot = readSnapshot();
-  const name = nameSchema.parse(data.name);
+const authFake = fakes<AuthActions>();
 
-  return write({
-    ...snapshot,
-    user: { ...snapshot.user, name },
-    household: {
-      ...snapshot.household,
-      members: snapshot.household.members.map((member) =>
-        member.id === snapshot.user.id ? { ...member, name } : member,
-      ),
-    },
-  });
-}
+export const authActions = {
+  setName: authFake("setName", async ({ data }) => {
+    const snapshot = readSnapshot();
+    const name = nameSchema.parse(data.name);
 
-export function createInvite() {
-  return Promise.resolve({ inviteToken: "0123456789abcdef".repeat(4) });
-}
+    await write({
+      ...snapshot,
+      user: { ...snapshot.user, name },
+      household: {
+        ...snapshot.household,
+        members: snapshot.household.members.map((member) =>
+          member.id === snapshot.user.id ? { ...member, name } : member,
+        ),
+      },
+    });
+  }),
+} satisfies Fakes<AuthActions>;
 
-export function revokeInvite() {
-  return Promise.resolve();
-}
+const householdFake = fakes<HouseholdActions>();
+
+// The harness starts inside a household, so onboarding has nothing to do.
+const onboarded = () =>
+  Promise.reject(new Error("Break UI já começa dentro de um orçamento."));
+
+export const householdActions = {
+  createHousehold: householdFake("createHousehold", () => onboarded()),
+  joinHousehold: householdFake("joinHousehold", () => onboarded()),
+  createInvite: householdFake("createInvite", () =>
+    Promise.resolve({ inviteToken: "0123456789abcdef".repeat(4) }),
+  ),
+  revokeInvite: householdFake("revokeInvite", () => Promise.resolve()),
+} satisfies Fakes<HouseholdActions>;
