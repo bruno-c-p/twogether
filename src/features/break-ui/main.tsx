@@ -51,7 +51,7 @@ import {
   readDataset,
   type Dataset,
 } from "@/features/break-ui/fixtures";
-import { resetFixture, setName } from "@/features/break-ui/actions";
+import { authActions, resetFixture } from "@/features/break-ui/actions";
 import { workspaceQueryKey } from "@/features/budget/workspace";
 import "@/styles.css";
 import "virtual:uno.css";
@@ -73,7 +73,7 @@ function FixtureAccount({ placement }: { placement: AccountPlacement }) {
   const name = useNameForm({
     run,
     saveName: async (value) => {
-      await setName({ data: { name: value } });
+      await authActions.setName({ data: { name: value } });
     },
     onSaved: () =>
       void queryClient.invalidateQueries({ queryKey: workspaceQueryKey }),

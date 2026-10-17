@@ -52,13 +52,13 @@ export type ExtraOf<M> = M extends { optimistic: (...args: infer P) => object }
   : undefined;
 
 export type ServerActions<Registry> = {
-  readonly [K in keyof Registry]: (opts: {
-    data: InputOf<Registry[K]>;
-  }) => Promise<ResultOf<Registry[K]>>;
+  readonly [K in keyof Registry]: InputOf<Registry[K]> extends undefined
+    ? () => Promise<ResultOf<Registry[K]>>
+    : (opts: { data: InputOf<Registry[K]> }) => Promise<ResultOf<Registry[K]>>;
 };
 
 export function mutations<Store, Snapshot = never>() {
-  return function define<
+  function define<
     Name extends string,
     G extends Gate,
     Input,
@@ -89,5 +89,17 @@ export function mutations<Store, Snapshot = never>() {
       // undefined exactly when the field is omitted.
       optimistic: spec.optimistic as Optimistic,
     };
-  };
+  }
+
+  function defineCommand<Name extends string, G extends Gate, Result>(
+    name: Name,
+    spec: {
+      gate: G;
+      run: (store: Store, actor: ActorFor<G>) => Promise<Result>;
+    },
+  ): Omit<Mutation<G, Store, undefined, Result, undefined, Name>, "parse"> {
+    return { name, gate: spec.gate, run: spec.run, optimistic: undefined };
+  }
+
+  return { define, defineCommand };
 }

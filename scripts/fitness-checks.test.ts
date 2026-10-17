@@ -810,6 +810,85 @@ export { budgetActions };`,
     ).toEqual([`${registry}: settleSplit must be define("settleSplit", ...)`]);
   });
 
+  test("reads the gate of a mutation without input", () => {
+    const household = "src/features/household/actions/mutations.ts";
+    const householdBarrel = "src/features/household/actions/index.ts";
+
+    const command = `const householdMutations = {
+  createInvite: defineCommand("createInvite", {
+    gate: "household",
+    run: (store, actor) => store.createInvite(actor.householdId),
+  }),
+};`;
+
+    const invite = (
+      middleware: string,
+    ) => `const createInvite = createServerFn({ method: "POST" })
+  .middleware([${middleware}])
+  .handler(serve(defs.createInvite));`;
+
+    expect(
+      mutationRules(
+        repoWith({
+          [household]: command,
+          [householdBarrel]: invite("householdMiddleware"),
+        }),
+      ),
+    ).toEqual([]);
+    expect(
+      mutationRules(
+        repoWith({
+          [household]: command,
+          [householdBarrel]: invite("authMiddleware"),
+        }),
+      ),
+    ).toEqual([
+      `${householdBarrel}: createInvite must run .middleware([householdMiddleware]) for its "household" gate`,
+    ]);
+  });
+
+  test("checks a mutation without input like any other entry", () => {
+    const household = "src/features/household/actions/mutations.ts";
+    const householdBarrel = "src/features/household/actions/index.ts";
+
+    const command = (
+      name: string,
+      method: string,
+    ) => `const householdMutations = {
+  revokeInvite: defineCommand("${name}", {
+    gate: "household",
+    run: (store, actor) => store.${method}(actor.householdId),
+  }),
+};`;
+
+    const revoke = (
+      validator: string,
+    ) => `const revokeInvite = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])${validator}
+  .handler(serve(defs.revokeInvite));`;
+
+    const rules = (registry: string, barrel: string) =>
+      mutationRules(
+        repoWith({ [household]: registry, [householdBarrel]: barrel }),
+      );
+
+    expect(rules(command("revokeInvite", "revokeInvite"), revoke(""))).toEqual(
+      [],
+    );
+    expect(
+      rules(
+        command("revokeInvite", "revokeInvite"),
+        revoke("\n  .validator(defs.revokeInvite.parse)"),
+      ),
+    ).toEqual([
+      `${householdBarrel}: revokeInvite takes no input; drop its .validator()`,
+    ]);
+    expect(rules(command("createInvite", "createInvite"), revoke(""))).toEqual([
+      `${household}: revokeInvite must be defineCommand("revokeInvite", ...)`,
+      `${household}: revokeInvite must run store.revokeInvite`,
+    ]);
+  });
+
   test("leaves features without a registry alone", () => {
     expect(
       mutationRules(

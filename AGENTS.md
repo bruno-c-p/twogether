@@ -262,7 +262,9 @@
 
 - A mutation is one entry in `src/features/<name>/actions/mutations.ts`,
   `<name>: define("<name>", { ... })`: its gate, schema, store call (`run`)
-  and, if the UI paints it early, its optimistic update. The name gives the
+  and, if the UI paints it early, its optimistic update. A mutation without
+  input uses `defineCommand("<name>", { gate, run })`; its server fn has no
+  `.validator()` and callers pass no arguments. The name gives the
   definition its identity, so a surface filed under another mutation with a
   compatible input still fails to compile. Add the entry and the store
   method, then run `bun run typecheck`: it names each surface below that
@@ -271,11 +273,14 @@
     `const <name> = createServerFn(...).validator(defs.<name>.parse).handler(serve(defs.<name>))`,
     listed in the feature's actions object (`budgetActions: BudgetActions`),
     typed from the registry.
-  - The client handle in `useBudgetMutations`.
-  - The break-ui fake in `src/features/break-ui/actions.ts`.
-  - The MCP tool in `budgetTools` (`src/features/mcp/tools.server.ts`): a
-    `writeTool(definition, spec)` whose spec owns the agent's arguments and
-    answer, or `null` when agents should not reach it.
+  - Budget: the client handle in `useBudgetMutations`. Auth and household
+    call `authActions` / `householdActions` through `useActionRun`.
+  - The break-ui fake in `src/features/break-ui/actions.ts` (one tagged
+    object per feature).
+  - Budget: the MCP tool in `budgetTools`
+    (`src/features/mcp/tools.server.ts`): a `writeTool(definition, spec)`
+    whose spec owns the agent's arguments and answer, or `null` when agents
+    should not reach it.
   - A parity scenario in `src/features/budget/optimistic.server.test.ts` when
     the entry has an optimistic update. `bun run test` fails when the paint
     disagrees with what the store writes.

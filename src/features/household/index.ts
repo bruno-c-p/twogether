@@ -1,6 +1,3 @@
-export {
-  createHousehold,
-  createInvite,
-  joinHousehold,
-  revokeInvite,
-} from "@/features/household/actions";
+export { householdActions } from "@/features/household/actions";
+
+export type { HouseholdActions } from "@/features/household/actions/mutations";

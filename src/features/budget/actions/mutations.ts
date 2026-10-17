@@ -25,7 +25,7 @@ import {
 } from "@/server/mutation";
 import type { Store } from "@/server/store.server";
 
-const define = mutations<Store, WorkspaceSnapshot>();
+const { define } = mutations<Store, WorkspaceSnapshot>();
 
 const saveTransactionSchema = inputSchema({
   transaction: transactionSchema,
