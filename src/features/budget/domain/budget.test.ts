@@ -173,8 +173,7 @@ describe("tipo da transação", () => {
         ...transactions[0],
         accountId: "nubank",
         tags: ["casa"],
-      })
-        .success,
+      }).success,
     ).toBe(true);
   });
 });

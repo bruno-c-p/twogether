@@ -25,10 +25,7 @@ export function Sheet({
   const phone = usePhone();
 
   return (
-    <Drawer.Root
-      actionsRef={actions}
-      swipeDirection={phone ? "down" : "right"}
-    >
+    <Drawer.Root actionsRef={actions} swipeDirection={phone ? "down" : "right"}>
       {trigger}
       <Drawer.Portal>
         <Drawer.Backdrop

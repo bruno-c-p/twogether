@@ -23,5 +23,9 @@ data/
 .fallow/
 coverage/
 
+# Agent scratch: todolists and throwaway prototypes.
+.audit/
+.proto/
+
 # Impeccable downloads a platform-specific engine during installation.
 .agents/skills/impeccable/scripts/bin/
