@@ -11,7 +11,9 @@ const devEnv = [
 
 function refusal(state: Partial<SetupState>) {
   return setupRefusal({
+    isMainCheckout: false,
     source,
+    sourceIsLocalEnv: false,
     sourceContents: devEnv,
     localEnvIsFile: false,
     ...state,
@@ -45,7 +47,7 @@ describe("setupRefusal", () => {
   test.each([
     "TURSO_DATABASE_URL=libsql://twogether-prod.turso.io",
     'TURSO_DATABASE_URL="turso://twogether-prod"',
-    "export DATABASE_URL=https://db.example.com",
+    "export BUDGET_DATABASE_PATH=https://db.example.com",
     "BUDGET_DATABASE_PATH=http://db.example.com",
     "TURSO_DATABASE_URL='wss://db.example.com'",
     "TURSO_DATABASE_URL=ws://db.example.com",
@@ -55,9 +57,30 @@ describe("setupRefusal", () => {
     );
   });
 
-  test("refuses to replace a regular .env.local file", () => {
-    expect(refusal({ localEnvIsFile: true })).toContain(
-      "delete it and rerun `bun run setup`",
+  test("ignores database variables the app does not read", () => {
+    expect(
+      refusal({
+        sourceContents: `${devEnv}\nDATABASE_URL=libsql://unused.turso.io`,
+      }),
+    ).toBeUndefined();
+  });
+
+  test("refuses to replace a regular .env.local file and says to move it aside", () => {
+    const message = refusal({ localEnvIsFile: true });
+
+    expect(message).toContain("move it aside (`mv .env.local .env.local.bak`)");
+    expect(message).not.toContain("delete");
+  });
+
+  test("refuses the main checkout before touching its real .env.local", () => {
+    expect(refusal({ isMainCheckout: true, localEnvIsFile: true })).toContain(
+      "setup is for worktrees only",
     );
+  });
+
+  test("refuses a dev env that is this worktree's own .env.local", () => {
+    expect(
+      refusal({ sourceIsLocalEnv: true, sourceContents: undefined }),
+    ).toContain("the link would point at itself");
   });
 });

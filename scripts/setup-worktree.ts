@@ -2,24 +2,23 @@ import {
   existsSync,
   lstatSync,
   readFileSync,
+  realpathSync,
   symlinkSync,
   unlinkSync,
 } from "node:fs";
 import { homedir } from "node:os";
-import { join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 
 const LIVE_CLERK_KEY = /[sp]k_live_/;
 
 const REMOTE_DATABASE = /^(?:libsql|turso|https?|wss?):\/\//i;
 
-const DATABASE_KEYS = new Set([
-  "TURSO_DATABASE_URL",
-  "BUDGET_DATABASE_PATH",
-  "DATABASE_URL",
-]);
+const DATABASE_KEYS = new Set(["TURSO_DATABASE_URL", "BUDGET_DATABASE_PATH"]);
 
 export type SetupState = {
+  isMainCheckout: boolean;
   source: string;
+  sourceIsLocalEnv: boolean;
   sourceContents: string | undefined;
   localEnvIsFile: boolean;
 };
@@ -37,10 +36,18 @@ function databaseUrls(contents: string) {
 }
 
 export function setupRefusal({
+  isMainCheckout,
   source,
+  sourceIsLocalEnv,
   sourceContents,
   localEnvIsFile,
 }: SetupState): string | undefined {
+  if (isMainCheckout)
+    return "setup is for worktrees only. This is the main checkout, where .env.local is your real env; run setup in a worktree instead.";
+
+  if (sourceIsLocalEnv)
+    return `TWOGETHER_DEV_ENV points at this worktree's own .env.local (${source}), so the link would point at itself. Point it at the dev env instead.`;
+
   if (sourceContents === undefined)
     return `no dev env at ${source}. Create it with Clerk development keys (\`npx clerk@latest init\`), or point TWOGETHER_DEV_ENV at one.`;
 
@@ -55,7 +62,7 @@ export function setupRefusal({
     return `${source} sets ${remote.key} to a remote database. Remove that line so the app uses local SQLite, or point TWOGETHER_DEV_ENV at a dev-only env file.`;
 
   if (localEnvIsFile)
-    return `.env.local is a regular file, not a link to the dev env. It may be a copied production env: delete it and rerun \`bun run setup\`.`;
+    return `.env.local is a regular file, not a link to the dev env. It may be a copied production env: move it aside (\`mv .env.local .env.local.bak\`) and rerun \`bun run setup\`.`;
 
   return undefined;
 }
@@ -82,8 +89,25 @@ if (import.meta.main) {
   process.chdir(join(import.meta.dir, ".."));
   const localEnv = lstatSync(".env.local", { throwIfNoEntry: false });
 
+  const [gitDir, gitCommonDir] = Bun.spawnSync([
+    "git",
+    "rev-parse",
+    "--path-format=absolute",
+    "--git-dir",
+    "--git-common-dir",
+  ])
+    .stdout.toString()
+    .trim()
+    .split("\n");
+
+  const sourceLocation = existsSync(dirname(source))
+    ? join(realpathSync(dirname(source)), basename(source))
+    : source;
+
   const refusal = setupRefusal({
+    isMainCheckout: gitDir === gitCommonDir,
     source,
+    sourceIsLocalEnv: sourceLocation === join(realpathSync("."), ".env.local"),
     sourceContents: existsSync(source)
       ? readFileSync(source, "utf8")
       : undefined,
@@ -98,7 +122,7 @@ if (import.meta.main) {
   run(["bun", "install", "--frozen-lockfile"]);
 
   if (localEnv) unlinkSync(".env.local");
-  symlinkSync(source, ".env.local");
+  symlinkSync(realpathSync(source), ".env.local");
   run(["bunx", "playwright", "install", "chromium"]);
   run(["bun", "scripts/check-env.ts"]);
   console.log(`setup: ready, .env.local -> ${source}`);
