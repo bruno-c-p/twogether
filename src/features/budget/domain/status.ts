@@ -6,6 +6,10 @@ export function isRepayment(t: Transaction) {
   return Boolean(t.settlementOf);
 }
 
+export function isRepaymentOf(t: Transaction, sourceId: string) {
+  return t.settlementOf === sourceId;
+}
+
 export function transactionStatus(t: Transaction, userId: string) {
   const repayment = isRepayment(t);
   const split = !repayment && t.kind === "expense" && Boolean(t.split);

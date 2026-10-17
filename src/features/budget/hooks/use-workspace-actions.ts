@@ -33,13 +33,19 @@ export function useWorkspaceActions({
   mutations: BudgetMutations;
   setMonth: (month: string) => void;
 }) {
-  const { saveTx, deleteTx, restoreTx, savePct, settleTx, unsettleTx } =
-    mutations;
+  const {
+    saveTransaction,
+    deleteTransaction,
+    restoreTransaction,
+    savePercentages,
+    settleSplit,
+    unsettleSplit,
+  } = mutations;
 
   async function save(transaction: Transaction, occurrences = 1) {
     const isUpdate = Boolean(dialogs.transaction?.transaction);
 
-    if (!(await saveTx.run({ transaction, occurrences }))) return;
+    if (!(await saveTransaction.run({ transaction, occurrences }))) return;
 
     dialogs.setTransaction(null);
     setMonth(transaction.date.slice(0, 7));
@@ -56,7 +62,7 @@ export function useWorkspaceActions({
       return;
     }
 
-    if (!(await deleteTx.run(versioned(transaction)))) return;
+    if (!(await deleteTransaction.run(versioned(transaction)))) return;
 
     notifyDeleted(transaction);
   }
@@ -77,11 +83,10 @@ export function useWorkspaceActions({
   }
 
   async function restoreDeleted(transaction: Transaction, id: string) {
-    const restored = await restoreTx.run({
-      id: transaction.id,
-      revision: (transaction.revision ?? 0) + 1,
-      transaction,
-    });
+    const restored = await restoreTransaction.run(
+      { id: transaction.id, revision: (transaction.revision ?? 0) + 1 },
+      { transaction },
+    );
 
     if (!restored) return;
 
@@ -111,7 +116,7 @@ export function useWorkspaceActions({
 
     if (!source) return;
 
-    if (!(await settleTx.run({ ...input, ...versioned(source) }))) return;
+    if (!(await settleSplit.run({ ...input, ...versioned(source) }))) return;
 
     dialogs.setSettling(null);
 
@@ -134,7 +139,7 @@ export function useWorkspaceActions({
 
   // Closes the transaction dialog it may have been started from.
   async function unsettle(transaction: Transaction, toastId?: string) {
-    if (!(await unsettleTx.run(versioned(transaction)))) return;
+    if (!(await unsettleSplit.run(versioned(transaction)))) return;
 
     dialogs.setTransaction(null);
 
@@ -148,7 +153,7 @@ export function useWorkspaceActions({
 
     if (revision === null) return;
 
-    if (!(await savePct.run({ percentages: values, revision }))) return;
+    if (!(await savePercentages.run({ percentages: values, revision }))) return;
 
     dialogs.setPercentagesRevision(null);
     toastManager.add({ title: "Percentuais atualizados.", type: "success" });
@@ -160,7 +165,7 @@ export function useWorkspaceActions({
     transaction: Transaction,
     following: Transaction[],
   ) {
-    const deleted = await deleteTx.run({
+    const deleted = await deleteTransaction.run({
       ...versioned(transaction),
       following: following.length ? following.map(versioned) : undefined,
     });

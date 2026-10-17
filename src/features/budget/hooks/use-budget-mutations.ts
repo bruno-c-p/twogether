@@ -1,69 +1,61 @@
+import { budgetActions } from "@/features/budget/actions";
 import {
-  deleteTransaction,
-  restoreTransaction,
-  savePercentages,
-  saveTransaction,
-  settleSplit,
-  unsettleSplit,
-} from "@/features/budget/actions";
+  budgetMutations,
+  type BudgetExtra,
+  type BudgetInput,
+  type BudgetMutationName,
+} from "@/features/budget/actions/mutations";
+import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
-import {
-  optimisticDelete,
-  optimisticRestore,
-  optimisticSave,
-  optimisticSettle,
-  optimisticUnsettle,
-} from "@/features/budget/workspace";
-import type { DeleteTransactionInput } from "@/features/budget/actions/delete-transaction";
-import type { RestoreTransactionInput } from "@/features/budget/actions/restore-transaction";
-import type { SavePercentagesInput } from "@/features/budget/actions/save-percentages";
-import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
-import type { SettleSplitInput } from "@/features/budget/actions/settle-split";
-import type { UnsettleSplitInput } from "@/features/budget/actions/unsettle-split";
-import type { Transaction } from "@/features/budget/domain/types";
+
+type Args<K extends BudgetMutationName> =
+  BudgetExtra<K> extends undefined
+    ? [input: BudgetInput<K>]
+    : [input: BudgetInput<K>, extra: BudgetExtra<K>];
+
+// Annotated per key so indexing with a generic K keeps the definition and
+// its server fn correlated.
+const definitions: {
+  [K in BudgetMutationName]: {
+    optimistic?: (
+      snapshot: WorkspaceSnapshot,
+      ...args: Args<K>
+    ) => WorkspaceSnapshot;
+  };
+} = budgetMutations;
+
+const actions: {
+  [K in BudgetMutationName]: (opts: { data: BudgetInput<K> }) => Promise<void>;
+} = budgetActions;
+
+function useBudgetMutation<K extends BudgetMutationName>(name: K) {
+  const mutation = useMutation(
+    (...args: Args<K>) => actions[name]({ data: args[0] }),
+    definitions[name].optimistic,
+  );
+
+  return { ...mutation, name };
+}
+
+type Handles = {
+  [K in BudgetMutationName]: ReturnType<typeof useBudgetMutation<K>>;
+};
 
 export function useBudgetMutations() {
-  const saveTx = useMutation(
-    (data: SaveTransactionInput) => saveTransaction({ data }),
-    optimisticSave,
-  );
-
-  const deleteTx = useMutation(
-    (data: DeleteTransactionInput) => deleteTransaction({ data }),
-    optimisticDelete,
-  );
-
-  const restoreTx = useMutation(
-    (data: RestoreTransactionInput & { transaction: Transaction }) =>
-      restoreTransaction({ data: { id: data.id, revision: data.revision } }),
-    (snapshot, data) => optimisticRestore(snapshot, data.transaction),
-  );
-
-  const savePct = useMutation((data: SavePercentagesInput) =>
-    savePercentages({ data }),
-  );
-
-  const settleTx = useMutation(
-    (data: SettleSplitInput) => settleSplit({ data }),
-    optimisticSettle,
-  );
-
-  const unsettleTx = useMutation(
-    (data: UnsettleSplitInput) => unsettleSplit({ data }),
-    optimisticUnsettle,
-  );
-
-  const all = [saveTx, deleteTx, restoreTx, savePct, settleTx, unsettleTx];
+  // A fixed literal, not a loop: rules of hooks.
+  const handles = {
+    saveTransaction: useBudgetMutation("saveTransaction"),
+    deleteTransaction: useBudgetMutation("deleteTransaction"),
+    restoreTransaction: useBudgetMutation("restoreTransaction"),
+    settleSplit: useBudgetMutation("settleSplit"),
+    unsettleSplit: useBudgetMutation("unsettleSplit"),
+    savePercentages: useBudgetMutation("savePercentages"),
+  } satisfies Handles;
 
   return {
-    saveTx,
-    deleteTx,
-    restoreTx,
-    savePct,
-    settleTx,
-    unsettleTx,
-    splitBusy: settleTx.pending || unsettleTx.pending,
-    busy: all.some((mutation) => mutation.pending),
+    ...handles,
+    splitBusy: handles.settleSplit.pending || handles.unsettleSplit.pending,
+    busy: Object.values(handles).some((mutation) => mutation.pending),
   };
 }
 

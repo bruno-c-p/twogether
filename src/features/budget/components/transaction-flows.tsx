@@ -22,8 +22,8 @@ function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
     <DeleteRecurrenceDialog
       transaction={transaction}
       count={following.length + 1}
-      busy={mutations.deleteTx.pending}
-      error={mutations.deleteTx.error}
+      busy={mutations.deleteTransaction.pending}
+      error={mutations.deleteTransaction.error}
       onClose={() => dialogs.setDeleting(null)}
       onDelete={(all) =>
         actions.deleteRecurring(transaction, all ? following : [])
@@ -40,8 +40,8 @@ export function TransactionFlows() {
       {dialogs.percentagesRevision !== null && (
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
-          busy={mutations.savePct.pending}
-          error={mutations.savePct.error}
+          busy={mutations.savePercentages.pending}
+          error={mutations.savePercentages.error}
           onSave={actions.saveGoalPercentages}
           onClose={() => dialogs.setPercentagesRevision(null)}
         />
@@ -52,8 +52,8 @@ export function TransactionFlows() {
           defaultDate={transactionDefaultDate(month)}
           members={budget.household.members}
           currentUserId={budget.user.id}
-          busy={mutations.saveTx.pending}
-          serverError={mutations.saveTx.error}
+          busy={mutations.saveTransaction.pending}
+          serverError={mutations.saveTransaction.error}
           splitBusy={mutations.splitBusy}
           onSave={actions.save}
           onSettle={actions.openSettle}
@@ -72,8 +72,8 @@ export function TransactionFlows() {
         <SettleDialog
           transaction={dialogs.settling}
           members={budget.household.members}
-          busy={mutations.settleTx.pending}
-          serverError={mutations.settleTx.error}
+          busy={mutations.settleSplit.pending}
+          serverError={mutations.settleSplit.error}
           onConfirm={actions.confirmSettle}
           onClose={() => dialogs.setSettling(null)}
         />

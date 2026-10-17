@@ -1,12 +1,14 @@
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import type { InStatement } from "@libsql/client";
-import type { DeleteTransactionInput } from "@/features/budget/actions/delete-transaction";
-import type { RestoreTransactionInput } from "@/features/budget/actions/restore-transaction";
-import type { SavePercentagesInput } from "@/features/budget/actions/save-percentages";
-import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
-import type { SettleSplitInput } from "@/features/budget/actions/settle-split";
-import type { UnsettleSplitInput } from "@/features/budget/actions/unsettle-split";
+import type {
+  DeleteTransactionInput,
+  RestoreTransactionInput,
+  SavePercentagesInput,
+  SaveTransactionInput,
+  SettleSplitInput,
+  UnsettleSplitInput,
+} from "@/features/budget/actions/mutations";
 import {
   firstOccurrence,
   clampedMonthsAfter,

@@ -1,0 +1,91 @@
+import type { z } from "zod";
+import type { UserRow } from "@/server/db.server";
+import { parseInput } from "@/server/action-input";
+
+export type Gate = "auth" | "household";
+
+// `householdId?: never` makes an auth mutation behind householdMiddleware,
+// or a household one behind authMiddleware, fail to compile at serve().
+export type ActorFor<G extends Gate> = G extends "household"
+  ? { user: UserRow; householdId: string }
+  : { user: UserRow; householdId?: never };
+
+export interface Mutation<
+  G extends Gate,
+  Store,
+  Input,
+  Result,
+  Optimistic,
+  Name extends string = string,
+> {
+  readonly name: Name;
+  readonly gate: G;
+  readonly parse: (input: Input, fail?: (message: string) => never) => Input;
+  readonly run: (
+    store: Store,
+    actor: ActorFor<G>,
+    input: Input,
+  ) => Promise<Result>;
+  readonly optimistic: Optimistic;
+}
+
+export type InputOf<M> = M extends {
+  parse: (...args: never[]) => infer Input;
+}
+  ? Input
+  : never;
+
+export type ResultOf<M> = M extends {
+  run: (...args: never[]) => Promise<infer Result>;
+}
+  ? Result
+  : never;
+
+// What the optimistic update needs beyond the wire input, such as the
+// deleted row a restore puts back. It travels as run()'s second argument and
+// never reaches the server.
+export type ExtraOf<M> = M extends { optimistic: (...args: infer P) => object }
+  ? P extends [unknown, unknown, infer Extra]
+    ? Extra
+    : undefined
+  : undefined;
+
+export type ServerActions<Registry> = {
+  readonly [K in keyof Registry]: (opts: {
+    data: InputOf<Registry[K]>;
+  }) => Promise<ResultOf<Registry[K]>>;
+};
+
+export function mutations<Store, Snapshot = never>() {
+  return function define<
+    Name extends string,
+    G extends Gate,
+    Input,
+    Result,
+    Optimistic extends
+      | ((snapshot: Snapshot, input: NoInfer<Input>, extra: never) => Snapshot)
+      | undefined = undefined,
+  >(
+    name: Name,
+    spec: {
+      gate: G;
+      schema: z.ZodType<Input>;
+      run: (
+        store: Store,
+        actor: ActorFor<G>,
+        input: NoInfer<Input>,
+      ) => Promise<Result>;
+      optimistic?: Optimistic;
+    },
+  ): Mutation<G, Store, Input, Result, Optimistic, Name> {
+    return {
+      name,
+      gate: spec.gate,
+      run: spec.run,
+      parse: (input, fail) => parseInput(spec.schema, input, fail),
+      // SAFETY: Optimistic is inferred from spec.optimistic and defaults to
+      // undefined exactly when the field is omitted.
+      optimistic: spec.optimistic as Optimistic,
+    };
+  };
+}

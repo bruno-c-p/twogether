@@ -1,34 +1,16 @@
 import { describe, expect, test, vi } from "vitest";
-import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
+import { fakeBudgetMutations } from "@/test/budget-mutations";
 import { transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
-function idle() {
-  return {
-    run: vi.fn(() => Promise.resolve(false)),
-    reset: vi.fn(),
-    pending: false,
-    error: "",
-  };
-}
-
 function Harness() {
-  const saveTx = useMutation(() =>
+  const saveTransaction = useMutation(() =>
     Promise.reject(new Error("Transação duplicada.")),
   );
 
-  const mutations: BudgetMutations = {
-    saveTx,
-    deleteTx: idle(),
-    restoreTx: idle(),
-    savePct: idle(),
-    settleTx: idle(),
-    unsettleTx: idle(),
-    splitBusy: false,
-    busy: false,
-  };
+  const mutations = fakeBudgetMutations(false, saveTransaction);
 
   const dialogs = useWorkspaceDialogs(mutations, [transaction()]);
 
@@ -39,9 +21,9 @@ function Harness() {
       >
         open
       </button>
-      <button onClick={() => void saveTx.run()}>save</button>
+      <button onClick={() => void saveTransaction.run()}>save</button>
       <button onClick={() => dialogs.setTransaction(null)}>close</button>
-      <p role="status">{saveTx.error || "no error"}</p>
+      <p role="status">{saveTransaction.error || "no error"}</p>
       <p data-testid="editing">
         {dialogs.transaction?.transaction?.id ?? "closed"}
       </p>

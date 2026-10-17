@@ -6,10 +6,12 @@ import type {
 } from "@/features/budget/domain/types";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
-  loadCachedWorkspace,
   optimisticDelete,
   optimisticRestore,
   optimisticSave,
+} from "@/features/budget/optimistic";
+import {
+  loadCachedWorkspace,
   workspaceQueryKey,
   workspaceQueryOptions,
 } from "@/features/budget/workspace";
@@ -123,8 +125,12 @@ describe("optimisticRestore", () => {
       budget: { ...snapshot.budget, transactions: [] },
     };
 
-    expect(optimisticRestore(empty, mercado).budget.transactions).toEqual([
-      { ...mercado, revision: 3 },
-    ]);
+    expect(
+      optimisticRestore(
+        empty,
+        { id: mercado.id, revision: 2 },
+        { transaction: mercado },
+      ).budget.transactions,
+    ).toEqual([{ ...mercado, revision: 3 }]);
   });
 });

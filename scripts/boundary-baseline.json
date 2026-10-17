@@ -41,7 +41,6 @@
     "src/features/auth/auth.server.test.ts->src/features/budget/constants.ts",
     "src/features/break-ui/actions.ts->src/features/budget/domain/schemas.ts",
     "src/features/break-ui/actions.ts->src/features/budget/domain/types.ts",
-    "src/features/break-ui/actions.ts->src/features/budget/workspace.ts",
     "src/features/break-ui/fixtures.test.ts->src/features/budget/domain/schemas.ts",
     "src/features/break-ui/fixtures.ts->src/features/budget/constants.ts",
     "src/features/break-ui/fixtures.ts->src/features/budget/domain/schemas.ts",
