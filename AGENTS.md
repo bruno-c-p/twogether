@@ -289,7 +289,8 @@
   method differs from its key, on an exported server fn statement, on a
   statement whose validator or handler names another definition, on a
   statement used
-  anywhere but as its own entry in exactly one actions object, on a statement that
+  anywhere but as its own entry in the one exported actions object, on an
+  actions object holding anything else, on a statement that
   is not a top-level `const`, and on a POST server fn outside
   `actions/index.ts`.
 

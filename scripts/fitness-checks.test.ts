@@ -648,8 +648,22 @@ const internal = { settleSplit, unsettleSplit };
 export const budgetActions = { settleSplit: internal.unsettleSplit, unsettleSplit } satisfies BudgetActions;`,
       }),
     ).toEqual([
-      `${barrel}: unsettleSplit must appear in exactly one actions object`,
+      `${barrel}: every statement must be an entry of one actions object`,
     ]);
+  });
+
+  test("rejects an actions object that reaches statements through another object", () => {
+    expect(
+      check({
+        [barrel]: `${statement("restoreTransaction", "restoreTransaction", "restoreTransaction")}
+${statement("unsettleSplit", "unsettleSplit", "unsettleSplit")}
+const internal = { restoreTransaction, unsettleSplit };
+export const budgetActions = {
+  restoreTransaction: internal.unsettleSplit,
+  unsettleSplit: internal.restoreTransaction,
+} satisfies BudgetActions;`,
+      }),
+    ).toEqual([`${barrel}: the actions object must be an exported const`]);
   });
 
   test("rejects a statement that is not a top-level const", () => {
@@ -698,6 +712,7 @@ export { budgetActions };`,
       }),
     ).toEqual([
       `${barrel}: unsettleSplit may only appear as its own entry in the actions object`,
+      `${barrel}: actions entry settleSplit must be the statement of the same name`,
     ]);
   });
 

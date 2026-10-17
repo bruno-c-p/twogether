@@ -129,26 +129,102 @@ function strayReferences(
   names: Set<string>,
 ) {
   const failures: string[] = [];
-  const entries = new Map<string, number>();
 
   visitAll(source, (node) => {
-    if (!ts.isIdentifier(node) || !names.has(node.text) || isNameOnly(node))
-      return;
-
-    if (isOwnEntry(node))
-      entries.set(node.text, (entries.get(node.text) ?? 0) + 1);
-    else
+    if (
+      ts.isIdentifier(node) &&
+      names.has(node.text) &&
+      !isNameOnly(node) &&
+      !isOwnEntry(node)
+    )
       failures.push(
         `${file}: ${node.text} may only appear as its own entry in the actions object`,
       );
   });
 
-  // A second entry means an intermediate object that can be re-keyed.
-  for (const [name, count] of entries)
-    if (count > 1)
+  return failures;
+}
+
+function exportedNames(source: ts.SourceFile) {
+  return new Set(
+    source.statements.flatMap((statement) => {
+      if (ts.isVariableStatement(statement) && hasExportModifier(statement))
+        return statement.declarationList.declarations.map((declaration) =>
+          declaration.name.getText(),
+        );
+
+      if (
+        ts.isExportDeclaration(statement) &&
+        statement.exportClause &&
+        ts.isNamedExports(statement.exportClause)
+      )
+        return statement.exportClause.elements.map(
+          (element) => (element.propertyName ?? element.name).text,
+        );
+
+      return [];
+    }),
+  );
+}
+
+function declaredName(object: ts.ObjectLiteralExpression) {
+  let node: ts.Node = object.parent;
+
+  while (ts.isSatisfiesExpression(node) || ts.isParenthesizedExpression(node))
+    node = node.parent;
+
+  return ts.isVariableDeclaration(node) ? node.name.getText() : undefined;
+}
+
+// Every statement's one entry must sit in a single exported object, and that
+// object may hold nothing else: a second object, or an entry reached through
+// one (`internal.x`), could hand a caller the wrong mutation.
+function actionsObjectFailures(
+  file: string,
+  source: ts.SourceFile,
+  names: Set<string>,
+) {
+  const owners = new Set<ts.ObjectLiteralExpression>();
+
+  visitAll(source, (node) => {
+    if (
+      ts.isIdentifier(node) &&
+      names.has(node.text) &&
+      isOwnEntry(node) &&
+      ts.isObjectLiteralExpression(node.parent.parent)
+    )
+      owners.add(node.parent.parent);
+  });
+
+  if (owners.size > 1)
+    return [`${file}: every statement must be an entry of one actions object`];
+
+  const [object] = owners;
+
+  if (!object) return [];
+
+  const name = declaredName(object);
+
+  const failures =
+    name && exportedNames(source).has(name)
+      ? []
+      : [`${file}: the actions object must be an exported const`];
+
+  for (const property of object.properties) {
+    const key = property.name?.getText() ?? "...";
+
+    const own =
+      (ts.isShorthandPropertyAssignment(property) ||
+        (ts.isPropertyAssignment(property) &&
+          ts.isIdentifier(property.initializer) &&
+          property.initializer.text === key)) &&
+      names.has(key);
+
+    if (!own)
       failures.push(
-        `${file}: ${name} must appear in exactly one actions object`,
+        `${file}: actions entry ${key} must be the statement of the same name`,
       );
+  }
 
   return failures;
 }
@@ -194,6 +270,7 @@ function barrelFailures(file: string, text: string) {
   return [
     ...statements.flatMap((statement) => statementFailures(file, statement)),
     ...strayReferences(file, source, names),
+    ...actionsObjectFailures(file, source, names),
   ];
 }
 
