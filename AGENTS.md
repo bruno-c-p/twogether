@@ -5,7 +5,8 @@ failure prints, and the section below that holds the full rule; when the two
 differ, the section wins. **prose** means nothing checks the rule: you are
 the enforcer. `bun run fitness` (`agentsRuleTable`) fails when the table
 names a `fitness <name>` or `oxlint <rule>` that does not exist, or leaves
-out a check that fitness runs.
+out a check that fitness runs. Write the prefix before every name; a name
+without one is not checked.
 
 ## Rule table
 
@@ -40,7 +41,7 @@ out a check that fitness runs.
 
 | Rule                                                                              | Enforcer                                                                          | Failure looks like                                             | Details                |
 | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------- |
-| No `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useInsertionEffect` | oxlint `no-restricted-imports` and `no-restricted-properties`                     | `Local component state is banned: …` / `Effects are banned: …` | State without useState |
+| No `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useInsertionEffect` | oxlint `no-restricted-imports`, oxlint `no-restricted-properties`                 | `Local component state is banned: …` / `Effects are banned: …` | State without useState |
 | Put state in React Query, React Hook Form, nuqs or Base UI as listed              | **prose**                                                                         | —                                                              | State without useState |
 | URL index parsers read out-of-range values as absent                              | `transaction-list.test.tsx` (`?page=0`) pins `pageParam`; new parsers **prose**   | test failure                                                   | State without useState |
 | Gate navigation on `queryClient.query()`, never `prefetchQuery`                   | `use-workspace-search.test.tsx` pins `setMonth`; new call sites **prose**         | `a month that fails to load keeps the current month` fails     | React Query            |
