@@ -7,10 +7,7 @@ import {
   verifyClerkToken,
 } from "@clerk/mcp-tools/server";
 import { z } from "zod";
-import {
-  getBudgetStore,
-  type BudgetStore,
-} from "@/features/budget/budget.server";
+import { getStore, type Store } from "@/server/store.server";
 import { createBudgetMcpServer } from "@/features/mcp/tools.server";
 import { now as clockNow } from "@/lib/clock";
 import { parseClientEnv } from "@/lib/env";
@@ -107,7 +104,7 @@ export function methodNotAllowed() {
 // it runs on serverless functions without sticky sessions.
 export async function serveMcp(
   request: Request,
-  store: BudgetStore,
+  store: Store,
   userId: string,
   authInfo?: AuthInfo,
 ) {
@@ -129,7 +126,7 @@ export async function handleMcpPost(
   request: Request,
   authenticate: () => Promise<OAuthSession> = () =>
     auth({ acceptsToken: "oauth_token" }),
-  loadStore: () => BudgetStore = getBudgetStore,
+  loadStore: () => Store = getStore,
 ) {
   const token = bearerToken(request);
 

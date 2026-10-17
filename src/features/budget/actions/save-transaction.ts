@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
+import { getStore } from "@/server/store.server";
 import {
   occurrencesSchema,
   transactionSchema,
@@ -22,5 +22,5 @@ export const saveTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSaveTransaction)
   .handler(async ({ data, context }) =>
-    getBudgetStore().saveTransaction(context.user, context.householdId, data),
+    getStore().saveTransaction(context.user, context.householdId, data),
   );

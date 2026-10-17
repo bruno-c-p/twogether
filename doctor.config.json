@@ -58,7 +58,7 @@
       {
         // The test harness replays a user story against a single in-memory
         // SQLite connection, so its steps run in order on purpose.
-        "files": ["src/features/budget/services/store-test-harness.ts"],
+        "files": ["src/server/store-test-harness.ts"],
         "rules": ["react-doctor/server-sequential-independent-await"]
       }
     ]

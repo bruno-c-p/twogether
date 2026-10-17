@@ -2,7 +2,6 @@ import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import type { InStatement } from "@libsql/client";
 import { firstOccurrence } from "@/features/budget/domain/recurrence";
-import { ensureUser, setName } from "@/features/auth/auth.server";
 import {
   goalPercentagesSchema,
   transactionSchema,
@@ -13,18 +12,13 @@ import type {
   Transaction,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
-import {
-  createHousehold,
-  createInvite,
-  joinHousehold,
-  memberCount,
-  revokeInvite,
-} from "@/features/household/household.server";
 import { now as clockNow } from "@/lib/clock";
+import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
   all,
-  createStoreContext,
+  bindContext,
   execute,
+  memberCount,
   one,
   parseRows,
   type DatabaseTransaction,
@@ -34,7 +28,6 @@ import {
   type UserRow,
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
-import { databaseUrl } from "@/server/env.server";
 
 const STORED_MESSAGE = "Não foi possível ler os dados salvos.";
 
@@ -624,38 +617,18 @@ async function savePercentages(
   });
 }
 
-export function createBudgetStore(filename: string) {
-  const ctx = createStoreContext(filename);
+export const NEW_USER_PERCENTAGES = JSON.stringify(DEFAULT_PERCENTAGES);
 
-  const bind =
-    <Args extends unknown[], Result>(
-      fn: (ctx: StoreContext, ...args: Args) => Result,
-    ) =>
-    (...args: Args) =>
-      fn(ctx, ...args);
+export function createBudgetStore(ctx: StoreContext) {
+  const bind = bindContext(ctx);
 
   return {
     snapshot: bind(snapshot),
-    ensureUser: bind(ensureUser),
-    setName: bind(setName),
-    createHousehold: bind(createHousehold),
-    joinHousehold: bind(joinHousehold),
-    createInvite: bind(createInvite),
-    revokeInvite: bind(revokeInvite),
     saveTransaction: bind(saveTransaction),
     deleteTransaction: bind(deleteTransaction),
     restoreTransaction: bind(restoreTransaction),
     settleSplit: bind(settleSplit),
     unsettleSplit: bind(unsettleSplit),
     savePercentages: bind(savePercentages),
-    close: () => ctx.close(),
   };
-}
-
-export type BudgetStore = ReturnType<typeof createBudgetStore>;
-
-let store: BudgetStore | undefined;
-
-export function getBudgetStore(): BudgetStore {
-  return (store ??= createBudgetStore(databaseUrl()));
 }

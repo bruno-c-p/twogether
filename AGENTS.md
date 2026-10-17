@@ -187,6 +187,13 @@
   Fix it by importing from the feature's `index.ts` (export the symbol there
   if needed), moving shared code down into `src/lib` or `domain/`, or passing
   the value in. Change the zones only when the architecture itself changes.
+- One exception: the `store` zone (`src/server/store.server.ts`,
+  `src/server/middleware.ts`, `src/server/store-test-harness.ts`) is the
+  composition root. It alone may import feature stores, and only through
+  each feature's `*.server.ts` entry zone (`auth-store`, `household-store`,
+  `budget-store`). Features reach each other's stores only through
+  `getStore()`. New server code stays out of that zone unless it composes
+  stores; the rest of `src/server` still never imports features.
 - `scripts/boundary-baseline.json` grandfathers violations that predate the
   gate. It must never grow. When you remove a listed import, `bun run fallow`
   fails on the stale entry: re-save with

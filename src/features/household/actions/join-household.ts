@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
-import { inviteTokenSchema } from "@/features/budget/domain/schemas";
+import { getStore } from "@/server/store.server";
+import { inviteTokenSchema } from "@/lib/account-schemas";
 import { authMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -14,5 +14,5 @@ export const joinHousehold = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(parseJoinHousehold)
   .handler(async ({ data, context }) =>
-    getBudgetStore().joinHousehold(context.user, data.token),
+    getStore().joinHousehold(context.user, data.token),
   );

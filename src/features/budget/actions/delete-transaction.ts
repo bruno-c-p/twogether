@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
+import { getStore } from "@/server/store.server";
 import {
   followingSchema,
   idSchema,
@@ -24,5 +24,5 @@ export const deleteTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseDeleteTransaction)
   .handler(async ({ data, context }) =>
-    getBudgetStore().deleteTransaction(context.user, context.householdId, data),
+    getStore().deleteTransaction(context.user, context.householdId, data),
   );

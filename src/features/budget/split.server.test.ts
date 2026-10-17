@@ -3,11 +3,11 @@ import type { Transaction } from "@/features/budget/domain/types";
 import {
   couple,
   signup,
-  transaction,
   setupMemoryStore,
   view,
   withHousehold,
-} from "@/features/budget/services/store-test-harness";
+} from "@/server/store-test-harness";
+import { transaction } from "@/test/store-transaction";
 import { cents } from "@/test/cents";
 
 const ctx = setupMemoryStore();

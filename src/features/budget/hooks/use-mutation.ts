@@ -8,9 +8,7 @@ import { useRef } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { workspaceQueryKey } from "@/features/budget/workspace";
-
-const OFFLINE_MESSAGE =
-  "Sem conexão. Confira o orçamento antes de tentar novamente.";
+import { failureMessage } from "@/lib/errors";
 
 type CachedWorkspaces = [QueryKey, WorkspaceSnapshot | undefined][];
 
@@ -19,12 +17,6 @@ function cachedWorkspaces(queryClient: QueryClient): CachedWorkspaces {
   return queryClient.getQueriesData<WorkspaceSnapshot>({
     queryKey: workspaceQueryKey,
   });
-}
-
-export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
-  return cause instanceof Error && !(cause instanceof TypeError)
-    ? cause.message
-    : offline;
 }
 
 // A React Query mutation over the workspace snapshot. run() resolves to

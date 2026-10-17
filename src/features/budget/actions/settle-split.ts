@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
+import { getStore } from "@/server/store.server";
 import {
   dateSchema,
   idSchema,
@@ -24,5 +24,5 @@ export const settleSplit = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSettleSplit)
   .handler(async ({ data, context }) =>
-    getBudgetStore().settleSplit(context.user, context.householdId, data),
+    getStore().settleSplit(context.user, context.householdId, data),
   );

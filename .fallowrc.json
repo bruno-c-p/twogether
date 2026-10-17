@@ -31,6 +31,28 @@
   // internals. Older violations live in scripts/boundary-baseline.json.
   "boundaries": {
     "zones": [
+      // The composition root: the only code that may import feature stores,
+      // and only through each feature's *.server.ts entry point.
+      {
+        "name": "store",
+        "patterns": [
+          "src/server/store.server.ts",
+          "src/server/middleware.ts",
+          "src/server/store-test-harness.ts"
+        ]
+      },
+      {
+        "name": "auth-store",
+        "patterns": ["src/features/auth/auth.server.ts"]
+      },
+      {
+        "name": "household-store",
+        "patterns": ["src/features/household/household.server.ts"]
+      },
+      {
+        "name": "budget-store",
+        "patterns": ["src/features/budget/budget.server.ts"]
+      },
       {
         "name": "budget-domain",
         "patterns": ["src/features/budget/domain/**"]
@@ -52,6 +74,22 @@
       }
     ],
     "rules": [
+      {
+        "from": "store",
+        "allow": [
+          "auth-store",
+          "household-store",
+          "budget-store",
+          "server",
+          "lib"
+        ]
+      },
+      { "from": "auth-store", "allow": ["server", "lib"] },
+      { "from": "household-store", "allow": ["server", "lib"] },
+      {
+        "from": "budget-store",
+        "allow": ["budget-domain", "budget", "server", "lib"]
+      },
       { "from": "budget-domain", "allow": ["lib"] },
       {
         "from": "budget-api",
@@ -67,6 +105,7 @@
           "budget-domain",
           "budget-api",
           "theme-api",
+          "store",
           "server",
           "lib",
           "components"
@@ -74,7 +113,14 @@
       },
       {
         "from": "auth",
-        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget-api",
+          "theme-api",
+          "store",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "break-ui",
@@ -82,11 +128,25 @@
       },
       {
         "from": "household",
-        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget-api",
+          "theme-api",
+          "store",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "mcp",
-        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget-api",
+          "theme-api",
+          "store",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "theme",
@@ -94,7 +154,14 @@
       },
       {
         "from": "app",
-        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget-api",
+          "theme-api",
+          "store",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       { "from": "server", "allow": ["lib", "components"] },
       { "from": "lib", "allow": ["server", "components"] },

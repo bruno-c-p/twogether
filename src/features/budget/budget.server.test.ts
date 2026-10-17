@@ -2,18 +2,18 @@ import { describe, expect, test } from "bun:test";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createBudgetStore } from "@/features/budget/budget.server";
+import { createStore } from "@/server/store.server";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
 import {
   couple,
   requireUser,
   signup,
-  transaction,
   setupMemoryStore,
   view,
   withHousehold,
-} from "@/features/budget/services/store-test-harness";
+} from "@/server/store-test-harness";
+import { transaction } from "@/test/store-transaction";
 import { cents } from "@/test/cents";
 
 const ctx = setupMemoryStore();
@@ -176,7 +176,7 @@ describe("budget store", () => {
   test("data survives reopening the database", async () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-test-"));
     const file = join(dir, "test.sqlite");
-    let disk = createBudgetStore(file);
+    let disk = createStore(file);
 
     try {
       const user = await disk.ensureUser("user_disk");
@@ -189,7 +189,7 @@ describe("budget store", () => {
         transaction: transaction(user.id),
       });
       disk.close();
-      disk = createBudgetStore(file);
+      disk = createStore(file);
 
       const reopened = (await view(disk, user)).budget.transactions;
 

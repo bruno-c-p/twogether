@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useRef } from "react";
 import { isRedirect, useRouter } from "@tanstack/react-router";
-import { failureMessage } from "@/features/budget/hooks/use-mutation";
+import { failureMessage } from "@/lib/errors";
 
 // Runs one server action at a time as a React Query mutation: failures
 // become the error message, redirects navigate, and success reloads the

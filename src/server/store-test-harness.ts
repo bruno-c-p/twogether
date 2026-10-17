@@ -1,35 +1,18 @@
 import { afterEach, beforeEach } from "bun:test";
-import {
-  createBudgetStore,
-  type BudgetStore,
-} from "@/features/budget/budget.server";
+import { createStore, type Store } from "@/server/store.server";
 import { RequestError } from "@/server/request-error";
 import type { UserRow } from "@/server/db.server";
-import type { Transaction } from "@/features/budget/domain/types";
-import { cents } from "@/test/cents";
-
-export function transaction(memberId: string): Transaction {
-  return {
-    id: "transaction-1",
-    description: "Mercado",
-    amount: cents(10000),
-    kind: "expense",
-    date: "2026-09-14",
-    goal: "fixed",
-    memberId,
-  };
-}
 
 function clerkId(name: string) {
   return `user_${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
 }
 
-export async function requireUser(store: BudgetStore, user: UserRow) {
+export async function requireUser(store: Store, user: UserRow) {
   return store.ensureUser(user.id);
 }
 
 // Mirrors householdMiddleware: re-read the user, then require a household.
-export async function withHousehold(store: BudgetStore, user: UserRow) {
+export async function withHousehold(store: Store, user: UserRow) {
   const fresh = await store.ensureUser(user.id);
 
   if (!fresh.household_id)
@@ -39,20 +22,20 @@ export async function withHousehold(store: BudgetStore, user: UserRow) {
 }
 
 // The workspace as loadWorkspace would serve it to this user right now.
-export async function view(store: BudgetStore, user: UserRow) {
+export async function view(store: Store, user: UserRow) {
   const actor = await withHousehold(store, user);
 
   return store.snapshot(actor.user, actor.householdId);
 }
 
-export async function signup(store: BudgetStore, name: string) {
+export async function signup(store: Store, name: string) {
   const user = await store.ensureUser(clerkId(name));
   await store.setName(user, name);
 
   return { user: await store.ensureUser(user.id) };
 }
 
-export async function couple(store: BudgetStore) {
+export async function couple(store: Store) {
   const a = await signup(store, "Ana");
   await store.createHousehold(a.user);
   const ana = await withHousehold(store, a.user);
@@ -67,10 +50,10 @@ export async function couple(store: BudgetStore) {
 }
 
 export function setupMemoryStore() {
-  let current: BudgetStore | undefined;
+  let current: Store | undefined;
 
   beforeEach(() => {
-    current = createBudgetStore(":memory:");
+    current = createStore(":memory:");
   });
   afterEach(() => {
     current?.close();

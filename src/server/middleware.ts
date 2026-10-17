@@ -2,11 +2,12 @@ import { redirect } from "@tanstack/react-router";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest, getRequestIP } from "@tanstack/react-start/server";
-import { currentUser } from "@/features/auth/current-user.server";
 import {
   consumeRateLimit,
   rememberRetryAfter,
 } from "@/server/rate-limit.server";
+import { getStore } from "@/server/store.server";
+import type { UserRow } from "@/server/db.server";
 import {
   RATE_LIMITED_MESSAGE,
   RequestError,
@@ -40,6 +41,14 @@ export const rateLimitMiddleware = createMiddleware({
 
   return next();
 });
+
+async function currentUser(): Promise<UserRow | null> {
+  const { userId } = await auth();
+
+  if (!userId) return null;
+
+  return getStore().ensureUser(userId);
+}
 
 export const authMiddleware = createMiddleware({ type: "function" }).server(
   async ({ next }) => {

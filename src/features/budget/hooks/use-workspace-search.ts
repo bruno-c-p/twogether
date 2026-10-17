@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import { failureMessage } from "@/features/budget/hooks/use-mutation";
+import { failureMessage } from "@/lib/errors";
 import { pageParam, workspaceParams } from "@/features/budget/search";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 import { useBrowserSync } from "@/lib/use-browser-sync";

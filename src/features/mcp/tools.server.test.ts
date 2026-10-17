@@ -2,14 +2,14 @@ import { afterEach, describe, expect, setSystemTime, test } from "bun:test";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { z } from "zod";
-import type { BudgetStore } from "@/features/budget/budget.server";
+import type { Store } from "@/server/store.server";
 import { createBudgetMcpServer } from "@/features/mcp/tools.server";
 import {
   couple,
   setupMemoryStore,
   signup,
   view,
-} from "@/features/budget/services/store-test-harness";
+} from "@/server/store-test-harness";
 
 const ctx = setupMemoryStore();
 
@@ -33,7 +33,7 @@ const savedRow = z.object({
   split: z.object({ paid: z.boolean() }).optional(),
 });
 
-async function connect(store: BudgetStore, userId: string) {
+async function connect(store: Store, userId: string) {
   const [clientSide, serverSide] = InMemoryTransport.createLinkedPair();
   const client = new Client({ name: "test", version: "1.0.0" });
   await createBudgetMcpServer(store, userId).connect(serverSide);

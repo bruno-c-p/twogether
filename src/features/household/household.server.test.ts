@@ -5,7 +5,7 @@ import {
   setupMemoryStore,
   view,
   withHousehold,
-} from "@/features/budget/services/store-test-harness";
+} from "@/server/store-test-harness";
 import { now } from "@/lib/clock";
 
 const ctx = setupMemoryStore();

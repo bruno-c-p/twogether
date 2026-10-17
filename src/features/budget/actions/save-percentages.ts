@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
+import { getStore } from "@/server/store.server";
 import {
   goalPercentagesSchema,
   revisionSchema,
@@ -22,5 +22,5 @@ export const savePercentages = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
   .validator(parseSavePercentages)
   .handler(async ({ data, context }) =>
-    getBudgetStore().savePercentages(context.user, data),
+    getStore().savePercentages(context.user, data),
   );

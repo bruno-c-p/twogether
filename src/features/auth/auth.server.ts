@@ -1,5 +1,5 @@
-import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import {
+  bindContext,
   execute,
   one,
   type StoreContext,
@@ -8,8 +8,9 @@ import {
 } from "@/server/db.server";
 import { RequestError } from "@/server/request-error";
 
-export async function ensureUser(
+async function ensureUser(
   ctx: StoreContext,
+  percentages: string,
   clerkUserId: string,
 ): Promise<UserRow> {
   // ctx.db is used directly here, outside atomic(), so wait for the schema.
@@ -27,7 +28,7 @@ export async function ensureUser(
     await execute(
       transaction,
       "INSERT INTO users(id,name,percentages) VALUES (?,?,?) ON CONFLICT(id) DO NOTHING",
-      [clerkUserId, "", JSON.stringify(DEFAULT_PERCENTAGES)],
+      [clerkUserId, "", percentages],
     );
   });
 
@@ -43,11 +44,22 @@ export async function ensureUser(
   return user;
 }
 
-export async function setName(ctx: StoreContext, user: UserRow, name: string) {
+async function setName(ctx: StoreContext, user: UserRow, name: string) {
   await ctx.atomic(async (transaction) => {
     await execute(transaction, "UPDATE users SET name = ? WHERE id = ?", [
       name,
       user.id,
     ]);
   });
+}
+
+// percentages is the JSON a new user starts with; the budget feature owns it.
+export function createAuthStore(ctx: StoreContext, percentages: string) {
+  const bind = bindContext(ctx);
+
+  return {
+    ensureUser: (clerkUserId: string) =>
+      ensureUser(ctx, percentages, clerkUserId),
+    setName: bind(setName),
+  };
 }
