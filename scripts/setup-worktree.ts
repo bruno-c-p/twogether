@@ -123,8 +123,9 @@ if (import.meta.main) {
 
   run(["bun", "install", "--frozen-lockfile"]);
 
-  if (localEnv) unlinkSync(".env.local");
   const target = realpathSync(source);
+
+  if (localEnv) unlinkSync(".env.local");
 
   symlinkSync(target, ".env.local");
   run(["bunx", "playwright", "install", "chromium"]);

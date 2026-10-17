@@ -1,3 +1,15 @@
+import { spawnSync } from "node:child_process";
+import {
+  chmodSync,
+  copyFileSync,
+  mkdirSync,
+  mkdtempSync,
+  realpathSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from "node:fs";
+import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { setupRefusal, type SetupState } from "./setup-worktree";
 
@@ -99,5 +111,71 @@ describe("setupRefusal", () => {
     expect(
       refusal({ sourceIsLocalEnv: true, sourceContents: undefined }),
     ).toContain("the link would point at itself");
+  });
+});
+
+describe("setup-worktree script", () => {
+  test("keeps .env.local resolving when the dev env links through it", () => {
+    const tmp = realpathSync(mkdtempSync("/tmp/setup-worktree-"));
+    const repo = join(tmp, "repo");
+    const worktree = join(tmp, "worktree");
+    const bin = join(tmp, "bin");
+    const devEnv = join(tmp, "dev.env");
+    const bun = spawnSync("which", ["bun"]).stdout.toString().trim();
+
+    const git = (...args: string[]) => {
+      const { status, stderr } = spawnSync("git", ["-C", repo, ...args], {
+        env: {
+          ...process.env,
+          GIT_CONFIG_GLOBAL: "/dev/null",
+          GIT_CONFIG_NOSYSTEM: "1",
+        },
+      });
+
+      if (status !== 0)
+        throw new Error(`git ${args.join(" ")}: ${stderr.toString()}`);
+    };
+
+    try {
+      mkdirSync(join(repo, "scripts"), { recursive: true });
+      copyFileSync(
+        join(import.meta.dirname, "setup-worktree.ts"),
+        join(repo, "scripts/setup-worktree.ts"),
+      );
+      git("init", "-q");
+      git("add", ".");
+      git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "init");
+      git("worktree", "add", "-q", "--detach", worktree);
+
+      mkdirSync(bin);
+
+      for (const stub of ["bun", "bunx"]) {
+        writeFileSync(join(bin, stub), "#!/bin/sh\nexit 0\n");
+        chmodSync(join(bin, stub), 0o755);
+      }
+
+      writeFileSync(devEnv, "CLERK_SECRET_KEY=sk_test_abc\n");
+      symlinkSync(devEnv, join(worktree, ".env.local"));
+      symlinkSync(join(worktree, ".env.local"), join(worktree, "chain.env"));
+
+      const run = spawnSync(
+        bun,
+        ["--no-env-file", join(worktree, "scripts/setup-worktree.ts")],
+        {
+          env: {
+            ...process.env,
+            HOME: tmp,
+            PATH: `${bin}:${process.env.PATH}`,
+            TWOGETHER_DEV_ENV: join(worktree, "chain.env"),
+          },
+        },
+      );
+
+      expect(run.stderr.toString()).toBe("");
+      expect(run.status).toBe(0);
+      expect(realpathSync(join(worktree, ".env.local"))).toBe(devEnv);
+    } finally {
+      rmSync(tmp, { recursive: true, force: true });
+    }
   });
 });
