@@ -107,7 +107,12 @@
       { "name": "components", "patterns": ["src/components/**"] },
       {
         "name": "app",
-        "patterns": ["src/routes/**", "src/router.tsx", "src/start.ts"]
+        "patterns": [
+          "src/routes/**",
+          "src/router.tsx",
+          "src/start.ts",
+          "src/start.server.test.ts"
+        ]
       }
     ],
     "rules": [
