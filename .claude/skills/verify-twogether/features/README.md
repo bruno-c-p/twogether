@@ -14,7 +14,8 @@ This directory is the maintained source for verifying twogether's user-facing be
 - Journeys run through `verify.ts drive "$RUN" <journey.ts>` and use the `Kit` described in `../SKILL.md`.
 - Use `getByRole` and `getByLabel` with the exact Portuguese names below, scoped to a named region, dialog, or navigation.
 - Desktop navigation is `navigation "Navegação principal"` with links `Visão geral`, `Transações`, `Orçamento`. Phones use `navigation "Navegação mobile"` with links `Início`, `Transações`, `Orçamento` and buttons `Registrar transação`, `Conta`.
-- The month lives in `?month=YYYY-MM`, the person filter in `?member=<id>`. Use `kit.setMonth` and the `Filtrar por pessoa` button, not URL edits, unless the feature is about URLs.
+- The month lives in `?month=YYYY-MM`, the person filter in `?member=<id>`. Use `kit.setMonth` and the person picker, not URL edits, unless the feature is about URLs. The picker is `getByRole("button", { name: /^Filtrar por pessoa/ })`; it opens a dialog whose options are `getByRole("radio", { name: "Nós" | "Eu" | "<partner name>", exact: true })`. Choosing one closes the dialog and renames the button `Filtrar por pessoa: <option>`.
+- Toasts are `page.locator('[data-slot="toast"]').filter({ hasText: "<message>" })`. Their buttons (`Desfazer`, `Fechar aviso`) are `getByRole("button")` inside that locator. A toast has no role, so this is the one CSS locator the map uses.
 - Amounts are typed in pt-BR form (`45,90`, `5000,00`) and render as `R$ 4.940,00`. Match with `/R\$\s*4\.940,00/`: the space is a no-break space.
 - Use months in 2026 away from today's (the journeys use `2026-09` and `2026-10`) so the default-month redirect does not hide a month switch.
 

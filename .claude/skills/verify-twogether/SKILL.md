@@ -10,7 +10,7 @@ twogether is a shared budget web app (TanStack Start, Clerk auth, SQLite). Users
 Everything runs through one helper, from the repo root:
 
 ```sh
-.claude/skills/verify-twogether/scripts/verify.ts launch [--no-build]
+.claude/skills/verify-twogether/scripts/verify.ts launch
 .claude/skills/verify-twogether/scripts/verify.ts doctor  "$RUN"
 .claude/skills/verify-twogether/scripts/verify.ts drive   "$RUN" <journey.ts>
 .claude/skills/verify-twogether/scripts/verify.ts cleanup "$RUN"
@@ -18,7 +18,7 @@ Everything runs through one helper, from the repo root:
 
 ## Hard rules
 
-- Never drive, restart, or kill the user's `bun run dev` on port 3000, and never open `data/twogether.sqlite`. The helper only uses ports 3500-3599 (e2e uses 3400-3499, so a parallel `bun run e2e` cannot collide) and a fresh SQLite file in a temp dir.
+- Never drive, restart, or kill the user's `bun run dev` on port 3000, and never open `data/twogether.sqlite`. The helper only uses ports 3500-3599 (e2e uses 3400-3499), a fresh SQLite file, and its own build output in a temp dir, so several launches and a `bun run e2e` can run at the same time.
 - The Clerk dev instance is at its 100-user quota. Sign in only as the existing e2e users the helper knows (`solo`, `ana`, `bia`). It looks them up and refuses to create one. Do not call `createUser`, do not invent new emails, and do not sign up through the Clerk form.
 - Evidence never goes under the repo, and never under `.github/`. Do not commit it.
 
@@ -30,7 +30,7 @@ Prerequisite: `bun run setup` has run in this worktree (it links the test-only `
 .claude/skills/verify-twogether/scripts/verify.ts launch
 ```
 
-This runs `bun run build`, picks a free port in 3500-3599, creates a scratch dir `$TMPDIR/twogether-verify-XXXXXX/` holding an empty `budget.sqlite`, and starts `node .output/server/index.mjs` detached with `BUDGET_DATABASE_PATH` set to that file, the Turso variables blanked, and the Clerk test keys from `.env.local`. The schema is created on first connect, so an empty data dir is enough. The helper refuses a `.env.local` with live Clerk keys.
+This creates a scratch dir `$TMPDIR/twogether-verify-XXXXXX/` and builds the app into `<scratch>/output/` through a wrapper Vite config that imports the repo's `vite.config.ts` and points Nitro's output there (Nitro's intermediate files go to `node_modules/.cache/twogether-verify/<scratch name>/`). The shared `.output/` is never written. It then picks a free port in 3500-3599 and starts `node <scratch>/output/server/index.mjs` detached with `BUDGET_DATABASE_PATH` set to that file, the Turso variables blanked, and the Clerk test keys from `.env.local`. The schema is created on first connect, so an empty data dir is enough. The helper refuses a `.env.local` with live Clerk keys.
 
 It is ready when the last two lines are:
 
@@ -39,7 +39,7 @@ ready http://127.0.0.1:35NN
 RUN=/Users/<you>/.local/state/twogether-verify/<timestamp>
 ```
 
-`ready` means `/manifest.webmanifest` answers 200 and `/entrar` renders the app title. Keep the `RUN` path: every other command takes it. Pass `--no-build` only when you built this exact tree a moment ago. Doctor fails if the source changed after launch.
+`ready` means `/manifest.webmanifest` answers 200 and `/entrar` renders the app title. Keep the `RUN` path: every other command takes it. Each launch gets its own `RUN` dir (timestamp plus a random suffix). Doctor fails if the source changed after launch.
 
 Why the production build: the e2e suite moved off `vite dev` because the dev SSR module runner races on server-function modules. Verify the artifact that ships.
 
@@ -54,7 +54,7 @@ Read-only. Run it first, and again whenever anything looks off. Every line must 
 - the run was not cleaned up
 - the port is in 3500-3599 (never 3000)
 - the database lives in this run's scratch dir, not `data/`
-- the recorded pid is alive and is `.output/server/index.mjs` started with this run's scratch path
+- the recorded pid is alive and is this run's `<scratch>/output/server/index.mjs`
 - that pid owns the listening port
 - `/manifest.webmanifest` and `/entrar` respond
 - the build matches the working tree (HEAD + diff of `src`, `public`, Vite/Uno config). If this fails, `cleanup` and `launch` again
@@ -67,7 +67,7 @@ Read-only. Run it first, and again whenever anything looks off. Every line must 
 A journey is a TypeScript file whose default export receives a `Kit` (types in `scripts/verify.ts`):
 
 ```ts
-import type { Kit } from "../scripts/verify.ts";
+import type { Kit } from "/abs/path/to/repo/.claude/skills/verify-twogether/scripts/verify.ts";
 
 export default async function journey(kit: Kit) {
   const { page, expect, step, shot } = kit;
@@ -82,7 +82,7 @@ export default async function journey(kit: Kit) {
 .claude/skills/verify-twogether/scripts/verify.ts drive "$RUN" .claude/skills/verify-twogether/journeys/transactions.ts
 ```
 
-Write one-off journeys in a scratch dir outside the repo (for example `/tmp/<task>/journey.ts`). Keep a journey in `journeys/` only when it is a maintained proof for a mapped feature.
+Write one-off journeys in a scratch dir outside the repo (for example `/tmp/<task>/journey.ts`). The `Kit` import is type-only, so Bun erases it and the journey runs from any directory. Use the absolute path to `scripts/verify.ts` so editors resolve the types. Keep a journey in `journeys/` only when it is a maintained proof for a mapped feature.
 
 What the kit gives you:
 
@@ -133,7 +133,7 @@ Proof standards:
 .claude/skills/verify-twogether/scripts/verify.ts cleanup "$RUN"
 ```
 
-Stops the recorded pid only if its command line is still `.output/server/index.mjs <this run's scratch dir>` and the run was not already cleaned (never by name, so a recycled pid is left alone), copies `server.log` into the run dir, deletes the scratch dir and its SQLite file, and stamps `cleanedAt` in `run.json`. Evidence stays. Run cleanup after every run, including failed launches and failed drives, before trying again.
+Stops the recorded pid only if its command line is still `<this run's scratch dir>/output/server/index.mjs` and the run was not already cleaned (never by name, so a recycled pid is left alone), copies `server.log` into the run dir, deletes the scratch dir (build output and SQLite file) and the run's Nitro build dir, and stamps `cleanedAt` (first cleanup only) in `run.json`. Evidence stays. Run cleanup after every run, including failed launches and failed drives, before trying again.
 
 ## Helpers
 
@@ -142,8 +142,10 @@ Stops the recorded pid only if its command line is still `.output/server/index.m
 
 ## Gotchas
 
-- The build is shared with `bun run e2e` (`.output/`). Launch rebuilds by default, so an e2e run started afterwards uses your tree, which is what you want in the same worktree.
+- Launch builds into scratch every time, so the instance always runs the current tree. It never refreshes `.output/`; e2e still builds that itself when it is missing.
 - `bun run e2e` resets nothing of yours: it uses its own port range and its own temp database. The two can run at the same time.
 - The Clerk users are shared with e2e. That is safe because sessions are per browser context and households live in each run's own SQLite file.
 - `sweep` drives the theme through `prefers-color-scheme`. If the journey clicked `Tema escuro`/`Tema claro`, the stored preference overrides it and the sweep fails on `data-theme`. Click `Tema sistema` first.
+- A run's database keeps everything earlier drives did. Each test user can onboard once per `RUN`; `onboard` throws `already has a household in this run's database` on a second attempt. Use different users per drive (`solo` vs `ana`/`bia`) or launch a new run.
+- The Clerk dev FAPI is occasionally flaky. If `onboard` fails with `Clerk: Failed to sign in: You're already signed in.` (a retried sign-in POST answered 400), run cleanup, launch again, and rerun. Report it if it repeats.
 - Value hiding is tab-only state. A reload shows values again by design.

@@ -25,11 +25,11 @@ Preconditions:
 - `kit.onboard(page, "ana", "Ana")`, then `const bia = await kit.invitePartner(page, "bia", "Bia")`.
 - Both pages on `kit.setMonth(…, "2026-09")`.
 
-- **Split.** On Ana's `Transações`, new transaction: `Valor` `2000,00`, `Descrição` `Aluguel`, `Data` `2026-09-05`, `Custo fixo`, then `getByRole("switch", { name: /Dividir com Bia/ })` check. The dialog shows `Bia deve R$ 1.000,00 a você.` Submit; toast `Transação adicionada.`; the `Aluguel` row contains `dividida · a receber` (`useInnerText`).
+- **Split.** On Ana's `Transações`, new transaction: `Valor` `2000,00`, `Descrição` `Aluguel`, `Data` `2026-09-05`, `Custo fixo`, then `getByRole("switch", { name: /Dividir com Bia/ })` check. The dialog shows `Bia deve R$ 1.000,00 a você.` Submit; toast `Transação adicionada.`; the `Aluguel` row (the listitem-filter locator from [transactions](./transactions.md), **Edit** step: `getByRole("region", { name: "Transações do mês" }).getByRole("listitem").filter({ has: page.getByRole("button", { name: "Aluguel", exact: true }) })`) contains `dividida · a receber` (`toContainText` with `useInnerText: true`).
 - **Creditor card.** Ana's overview `region "Acerto entre vocês"` shows `Bia te deve R$ 1.000,00` and `1 despesa dividida em aberto · aguardando Bia`, with no `Marcar como pago` button.
 - **Settle.** `kit.reload(bia)`, Bia's card shows `Você deve R$ 1.000,00 a Ana`. Choose `Marcar como pago`; in `dialog "Marcar como pago"` fill `getByLabel("Data do pagamento")` `2026-09-10`, choose `Confirmar pagamento`. Toast `Pagamento registrado.`, card shows `Nada pendente entre vocês`.
-- **Repayments.** `reload` both. Bia, `Transações`, person `Eu`: `Aluguel (sua parte)` with `/[-−]\s?R\$\s*1\.000,00/`. Ana, person `Eu`: `Reembolso: Aluguel`, its `Editar Reembolso: Aluguel` disabled, list text `dividida · paga`. Under `Nós`, Bia sees no `Reembolso: Aluguel`.
-- **Unsettle.** Bia, person `Nós`, open `Aluguel`: `dialog "Editar transação"` shows `Pago por você em …`; choose `Desmarcar pagamento`. Toast `Pagamento desmarcado.`; after reload the card shows the debt again and `Aluguel (sua parte)` is gone.
+- **Repayments.** `reload` both. Bia, `Transações`, person `Eu` (`getByRole("button", { name: /^Filtrar por pessoa/ })`, then `getByRole("radio", { name: "Eu", exact: true })`): `Aluguel (sua parte)` with `/[-−]\s?R\$\s*1\.000,00/`. Ana, person `Eu`: `Reembolso: Aluguel`, its `Editar Reembolso: Aluguel` disabled, list text `dividida · paga`. Under `Nós`, Bia sees no `Reembolso: Aluguel`.
+- **Unsettle.** Bia, person `Nós` (same picker, radio `Nós`), open `Aluguel`: `dialog "Editar transação"` shows `Pago por você em …`; choose `Desmarcar pagamento`. Toast `Pagamento desmarcado.`; after reload the card shows the debt again and `Aluguel (sua parte)` is gone.
 - **Proof.** `shot` each side before and after settle; `sweep(bia, "split-settled")`.
 
 ## Gotchas

@@ -34,8 +34,10 @@ import { parse } from "dotenv";
 const ROOT = resolve(import.meta.dir, "../../../..");
 const EVIDENCE_HOME = join(homedir(), ".local/state/twogether-verify");
 const SCRATCH_PREFIX = join(realpathSync(tmpdir()), "twogether-verify-");
+// Nitro resolves its intermediate bundle from the repo's node_modules, so
+// the per-run build dir lives there; the final output goes to scratch.
+const BUILD_HOME = join(ROOT, "node_modules/.cache/twogether-verify");
 const PORTS = { from: 3500, count: 100 };
-const SERVER_ENTRY = ".output/server/index.mjs";
 
 // Existing e2e Clerk users (uniqueEmail of these spec titles). The dev
 // instance is at its user quota: these are looked up, never created.
@@ -185,11 +187,40 @@ function listener(port: number) {
   }
 }
 
+// Each run's server lives in its own scratch dir, so its path names the run.
+function serverEntry(scratch: string) {
+  return join(scratch, "output/server/index.mjs");
+}
+
 function ours(run: Run) {
-  return (
-    alive(run.pid) &&
-    command(run.pid).includes(`${SERVER_ENTRY} ${run.scratch}`)
+  return alive(run.pid) && command(run.pid).includes(serverEntry(run.scratch));
+}
+
+function buildDir(scratch: string) {
+  return join(BUILD_HOME, basename(scratch));
+}
+
+// Builds into scratch through a wrapper config, so parallel launches and a
+// running `bun run e2e` never share `.output/`.
+function build(scratch: string) {
+  const config = join(scratch, "vite.config.mjs");
+
+  writeFileSync(
+    config,
+    [
+      `import { mergeConfig } from ${JSON.stringify(Bun.resolveSync("vite", ROOT))};`,
+      `import base from ${JSON.stringify(join(ROOT, "vite.config.ts"))};`,
+      `export default mergeConfig(base, { nitro: ${JSON.stringify({
+        output: { dir: join(scratch, "output") },
+        buildDir: buildDir(scratch),
+      })} });`,
+    ].join("\n"),
   );
+  execFileSync("bun", ["scripts/check-env.ts"], { cwd: ROOT, stdio: "inherit" });
+  execFileSync("bunx", ["vite", "build", "--config", config], {
+    cwd: ROOT,
+    stdio: "inherit",
+  });
 }
 
 async function fetchOk(url: string, text?: string) {
@@ -210,25 +241,28 @@ async function ready(run: Run) {
   );
 }
 
-async function launch(args: string[]) {
+async function launch() {
   const env = devEnv();
-
-  if (!args.includes("--no-build"))
-    execFileSync("bun", ["run", "build"], { cwd: ROOT, stdio: "inherit" });
-
-  if (!existsSync(join(ROOT, SERVER_ENTRY)))
-    throw new Error(`${SERVER_ENTRY} is missing: run without --no-build.`);
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const dir = join(EVIDENCE_HOME, stamp);
-
-  mkdirSync(dir, { recursive: true });
+  const source = sourceDigest();
   const scratch = mkdtempSync(SCRATCH_PREFIX);
+
+  try {
+    build(scratch);
+  } catch (error) {
+    rmSync(scratch, { recursive: true, force: true });
+    rmSync(buildDir(scratch), { recursive: true, force: true });
+    throw error;
+  }
+
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
+
+  mkdirSync(EVIDENCE_HOME, { recursive: true });
+  const dir = mkdtempSync(join(EVIDENCE_HOME, `${stamp}-`));
   const port = await freePort();
   const log = join(scratch, "server.log");
   const out = openSync(log, "a");
 
-  // The scratch path in argv makes the process identifiable per run.
-  const server = spawn("node", [SERVER_ENTRY, scratch], {
+  const server = spawn("node", [serverEntry(scratch)], {
     cwd: ROOT,
     detached: true,
     stdio: ["ignore", out, out],
@@ -256,7 +290,7 @@ async function launch(args: string[]) {
     scratch,
     database: join(scratch, "budget.sqlite"),
     log,
-    source: sourceDigest(),
+    source,
     launchedAt: new Date().toISOString(),
   };
 
@@ -293,7 +327,7 @@ async function doctor(dir: string | undefined) {
     run.database.startsWith(SCRATCH_PREFIX) &&
       !run.database.startsWith(join(ROOT, "data")),
   );
-  check(`pid ${run.pid} is our ${SERVER_ENTRY}`, ours(run));
+  check(`pid ${run.pid} is this run's server`, ours(run));
   check(
     `port ${run.port} listener is pid ${run.pid}`,
     listener(run.port).includes(run.pid),
@@ -345,7 +379,9 @@ async function cleanup(dir: string | undefined) {
     console.log(`removed scratch ${run.scratch}`);
   }
 
-  run.cleanedAt = new Date().toISOString();
+  rmSync(buildDir(run.scratch), { recursive: true, force: true });
+
+  run.cleanedAt ??= new Date().toISOString();
   writeRun(run);
   console.log(`evidence kept in ${run.dir}`);
 }
@@ -479,9 +515,17 @@ async function drive(dir: string | undefined, journeyPath: string | undefined) {
         page,
         signInParams: { strategy: "ticket", ticket: token.token },
       });
-      await expect(
-        page.getByRole("heading", { name: /Como chamamos você\?|Vamos começar,/ }),
-      ).toBeVisible({ timeout: 20_000 });
+      const onboarding = page.getByRole("heading", {
+        name: /Como chamamos você\?|Vamos começar,/,
+      });
+      const overview = page.getByRole("heading", { name: "Visão geral" });
+
+      await expect(onboarding.or(overview)).toBeVisible({ timeout: 20_000 });
+
+      if (await overview.isVisible())
+        throw new Error(
+          `${who} already has a household in this run's database; launch a new run for a fresh journey.`,
+        );
       await hydrated(page);
       const field = page.getByLabel("Seu nome");
 
@@ -587,7 +631,7 @@ async function drive(dir: string | undefined, journeyPath: string | undefined) {
 async function main() {
   const [subcommand, ...args] = process.argv.slice(2);
 
-  if (subcommand === "launch") return launch(args);
+  if (subcommand === "launch") return launch();
 
   if (subcommand === "doctor") return (await doctor(args[0])) || process.exit(1);
 
@@ -595,7 +639,7 @@ async function main() {
     return (await drive(args[0], args[1])) || process.exit(1);
 
   if (subcommand === "cleanup") return cleanup(args[0]);
-  console.error("usage: verify.ts launch [--no-build] | doctor <run> | drive <run> <journey.ts> | cleanup <run>");
+  console.error("usage: verify.ts launch | doctor <run> | drive <run> <journey.ts> | cleanup <run>");
   process.exit(2);
 }
 
