@@ -15,10 +15,11 @@ export function useWorkspaceSearch() {
   );
 
   // A month not in memory loads before the URL changes, so the current
-  // screen stays up instead of the loading skeleton.
+  // screen stays up instead of the loading skeleton. query() rejects when the
+  // load fails (prefetchQuery does not), so a failure keeps the URL.
   const monthLoad = useMutation({
     mutationFn: (month: string) =>
-      queryClient.prefetchQuery(workspaceQueryOptions(month)),
+      queryClient.query(workspaceQueryOptions(month)),
   });
 
   function setMonth(month: string) {

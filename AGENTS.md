@@ -76,6 +76,12 @@
   `useBrowserSync` (`src/lib/use-browser-sync.ts`) for browser-only syncs.
 - Tab-only client state that must stay out of the URL lives in the React
   Query cache, as `useHiddenValues` does.
+- Loading before a URL change: `queryClient.query()` rejects on failure;
+  `prefetchQuery` resolves either way, so never gate navigation on it.
+- `mutation.reset()` only detaches the observer; the request keeps running.
+  Wrap it so an in-flight run keeps its pending state and error.
+- nuqs `parseAsIndex` maps `?page=0` to index `-1`. Wrap parsers so values
+  outside the valid range read as absent, as `pageParam` does.
 
 ## Component folders
 

@@ -5,6 +5,7 @@ import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { workspaceQueryOptions } from "@/features/budget/workspace";
 import { ana, transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
 
@@ -50,7 +51,21 @@ async function renderWorkspace(
 ) {
   window.scrollTo = vi.fn();
 
-  return renderWithProviders(<Layout controller={controller} />, path);
+  const view = await renderWithProviders(
+    <Layout controller={controller} />,
+    path,
+  );
+
+  // The layout loader caches each month it shows; the months the tests pick
+  // are seeded here since there is no server to load them from.
+  for (const month of ["2026-09", "2026-10"])
+    view.queryClient.setQueryData(workspaceQueryOptions(month).queryKey, {
+      user: controller.user,
+      household: controller.household,
+      budget: controller.state,
+    });
+
+  return view;
 }
 
 describe("BudgetWorkspace", () => {
