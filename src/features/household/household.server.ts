@@ -9,6 +9,7 @@ import {
 } from "@/server/db.server";
 import { z } from "zod";
 import { RequestError } from "@/server/request-error";
+import { now } from "@/lib/clock";
 
 const digest = (value: string) =>
   createHash("sha256").update(value).digest("hex");
@@ -75,7 +76,7 @@ export async function joinHousehold(
       transaction,
       z.object({ household_id: z.string() }),
       "SELECT household_id FROM invites WHERE hash = ? AND expires > ?",
-      [digest(tokenValue), Date.now()],
+      [digest(tokenValue), now().getTime()],
     );
 
     if (!invite)
@@ -101,7 +102,7 @@ export async function createInvite(ctx: StoreContext, householdId: string) {
     await execute(
       transaction,
       "INSERT INTO invites(hash, household_id, expires) VALUES (?,?,?) ON CONFLICT(household_id) DO UPDATE SET hash = excluded.hash, expires = excluded.expires",
-      [digest(inviteToken), householdId, Date.now() + 48 * 3600_000],
+      [digest(inviteToken), householdId, now().getTime() + 48 * 3600_000],
     );
   });
 

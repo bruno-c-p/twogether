@@ -3,7 +3,6 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { BudgetStore } from "@/features/budget/budget.server";
-import { currentMonth, localDate } from "@/features/budget/domain/format";
 import {
   dateSchema,
   followingSchema,
@@ -26,6 +25,7 @@ import {
   listTransactions,
   overview,
 } from "@/features/mcp/budget-view";
+import { currentMonth, today } from "@/lib/clock";
 import { reportError } from "@/lib/errors";
 import { parseInput } from "@/server/action-input";
 import { consumeRateLimit } from "@/server/rate-limit.server";
@@ -35,6 +35,10 @@ import {
   RequestError,
   UNEXPECTED_MESSAGE,
 } from "@/server/request-error";
+
+// Households store no time zone and an MCP request carries no browser cookie,
+// so "today" and the default month follow the app's home market.
+const HOUSEHOLD_TIME_ZONE = "America/Sao_Paulo";
 
 const SETUP_REQUIRED =
   "Termine o cadastro no twogether antes de usar o agente: escolha seu nome e crie um orçamento ou aceite um convite.";
@@ -113,7 +117,7 @@ function createdTransaction(input: SaveInput): Transaction {
     id: randomUUID(),
     description: input.description ?? "",
     amount: input.amount ?? 0,
-    date: input.date ?? localDate(),
+    date: input.date ?? today(HOUSEHOLD_TIME_ZONE),
     kind: input.kind ?? "expense",
     goal: input.goal ?? null,
     split: input.split ? {} : undefined,
@@ -214,9 +218,9 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
       run(async () =>
         overview(
           await workspace(),
-          month ?? currentMonth(),
+          month ?? currentMonth(HOUSEHOLD_TIME_ZONE),
           member,
-          localDate(),
+          today(HOUSEHOLD_TIME_ZONE),
         ),
       ),
   );
@@ -252,7 +256,7 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
       run(async () =>
         listTransactions(await workspace(), {
           ...filters,
-          month: month ?? currentMonth(),
+          month: month ?? currentMonth(HOUSEHOLD_TIME_ZONE),
         }),
       ),
   );
@@ -411,7 +415,7 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
         await store.settleSplit(user, householdId, {
           id,
           revision,
-          date: date ?? localDate(),
+          date: date ?? today(HOUSEHOLD_TIME_ZONE),
         });
 
         const settled = await store.snapshot(user, householdId);

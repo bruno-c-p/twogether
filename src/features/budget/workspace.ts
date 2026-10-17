@@ -1,6 +1,7 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import { loadWorkspace } from "@/features/budget/actions";
 import { shiftMonth } from "@/features/budget/domain/format";
+import { now } from "@/lib/clock";
 import type {
   Transaction,
   WorkspaceSnapshot,
@@ -149,7 +150,7 @@ export function optimisticSettle(
   // ponytail: the repayment rows wait for refetch; the server mints their UUIDs
   return replaceTransaction(snapshot, input.id, (item) => ({
     ...item,
-    split: { paidAt: new Date().toISOString(), paidBy: snapshot.user.id },
+    split: { paidAt: now().toISOString(), paidBy: snapshot.user.id },
     revision: (item.revision ?? 0) + 1,
   }));
 }

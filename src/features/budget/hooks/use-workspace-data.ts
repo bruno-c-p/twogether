@@ -5,10 +5,11 @@ import {
   planGoals,
   summarize,
 } from "@/features/budget/domain/calc";
-import { localDate } from "@/features/budget/domain/format";
 import { splitDebt } from "@/features/budget/domain/split";
 import { transactionsFor } from "@/features/budget/domain/view";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
+import { today as clockToday } from "@/lib/clock";
+import { browserTimeZone } from "@/lib/time-zone";
 
 export function useWorkspaceData(
   budget: BudgetController,
@@ -58,7 +59,7 @@ export function useWorkspaceData(
 
   // Future splits are not owed yet. "Today" is the reader's date, which the
   // server cannot know, so the debt waits for hydration (null until then).
-  const today = useHydrated() ? localDate() : null;
+  const today = useHydrated() ? clockToday(browserTimeZone()) : null;
 
   const debt = useMemo(
     () => (today ? splitDebt(transactions, budget.user.id, today) : null),

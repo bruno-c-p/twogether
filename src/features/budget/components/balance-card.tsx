@@ -1,19 +1,22 @@
 import { Button } from "@/components/ui/button";
 import { useHydrated } from "@tanstack/react-router";
 import { Eye, EyeOff } from "lucide-react";
-import { currentMonth, monthName } from "@/features/budget/domain/format";
+import { monthName } from "@/features/budget/domain/format";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
+import { today } from "@/lib/clock";
 import { cx } from "@/lib/cx";
+import { browserTimeZone } from "@/lib/time-zone";
 import { percentOf } from "@/lib/decimal";
 
-function daysLeft(month: string, today: Date) {
-  if (month !== currentMonth(today)) return null;
+// `date` is the reader's "YYYY-MM-DD".
+function daysLeft(month: string, date: string) {
+  if (date.slice(0, 7) !== month) return null;
 
   const [year, number] = month.split("-").map(Number);
   const lastDay = new Date(year, number, 0).getDate();
 
-  return lastDay - today.getDate();
+  return lastDay - Number(date.slice(8));
 }
 
 function closingLabel(days: number) {
@@ -51,7 +54,7 @@ export function BalanceCard({
   // The server's clock and time zone can differ from the reader's, so the
   // countdown waits for hydration instead of risking a mismatch.
   const hydrated = useHydrated();
-  const days = hydrated ? daysLeft(month, new Date()) : null;
+  const days = hydrated ? daysLeft(month, today(browserTimeZone())) : null;
   const overspent = summary.expenses > summary.income;
 
   return (

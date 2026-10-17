@@ -117,6 +117,14 @@
 - `src/styles.css` keeps tokens, resets, and global element rules only. Do
   not add per-component rules there.
 
+## Clock
+
+- Read the time only through `@/lib/clock`: `now()` for an instant,
+  `today(timeZone)` and `currentMonth(timeZone)` for calendar dates. Pass the
+  reader's zone (`browserTimeZone()`, the time-zone cookie, or the MCP
+  household zone), never the process zone. `bun run lint` bans `new Date()`
+  and `Date.now()` elsewhere.
+
 ## Absolute imports
 
 - Source-code imports in the repository must use the `@/` alias (`src/`),

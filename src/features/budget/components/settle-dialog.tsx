@@ -19,10 +19,12 @@ import {
   Fieldset,
   FormError,
 } from "@/components/ui/field/field";
-import { localDate, money } from "@/features/budget/domain/format";
+import { money } from "@/features/budget/domain/format";
 import { dateSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Member, Transaction } from "@/features/budget/domain/types";
+import { today } from "@/lib/clock";
+import { browserTimeZone } from "@/lib/time-zone";
 
 const settleFormSchema = z.object({ date: dateSchema });
 
@@ -50,7 +52,7 @@ export function SettleDialog({
     formState: { errors },
   } = useForm({
     resolver: zodResolver(settleFormSchema),
-    defaultValues: { date: localDate() },
+    defaultValues: { date: today(browserTimeZone()) },
   });
 
   const dateError = errors.date?.message;

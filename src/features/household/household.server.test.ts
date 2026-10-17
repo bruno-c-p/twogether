@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setSystemTime, test } from "bun:test";
 import {
   requireUser,
   signup,
@@ -6,6 +6,7 @@ import {
   view,
   withHousehold,
 } from "@/features/budget/services/store-test-harness";
+import { now } from "@/lib/clock";
 
 const ctx = setupMemoryStore();
 
@@ -78,11 +79,9 @@ describe("household store", () => {
     const b = await signup(store, "Bia");
     const ana = await withHousehold(store, a.user);
     const invite = await store.createInvite(ana.householdId);
-    const now = Date.now;
-    const time = now();
 
     try {
-      Date.now = () => time + 49 * 3600_000;
+      setSystemTime(now().getTime() + 49 * 3600_000);
       await expect(
         store.joinHousehold(
           await requireUser(store, b.user),
@@ -90,7 +89,7 @@ describe("household store", () => {
         ),
       ).rejects.toThrow("expirado");
     } finally {
-      Date.now = now;
+      setSystemTime();
     }
   });
 });

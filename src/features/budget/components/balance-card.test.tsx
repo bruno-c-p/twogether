@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { BalanceCard } from "@/features/budget/components/balance-card";
 import { summarize } from "@/features/budget/domain/calc";
-import { currentMonth, money } from "@/features/budget/domain/format";
+import { money } from "@/features/budget/domain/format";
 import type { Transaction } from "@/features/budget/domain/types";
 import { transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
@@ -64,7 +64,7 @@ describe("BalanceCard", () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date(2026, 8, 28, 12));
 
-    const { screen } = renderCard(currentMonth());
+    const { screen } = renderCard("2026-09");
 
     expect(screen.getByText("Faltam 2 dias")).toBeTruthy();
   });
