@@ -96,7 +96,7 @@ export function BalanceCard({
           </div>
         </div>
         <p
-          className="m-0 mt-2 font-heading font-800 tracking-[-0.045em] leading-none whitespace-nowrap tabular-nums [--balance-size:76px] max-bp1000:[--balance-size:56px] max-bp620:[--balance-size:40px]"
+          className="mt-2 font-heading font-800 tracking-[-0.045em] leading-none whitespace-nowrap tabular-nums [--balance-size:76px] max-bp1000:[--balance-size:56px] max-bp620:[--balance-size:40px]"
           style={{
             fontSize: `min(var(--balance-size), ${160 / displayMoney(summary.balance).length}cqi)`,
           }}
@@ -119,7 +119,7 @@ export function BalanceCard({
             }}
           />
         </div>
-        <p className="m-0 mt-3 text-sm text-on-balance-muted max-bp620:text-xs">
+        <p className="mt-3 text-sm text-on-balance-muted max-bp620:text-xs">
           <strong className="font-700 text-on-balance tabular-nums">
             {displayMoney(summary.expenses)}
           </strong>{" "}

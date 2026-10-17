@@ -68,8 +68,7 @@ export function WorkspaceShell({
       <main id="main-content" tabIndex={-1} className="scroll-mt-[80px]">
         {children}
       </main>
-      {/* Clears the fixed mobile nav: pt-2 + ~49px of content + its bottom padding. */}
-      <div className="max-bp1000:pb-[calc(60px+max(20px,env(safe-area-inset-bottom,0px)))]">
+      <div className="max-bp1000:pb-mobile-nav">
         <AppFooter />
       </div>
       <MobileNavigation

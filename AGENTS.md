@@ -105,7 +105,16 @@
 - Never emit conflicting utilities on one element (two `left-[...]`, two
   `text-[...]` without a variant). Cascade order decides the winner, not the
   order in `className`. Pick one branch conditionally, as
-  `src/components/ui/brand.tsx` does for its mark bars.
+  `src/components/ui/brand.tsx` does for its mark bars. `bun run fitness`
+  fails when a padding/margin shorthand and a side share one string
+  (`m-0 mt-2`); keep only the sides you mean.
+- No new arbitrary px values in class strings: use a theme utility (spacing
+  is 4px per step, so `w-8`, not `w-[32px]`) or add a named token to
+  `uno.config.ts`. `bun run fitness` fails on any px value not grandfathered
+  in `scripts/fitness-px-baseline.tsv`; never add entries to that file.
+- The phone nav height lives once in `--mobile-nav-height` (`h-mobile-nav`,
+  `pb-mobile-nav`). Anything that clears the nav reads that token, not a
+  pixel guess.
 - Utilities live next to the markup, grouped in readable `cx(...)` lines or a
   variant map like `src/components/ui/button.tsx`. Repeated cross-component
   patterns belong in `shortcuts` in `uno.config.ts`.

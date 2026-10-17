@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { styleChecks } from "./fitness-styles";
 
 export type Repo = {
   tracked: (patterns: string[]) => string[];
@@ -24,6 +25,8 @@ const SELF = [
   "scripts/fitness.ts",
   "scripts/fitness-checks.ts",
   "scripts/fitness-checks.test.ts",
+  "scripts/fitness-styles.ts",
+  "scripts/fitness-styles.test.ts",
 ];
 
 const MEDIA = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;
@@ -211,6 +214,7 @@ export function sourceChecks(repo: Repo) {
     ...cssHouseStyle(repo),
     ...unoWiring(repo),
     ...componentModuleLayout(repo),
+    ...styleChecks(repo),
   ];
 }
 

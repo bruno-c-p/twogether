@@ -110,7 +110,7 @@ function DebtCard({
         >
           {headline(net, unpaid.length, partner, displayMoney(Math.abs(net)))}
         </h2>
-        <p className="m-0 mt-1 text-sm text-text-muted">
+        <p className="mt-1 text-sm text-text-muted">
           {detail(unpaid.length, unpaid.length > 0 && !owed, partner)}
         </p>
       </div>

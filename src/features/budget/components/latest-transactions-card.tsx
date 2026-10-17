@@ -75,7 +75,7 @@ export function LatestTransactionsCard({
                 <Button
                   variant="unstyled"
                   type="button"
-                  className="flex w-full items-center gap-4 py-2 p-0 border-0 bg-transparent text-left text-text cursor-pointer"
+                  className="flex w-full items-center gap-4 px-0 py-2 border-0 bg-transparent text-left text-text cursor-pointer"
                   aria-label={`Editar ${transaction.description}`}
                   onClick={() => onEdit(transaction)}
                 >

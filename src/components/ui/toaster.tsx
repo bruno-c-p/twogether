@@ -11,7 +11,7 @@ function ToastViewport() {
     <Toast.Portal>
       <Toast.Viewport
         aria-label="Avisos"
-        className="fixed bottom-[calc(24px_+_var(--navigation-clearance)_+_env(safe-area-inset-bottom))] left-1/2 -translate-x-1/2 z-100 flex flex-col gap-3 w-[356px] max-w-[calc(100%_-_32px)] outline-0 [--navigation-clearance:0px] max-bp1000:[--navigation-clearance:80px]"
+        className="fixed bottom-[calc(24px_+_var(--navigation-clearance))] left-1/2 -translate-x-1/2 z-100 flex flex-col gap-3 w-[356px] max-w-[calc(100%_-_32px)] outline-0 [--navigation-clearance:env(safe-area-inset-bottom)] max-bp1000:[--navigation-clearance:var(--mobile-nav-height)]"
       >
         {toasts.map((toast) => (
           <Toast.Root

@@ -13,6 +13,12 @@ import {
   waitForHeader,
   type Repo,
 } from "./fitness-checks";
+import {
+  conflictingBoxUtilities,
+  mobileNavToken,
+  noNewArbitraryPx,
+  PX_BASELINE,
+} from "./fitness-styles";
 
 const healthyFiles = {
   "package.json": JSON.stringify({ devDependencies: { unocss: "1" } }),
@@ -22,6 +28,12 @@ const healthyFiles = {
   "src/ui/button/button.module.css": ".root {}",
   "src/ui/button/button.tsx": "export {}",
   "src/features/budget/actions/save.ts": "export const save = 1;",
+  "src/features/budget/components/workspace-navigation.tsx":
+    '<nav className="h-mobile-nav" />',
+  "src/features/budget/components/workspace-shell.tsx":
+    '<div className="max-bp1000:pb-mobile-nav" />',
+  "src/components/ui/toaster.tsx":
+    'const c = "[--c:var(--mobile-nav-height)]";',
 };
 
 function repoWith(files: Record<string, string>): Repo {
@@ -194,5 +206,71 @@ describe("fitness header checks", () => {
   test("failures include the server output when there is some", () => {
     expect(headerCheckFailure(new Error("timeout"), "")).toBe("timeout");
     expect(headerCheckFailure("boom", "log line")).toBe("boom\nlog line");
+  });
+});
+
+describe("fitness style checks", () => {
+  const spacer = "src/features/budget/components/workspace-shell.tsx";
+
+  test("a new arbitrary px value fails and names the utility to use", () => {
+    expect(
+      noNewArbitraryPx(
+        repoWith({
+          [spacer]: 'const a = <div className="max-bp1000:pb-[77px]" />;',
+          "src/a.tsx": 'cx("w-[32px]", "text-[13px]", "[--size:40px]")',
+        }),
+      ),
+    ).toEqual([
+      `${spacer}:1 adds arbitrary px value max-bp1000:pb-[77px]; use a theme utility (spacing p-4 = 16px, text-sm, rounded-md, bp* breakpoints) or add a named token to uno.config.ts. Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`,
+      `src/a.tsx:1 adds arbitrary px value w-[32px]; use w-8 (spacing is 4px per step). Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`,
+      `src/a.tsx:1 adds arbitrary px value text-[13px]; use text-sm. Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`,
+      `src/a.tsx:1 adds arbitrary px value [--size:40px]; use a theme utility (spacing p-4 = 16px, text-sm, rounded-md, bp* breakpoints) or add a named token to uno.config.ts. Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`,
+    ]);
+  });
+
+  test("baselined px values pass only up to their recorded count", () => {
+    const repo = repoWith({
+      [PX_BASELINE]: "src/a.tsx\th-[8px]\n",
+      "src/a.tsx": 'cx("h-[8px] w-[min(10em,100%)]");\ncx("h-[8px]");',
+    });
+
+    expect(noNewArbitraryPx(repo)).toEqual([
+      expect.stringMatching(
+        /^src\/a\.tsx:2 adds arbitrary px value h-\[8px\]; use h-2/,
+      ),
+    ]);
+  });
+
+  test("a shorthand and a side on one element conflict", () => {
+    expect(
+      conflictingBoxUtilities(
+        "src/a.tsx",
+        [
+          '<p className="m-0 mt-2" />;',
+          '<button className="py-2 p-0" />;',
+          '<p className="pt-2 pt-3" />;',
+          '<p className="mt-2 mb-4 px-0 py-2 p-4 max-bp620:p-2" />;',
+          'cx("m-0", cond ? "mt-1" : "mt-2");',
+        ].join("\n"),
+      ),
+    ).toEqual([
+      "src/a.tsx:1 sets m-0 and mt-2 on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)",
+      "src/a.tsx:2 sets py-2 and p-0 on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)",
+      "src/a.tsx:3 sets pt-2 and pt-3 on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)",
+      "src/a.tsx:4 sets px-0 and p-4 on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)",
+    ]);
+  });
+
+  test("the nav spacer must derive from the nav height token", () => {
+    expect(
+      mobileNavToken(
+        repoWith({
+          ...healthyFiles,
+          [spacer]: '<div className="max-bp1000:pb-16" />',
+        }),
+      ),
+    ).toEqual([
+      `${spacer} must use pb-mobile-nav: the mobile nav height lives in --mobile-nav-height (src/styles.css) so the nav and what clears it cannot drift`,
+    ]);
   });
 });
