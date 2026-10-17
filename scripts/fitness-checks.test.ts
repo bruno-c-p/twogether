@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
+  BOUNDARY_BASELINE,
+  boundaryBaselineGrowth,
+  boundaryBaselineScope,
   cacheControlSource,
   componentModuleLayout,
   cssHouseStyle,
@@ -11,6 +14,7 @@ import {
   sourceChecks,
   unoWiring,
   waitForHeader,
+  type Git,
   type Repo,
 } from "./fitness-checks";
 import {
@@ -34,6 +38,11 @@ const healthyFiles = {
     '<div className="max-bp1000:pb-mobile-nav" />',
   "src/components/ui/toaster.tsx":
     '<div className="[--c:var(--mobile-nav-height)]" />',
+  [BOUNDARY_BASELINE]: JSON.stringify({
+    kind: "dead-code",
+    unused_exports: [],
+    boundary_violations: ["src/lib/a.ts->src/features/b/c.ts"],
+  }),
 };
 
 function repoWith(files: Record<string, string>): Repo {
@@ -149,6 +158,98 @@ describe("fitness source checks", () => {
     ).toEqual([
       "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
       "src/routes/__root.tsx must import virtual:uno.css",
+    ]);
+  });
+
+  test("the boundary baseline may only grandfather boundary violations", () => {
+    const baseline = JSON.stringify({
+      kind: "dead-code",
+      unused_exports: [{ path: "src/a.ts", export_name: "a" }],
+      boundary_violations: ["src/lib/a.ts->src/features/b/c.ts"],
+    });
+
+    expect(
+      boundaryBaselineScope(repoWith({ [BOUNDARY_BASELINE]: baseline })),
+    ).toEqual([
+      `${BOUNDARY_BASELINE} grandfathers 1 unused_exports; it may only hold boundary_violations. Fix those findings and drop them from the file.`,
+    ]);
+  });
+});
+
+function baselineWith(entries: string[]) {
+  return JSON.stringify({ kind: "dead-code", boundary_violations: entries });
+}
+
+function gitWith(answers: Record<string, string>): Git {
+  return (args) => {
+    const answer = answers[args.join(" ")];
+
+    if (answer === undefined) throw new Error(`git ${args.join(" ")} failed`);
+
+    return answer;
+  };
+}
+
+describe("boundary baseline ratchet", () => {
+  const base = {
+    "merge-base HEAD origin/main": "abc123",
+    "rev-parse --verify --quiet abc123^{commit}": "abc123",
+    [`cat-file -e abc123:${BOUNDARY_BASELINE}`]: "",
+    [`show abc123:${BOUNDARY_BASELINE}`]: baselineWith(["a->b", "c->d"]),
+  };
+
+  const warnings: string[] = [];
+  const warn = (message: string) => warnings.push(message);
+
+  test("a baseline that shrinks or holds passes", () => {
+    for (const entries of [["a->b"], ["a->b", "c->d"]])
+      expect(
+        boundaryBaselineGrowth(
+          repoWith({ [BOUNDARY_BASELINE]: baselineWith(entries) }),
+          gitWith(base),
+          warn,
+        ),
+      ).toEqual([]);
+  });
+
+  test("a re-saved baseline with more entries fails and names them", () => {
+    const grown = repoWith({
+      [BOUNDARY_BASELINE]: baselineWith(["a->b", "c->d", "e->f"]),
+    });
+
+    expect(boundaryBaselineGrowth(grown, gitWith(base), warn)).toEqual([
+      `${BOUNDARY_BASELINE} grew from 2 to 3 entries since abc123; it may only shrink. Fix the new boundary violation instead of re-saving the baseline:\ne->f`,
+    ]);
+  });
+
+  test("without a merge-base it warns and compares against the origin/main tip", () => {
+    warnings.length = 0;
+
+    const tip = gitWith({
+      "rev-parse --verify --quiet origin/main^{commit}": "abc123",
+      [`cat-file -e origin/main:${BOUNDARY_BASELINE}`]: "",
+      [`show origin/main:${BOUNDARY_BASELINE}`]: baselineWith(["a->b"]),
+    });
+
+    const grown = repoWith({
+      [BOUNDARY_BASELINE]: baselineWith(["a->b", "e->f"]),
+    });
+
+    expect(boundaryBaselineGrowth(grown, tip, warn)).toHaveLength(1);
+    expect(warnings).toEqual([
+      "boundary ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
+    ]);
+  });
+
+  test("an unresolvable origin/main fails instead of passing silently", () => {
+    expect(
+      boundaryBaselineGrowth(
+        repoWith({ [BOUNDARY_BASELINE]: baselineWith([]) }),
+        gitWith({}),
+        warn,
+      ),
+    ).toEqual([
+      `cannot resolve origin/main to check that ${BOUNDARY_BASELINE} only shrinks; run git fetch origin main (CI needs fetch-depth: 0)`,
     ]);
   });
 });

@@ -102,6 +102,65 @@ const bannedReactMembers = [
   })),
 ];
 
+const relativeImports = {
+  group: ["./*", "../*", "./**", "../**"],
+  message: "Use the @/ alias (src/) instead of relative imports.",
+};
+
+// Import graph between zones lives in .fallowrc.json `boundaries`; these
+// cover what fallow cannot express: npm packages, node built-ins and the
+// *.server suffix.
+const impureInDomain = {
+  group: [
+    "react",
+    "react/**",
+    "react-dom",
+    "react-dom/**",
+    "@tanstack/**",
+    "**/*.server",
+    "@/server/**",
+    "node:*",
+  ],
+  message:
+    "domain/ is pure: no React, TanStack, server modules or Node built-ins. Pass the value in from the caller or move this code out of domain/.",
+};
+
+const serverOnlyInClient = {
+  group: ["**/*.server", "@/server/**"],
+  message:
+    "Only server code (*.server.ts, src/server, actions/, start.ts, server routes) may import server modules. Call a server function from actions/ instead.",
+};
+
+// Files that run only on the server and may import server modules; every
+// other file under src/ is treated as client code.
+const SERVER_SIDE = [
+  "src/**/*.server.ts",
+  "src/**/*.server.tsx",
+  "src/**/*.server.test.ts",
+  "src/server/**",
+  "src/features/*/actions/**",
+  "src/start.ts",
+  "src/routes/mcp.ts",
+  "src/routes/*well-known*.ts",
+  // Server-only helpers imported only by *.server modules and their tests.
+  "src/features/budget/services/store-test-harness.ts",
+  "src/features/mcp/budget-view.ts",
+];
+
+// An override's no-restricted-imports replaces the base options instead of
+// merging, so every override repeats the shared bans.
+function restrictedImports(
+  ...extra: (typeof relativeImports)[]
+): [
+  "error",
+  { paths: typeof bannedReactHooks; patterns: (typeof relativeImports)[] },
+] {
+  return [
+    "error",
+    { paths: bannedReactHooks, patterns: [relativeImports, ...extra] },
+  ];
+}
+
 export default defineConfig({
   plugins: ["eslint", "typescript", "react", "oxc"],
   categories: { correctness: "error" },
@@ -148,18 +207,23 @@ export default defineConfig({
         ...typeChecked,
         "clock/no-direct-clock": "error",
         "no-restricted-properties": ["error", ...bannedReactMembers],
-        "no-restricted-imports": [
-          "error",
-          {
-            paths: bannedReactHooks,
-            patterns: [
-              {
-                group: ["./*", "../*", "./**", "../**"],
-                message: "Use the @/ alias (src/) instead of relative imports.",
-              },
-            ],
-          },
-        ],
+        "no-restricted-imports": restrictedImports(),
+      },
+    },
+    {
+      files: ["src/**"],
+      rules: {
+        "no-restricted-imports": restrictedImports(serverOnlyInClient),
+      },
+    },
+    {
+      files: SERVER_SIDE,
+      rules: { "no-restricted-imports": restrictedImports() },
+    },
+    {
+      files: ["src/features/*/domain/**"],
+      rules: {
+        "no-restricted-imports": restrictedImports(impureInDomain),
       },
     },
     {

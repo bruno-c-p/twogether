@@ -26,5 +26,79 @@
   },
   "rules": {
     "unused-dependencies": "warn"
+  },
+  // First matching zone wins, so each feature's index.ts zone precedes its
+  // internals. Older violations live in scripts/boundary-baseline.json.
+  "boundaries": {
+    "zones": [
+      {
+        "name": "budget-domain",
+        "patterns": ["src/features/budget/domain/**"]
+      },
+      { "name": "budget-api", "patterns": ["src/features/budget/index.ts"] },
+      { "name": "theme-api", "patterns": ["src/features/theme/index.ts"] },
+      { "name": "auth", "patterns": ["src/features/auth/**"] },
+      { "name": "break-ui", "patterns": ["src/features/break-ui/**"] },
+      { "name": "budget", "patterns": ["src/features/budget/**"] },
+      { "name": "household", "patterns": ["src/features/household/**"] },
+      { "name": "mcp", "patterns": ["src/features/mcp/**"] },
+      { "name": "theme", "patterns": ["src/features/theme/**"] },
+      { "name": "server", "patterns": ["src/server/**"] },
+      { "name": "lib", "patterns": ["src/lib/**"] },
+      { "name": "components", "patterns": ["src/components/**"] },
+      {
+        "name": "app",
+        "patterns": ["src/routes/**", "src/router.tsx", "src/start.ts"]
+      }
+    ],
+    "rules": [
+      { "from": "budget-domain", "allow": ["lib"] },
+      {
+        "from": "budget-api",
+        "allow": ["budget", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "theme-api",
+        "allow": ["theme", "budget-api", "server", "lib", "components"]
+      },
+      {
+        "from": "budget",
+        "allow": [
+          "budget-domain",
+          "budget-api",
+          "theme-api",
+          "server",
+          "lib",
+          "components"
+        ]
+      },
+      {
+        "from": "auth",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "break-ui",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "household",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "mcp",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "theme",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "app",
+        "allow": ["budget-api", "theme-api", "server", "lib", "components"]
+      },
+      { "from": "server", "allow": ["lib", "components"] },
+      { "from": "lib", "allow": ["server", "components"] },
+      { "from": "components", "allow": ["server", "lib"] }
+    ]
   }
 }
