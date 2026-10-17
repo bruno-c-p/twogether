@@ -36,8 +36,8 @@ type Spec<Args extends ToolInputSchema, RawInput, Input, Result> = {
   description: string;
   annotations: ToolAnnotations;
   inputSchema: Args;
-  // The agent's arguments become the definition's input: patch merges,
-  // defaults, and checks the app's form makes before it sends.
+  // Does what the app's form does before it sends: patch merges, defaults,
+  // checks.
   input: (
     args: z.output<z.ZodObject<Args>>,
     session: WriteSession,
@@ -81,12 +81,10 @@ export function writeTool<
           const current = session();
           const args = argsSchema.parse(raw);
 
-          const input = definition.parse(
-            await spec.input(args, current),
-            rejected,
-          );
-
+          const draft = await spec.input(args, current);
+          // The setup gate and rate limit answer before validation does.
           const actor = await current.actor();
+          const input = definition.parse(draft, rejected);
           const result = await definition.run(current.store, actor, input);
 
           return spec.output(current, input, result);

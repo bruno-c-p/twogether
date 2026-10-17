@@ -41,11 +41,11 @@ const savePercentages = createServerFn({ method: "POST" })
   .validator(defs.savePercentages.parse)
   .handler(serve(defs.savePercentages));
 
-export const budgetActions = {
+export const budgetActions: BudgetActions = {
   saveTransaction,
   deleteTransaction,
   restoreTransaction,
   settleSplit,
   unsettleSplit,
   savePercentages,
-} satisfies BudgetActions;
+};

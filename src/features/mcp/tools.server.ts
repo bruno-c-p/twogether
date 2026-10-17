@@ -199,8 +199,6 @@ async function described(session: WriteSession, id: string) {
 
 type Mutations = typeof budgetMutations;
 
-// Every mutation gets a tool or an explicit `null`, so a new mutation cannot
-// silently skip the agent surface.
 type BudgetTools = {
   [K in keyof Mutations]: WriteTool<K> | null;
 };

@@ -121,6 +121,21 @@ describe("budget MCP tools", () => {
     expect(result.text).toContain("Termine o cadastro");
   });
 
+  test("answers with the setup message before validating a draft", async () => {
+    const { store } = ctx;
+    const solo = await signup(store, "Cris");
+    const { call } = await connect(store, solo.user.id);
+
+    const result = await call("save_transaction", {
+      description: "Mercado",
+      amount: 100,
+      goal: null,
+    });
+
+    expect(result.error).toBe(true);
+    expect(result.text).toContain("Termine o cadastro");
+  });
+
   test("adds, edits, deletes, and restores a transaction", async () => {
     const { store } = ctx;
     const { a } = await couple(store);

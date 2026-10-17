@@ -269,8 +269,8 @@
   still lacks it.
   - The server fn in `actions/index.ts`: one private
     `const <name> = createServerFn(...).validator(defs.<name>.parse).handler(serve(defs.<name>))`,
-    listed in the feature's actions object (`budgetActions`), which
-    `satisfies` the registry.
+    listed in the feature's actions object (`budgetActions: BudgetActions`),
+    typed from the registry.
   - The client handle in `useBudgetMutations`.
   - The break-ui fake in `src/features/break-ui/actions.ts`.
   - The MCP tool in `budgetTools` (`src/features/mcp/tools.server.ts`): a

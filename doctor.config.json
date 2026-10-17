@@ -60,6 +60,14 @@
         // SQLite connection, so its steps run in order on purpose.
         "files": ["src/server/store-test-harness.ts"],
         "rules": ["react-doctor/server-sequential-independent-await"]
+      },
+      {
+        // An MCP write runs the tool's own checks, then the setup gate and
+        // rate limit, then validation, in that order: running them together
+        // would spend a rate-limit token on a call the checks reject and
+        // answer a user without setup with a validation error.
+        "files": ["src/features/mcp/write-tool.server.ts"],
+        "rules": ["react-doctor/server-sequential-independent-await"]
       }
     ]
   }

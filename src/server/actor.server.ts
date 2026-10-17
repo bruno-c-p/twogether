@@ -9,7 +9,6 @@ function reject(message: string, status?: number): never {
   throw new RequestError(message, status);
 }
 
-// A server fn middleware passes `fail` to raise its own HTTP error.
 export function householdActor(
   user: UserRow,
   fail: (message: string) => never = reject,
@@ -19,7 +18,6 @@ export function householdActor(
   return { user, householdId: user.household_id };
 }
 
-// `limited` gets the wait so the middleware can send Retry-After.
 export function assertWritable(
   key: string,
   limited: (retryAfterSeconds: number) => never = () =>

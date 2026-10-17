@@ -45,10 +45,11 @@ type Updater<K extends OptimisticName> = (
 ) => WorkspaceSnapshot;
 
 // Annotated per key so a generic name keeps the definition and its updater
-// correlated, as useBudgetMutations does.
+// correlated.
 const definitions: {
   [K in OptimisticName]: {
     optimistic: Updater<K>;
+    parse: (input: BudgetInput<K>) => BudgetInput<K>;
     run: (store: Store, actor: Actor, input: BudgetInput<K>) => Promise<void>;
   };
 } = budgetMutations;
@@ -63,7 +64,9 @@ type Scenario<K extends OptimisticName> = {
   ) => Promise<{ actor: Actor; args: Args<K> }>;
 };
 
-type Scenarios = { [K in OptimisticName]: Scenario<K>[] };
+type Scenarios = {
+  [K in OptimisticName]: [Scenario<K>, ...Scenario<K>[]];
+};
 
 // Fields the server owns or stamps with its own clock.
 function comparable(row: Transaction) {
@@ -75,38 +78,59 @@ function comparable(row: Transaction) {
   };
 }
 
-// The optimistic paint must agree with the server on every row it touches.
 // The server may add rows (repayments, later occurrences) the client cannot
 // mint ids for.
+// Ids the input names (the row, a series' later occurrences).
+function idsIn(input: BudgetInput<OptimisticName>) {
+  return [...JSON.stringify(input).matchAll(/"id":"([^"]+)"/g)].map(
+    ([, id]) => id,
+  );
+}
+
+function fieldGaps(id: string, painted: Transaction, server: Transaction) {
+  const mine = new Map(Object.entries(comparable(painted)));
+  const theirs = new Map(Object.entries(comparable(server)));
+
+  return [...new Set([...mine.keys(), ...theirs.keys()])].flatMap((key) =>
+    Bun.deepEquals(mine.get(key), theirs.get(key))
+      ? []
+      : [
+          `${id}.${key}: painted ${JSON.stringify(mine.get(key))}, server ${JSON.stringify(theirs.get(key))}`,
+        ],
+  );
+}
+
+// The server may add rows (repayments, later occurrences) the client cannot
+// mint ids for; a row it already knew, or named in the input, must be painted.
 function gaps(
   before: WorkspaceSnapshot,
   painted: WorkspaceSnapshot,
   after: WorkspaceSnapshot,
+  named: string[],
 ) {
-  const found: string[] = [];
+  const paint = new Map(painted.budget.transactions.map((t) => [t.id, t]));
+
+  const found = painted.budget.transactions
+    .filter((t, index, rows) => rows.findIndex((r) => r.id === t.id) !== index)
+    .map((t) => `${t.id} is painted twice`);
+
   const served = new Map(after.budget.transactions.map((t) => [t.id, t]));
-  const kept = new Set(painted.budget.transactions.map((t) => t.id));
 
-  for (const row of painted.budget.transactions) {
-    const server = served.get(row.id);
+  const known = new Set([
+    ...before.budget.transactions.map((t) => t.id),
+    ...named,
+  ]);
 
-    if (!server) {
-      found.push(`${row.id} is painted but not on the server`);
-      continue;
-    }
+  for (const [id, row] of paint) {
+    const server = served.get(id);
 
-    const theirs = new Map(Object.entries(comparable(server)));
-
-    for (const [key, value] of Object.entries(comparable(row)))
-      if (!Bun.deepEquals(value, theirs.get(key)))
-        found.push(
-          `${row.id}.${key}: painted ${JSON.stringify(value)}, server ${JSON.stringify(theirs.get(key))}`,
-        );
+    if (server) found.push(...fieldGaps(id, row, server));
+    else found.push(`${id} is painted but not on the server`);
   }
 
-  for (const row of before.budget.transactions)
-    if (!kept.has(row.id) && served.has(row.id))
-      found.push(`${row.id} is removed but still on the server`);
+  for (const id of served.keys())
+    if (!paint.has(id) && known.has(id))
+      found.push(`${id} is on the server but not painted`);
 
   return found;
 }
@@ -122,9 +146,10 @@ async function parity<K extends OptimisticName>(
   const before = await view(store, actor.user);
   const painted = optimistic(before, ...args);
 
-  await definitions[name].run(store, actor, args[0]);
+  // The client paints its raw input; the server parses it first.
+  await definitions[name].run(store, actor, definitions[name].parse(args[0]));
 
-  return gaps(before, painted, await view(store, actor.user));
+  return gaps(before, painted, await view(store, actor.user), idsIn(args[0]));
 }
 
 async function seeded(store: Store, people: People, row: Transaction) {
@@ -206,6 +231,39 @@ const scenarios = {
         };
       },
     },
+    {
+      title: "deletes a series from its first occurrence onward",
+      arrange: async (store, people) => {
+        const ana = await withHousehold(store, people.a.user);
+
+        await store.saveTransaction(ana.user, ana.householdId, {
+          transaction: { ...transaction("ana"), id: "rent-series" },
+          occurrences: 3,
+        });
+
+        const [first, ...later] = (
+          await view(store, ana.user)
+        ).budget.transactions
+          .filter((t) => t.recurrenceId)
+          .sort((a, b) => (a.recurrenceIndex ?? 0) - (b.recurrenceIndex ?? 0));
+
+        if (!first) throw new Error("series missing");
+
+        return {
+          actor: ana,
+          args: [
+            {
+              id: first.id,
+              revision: first.revision ?? 0,
+              following: later.map((t) => ({
+                id: t.id,
+                revision: t.revision ?? 0,
+              })),
+            },
+          ],
+        };
+      },
+    },
   ],
   restoreTransaction: [
     {
@@ -277,6 +335,38 @@ describe("optimistic updates agree with the server", () => {
   // are those names.
   for (const name of Object.keys(byName) as OptimisticName[]) suite(name);
 
+  test("an updater that paints nothing fails parity", async () => {
+    const [restore] = scenarios.restoreTransaction;
+
+    expect(
+      await parity(
+        ctx.store,
+        "restoreTransaction",
+        restore,
+        (snapshot) => snapshot,
+      ),
+    ).toEqual([`${transaction("ana").id} is on the server but not painted`]);
+  });
+
+  test("an updater that keeps the stale row next to the edit fails parity", async () => {
+    const [, edit] = scenarios.saveTransaction;
+
+    const appended = await parity(
+      ctx.store,
+      "saveTransaction",
+      edit,
+      (snapshot, input) => ({
+        ...snapshot,
+        budget: {
+          ...snapshot.budget,
+          transactions: [...snapshot.budget.transactions, input.transaction],
+        },
+      }),
+    );
+
+    expect(appended).toContain("market is painted twice");
+  });
+
   test("a swapped updater with a compatible input fails parity", async () => {
     const [settle] = scenarios.settleSplit;
 
@@ -291,8 +381,6 @@ describe("optimistic updates agree with the server", () => {
   });
 });
 
-// Rows saved before memberId existed: the server reads the owner from
-// createdBy, and the optimistic paint must agree.
 describe("legacy rows without a memberId", () => {
   let dir = "";
   let store: Store | undefined;
