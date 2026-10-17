@@ -1,5 +1,18 @@
 # Working rules
 
+## Worktree setup
+
+- Run `bun run setup` once in every new worktree, and again whenever
+  dependencies change. It installs dependencies from the frozen lockfile,
+  links `.env.local` to the dev env, installs Playwright Chromium, and
+  validates the client env. Rerunning it is safe.
+- The dev env is `~/workspaces/twogether/.env.local`. Set
+  `TWOGETHER_DEV_ENV` to use another file.
+- Setup refuses an env file with live Clerk keys (`sk_live_`, `pk_live_`)
+  or a remote database URL, and refuses to replace a regular `.env.local`.
+  Fix what its message names. Never copy the main checkout's `.env.local`
+  into a worktree: it holds production Turso credentials.
+
 ## Mandatory validation for any change
 
 - Every change, regardless of size or type (code, UI, styles, copy,
@@ -21,8 +34,7 @@
 - Run `bun run typecheck`, `bun run lint`, `bun run format:check`,
   `bun run fitness`, `bun run doctor`, `bun run fallow`, `bun run test`,
   `bun run build`, `bun run e2e`, and `git diff --check`.
-  If dependencies are missing, run `bun install --frozen-lockfile` before
-  the checks. Playwright Chromium: `bunx playwright install chromium`.
+  In a fresh worktree, run `bun run setup` first (see Worktree setup).
 - `lint` runs oxlint (config in `oxlint.config.ts`) with the vendored
   anti-slop rules in `tools/oxlint/anti-slop/`. Fix findings instead of
   disabling rules or adding casts; a type assertion needs a `SAFETY:` comment
