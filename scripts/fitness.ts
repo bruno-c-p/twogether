@@ -4,10 +4,12 @@ import { createServer } from "node:net";
 import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
 import {
+  boundaryBaselineGrowth,
   headerCheckFailure,
   headerFailures,
   sourceChecks,
   waitForHeader,
+  type Git,
   type Repo,
 } from "./fitness-checks";
 
@@ -70,6 +72,12 @@ function productionEnv(port: number) {
   };
 }
 
+const git: Git = (args) =>
+  execFileSync("git", args, {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  }).trim();
+
 const headerProbe = {
   fetch: (url: string) =>
     fetch(url, {
@@ -130,7 +138,10 @@ async function builtHeaderChecks() {
 
 const failures = process.argv.includes("--headers")
   ? await builtHeaderChecks()
-  : sourceChecks(repo);
+  : [
+      ...sourceChecks(repo),
+      ...boundaryBaselineGrowth(repo, git, (message) => console.warn(message)),
+    ];
 
 if (failures.length) {
   console.error(failures.join("\n"));

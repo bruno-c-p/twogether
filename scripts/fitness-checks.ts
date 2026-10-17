@@ -31,6 +31,10 @@ export const BOUNDARY_BASELINE = "scripts/boundary-baseline.json";
 
 const fallowBaselineSchema = z.record(z.string(), z.unknown());
 
+const boundaryEntriesSchema = z.object({
+  boundary_violations: z.array(z.string()),
+});
+
 const MEDIA = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;
 
 const GRADIENT =
@@ -222,6 +226,68 @@ export function boundaryBaselineScope(repo: Repo) {
         ]
       : [],
   );
+}
+
+export type Git = (args: string[]) => string;
+
+function boundaryEntries(text: string) {
+  return boundaryEntriesSchema.parse(JSON.parse(text)).boundary_violations;
+}
+
+function succeeds(git: Git, args: string[]) {
+  try {
+    git(args);
+
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function ratchetBase(git: Git, warn: (message: string) => void) {
+  try {
+    return git(["merge-base", "HEAD", "origin/main"]);
+  } catch {
+    warn(
+      "boundary ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
+    );
+
+    return "origin/main";
+  }
+}
+
+// A re-save absorbs new violations, so the entry count must not exceed the
+// one at the branch point. CI checks out full history for this.
+export function boundaryBaselineGrowth(
+  repo: Repo,
+  git: Git,
+  warn: (message: string) => void,
+) {
+  const base = ratchetBase(git, warn);
+
+  if (!succeeds(git, ["rev-parse", "--verify", "--quiet", `${base}^{commit}`]))
+    return [
+      `cannot resolve ${base} to check that ${BOUNDARY_BASELINE} only shrinks; run git fetch origin main (CI needs fetch-depth: 0)`,
+    ];
+
+  if (!succeeds(git, ["cat-file", "-e", `${base}:${BOUNDARY_BASELINE}`])) {
+    warn(
+      `boundary ratchet: ${base} has no ${BOUNDARY_BASELINE}; nothing to compare against`,
+    );
+
+    return [];
+  }
+
+  const before = boundaryEntries(git(["show", `${base}:${BOUNDARY_BASELINE}`]));
+  const now = boundaryEntries(repo.read(BOUNDARY_BASELINE));
+
+  if (now.length <= before.length) return [];
+
+  const added = now.filter((entry) => !before.includes(entry));
+
+  return [
+    `${BOUNDARY_BASELINE} grew from ${before.length} to ${now.length} entries since ${base}; it may only shrink. Fix the new boundary violation instead of re-saving the baseline:\n${added.join("\n")}`,
+  ];
 }
 
 export function sourceChecks(repo: Repo) {

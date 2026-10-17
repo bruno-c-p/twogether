@@ -128,8 +128,24 @@ const impureInDomain = {
 const serverOnlyInClient = {
   group: ["**/*.server", "@/server/**"],
   message:
-    "Client code cannot import server modules. Call a server function from actions/ instead.",
+    "Only server code (*.server.ts, src/server, actions/, start.ts, server routes) may import server modules. Call a server function from actions/ instead.",
 };
+
+// Files that run only on the server and may import server modules; every
+// other file under src/ is treated as client code.
+const SERVER_SIDE = [
+  "src/**/*.server.ts",
+  "src/**/*.server.tsx",
+  "src/**/*.server.test.ts",
+  "src/server/**",
+  "src/features/*/actions/**",
+  "src/start.ts",
+  "src/routes/mcp.ts",
+  "src/routes/*well-known*.ts",
+  // Server-only helpers imported only by *.server modules and their tests.
+  "src/features/budget/services/store-test-harness.ts",
+  "src/features/mcp/budget-view.ts",
+];
 
 // An override's no-restricted-imports replaces the base options instead of
 // merging, so every override repeats the shared bans.
@@ -195,19 +211,19 @@ export default defineConfig({
       },
     },
     {
-      files: ["src/features/*/domain/**"],
+      files: ["src/**"],
       rules: {
-        "no-restricted-imports": restrictedImports(impureInDomain),
+        "no-restricted-imports": restrictedImports(serverOnlyInClient),
       },
     },
     {
-      files: [
-        "src/components/**",
-        "src/features/*/components/**",
-        "src/features/*/hooks/**",
-      ],
+      files: SERVER_SIDE,
+      rules: { "no-restricted-imports": restrictedImports() },
+    },
+    {
+      files: ["src/features/*/domain/**"],
       rules: {
-        "no-restricted-imports": restrictedImports(serverOnlyInClient),
+        "no-restricted-imports": restrictedImports(impureInDomain),
       },
     },
     {
