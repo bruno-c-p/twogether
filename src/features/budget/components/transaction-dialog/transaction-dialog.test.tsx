@@ -177,6 +177,23 @@ describe("TransactionDialog", () => {
     expect(onSettle).toHaveBeenCalledWith(editing);
   });
 
+  test("a legacy split without memberId treats the viewer as the payer", () => {
+    const editing = transaction({
+      memberId: undefined,
+      createdBy: "ana",
+      split: {},
+    });
+
+    const { screen } = setup({ editing, currentUserId: "bia" });
+
+    expect(
+      screen.getByRole("switch", { name: "Dividir com Ana" }),
+    ).toBeTruthy();
+    expect(
+      screen.queryByRole("button", { name: "Marcar como pago" }),
+    ).toBeNull();
+  });
+
   test("a paid split locks amount and kind and can be unmarked", async () => {
     const editing = transaction({
       memberId: "ana",

@@ -250,6 +250,19 @@
   `split`, `paidAt`, `userOwes` and `lock`. Outside `domain/`, do not branch
   on `settlementOf` or `split.paidAt`; map `lock` to copy at the edge, as
   `LOCKED` in `budget.server.ts` and `deleteLock` in `domain/view.ts` do.
+- Rows saved before `memberId` existed have none, and four answers about
+  them are kept on purpose and pinned in `domain/legacy-rows.test.ts`,
+  `legacy-rows.server.test.ts` and `transaction-dialog.test.tsx`:
+  - `ownerOf` (server writes and the optimistic paint) gives the row to its
+    creator;
+  - `transactionStatus` reads its split as owed by either partner;
+  - so either partner, its creator included, may settle that split, and the
+    repayment income is written without `memberId` too;
+  - the dialog treats the viewer as the payer.
+
+  Rows the app creates otherwise carry `memberId`. Change these answers
+  together and deliberately.
+
 - `bun run fitness` fails on a new interface in `domain/types.ts`, on a
   type there that is anything but exactly `z.infer`, `z.input` or
   `z.output` of a schema (no intersections or extra members), and on a new
