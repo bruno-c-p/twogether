@@ -7,24 +7,9 @@ import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
 import { useWorkspaceActions } from "@/features/budget/hooks/use-workspace-actions";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
+import { fakeBudgetMutations } from "@/test/budget-mutations";
 import { ana, transaction } from "@/test/fixtures";
 import { renderWithProviders } from "@/test/render";
-
-function fakeMutations(succeeds: boolean): BudgetMutations {
-  const ok = succeeds;
-  const idle = { pending: false, error: "", reset: vi.fn() };
-
-  return {
-    saveTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    deleteTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    restoreTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    savePct: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    settleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    unsettleTx: { ...idle, run: vi.fn(() => Promise.resolve(ok)) },
-    splitBusy: false,
-    busy: false,
-  };
-}
 
 const budget: BudgetController = {
   state: {
@@ -81,7 +66,7 @@ function setup(props: Parameters<typeof Harness>[0]) {
 describe("useWorkspaceActions", () => {
   afterEach(() => toastManager.close());
   test("deleting one occurrence offers undo and closes the dialog", async () => {
-    const mutations = fakeMutations(true);
+    const mutations = fakeBudgetMutations(true);
     const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
@@ -92,7 +77,7 @@ describe("useWorkspaceActions", () => {
         "Transação excluída.",
       ),
     );
-    expect(mutations.deleteTx.run).toHaveBeenCalledWith({
+    expect(mutations.deleteTransaction.run).toHaveBeenCalledWith({
       id: "r0",
       revision: 0,
       following: undefined,
@@ -101,7 +86,7 @@ describe("useWorkspaceActions", () => {
   });
 
   test("deleting the following occurrences sends each revision", async () => {
-    const mutations = fakeMutations(true);
+    const mutations = fakeBudgetMutations(true);
     const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
@@ -112,7 +97,7 @@ describe("useWorkspaceActions", () => {
         "3 transações excluídas.",
       ),
     );
-    expect(mutations.deleteTx.run).toHaveBeenCalledWith({
+    expect(mutations.deleteTransaction.run).toHaveBeenCalledWith({
       id: "r0",
       revision: 0,
       following: [
@@ -123,52 +108,55 @@ describe("useWorkspaceActions", () => {
   });
 
   test("a failed delete keeps the dialog open", async () => {
-    const mutations = fakeMutations(false);
+    const mutations = fakeBudgetMutations(false);
     const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "pick" }));
     await user.click(screen.getByRole("button", { name: "delete one" }));
-    await vi.waitFor(() => expect(mutations.deleteTx.run).toHaveBeenCalled());
+    await vi.waitFor(() =>
+      expect(mutations.deleteTransaction.run).toHaveBeenCalled(),
+    );
     expect(screen.getByTestId("deleting").textContent).toBe("r0");
     expect(screen.queryByText("Transação excluída.")).toBeNull();
   });
 
   test("percentages open at the person's own revision", async () => {
-    const { screen, user } = await setup({ mutations: fakeMutations(true) });
+    const { screen, user } = await setup({
+      mutations: fakeBudgetMutations(true),
+    });
 
     await user.click(screen.getByRole("button", { name: "edit percentages" }));
     expect(screen.getByTestId("percentages").textContent).toBe("7");
   });
 
   test("undo restores the deleted transaction at the next revision", async () => {
-    const mutations = fakeMutations(true);
+    const mutations = fakeBudgetMutations(true);
     const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "delete one" }));
     fireEvent.click(await screen.findByRole("button", { name: "Desfazer" }));
 
     await screen.findByText("Alteração desfeita.");
-    expect(mutations.restoreTx.run).toHaveBeenCalledWith({
-      id: "r0",
-      revision: 1,
-      transaction: series[0],
-    });
+    expect(mutations.restoreTransaction.run).toHaveBeenCalledWith(
+      { id: "r0", revision: 1 },
+      { transaction: series[0] },
+    );
   });
 
   test("failed undo keeps its action available for retry", async () => {
-    const mutations = fakeMutations(true);
-    vi.mocked(mutations.restoreTx.run).mockResolvedValueOnce(false);
+    const mutations = fakeBudgetMutations(true);
+    vi.mocked(mutations.restoreTransaction.run).mockResolvedValueOnce(false);
     const { screen, user } = await setup({ mutations });
 
     await user.click(screen.getByRole("button", { name: "delete one" }));
     fireEvent.click(await screen.findByRole("button", { name: "Desfazer" }));
     await vi.waitFor(() =>
-      expect(mutations.restoreTx.run).toHaveBeenCalledTimes(1),
+      expect(mutations.restoreTransaction.run).toHaveBeenCalledTimes(1),
     );
     expect(screen.queryByText("Alteração desfeita.")).toBeNull();
 
     fireEvent.click(screen.getByRole("button", { name: "Desfazer" }));
     await screen.findByText("Alteração desfeita.");
-    expect(mutations.restoreTx.run).toHaveBeenCalledTimes(2);
+    expect(mutations.restoreTransaction.run).toHaveBeenCalledTimes(2);
   });
 });

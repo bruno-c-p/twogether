@@ -1,13 +1,51 @@
+import { createServerFn } from "@tanstack/react-start";
+import {
+  budgetMutations as defs,
+  type BudgetActions,
+} from "@/features/budget/actions/mutations";
+import { householdMiddleware } from "@/server/middleware";
+import { serve } from "@/server/serve.server";
+
 export { loadWorkspace } from "@/features/budget/actions/load-workspace";
 
-export { saveTransaction } from "@/features/budget/actions/save-transaction";
+// The Start compiler only extracts a top-level `const x = createServerFn()`,
+// so each mutation stays its own statement.
 
-export { deleteTransaction } from "@/features/budget/actions/delete-transaction";
+const saveTransaction = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.saveTransaction.parse)
+  .handler(serve(defs.saveTransaction));
 
-export { restoreTransaction } from "@/features/budget/actions/restore-transaction";
+const deleteTransaction = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.deleteTransaction.parse)
+  .handler(serve(defs.deleteTransaction));
 
-export { savePercentages } from "@/features/budget/actions/save-percentages";
+const restoreTransaction = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.restoreTransaction.parse)
+  .handler(serve(defs.restoreTransaction));
 
-export { settleSplit } from "@/features/budget/actions/settle-split";
+const settleSplit = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.settleSplit.parse)
+  .handler(serve(defs.settleSplit));
 
-export { unsettleSplit } from "@/features/budget/actions/unsettle-split";
+const unsettleSplit = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.unsettleSplit.parse)
+  .handler(serve(defs.unsettleSplit));
+
+const savePercentages = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.savePercentages.parse)
+  .handler(serve(defs.savePercentages));
+
+export const budgetActions = {
+  saveTransaction,
+  deleteTransaction,
+  restoreTransaction,
+  settleSplit,
+  unsettleSplit,
+  savePercentages,
+} satisfies BudgetActions;

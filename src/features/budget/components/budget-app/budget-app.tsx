@@ -76,9 +76,9 @@ export function BudgetApp({
 
 function listErrorFor(mutations: BudgetMutations, deleting: boolean) {
   return (
-    mutations.restoreTx.error ||
-    mutations.unsettleTx.error ||
-    (deleting ? "" : mutations.deleteTx.error)
+    mutations.restoreTransaction.error ||
+    mutations.unsettleSplit.error ||
+    (deleting ? "" : mutations.deleteTransaction.error)
   );
 }
 

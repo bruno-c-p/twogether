@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
+import { mutationRules } from "./fitness-mutations";
 import { styleChecks } from "./fitness-styles";
 
 export type Repo = {
@@ -379,6 +380,7 @@ export function sourceChecks(repo: Repo) {
     ...noComponentBarrels(repo),
     ...styleChecks(repo),
     ...domainModelRules(repo),
+    ...mutationRules(repo),
   ];
 }
 

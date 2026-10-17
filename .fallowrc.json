@@ -39,6 +39,7 @@
         "patterns": [
           "src/server/store.server.ts",
           "src/server/middleware.ts",
+          "src/server/serve.server.ts",
           "src/server/store-test-harness.ts"
         ]
       },
@@ -61,11 +62,14 @@
       // A feature's public API: index.ts for functions and types, plus the
       // component modules routes or other features render. They stay
       // separate modules so a lazy route chunk does not pull a barrel's other
-      // components in with it. Every export of a listed module is public.
+      // components in with it. budget/registry.ts likewise keeps the mutation
+      // registry out of the eager index.ts chunk. Every export of a listed
+      // module is public.
       {
         "name": "budget-api",
         "patterns": [
           "src/features/budget/index.ts",
+          "src/features/budget/registry.ts",
           "src/features/budget/components/budget-app/budget-app.tsx",
           "src/features/budget/components/screens/*.tsx",
           "src/features/budget/components/workspace-skeleton.tsx"

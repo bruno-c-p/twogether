@@ -199,9 +199,11 @@
   if needed), moving shared code down into `src/lib` or `domain/`, or passing
   the value in. Change the zones only when the architecture itself changes.
 - One exception: the `store` zone (`src/server/store.server.ts`,
-  `src/server/middleware.ts`, `src/server/store-test-harness.ts`) is the
-  composition root. `middleware.ts` belongs to it because `authMiddleware`
-  loads the current user through `getStore()`. The zone alone may import
+  `src/server/middleware.ts`, `src/server/serve.server.ts`,
+  `src/server/store-test-harness.ts`) is the composition root.
+  `middleware.ts` belongs to it because `authMiddleware` loads the current
+  user through `getStore()`, and `serve.server.ts` because every mutation
+  handler runs its definition against `getStore()`. The zone alone may import
   feature stores, and only through each feature's `*.server.ts` entry zone
   (`auth-store`, `household-store`, `budget-store`). Features reach each
   other's stores only through `getStore()`. New server code stays out of
@@ -239,10 +241,10 @@
 - A domain type backed by a schema is `z.infer` of that schema
   (`Transaction` is `z.infer<typeof transactionObjectSchema>`). Add a field
   to the schema, never to a hand-written interface in `domain/types.ts`.
-- A mutation's input type is `z.infer` of its action schema, exported from
-  the action as `<Name>Input`. The store parameter, the client wrapper in
-  `useBudgetMutations` and any optimistic updater that takes the whole input
-  use that type instead of an object literal.
+- A mutation's input type is `z.infer` of its schema, exported from the
+  feature's `actions/mutations.ts` as `<Name>Input`. The store parameter and
+  any optimistic updater that takes the whole input use that type instead of
+  an object literal.
 - Lock, settlement and ownership state comes from
   `transactionStatus(t, userId)` in `domain/status.ts`: `repayment`,
   `split`, `paidAt`, `userOwes` and `lock`. Outside `domain/`, do not branch
@@ -255,6 +257,42 @@
   `scripts/fitness-domain-baseline.tsv` grandfathers the existing ones, and
   fitness fails when it has more lines than at the merge-base with
   `origin/main`.
+
+## One definition per mutation
+
+- A mutation is one entry in `src/features/<name>/actions/mutations.ts`,
+  `<name>: define("<name>", { ... })`: its gate, schema, store call (`run`)
+  and, if the UI paints it early, its optimistic update. The name gives the
+  definition its identity, so a surface filed under another mutation with a
+  compatible input still fails to compile. Add the entry and the store
+  method, then run `bun run typecheck`: it names each surface below that
+  still lacks it.
+  Typecheck does not check that an optimistic update mirrors its store
+  method, and MCP tools are still wired by hand.
+  - The server fn in `actions/index.ts`: one private
+    `const <name> = createServerFn(...).validator(defs.<name>.parse).handler(serve(defs.<name>))`,
+    listed in the feature's actions object (`budgetActions`), which
+    `satisfies` the registry.
+  - The client handle in `useBudgetMutations`.
+  - The break-ui fake in `src/features/break-ui/actions.ts`.
+- The Start compiler extracts only a top-level `const x = createServerFn()`,
+  so never build server fns in a helper or an object literal; both leak
+  server code into the client build.
+- Code outside the feature reads the registry through its public module
+  (`@/features/budget/registry`), never `index.ts`: the registry's
+  top-level calls would land in the eager main chunk.
+- Client-only data an optimistic update needs (the row a restore puts back)
+  is the updater's third parameter and `run`'s second argument. It never
+  goes on the wire.
+- `bun run fitness` (`scripts/fitness-mutations.ts`) fails, in a feature
+  with a registry, on a registry entry whose `define` name or `run` store
+  method differs from its key, on an exported server fn statement, on a
+  statement whose validator or handler names another definition, on a
+  statement used
+  anywhere but as its own entry in the one exported actions object, on an
+  actions object holding anything else, on a statement that
+  is not a top-level `const`, and on a POST server fn outside
+  `actions/index.ts`.
 
 ---
 

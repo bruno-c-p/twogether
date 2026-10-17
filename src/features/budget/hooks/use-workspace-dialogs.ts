@@ -35,17 +35,17 @@ export function useWorkspaceDialogs(
         {
           transaction: next ? (next.transaction?.id ?? NEW_TRANSACTION) : null,
         },
-        mutations.saveTx,
+        mutations.saveTransaction,
       ),
     percentagesRevision: open.percentages,
     setPercentagesRevision: (revision: number | null) =>
-      update({ percentages: revision }, mutations.savePct),
+      update({ percentages: revision }, mutations.savePercentages),
     deleting: find(open.delete),
     setDeleting: (transaction: Transaction | null) =>
-      update({ delete: transaction?.id ?? null }, mutations.deleteTx),
+      update({ delete: transaction?.id ?? null }, mutations.deleteTransaction),
     settling: find(open.settle),
     setSettling: (transaction: Transaction | null) =>
-      update({ settle: transaction?.id ?? null }, mutations.settleTx),
+      update({ settle: transaction?.id ?? null }, mutations.settleSplit),
   };
 }
 

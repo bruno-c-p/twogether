@@ -1,22 +1,18 @@
 import { z } from "zod";
 import { fixture, readDataset } from "@/features/break-ui/fixtures";
 import {
+  budgetMutations,
+  type BudgetActions,
+} from "@/features/budget/registry";
+import {
   goalPercentagesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
 import { nameSchema } from "@/lib/account-schemas";
 import type {
-  GoalPercentages,
   Transaction,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
-import {
-  optimisticDelete,
-  optimisticRestore,
-  optimisticSave,
-  optimisticSettle,
-  optimisticUnsettle,
-} from "@/features/budget/workspace";
 
 const snapshotSchema = z.object({
   user: z.object({ id: z.string(), name: nameSchema }),
@@ -64,76 +60,78 @@ export function loadWorkspace() {
   return Promise.resolve(readSnapshot());
 }
 
-export function saveTransaction({
-  data,
-}: {
-  data: { transaction: Transaction; occurrences?: number };
-}) {
-  transactionSchema.parse(data.transaction);
+type Name = keyof BudgetActions;
 
-  return write(optimisticSave(readSnapshot(), data));
+// Tagged with its mutation, so `satisfies Fakes` rejects a fake filed under
+// another mutation whose input happens to fit.
+type Fakes = { [K in Name]: BudgetActions[K] & { readonly mutation: K } };
+
+function fake<K extends Name>(mutation: K, run: BudgetActions[K]) {
+  return Object.assign(run, { mutation });
+}
+
+function fromOptimistic<K extends Name, Input>(definition: {
+  name: K;
+  parse: (input: Input) => Input;
+  optimistic: (snapshot: WorkspaceSnapshot, input: Input) => WorkspaceSnapshot;
+}) {
+  const run = async ({ data }: { data: Input }) => {
+    await write(definition.optimistic(readSnapshot(), definition.parse(data)));
+  };
+
+  return Object.assign(run, { mutation: definition.name });
 }
 
 const deleted = new Map<string, Transaction>();
 
-export function deleteTransaction({
-  data,
-}: {
-  data: { id: string; following?: { id: string }[] };
-}) {
-  const snapshot = readSnapshot();
+const removeTransaction = fromOptimistic(budgetMutations.deleteTransaction);
 
-  const transaction = snapshot.budget.transactions.find(
-    (item) => item.id === data.id,
-  );
+export const budgetActions = {
+  saveTransaction: fromOptimistic(budgetMutations.saveTransaction),
+  deleteTransaction: fake("deleteTransaction", async (request) => {
+    const transaction = readSnapshot().budget.transactions.find(
+      (item) => item.id === request.data.id,
+    );
 
-  if (transaction) deleted.set(data.id, transaction);
+    if (transaction) deleted.set(request.data.id, transaction);
 
-  return write(optimisticDelete(snapshot, data));
-}
+    await removeTransaction(request);
+  }),
+  restoreTransaction: fake("restoreTransaction", async ({ data }) => {
+    const transaction = deleted.get(data.id);
 
-export function restoreTransaction({ data }: { data: { id: string } }) {
-  const transaction = deleted.get(data.id);
+    if (!transaction) throw new Error("Fixture excluída não encontrada.");
 
-  if (!transaction)
-    return Promise.reject(new Error("Fixture excluída não encontrada."));
+    await write(
+      budgetMutations.restoreTransaction.optimistic(readSnapshot(), data, {
+        transaction,
+      }),
+    );
+  }),
+  settleSplit: fromOptimistic(budgetMutations.settleSplit),
+  unsettleSplit: fromOptimistic(budgetMutations.unsettleSplit),
+  savePercentages: fake("savePercentages", async ({ data }) => {
+    const snapshot = readSnapshot();
+    const percentages = goalPercentagesSchema.parse(data.percentages);
 
-  return write(optimisticRestore(readSnapshot(), transaction));
-}
-
-export function savePercentages({
-  data,
-}: {
-  data: { percentages: GoalPercentages };
-}) {
-  const snapshot = readSnapshot();
-  const percentages = goalPercentagesSchema.parse(data.percentages);
-
-  return write({
-    ...snapshot,
-    budget: { ...snapshot.budget, percentages },
-    household: {
-      ...snapshot.household,
-      members: snapshot.household.members.map((member) =>
-        member.id === snapshot.user.id
-          ? {
-              ...member,
-              percentages,
-              percentagesRevision: member.percentagesRevision + 1,
-            }
-          : member,
-      ),
-    },
-  });
-}
-
-export function settleSplit({ data }: { data: { id: string } }) {
-  return write(optimisticSettle(readSnapshot(), data));
-}
-
-export function unsettleSplit({ data }: { data: { id: string } }) {
-  return write(optimisticUnsettle(readSnapshot(), data));
-}
+    await write({
+      ...snapshot,
+      budget: { ...snapshot.budget, percentages },
+      household: {
+        ...snapshot.household,
+        members: snapshot.household.members.map((member) =>
+          member.id === snapshot.user.id
+            ? {
+                ...member,
+                percentages,
+                percentagesRevision: member.percentagesRevision + 1,
+              }
+            : member,
+        ),
+      },
+    });
+  }),
+} satisfies Fakes;
 
 export function setName({ data }: { data: { name: string } }) {
   const snapshot = readSnapshot();
