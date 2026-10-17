@@ -5,7 +5,7 @@ import {
   useNameForm,
 } from "@/features/auth/components/account-settings";
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
-import type { Member } from "@/features/budget/domain/types";
+import type { Member } from "@/features/budget";
 import { renderWithProviders } from "@/test/render";
 
 const ana: Member = { id: "ana", name: "Ana" };

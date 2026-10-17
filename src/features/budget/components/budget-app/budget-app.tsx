@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Outlet, useRouter } from "@tanstack/react-router";
 import {
@@ -20,12 +20,12 @@ import { useHiddenValues } from "@/features/budget/hooks/use-hidden-values";
 import { useWorkspaceSearch } from "@/features/budget/hooks/use-workspace-search";
 import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
+import type { Member } from "@/features/budget/domain/types";
 import {
   prefetchMonth,
   prefetchNearbyMonths,
 } from "@/features/budget/workspace";
 import { useBrowserSync } from "@/lib/use-browser-sync";
-import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import { MemberFilter } from "@/features/budget/components/member-filter/member-filter";
 import { MonthFilter } from "@/features/budget/components/month-filter";
 import {
@@ -35,7 +35,17 @@ import {
 import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 
 // The layout route renders this only once the URL carries a month.
-export function BudgetApp({ month }: { month: string }) {
+export function BudgetApp({
+  month,
+  account: Account,
+}: {
+  month: string;
+  account: ComponentType<{
+    placement: AccountPlacement;
+    user: Member;
+    members: Member[];
+  }>;
+}) {
   const budget = useBudget(month);
   const router = useRouter();
 
@@ -54,7 +64,7 @@ export function BudgetApp({ month }: { month: string }) {
       budget={budget}
       month={month}
       account={(placement) => (
-        <AccountDrawer
+        <Account
           placement={placement}
           user={budget.user}
           members={budget.household.members}

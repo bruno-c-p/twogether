@@ -1,6 +1,6 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
+import { legacyViewHref } from "@/features/budget";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
-import { legacyViewHref } from "@/features/budget/search";
 
 export const Route = createFileRoute("/_authenticated/_workspace/")({
   beforeLoad: ({ location }) => {

@@ -174,9 +174,16 @@
 ## Import boundaries
 
 - The zone graph lives in `boundaries` in `.fallowrc.json`. Code outside
-  `src/features/<name>/` reaches a feature only through its `index.ts`;
+  `src/features/<name>/` reaches a feature only through its public API, the
+  `<name>-api` zone: `index.ts` for functions and types, plus the
+  route-level component modules that zone lists;
   `src/server`, `src/lib` and `src/components` never import features;
   `domain/` imports only `src/lib`. `bun run fallow` enforces it.
+- Keep components out of `index.ts`. Route config (`beforeLoad`,
+  `validateSearch`) loads eagerly, and a barrel that re-exports a component
+  drags that component and its CSS into the main chunk. A component another
+  feature or a route renders joins its feature's `-api` zone as its own
+  module instead.
 - `oxlint.config.ts` keeps `domain/` free of React, TanStack, server modules
   and `node:*`. Only server-side files may import `*.server` modules or
   `@/server/**`: `*.server.ts`, `src/server/`, `actions/`, `src/start.ts`,
@@ -189,7 +196,8 @@
   the value in. Change the zones only when the architecture itself changes.
 - One exception: the `store` zone (`src/server/store.server.ts`,
   `src/server/middleware.ts`, `src/server/store-test-harness.ts`) is the
-  composition root. It alone may import feature stores, and only through
+  composition root. `middleware.ts` belongs to it because `authMiddleware`
+  loads the current user through `getStore()`. It alone may import feature stores, and only through
   each feature's `*.server.ts` entry zone (`auth-store`, `household-store`,
   `budget-store`). Features reach each other's stores only through
   `getStore()`. New server code stays out of that zone unless it composes

@@ -6,12 +6,13 @@ import {
 } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
-import { BudgetApp } from "@/features/budget";
+import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import {
+  loadCachedWorkspace,
   validateWorkspaceSearch,
   withDefaultMonthHref,
-} from "@/features/budget/search";
-import { loadCachedWorkspace } from "@/features/budget/workspace";
+} from "@/features/budget";
+import { BudgetApp } from "@/features/budget/components/budget-app/budget-app";
 import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
 import { toastManager } from "@/components/ui/toast-manager";
 import { currentMonth } from "@/lib/clock";
@@ -77,5 +78,5 @@ function WorkspaceRoute() {
       </>
     );
 
-  return <BudgetApp month={search.month} />;
+  return <BudgetApp month={search.month} account={AccountDrawer} />;
 }

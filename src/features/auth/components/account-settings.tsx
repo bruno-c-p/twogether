@@ -9,10 +9,9 @@ import {
   useActionRun,
   type ActionRun,
 } from "@/features/auth/hooks/use-action-run";
-import { createInvite, revokeInvite } from "@/features/household/actions";
+import { createInvite, revokeInvite } from "@/features/household";
 import { MemberList } from "@/features/household/components/member-list/member-list";
-import { workspaceQueryKey } from "@/features/budget/workspace";
-import type { Member } from "@/features/budget/domain/types";
+import { workspaceQueryKey, type Member } from "@/features/budget";
 import { Button } from "@/components/ui/button";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import {

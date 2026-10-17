@@ -11,12 +11,12 @@ import {
   useActionRun,
   type ActionRun,
 } from "@/features/auth/hooks/use-action-run";
-import { createHousehold, joinHousehold } from "@/features/household/actions";
+import { createHousehold, joinHousehold } from "@/features/household";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
-import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
-import { LoadingState } from "@/features/budget/components/empty-state";
+import { AppFooter } from "@/components/ui/app-footer/app-footer";
+import { LoadingState } from "@/components/ui/empty-state";
 import { Brand } from "@/components/ui/brand";
 import { Button } from "@/components/ui/button";
 import {
