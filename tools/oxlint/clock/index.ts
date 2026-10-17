@@ -7,8 +7,7 @@ const noDirectClockRule = defineRule({
   meta: {
     type: "problem",
     docs: {
-      description:
-        "Disallow `new Date()` and `Date.now()` outside @/lib/clock.",
+      description: "Disallow `new Date()` and `Date.now` outside @/lib/clock.",
     },
     messages: { directClock: MESSAGE },
   },
@@ -21,8 +20,8 @@ const noDirectClockRule = defineRule({
           context.report({ node, messageId: "directClock" });
         }
       },
-      CallExpression(node) {
-        if (text(node.callee) === "Date.now") {
+      MemberExpression(node) {
+        if (text(node) === "Date.now") {
           context.report({ node, messageId: "directClock" });
         }
       },

@@ -12,6 +12,7 @@ import {
   type BudgetStore,
 } from "@/features/budget/budget.server";
 import { createBudgetMcpServer } from "@/features/mcp/tools.server";
+import { now as clockNow } from "@/lib/clock";
 import { parseClientEnv } from "@/lib/env";
 import { reportError } from "@/lib/errors";
 
@@ -188,7 +189,7 @@ async function fetchAuthorizationServer(
 // metadata rarely changes, so successful answers are cached.
 export function authorizationServerMetadataHandler(
   fetcher: typeof fetch = fetch,
-  now: () => number = Date.now,
+  now: () => number = () => clockNow().getTime(),
 ) {
   let cached:
     | {
