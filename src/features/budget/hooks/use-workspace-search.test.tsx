@@ -1,3 +1,4 @@
+import { defaultRateLimit } from "nuqs";
 import { describe, expect, test, vi } from "vitest";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
@@ -19,6 +20,7 @@ function Harness() {
     <>
       <button onClick={() => search.setMonth("2026-10")}>outubro</button>
       <p role="status">{search.monthPending ? "pending" : "idle"}</p>
+      <p role="alert">{search.monthError}</p>
     </>
   );
 }
@@ -40,7 +42,18 @@ describe("useWorkspaceSearch", () => {
     await vi.waitFor(() =>
       expect(screen.getByRole("status").textContent).toBe("idle"),
     );
+    // nuqs writes the URL on a throttle; wait the window out so a write
+    // queued by a wrong navigation would have landed.
+    await new Promise((resolve) =>
+      setTimeout(resolve, defaultRateLimit.timeMs + 10),
+    );
     expect(router.state.location.search).toMatchObject({ month: "2026-09" });
+    expect(screen.getByRole("alert").textContent).not.toBe("");
+
+    // The next pick that lands clears the message.
+    queryClient.setQueryData(october, snapshot);
+    await user.click(screen.getByRole("button", { name: "outubro" }));
+    expect(screen.getByRole("alert").textContent).toBe("");
   });
 
   test("a month already in memory shows at once", async () => {

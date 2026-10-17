@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
+import { failureMessage } from "@/features/budget/hooks/use-mutation";
 import { pageParam, workspaceParams } from "@/features/budget/search";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 
@@ -26,8 +27,9 @@ export function useWorkspaceSearch() {
     const show = () => void setSearch({ month, page: null });
 
     if (queryClient.getQueryData(workspaceQueryOptions(month).queryKey)) {
-      // An earlier pick still loading must not land after this one.
-      if (monthLoad.isPending) monthLoad.reset();
+      // An earlier pick still loading must not land after this one, and an
+      // earlier failure is over.
+      monthLoad.reset();
       show();
 
       return;
@@ -40,6 +42,7 @@ export function useWorkspaceSearch() {
   return {
     memberFilter: search.member ?? "all",
     monthPending: monthLoad.isPending,
+    monthError: monthLoad.error ? failureMessage(monthLoad.error) : "",
     setMonth,
     setMemberFilter: (member: string) =>
       void setSearch({ member: member === "all" ? null : member, page: null }),
