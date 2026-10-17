@@ -1,10 +1,11 @@
 import { describe, expect, test } from "vitest";
 import { parseSaveTransaction } from "@/features/budget/actions/save-transaction";
+import { cents } from "@/test/cents";
 
 const transaction = {
   id: "transaction-1",
   description: "Mercado",
-  amount: 10000,
+  amount: cents(10000),
   kind: "expense" as const,
   date: "2026-09-14",
   goal: "fixed" as const,
@@ -19,6 +20,7 @@ describe("parseSaveTransaction", () => {
       occurrences: 12,
     });
     expect(() =>
+      // @ts-expect-error: the parser must reject untrusted request bodies
       parseSaveTransaction({ transaction: { ...transaction, amount: 0 } }),
     ).toThrow("Digite um valor válido, como 45,90.");
 

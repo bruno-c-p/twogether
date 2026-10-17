@@ -13,11 +13,12 @@ import {
   workspaceQueryKey,
   workspaceQueryOptions,
 } from "@/features/budget/workspace";
+import { cents } from "@/test/cents";
 
 const mercado: Transaction = {
   id: "tx-1",
   description: "Mercado",
-  amount: 4590,
+  amount: cents(4590),
   kind: "expense",
   date: "2026-09-14",
   goal: "fixed",
@@ -66,7 +67,7 @@ describe("optimisticSave", () => {
     const salary: Transaction = {
       id: "tx-2",
       description: "Salário",
-      amount: 500000,
+      amount: cents(500000),
       kind: "income",
       date: "2026-09-01",
       goal: null,

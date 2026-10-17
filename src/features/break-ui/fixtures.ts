@@ -1,7 +1,7 @@
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import { transactionSchema } from "@/features/budget/domain/schemas";
 import type {
-  Transaction,
+  TransactionDraft,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
 
@@ -35,7 +35,7 @@ const goals = [
 
 const worstAmounts = [99999999999, 99999999999, 99999999999, 1];
 
-function baseTransaction(index: number, dataset: Dataset): Transaction {
+function baseTransaction(index: number, dataset: Dataset): TransactionDraft {
   const income = index === 0 || (dataset === "huge" && index % 20 === 0);
 
   return {
@@ -50,7 +50,7 @@ function baseTransaction(index: number, dataset: Dataset): Transaction {
   };
 }
 
-function worstTransaction(index: number): Transaction {
+function worstTransaction(index: number): TransactionDraft {
   const transaction = baseTransaction(index, "worst");
 
   return {

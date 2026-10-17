@@ -9,7 +9,7 @@ import {
 } from "@/features/budget/domain/goal-progress";
 import type { Member } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
-import { sum } from "@/lib/decimal";
+import { sum, ZERO_CENTS } from "@/lib/decimal";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
 
@@ -176,7 +176,7 @@ export function GoalCards({
     goal,
     plan: plansById.get(goal.id) ?? {
       id: goal.id,
-      planned: 0,
+      planned: ZERO_CENTS,
       shares: [],
       percentage: null,
     },

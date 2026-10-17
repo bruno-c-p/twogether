@@ -6,6 +6,7 @@ import {
 import type { Transaction } from "@/features/budget/domain/types";
 import { useTransactionFilters } from "@/features/budget/hooks/use-transaction-filters";
 import { ana, transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderPlain } from "@/test/render";
 
 const month = [
@@ -19,7 +20,7 @@ const month = [
     description: "Salário",
     kind: "income",
     goal: null,
-    amount: 500000,
+    amount: cents(500000),
     date: "2026-09-05",
     memberId: "someone-else",
   }),
@@ -96,7 +97,7 @@ describe("TransactionList", () => {
           transaction({
             id: "a",
             description: "Pão",
-            amount: 1000,
+            amount: cents(1000),
             date: "2026-09-10",
           }),
           transaction({
@@ -104,7 +105,7 @@ describe("TransactionList", () => {
             description: "Freela",
             kind: "income",
             goal: null,
-            amount: 3000,
+            amount: cents(3000),
             date: "2026-09-10",
           }),
         ]}
@@ -192,7 +193,7 @@ describe("TransactionList", () => {
         id: String(index).padStart(3, "0"),
         description: `Compra ${index}`,
         date: "2026-09-10",
-        amount: 100,
+        amount: cents(100),
       }),
     );
 

@@ -3,16 +3,17 @@ import { GoalCards } from "@/features/budget/components/goal-cards";
 import { planGoals, summarize } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import { ana, transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderWithProviders } from "@/test/render";
 
 const salary = transaction({
   id: "s",
   kind: "income",
   goal: null,
-  amount: 100000,
+  amount: cents(100000),
 });
 
-const rent = transaction({ id: "r", goal: "fixed", amount: 40000 });
+const rent = transaction({ id: "r", goal: "fixed", amount: cents(40000) });
 
 function renderTable({ hidden = false, withIncome = true } = {}) {
   const monthly = withIncome ? [salary, rent] : [rent];
@@ -91,7 +92,7 @@ describe("GoalCards", () => {
       memberId: "bia",
       kind: "income",
       goal: null,
-      amount: 50000,
+      amount: cents(50000),
     });
 
     const monthly = [salary, biaSalary, rent];

@@ -4,6 +4,7 @@ import type {
   transactionKindSchema,
   viewSchema,
 } from "@/features/budget/domain/schemas";
+import type { Cents } from "@/lib/decimal";
 
 export type GoalId = z.infer<typeof goalIdSchema>;
 
@@ -20,7 +21,7 @@ export interface TransactionSplit {
 export interface Transaction {
   id: string;
   description: string;
-  amount: number;
+  amount: Cents;
   kind: TransactionKind;
   date: string;
   goal: GoalId | null;
@@ -34,6 +35,9 @@ export interface Transaction {
   split?: TransactionSplit;
   settlementOf?: string;
 }
+
+/** A transaction before `transactionSchema` checks and brands its amount. */
+export type TransactionDraft = Omit<Transaction, "amount"> & { amount: number };
 
 export type GoalPercentages = Record<GoalId, number>;
 

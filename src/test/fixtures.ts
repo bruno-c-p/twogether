@@ -1,5 +1,6 @@
 import type { MemberBudget, Transaction } from "@/features/budget/domain/types";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
+import { cents } from "@/test/cents";
 
 export const ana: MemberBudget = {
   id: "ana",
@@ -12,7 +13,7 @@ export function transaction(overrides: Partial<Transaction> = {}): Transaction {
   return {
     id: "t1",
     description: "Mercado",
-    amount: 4590,
+    amount: cents(4590),
     kind: "expense",
     date: "2026-09-10",
     goal: "fixed",

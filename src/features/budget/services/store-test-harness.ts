@@ -6,12 +6,13 @@ import {
 import { RequestError } from "@/server/request-error";
 import type { UserRow } from "@/server/db.server";
 import type { Transaction } from "@/features/budget/domain/types";
+import { cents } from "@/test/cents";
 
 export function transaction(memberId: string): Transaction {
   return {
     id: "transaction-1",
     description: "Mercado",
-    amount: 10000,
+    amount: cents(10000),
     kind: "expense",
     date: "2026-09-14",
     goal: "fixed",

@@ -4,7 +4,9 @@ import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
 import type { BudgetStore } from "@/features/budget/budget.server";
 import {
+  centsSchema,
   dateSchema,
+  descriptionSchema,
   followingSchema,
   goalIdSchema,
   goalPercentagesSchema,
@@ -17,6 +19,7 @@ import {
 } from "@/features/budget/domain/schemas";
 import type {
   Transaction,
+  TransactionDraft,
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
 import {
@@ -112,7 +115,7 @@ function findTransaction(snapshot: WorkspaceSnapshot, id: string) {
   return found;
 }
 
-function createdTransaction(input: SaveInput): Transaction {
+function createdTransaction(input: SaveInput): TransactionDraft {
   return {
     id: randomUUID(),
     description: input.description ?? "",
@@ -161,7 +164,7 @@ function editedSplit(
 function editedTransaction(
   previous: Transaction,
   input: SaveInput,
-): Transaction {
+): TransactionDraft {
   const kind = input.kind ?? previous.kind;
 
   return {
@@ -272,10 +275,8 @@ export function createBudgetMcpServer(store: BudgetStore, userId: string) {
         revision: revisionSchema
           .optional()
           .describe("Current revision, required when editing."),
-        description: z.string().max(80).optional(),
-        amount: z
-          .int()
-          .min(1)
+        description: descriptionSchema.optional(),
+        amount: centsSchema
           .optional()
           .describe("Integer cents: R$ 45,90 is 4590."),
         date: dateSchema.optional().describe("YYYY-MM-DD."),

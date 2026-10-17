@@ -4,11 +4,12 @@ import {
   laterOccurrences,
 } from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
+import { cents } from "@/test/cents";
 
 const base: Transaction = {
   id: "t1",
   description: "Aluguel",
-  amount: 150000,
+  amount: cents(150000),
   kind: "expense",
   date: "2026-09-05",
   goal: "fixed",

@@ -150,6 +150,13 @@
 - `bun run merge-guard <pr> --dry-run` reports whether the PR would merge
   without merging it.
 
+## Money is `Cents`
+
+- Amounts are the branded `Cents` type from `src/lib/decimal.ts`. Get one
+  by parsing with `centsSchema` or from the `decimal.ts` helpers
+  (`sumCents`, `minusCents`, `halfDown`, `percentageOf`); never cast a
+  number to `Cents`. Tests use `cents()` from `src/test/cents.ts`.
+
 ---
 
 <!-- fallow:setup-hooks:start -->

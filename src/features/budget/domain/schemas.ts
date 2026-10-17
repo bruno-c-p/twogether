@@ -70,10 +70,11 @@ export const viewSchema = z.enum(["overview", "transactions", "goals"], {
   error: "Visão inválida.",
 });
 
-const centsSchema = z
+export const centsSchema = z
   .int({ error: "Digite um valor válido, como 45,90." })
   .min(1, { error: "Digite um valor válido, como 45,90." })
-  .max(MONEY_MAX, { error: "Digite um valor válido, como 45,90." });
+  .max(MONEY_MAX, { error: "Digite um valor válido, como 45,90." })
+  .brand<"Cents">();
 
 const amountInputSchema = z
   .string({ error: "Digite um valor válido, como 45,90." })
@@ -96,7 +97,7 @@ export const followingSchema = z.array(
   { error: "Recorrência inválida." },
 );
 
-const descriptionSchema = z
+export const descriptionSchema = z
   .string({ error: "Dê um nome para esta transação." })
   .trim()
   .min(1, { error: "Dê um nome para esta transação." })
