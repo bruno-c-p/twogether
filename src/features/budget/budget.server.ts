@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 import type { InStatement } from "@libsql/client";
+import type { DeleteTransactionInput } from "@/features/budget/actions/delete-transaction";
+import type { RestoreTransactionInput } from "@/features/budget/actions/restore-transaction";
+import type { SavePercentagesInput } from "@/features/budget/actions/save-percentages";
+import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
+import type { SettleSplitInput } from "@/features/budget/actions/settle-split";
+import type { UnsettleSplitInput } from "@/features/budget/actions/unsettle-split";
 import { firstOccurrence } from "@/features/budget/domain/recurrence";
 import {
   goalPercentagesSchema,
@@ -291,7 +297,7 @@ async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
-  input: { transaction: Transaction; occurrences?: number },
+  input: SaveTransactionInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const occurrences = input.occurrences ?? 1;
@@ -398,11 +404,7 @@ async function deleteTransaction(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
-  input: {
-    id: string;
-    revision: number;
-    following?: { id: string; revision: number }[];
-  },
+  input: DeleteTransactionInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const previous = await one(
@@ -440,7 +442,7 @@ async function restoreTransaction(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
-  input: { id: string; revision: number },
+  input: RestoreTransactionInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const previous = await one(
@@ -521,11 +523,7 @@ async function settleSplit(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
-  input: {
-    id: string;
-    revision: number;
-    date: string;
-  },
+  input: SettleSplitInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, householdId, input);
@@ -580,7 +578,7 @@ async function unsettleSplit(
   ctx: StoreContext,
   user: UserRow,
   householdId: string,
-  input: { id: string; revision: number },
+  input: UnsettleSplitInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, householdId, input);
@@ -604,7 +602,7 @@ async function unsettleSplit(
 async function savePercentages(
   ctx: StoreContext,
   user: UserRow,
-  input: { percentages: GoalPercentages; revision: number },
+  input: SavePercentagesInput,
 ) {
   await ctx.atomic(async (transaction) => {
     const result = await execute(

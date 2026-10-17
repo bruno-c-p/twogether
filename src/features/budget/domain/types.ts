@@ -15,7 +15,7 @@ export type View = z.infer<typeof viewSchema>;
 export type Transaction = z.infer<typeof transactionObjectSchema>;
 
 /** A transaction before `transactionSchema` checks and brands its amount. */
-export type TransactionDraft = Omit<Transaction, "amount"> & { amount: number };
+export type TransactionDraft = z.input<typeof transactionObjectSchema>;
 
 export type GoalPercentages = Record<GoalId, number>;
 

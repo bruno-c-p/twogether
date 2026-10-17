@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { z } from "zod";
 import { getStore } from "@/server/store.server";
 import {
   followingSchema,
@@ -14,11 +15,9 @@ const deleteTransactionSchema = inputSchema({
   following: followingSchema.optional(),
 });
 
-export const parseDeleteTransaction = actionInput<{
-  id: string;
-  revision: number;
-  following?: { id: string; revision: number }[];
-}>(deleteTransactionSchema);
+export type DeleteTransactionInput = z.infer<typeof deleteTransactionSchema>;
+
+export const parseDeleteTransaction = actionInput(deleteTransactionSchema);
 
 export const deleteTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

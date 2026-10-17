@@ -153,10 +153,10 @@ export const transactionObjectSchema = z.object({
   settlementOf: optionalText,
 });
 
-// Stored payloads keep keys this version does not know, so a rewrite by an
-// older deploy does not drop them. The Transaction type comes from the strict
-// object, so an unknown key still fails to compile.
-export const transactionSchema = withGoalRules(
+export const transactionSchema: z.ZodType<
+  z.output<typeof transactionObjectSchema>,
+  z.input<typeof transactionObjectSchema>
+> = withGoalRules(
   transactionObjectSchema
     .extend({ split: splitObjectSchema.loose().optional() })
     .loose(),

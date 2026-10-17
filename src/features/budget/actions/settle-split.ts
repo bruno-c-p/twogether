@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { z } from "zod";
 import { getStore } from "@/server/store.server";
 import {
   dateSchema,
@@ -14,11 +15,9 @@ const settleSplitSchema = inputSchema({
   date: dateSchema,
 });
 
-export const parseSettleSplit = actionInput<{
-  id: string;
-  revision: number;
-  date: string;
-}>(settleSplitSchema);
+export type SettleSplitInput = z.infer<typeof settleSplitSchema>;
+
+export const parseSettleSplit = actionInput(settleSplitSchema);
 
 export const settleSplit = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

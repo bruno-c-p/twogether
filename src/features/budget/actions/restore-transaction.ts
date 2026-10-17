@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { z } from "zod";
 import { getStore } from "@/server/store.server";
 import { idSchema, revisionSchema } from "@/features/budget/domain/schemas";
 import { householdMiddleware } from "@/server/middleware";
@@ -9,10 +10,9 @@ const restoreTransactionSchema = inputSchema({
   revision: revisionSchema,
 });
 
-export const parseRestoreTransaction = actionInput<{
-  id: string;
-  revision: number;
-}>(restoreTransactionSchema);
+export type RestoreTransactionInput = z.infer<typeof restoreTransactionSchema>;
+
+export const parseRestoreTransaction = actionInput(restoreTransactionSchema);
 
 export const restoreTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

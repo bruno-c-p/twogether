@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { z } from "zod";
 import { getStore } from "@/server/store.server";
 import {
   occurrencesSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
-import type { Transaction } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -13,10 +13,9 @@ const saveTransactionSchema = inputSchema({
   occurrences: occurrencesSchema.optional(),
 });
 
-export const parseSaveTransaction = actionInput<{
-  transaction: Transaction;
-  occurrences?: number;
-}>(saveTransactionSchema);
+export type SaveTransactionInput = z.infer<typeof saveTransactionSchema>;
+
+export const parseSaveTransaction = actionInput(saveTransactionSchema);
 
 export const saveTransaction = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])
