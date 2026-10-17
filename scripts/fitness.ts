@@ -4,6 +4,7 @@ import { createServer } from "node:net";
 import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
 import {
+  agentsRuleTable,
   boundaryBaselineGrowth,
   domainBaselineGrowth,
   headerCheckFailure,
@@ -141,6 +142,7 @@ const failures = process.argv.includes("--headers")
   ? await builtHeaderChecks()
   : [
       ...sourceChecks(repo),
+      ...agentsRuleTable(repo),
       ...boundaryBaselineGrowth(repo, git, (message) => console.warn(message)),
       ...domainBaselineGrowth(repo, git, (message) => console.warn(message)),
     ];

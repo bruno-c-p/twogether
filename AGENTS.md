@@ -1,5 +1,96 @@
 # Working rules
 
+Start with the rule table. Each row names the rule, what enforces it, what a
+failure prints, and the section below that holds the full rule; when the two
+differ, the section wins. **prose** means nothing checks the rule: you are
+the enforcer. `bun run fitness` (`agentsRuleTable`) fails when the table
+names a `fitness <name>` or `oxlint <rule>` that does not exist, or leaves
+out a check that fitness runs. Write the prefix before every name; a name
+without one is not checked.
+
+## Rule table
+
+### Setup, checks and pull requests
+
+| Rule                                                                                  | Enforcer                                                                      | Failure looks like                                                                      | Details                 |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------- |
+| Run `bun run setup` in every worktree; never copy the main checkout's `.env.local`    | `bun run setup` (`scripts/setup-worktree.ts`)                                 | `setup: … holds live Clerk keys` / `sets … to something other than a local SQLite path` | Worktree setup          |
+| Validate every change in a real browser (320px to desktop, light and dark)            | **prose** (`verify-twogether` skill is the tool)                              | —                                                                                       | Validation              |
+| Run the full check list before finishing                                              | CI `Verify` job (`.github/workflows/ci-cd.yml`) runs each one                 | red `Verify`; merge-guard then refuses                                                  | Validation              |
+| Prettier formatting                                                                   | `bun run format:check`                                                        | `[warn] Code style issues found … Run Prettier with --write to fix.`                    | Validation              |
+| No whitespace errors in the diff                                                      | `git diff --check`                                                            | `<file>:<line>: trailing whitespace.`                                                   | Validation              |
+| Report what was tested, the check results, and blockers; never claim more             | **prose**                                                                     | —                                                                                       | Validation              |
+| Isolated test data; no publish or deploy without authorization                        | **prose**                                                                     | —                                                                                       | Validation              |
+| Fix lint findings; never disable a rule or add a cast to silence one                  | `bun run lint` (oxlint); not disabling is **prose**                           | `× <plugin>(<rule>): …`                                                                 | Lint, Doctor and Fallow |
+| A type assertion carries a `SAFETY:` comment stating the invariant                    | oxlint `anti-slop/require-safety-comment-for-type-assertion`                  | `anti-slop(require-safety-comment-for-type-assertion)`                                  | Lint, Doctor and Fallow |
+| Update the vendored anti-slop only through `install-anti-slop`; record `UPSTREAM.md`  | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
+| React Doctor has zero findings                                                        | `bun run doctor` (`--blocking warning`)                                       | non-zero exit listing the diagnostics                                                   | Lint, Doctor and Fallow |
+| Fallow has zero findings                                                              | `bun run fallow`                                                              | `Failed: dead-code (1 issues): …`                                                       | Lint, Doctor and Fallow |
+| Suppress a Doctor or Fallow finding only as a proven false positive, reason beside it | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
+| Run `fallow audit` before a commit or push                                            | Claude Code hook `.claude/hooks/fallow-gate.sh`; other agents **prose**       | commit or push blocked with verdict `fail`                                              | Fallow local gate       |
+| Merge only with `bun run merge-guard <pr>`, never `gh pr merge`                       | Claude Code hook `scripts/merge-guard-hook.ts`; other agents **prose**        | ``Raw `gh pr merge` is blocked: …``                                                     | Pull requests           |
+| Answer every bot review thread with a fix or a concrete reason before CODE-READY      | **prose**                                                                     | —                                                                                       | Pull requests           |
+| The rule table names real enforcers and lists every fitness check                     | fitness `agentsRuleTable`                                                     | ``AGENTS.md names fitness `…`, which no scripts/fitness*.ts defines``                   | Rule table              |
+| No screenshots or videos under `.github/`                                             | fitness `noGithubMedia`                                                       | `image/video files under .github/:`                                                     | Pull requests           |
+| E2E uses a free port in 3400-3499 and a throwaway SQLite file, never a running server | `e2e/playwright.config.ts` (`freePort`, `mkdtempSync`, `reuseExistingServer`) | `No free e2e port in 3400-3499`                                                         | E2E                     |
+| Seed `uniqueEmail` with stable values only                                            | **prose**                                                                     | — (each new email burns a Clerk user slot)                                              | E2E                     |
+| Locate with `getByRole`/`getByLabel`; no bare tag locators or picks after `getByText` | oxlint `e2e/no-ambiguous-locator`                                             | ``locator('span')` matches every copy a breakpoint renders…``                           | E2E                     |
+| A copy hidden for a breakpoint is `display: none`                                     | **prose**                                                                     | —                                                                                       | E2E                     |
+
+### React state and data
+
+| Rule                                                                              | Enforcer                                                                          | Failure looks like                                             | Details                |
+| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------- |
+| No `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useInsertionEffect` | oxlint `no-restricted-imports`, oxlint `no-restricted-properties`                 | `Local component state is banned: …` / `Effects are banned: …` | State without useState |
+| Put state in React Query, React Hook Form, nuqs or Base UI as listed              | **prose**                                                                         | —                                                              | State without useState |
+| URL index parsers read out-of-range values as absent                              | `transaction-list.test.tsx` (`?page=0`) pins `pageParam`; new parsers **prose**   | test failure                                                   | State without useState |
+| Gate navigation on `queryClient.query()`, never `prefetchQuery`                   | `use-workspace-search.test.tsx` pins `setMonth`; new call sites **prose**         | `a month that fails to load keeps the current month` fails     | React Query            |
+| Wrap `mutation.reset()` so an in-flight run keeps pending and error               | `use-mutation.test.tsx` pins `useMutation`; new wrappers **prose**                | `reset during a run keeps it pending…` fails                   | React Query            |
+| An optimistic update paints what the server writes                                | `bun run test` (`optimistic.server.test.ts`); tsc `satisfies Scenarios` needs one | `optimistic updates agree with the server` fails / tsc error   | React Query            |
+| Workspace data lives under `workspaceQueryKey`, one entry per month               | **prose**                                                                         | —                                                              | React Query            |
+
+### Styling
+
+| Rule                                                                            | Enforcer                            | Failure looks like                                                    | Details           |
+| ------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- | ----------------- |
+| A component with a CSS module lives in `<component>/` next to it                | fitness `componentModuleLayout`     | `… must live in a folder named …` / `… has no sibling ….tsx`          | Component folders |
+| New components use UnoCSS utilities and stay flat; a module only when needed    | **prose**                           | —                                                                     | Component folders |
+| Token utilities, project breakpoints, `cx(...)` groups, `shortcuts` for repeats | **prose**                           | —                                                                     | Styling           |
+| No padding/margin shorthand next to one of its sides on one element             | fitness `noConflictingBoxUtilities` | `… sets m-0 and mt-2 on one element; …`                               | Styling           |
+| No other conflicting utilities on one element (two `left-[...]`)                | **prose**                           | —                                                                     | Styling           |
+| No new arbitrary px values in class strings                                     | fitness `noNewArbitraryPx`          | `… adds arbitrary px value w-[32px]; use w-8. …`                      | Styling           |
+| Never add lines to `scripts/fitness-px-baseline.tsv`                            | **prose** (no growth ratchet)       | —                                                                     | Styling           |
+| Clear the phone nav with `--mobile-nav-height`                                  | fitness `mobileNavToken`            | `… must use h-mobile-nav in its className: …`                         | Styling           |
+| `theme.font`, not `fontFamily`; `__root.tsx` imports `virtual:uno.css`          | fitness `unoWiring`                 | `uno.config.ts must set theme.font; …`                                | Styling           |
+| UnoCSS stays; no Tailwind, shadcn, `@radix-ui`, gradients or retired CSS files  | fitness `cssHouseStyle`             | `package.json must not depend on …` / `… still uses a CSS gradient …` | Styling           |
+| `src/styles.css` holds tokens, resets and global element rules only             | **prose**                           | —                                                                     | Styling           |
+
+### Code structure and domain
+
+| Rule                                                                              | Enforcer                                                                                                                       | Failure looks like                                                       | Details                           |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------ | --------------------------------- |
+| Read the time only through `@/lib/clock`                                          | oxlint `clock/no-direct-clock` (misses `globalThis.Date` and aliases)                                                          | `Read the clock through @/lib/clock: …`                                  | Clock                             |
+| Pass the reader's time zone, never the process zone                               | **prose**                                                                                                                      | —                                                                        | Clock                             |
+| Import source through `@/`, never `./` or `../`                                   | oxlint `no-restricted-imports`                                                                                                 | `Use the @/ alias (src/) instead of relative imports.`                   | Imports and boundaries            |
+| Imports at the top; leave public URLs, CSS `url()` and package imports alone      | **prose**                                                                                                                      | —                                                                        | Imports and boundaries            |
+| Reach a feature only through its `<name>-api` zone; the zone graph holds          | `bun run fallow` (`boundaries` in `.fallowrc.json`)                                                                            | `boundary-violation:<file>:<line>:<file> -> <target> (<zone> -> <zone>)` | Imports and boundaries            |
+| No component in a feature `index.ts`                                              | fitness `noComponentBarrels`                                                                                                   | `… links …; list that module in the feature's -api zone …`               | Imports and boundaries            |
+| `domain/` imports no React, TanStack, server modules or `node:*`                  | oxlint `no-restricted-imports`                                                                                                 | `domain/ is pure: …`                                                     | Imports and boundaries            |
+| Only server-side files import `*.server` or `@/server/**`                         | oxlint `no-restricted-imports`                                                                                                 | `Only server code (…) may import server modules. …`                      | Imports and boundaries            |
+| `scripts/boundary-baseline.json` only shrinks and holds only boundary violations  | fitness `boundaryBaselineGrowth`, fitness `boundaryBaselineScope`, `bun run fallow` stale                                      | `… gained 1 entry since …; it may only shrink.`                          | Imports and boundaries            |
+| Only `errorMiddleware` sets an HTTP status; throw a `RequestError`                | fitness `httpStatusBoundary`                                                                                                   | `… mentions setResponseStatus; only errorMiddleware …`                   | `scripts/fitness-checks.ts`       |
+| `src/start.ts` keeps CSRF and `Cache-Control: private, no-store`                  | fitness `cacheControlSource`; CI `bun run fitness -- --headers` on the build                                                   | `… must keep createCsrfMiddleware` / `GET / Cache-Control is ""…`        | `scripts/fitness-checks.ts`       |
+| No `/api/budget` routes, `api.server.ts` or the retired command bus               | fitness `noBudgetCommandBus`                                                                                                   | `… still has mutateBudget` / `tracked API route …`                       | `scripts/fitness-checks.ts`       |
+| Amounts are `Cents` from `centsSchema` or the `decimal.ts` helpers, never a cast  | tsc (branded type); a cast needs `SAFETY:`, so never casting is **prose**                                                      | `Type 'number' is not assignable to type 'Cents'`                        | Money is Cents                    |
+| A domain type is exactly `z.infer`/`z.input`/`z.output` of its schema             | fitness `domainModelRules`, fitness `domainBaselineGrowth`                                                                     | `… adds interface X; derive it with z.infer from its schema. …`          | One definition per domain concept |
+| Read settlement through `transactionStatus`, not `settlementOf` or `split.paidAt` | fitness `domainModelRules`                                                                                                     | `… adds settlementOf; read repayment, … from transactionStatus …`        | One definition per domain concept |
+| A mutation input type is `<Name>Input`, `z.infer` of its schema                   | **prose**                                                                                                                      | —                                                                        | One definition per domain concept |
+| The four legacy-row answers change together                                       | `bun run test` (`legacy-rows.test.ts`, `legacy-rows.server.test.ts`, dialog test)                                              | test failure                                                             | One definition per domain concept |
+| Every registry entry has its server fn, client handle, break-ui fake and MCP tool | `bun run typecheck` names each missing surface (`budgetActions: BudgetActions`, `satisfies Fakes<…>`, `satisfies BudgetTools`) | `Property 'x' is missing in type …`                                      | One definition per mutation       |
+| Registry and actions barrel keep their shape (names, gate, top-level `const`)     | fitness `mutationRules`                                                                                                        | `… mutation server fns belong in …/actions/index.ts`                     | One definition per mutation       |
+| Outside a feature, read the registry through `@/features/budget/registry`         | **prose**                                                                                                                      | —                                                                        | One definition per mutation       |
+| Client-only optimistic data is the third updater parameter, never on the wire     | **prose**                                                                                                                      | —                                                                        | One definition per mutation       |
+
 ## Worktree setup
 
 - Run `bun run setup` once in every new worktree, and again whenever
@@ -13,29 +104,43 @@
   Fix what its message names. Never copy the main checkout's `.env.local`
   into a worktree: it holds production Turso credentials.
 
-## Mandatory validation for any change
+## Validation
 
-- Every change, regardless of size or type (code, UI, styles, copy,
-  configuration, dependencies, or documentation), requires validating the app
-  running before finishing the task. Do not skip this step by considering the
-  change simple or low-impact.
-- Start the app with Bun and use a real browser to run the affected flow
-  end to end. For changes with no direct UI effect, do at least a basic
-  load-and-navigate test of the app and also validate the specific behavior
-  of the change.
-- Do this with the `verify-twogether` skill (`.claude/skills/verify-twogether/`).
+Every change, regardless of size or type (code, UI, styles, copy,
+configuration, dependencies, or documentation), is validated in the running
+app before the task is finished. Do not skip this because the change looks
+simple or low-impact.
+
+- Start the app with Bun and run the affected flow end to end in a real
+  browser, with the `verify-twogether` skill
+  (`.claude/skills/verify-twogether/`). For changes with no direct UI effect,
+  do at least a basic load-and-navigate test and also validate the specific
+  behavior of the change.
 - Check the visual result and responsiveness on desktop, tablet, and phone,
-  including 320px-wide screens. Verify clipping, overlaps, and unintended
-  horizontal scrolling. Inspect light and dark themes when there is UI.
-- Exercise the relevant controls and states: filters, month/person switching,
-  forms, empty states, filled data, persistence after reloading, and value
-  hiding, as the affected flow requires.
-- Inspect console errors and failed requests. Fix problems introduced by the
-  change and repeat the validation of the fixed flow.
+  including 320px-wide screens, for clipping, overlaps, and unintended
+  horizontal scrolling. Inspect light and
+  dark themes when there is UI.
+- Exercise the controls and states the flow needs: filters, month/person
+  switching, forms, empty states, filled data, persistence after reloading,
+  and value hiding.
+- Inspect console errors and failed requests. Fix problems the change
+  introduced and repeat the validation of the fixed flow.
 - Run `bun run typecheck`, `bun run lint`, `bun run format:check`,
   `bun run fitness`, `bun run doctor`, `bun run fallow`, `bun run test`,
   `bun run build`, `bun run e2e`, and `git diff --check`.
-  In a fresh worktree, run `bun run setup` first (see Worktree setup).
+- Automated tests, code analysis, and build do not replace in-browser
+  validation. Do not declare the task complete based only on those checks.
+- Use isolated test data; preserve real data and unrelated work. Do not
+  publish or deploy without authorization.
+- If access, authentication, or tools prevent some validation, report the
+  concrete blocker and what is left to verify. Do not present the change as
+  fully validated; ask only for the information or action needed to finish
+  the verification.
+- In the final response, briefly record what was tested in the app, the
+  results of the automated checks, and any real limitations.
+
+## Lint, Doctor and Fallow
+
 - `lint` runs oxlint (config in `oxlint.config.ts`) with the vendored
   anti-slop rules in `tools/oxlint/anti-slop/`. Fix findings instead of
   disabling rules or adding casts; a type assertion needs a `SAFETY:` comment
@@ -44,6 +149,9 @@
 - `doctor` (React Doctor, `doctor.config.json`) and `fallow`
   (`.fallowrc.json`) fail on any finding. Suppress one only when it is a
   proven false positive, with the reason written next to the suppression.
+
+## E2E
+
 - `e2e` runs on the first free port in 3400-3499, from a random start
   (`E2E_PORT` overrides), against a throwaway SQLite file and
   never reuses a running dev server, so a `bun run dev` on 3000 is safe.
@@ -52,31 +160,12 @@
   stable values (test title/project), never by file paths, timestamps, or
   worker indexes: every new email burns a user slot and the dev instance
   stops sign-ups at its user quota.
-- E2E specs locate with `getByRole` or `getByLabel`, scoped to the visible
+- Specs locate with `getByRole` or `getByLabel`, scoped to the visible
   region or row. Breakpoints can render the same text twice and hide one
   copy with CSS, so `bun run lint` bans `locator("span"|"p"|"div")` and
   `.first()`/`.nth()`/`.last()` after `getByText`. A copy hidden for a
   breakpoint must be `display: none` (`hidden`, `max-bpN:hidden`) so it
   leaves the accessibility tree.
-- Automated tests, code analysis, and build do not replace in-browser
-  validation. Do not declare the task complete based only on those checks.
-- Use isolated test data; preserve real data and unrelated work.
-  Do not publish or deploy without authorization.
-- If access, authentication, or tools prevent some validation, report the
-  concrete blocker and what is left to verify. Do not present the change as
-  fully validated; ask only for the information or action needed to finish
-  the verification.
-- In the final response, briefly record what was tested in the app, the
-  results of the automated checks, and any real limitations.
-
-## No media under `.github/`
-
-- Do not attach, commit, or leave screenshots or videos under `.github/`
-  (no `.github/assets`, no PR image dumps in that tree).
-- Visual validation stays in the PR body: hosted/agent images and markdown
-  embeds that are not files under `.github/`.
-- Do not use the repository's git as a substitute for storing that media
-  elsewhere.
 
 ## State without useState or useEffect
 
@@ -87,37 +176,55 @@
   Track pending, error, and success through the mutation instead of flags.
 - Form fields and local picker values: React Hook Form (`useForm`,
   `useWatch`, `setValue`), with `zodResolver` when a schema exists.
-- URL state (month, person, filters, list page, open dialogs): nuqs, with
-  parsers in `src/features/budget/search.ts` built from the route schemas.
-- Open/closed UI (sheets, dialogs): let Base UI own it uncontrolled; close
-  from code through the `actions` ref.
+- URL state (month, person, filters, list page): nuqs, with parsers in
+  `src/features/budget/search.ts` built from the route schemas.
+- Workspace dialogs (transaction, percentages, delete, settle) open through
+  the URL: nuqs `dialogParams` in `src/features/budget/search.ts`, read by
+  `hooks/use-workspace-dialogs.ts`.
+- Every other sheet and popover: let Base UI own it uncontrolled; close from
+  code through the `actions` ref, as `account-drawer.tsx` and
+  `month-filter.tsx` do.
 - Side effects: run them in the event handler, a route lifecycle hook
   (`onLeave`, `beforeLoad`), the router's `defaultOnCatch`, or
   `useBrowserSync` (`src/lib/use-browser-sync.ts`) for browser-only syncs.
 - Tab-only client state that must stay out of the URL lives in the React
   Query cache, as `useHiddenValues` does.
-- Loading before a URL change: `queryClient.query()` rejects on failure;
-  `prefetchQuery` resolves either way, so never gate navigation on it.
-- `mutation.reset()` only detaches the observer; the request keeps running.
-  Wrap it so an in-flight run keeps its pending state and error.
 - nuqs `parseAsIndex` maps `?page=0` to index `-1`. Wrap parsers so values
   outside the valid range read as absent, as `pageParam` does.
+
+## React Query
+
+- Cache ownership: React Query owns server data. Workspace snapshots live
+  under `workspaceQueryKey`, one entry per month, built only by
+  `workspaceQueryOptions(month)` (`src/features/budget/workspace.ts`).
+  Mutations refresh it by invalidating that key in `hooks/use-mutation.ts`,
+  the one refresh path.
+- Loading before a URL change: `queryClient.query()` rejects on failure;
+  `prefetchQuery` resolves either way, so never gate navigation on it (#102,
+  pinned by `use-workspace-search.test.tsx`).
+- `mutation.reset()` only detaches the observer; the request keeps running.
+  Wrap it so an in-flight run keeps its pending state and error, as
+  `useMutation` in `hooks/use-mutation.ts` does (#96, pinned by
+  `use-mutation.test.tsx`).
+- An optimistic updater paints every cached month and must match what the
+  store writes. `optimistic.server.test.ts` runs each one against the server
+  and fails on any difference; see One definition per mutation.
 
 ## Component folders
 
 - A component that owns a CSS module lives in its own folder:
   `<component>/<component>.tsx` next to `<component>.module.css`, mirroring
-  `src/components/ui/button/`.
+  `src/components/ui/button/`. `bun run fitness` fails when a
+  `*.module.css` is not inside a folder named after it or when the sibling
+  component file is missing.
 - Components without a CSS module stay flat, e.g. inside
   `features/<name>/components/`.
-- `bun run fitness` fails when a `*.module.css` is not inside a folder named
-  after it or when the sibling component file is missing.
 - New components default to UnoCSS utilities and stay flat. Keep a CSS module
   only when utilities cannot express the rule (e.g. `::backdrop`,
   `:focus-within` on a nested input, sibling selectors across component
   boundaries); in that case move the component back into its own folder.
 
-## Styling with UnoCSS
+## Styling
 
 - Style with utilities; tokens come from `uno.config.ts`, which maps
   `src/styles.css` custom properties into `theme.colors`. Use token utilities
@@ -138,6 +245,10 @@
   is 4px per step, so `w-8`, not `w-[32px]`) or add a named token to
   `uno.config.ts`. `bun run fitness` fails on any px value not grandfathered
   in `scripts/fitness-px-baseline.tsv`; never add entries to that file.
+  Fractional steps are fine: `--spacing` is `4px`, so `gap-3.5` is 14px and
+  `w-4.5` is 18px, and the check only flags tokens that spell out `px`. Its
+  suggestion names a step only for multiples of 4px; a fractional step
+  works for the rest just as well.
 - The phone nav height lives once in `--mobile-nav-height` (`h-mobile-nav`,
   `pb-mobile-nav`). Anything that clears the nav reads that token, not a
   pixel guess.
@@ -156,11 +267,11 @@
 
 - Read the time only through `@/lib/clock`: `now()` for an instant,
   `today(timeZone)` and `currentMonth(timeZone)` for calendar dates. Pass the
-  reader's zone (`browserTimeZone()`, the time-zone cookie, or the MCP
-  household zone), never the process zone. `bun run lint` bans `new Date()`
+  reader's zone (`browserTimeZone()` from `@/lib/time-zone`, the time-zone
+  cookie, or the MCP household zone), never the process zone. `bun run lint` bans `new Date()`
   and `Date.now()` elsewhere.
 
-## Absolute imports
+## Imports and boundaries
 
 - Source-code imports in the repository must use the `@/` alias (`src/`),
   never relative paths (`./` or `../`).
@@ -171,9 +282,6 @@
 - Exception: generated files that the toolchain rewrites with relative
   imports (e.g., TanStack Router's `src/routeTree.gen.ts`). Do not edit them
   to force the alias.
-
-## Import boundaries
-
 - The zone graph lives in `boundaries` in `.fallowrc.json`. Code outside
   `src/features/<name>/` reaches a feature only through its public API, the
   `<name>-api` zone: `index.ts` for functions and types, plus the component
@@ -216,7 +324,7 @@
   check that the diff only deletes lines. `bun run fitness` fails when the
   file has more entries than the copy at the merge-base with `origin/main`.
 
-## Merging pull requests
+## Pull requests
 
 - Merge only with `bun run merge-guard <pr>`. It waits for every check on
   the PR head with `gh pr checks --watch --fail-fast`, refuses unless all
@@ -228,6 +336,15 @@
   follow the rule without a hook.
 - `bun run merge-guard <pr> --dry-run` reports whether the PR would merge
   without merging it.
+- Bot review findings: before you report a PR code-ready, every bot review
+  thread on it has a reply with either the fix (the commit that makes it) or
+  a concrete reason it does not apply. A finding answered after merge counts
+  as ignored. merge-guard checks CI, not threads, so this one is on you.
+- Do not attach, commit, or leave screenshots or videos under `.github/`
+  (no `.github/assets`, no PR image dumps in that tree). Visual validation
+  stays in the PR body: hosted/agent images and markdown embeds that are not
+  files under `.github/`. Do not use the repository's git as a substitute for
+  storing that media elsewhere.
 
 ## Money is `Cents`
 

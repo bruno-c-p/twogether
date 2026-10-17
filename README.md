@@ -65,6 +65,6 @@ bun run build
 bun run e2e
 ```
 
-Vitest covers calculations/validation; Bun tests SQLite, user provisioning, isolation, member limit, invites, expiration, and concurrent editing. Playwright runs the real flows against a Clerk development instance using `@clerk/testing` and e2e test e-mails; because development instances cap at 100 users, each test derives one stable account from its spec file and title so re-runs reuse them. CI runs the same checks; the E2E step needs the `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` repository secrets and is skipped with a warning when they are absent.
+Vitest covers calculations/validation; Bun tests SQLite, user provisioning, isolation, member limit, invites, expiration, and concurrent editing. Playwright runs the real flows against a Clerk development instance using `@clerk/testing` and e2e test e-mails; because development instances cap at 100 users, each test derives one stable account from a hash of its Playwright project and title (never its file path) so re-runs reuse them. CI runs the same checks; the E2E step needs the `CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY` repository secrets and is skipped with a warning when they are absent.
 
 References: [TanStack Start server functions](https://tanstack.com/start/latest/docs/framework/react/guide/server-functions), [Clerk TanStack Start SDK](https://clerk.com/docs/tanstack-react-start/getting-started/quickstart), [Clerk testing with Playwright](https://clerk.com/docs/guides/development/testing/playwright/overview).
