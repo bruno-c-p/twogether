@@ -33,7 +33,6 @@ describe("parseSaveTransaction", () => {
       occurrences: 12,
     });
     expect(() =>
-      // @ts-expect-error: the parser must reject untrusted request bodies
       parseSaveTransaction({ transaction: { ...transaction, amount: 0 } }),
     ).toThrow("Digite um valor válido, como 45,90.");
 

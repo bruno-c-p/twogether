@@ -2,10 +2,8 @@ import { redirect } from "@tanstack/react-router";
 import { auth } from "@clerk/tanstack-react-start/server";
 import { createMiddleware } from "@tanstack/react-start";
 import { getRequest, getRequestIP } from "@tanstack/react-start/server";
-import {
-  consumeRateLimit,
-  rememberRetryAfter,
-} from "@/server/rate-limit.server";
+import { assertWritable, householdActor } from "@/server/actor.server";
+import { rememberRetryAfter } from "@/server/rate-limit.server";
 import { getStore } from "@/server/store.server";
 import type { UserRow } from "@/server/db.server";
 import {
@@ -32,12 +30,11 @@ export const rateLimitMiddleware = createMiddleware({
   if (method === "GET") return next();
   const { userId } = await auth();
   const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
-  const verdict = consumeRateLimit(key);
 
-  if (!verdict.ok) {
-    rememberRetryAfter(getRequest(), verdict.retryAfterSeconds);
+  assertWritable(key, (retryAfterSeconds) => {
+    rememberRetryAfter(getRequest(), retryAfterSeconds);
     throwHttpError(new RequestError(RATE_LIMITED_MESSAGE, 429));
-  }
+  });
 
   return next();
 });
@@ -67,12 +64,9 @@ export const optionalAuthMiddleware = createMiddleware({
 export const householdMiddleware = createMiddleware({ type: "function" })
   .middleware([authMiddleware])
   .server(async ({ next, context }) => {
-    const householdId = context.user.household_id;
-
-    if (!householdId)
-      throwHttpError(
-        new RequestError("Crie um orçamento ou aceite um convite."),
-      );
+    const { householdId } = householdActor(context.user, (message) =>
+      throwHttpError(new RequestError(message)),
+    );
 
     return next({ context: { householdId } });
   });

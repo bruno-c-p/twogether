@@ -1,6 +1,6 @@
 import { afterEach, beforeEach } from "bun:test";
 import { createStore, type Store } from "@/server/store.server";
-import { RequestError } from "@/server/request-error";
+import { householdActor } from "@/server/actor.server";
 import type { UserRow } from "@/server/db.server";
 
 function clerkId(name: string) {
@@ -13,12 +13,7 @@ export async function requireUser(store: Store, user: UserRow) {
 
 // Mirrors householdMiddleware: re-read the user, then require a household.
 export async function withHousehold(store: Store, user: UserRow) {
-  const fresh = await store.ensureUser(user.id);
-
-  if (!fresh.household_id)
-    throw new RequestError("Crie um orçamento ou aceite um convite.");
-
-  return { user: fresh, householdId: fresh.household_id };
+  return householdActor(await store.ensureUser(user.id));
 }
 
 // The workspace as loadWorkspace would serve it to this user right now.
