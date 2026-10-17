@@ -387,6 +387,57 @@ export function httpStatusBoundary(repo: Repo) {
     );
 }
 
+const RULE_TABLE = /^## Rule table\n([\s\S]*?)^## /m;
+
+// Checks that only gather other checks; the table lists what they gather.
+const AGGREGATES = ["sourceChecks", "styleChecks"];
+
+function captures(text: string, pattern: RegExp) {
+  return [...text.matchAll(pattern)].map((match) => match[1] ?? "");
+}
+
+// The rule table in AGENTS.md names each enforcer, so a renamed or deleted
+// check, or a new one nobody listed, fails here instead of leaving it stale.
+export function agentsRuleTable(repo: Repo) {
+  const table = RULE_TABLE.exec(repo.read("AGENTS.md"))?.[1];
+
+  if (!table) return ["AGENTS.md must keep its ## Rule table section"];
+
+  const scripts = repo
+    .tracked(["scripts"])
+    .flatMap((file) =>
+      /^scripts\/fitness[^/]*(?<!\.test)\.ts$/.test(file)
+        ? repo.read(file)
+        : [],
+    )
+    .join("\n");
+
+  const oxlint = repo.read("oxlint.config.ts");
+  const named = new Set(captures(table, /fitness `(\w+)`/g));
+
+  const defined = new Set(captures(scripts, /^(?:export )?function (\w+)\(/gm));
+
+  const run = new Set(captures(scripts, /^\s*\.\.\.(\w+)\(repo(?:,.*)?\),$/gm));
+
+  return [
+    ...[...named].flatMap((name) =>
+      defined.has(name)
+        ? []
+        : `AGENTS.md names fitness \`${name}\`, which no scripts/fitness*.ts defines`,
+    ),
+    ...[...run].flatMap((name) =>
+      AGGREGATES.includes(name) || named.has(name)
+        ? []
+        : `bun run fitness runs ${name}; add its row to the AGENTS.md rule table`,
+    ),
+    ...captures(table, /oxlint `([\w/-]+)`/g).flatMap((rule) =>
+      oxlint.includes(`"${rule}"`)
+        ? []
+        : `AGENTS.md names oxlint \`${rule}\`, which oxlint.config.ts does not configure`,
+    ),
+  ];
+}
+
 export function sourceChecks(repo: Repo) {
   return [
     ...noGithubMedia(repo),

@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import {
+  agentsRuleTable,
   BOUNDARY_BASELINE,
   boundaryBaselineGrowth,
   boundaryBaselineScope,
@@ -227,6 +228,61 @@ describe("fitness source checks", () => {
       boundaryBaselineScope(repoWith({ [BOUNDARY_BASELINE]: baseline })),
     ).toEqual([
       `${BOUNDARY_BASELINE} grandfathers 1 unused_exports; it may only hold boundary_violations. Fix those findings and drop them from the file.`,
+    ]);
+  });
+});
+
+describe("AGENTS.md rule table", () => {
+  const checks = `export function noGithubMedia(repo: Repo) {}
+export function sourceChecks(repo: Repo) {
+  return [
+    ...noGithubMedia(repo),
+    ...sourceFiles(repo).flatMap((file) => file),
+  ];
+}`;
+
+  const table = (rows: string) =>
+    `# Rules\n\n## Rule table\n\n${rows}\n## Setup\n\nfitness \`elsewhere\`\n`;
+
+  const files = (rows: string) => ({
+    "AGENTS.md": table(rows),
+    "scripts/fitness-checks.ts": checks,
+    "scripts/fitness-checks.test.ts": "function testOnly() {}",
+    "oxlint.config.ts": '{ "clock/no-direct-clock": "error" }',
+  });
+
+  test("a table naming every check and configured rule passes", () => {
+    expect(
+      agentsRuleTable(
+        repoWith(
+          files(
+            "| media | fitness `noGithubMedia` |\n| clock | oxlint `clock/no-direct-clock` |\n",
+          ),
+        ),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a renamed check, an unlisted check and an unknown lint rule fail", () => {
+    expect(
+      agentsRuleTable(
+        repoWith(
+          files(
+            "| media | fitness `noMedia` |\n| test | fitness `testOnly` |\n| clock | oxlint `clock/no-clock` |\n",
+          ),
+        ),
+      ),
+    ).toEqual([
+      "AGENTS.md names fitness `noMedia`, which no scripts/fitness*.ts defines",
+      "AGENTS.md names fitness `testOnly`, which no scripts/fitness*.ts defines",
+      "bun run fitness runs noGithubMedia; add its row to the AGENTS.md rule table",
+      "AGENTS.md names oxlint `clock/no-clock`, which oxlint.config.ts does not configure",
+    ]);
+  });
+
+  test("a missing rule table fails", () => {
+    expect(agentsRuleTable(repoWith({ "AGENTS.md": "# Rules\n" }))).toEqual([
+      "AGENTS.md must keep its ## Rule table section",
     ]);
   });
 });
