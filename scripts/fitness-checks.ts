@@ -212,6 +212,38 @@ export function unoWiring(repo: Repo) {
   return failures;
 }
 
+// Route config loads eagerly, so a barrel that re-exports a component drags
+// it and its CSS into the main chunk. Components join the feature's -api
+// zone as their own modules instead.
+const COMPONENT_BARRELS = [
+  // themeScript and useThemePreference live in the toggle's module, and the
+  // root route that imports them is eager anyway.
+  "src/features/theme/index.ts",
+];
+
+const VALUE_REEXPORT = /^export\s+\{[^}]*\}\s+from\s+"([^"]+)"/gm;
+
+export function noComponentBarrels(repo: Repo) {
+  return repo
+    .tracked(["src/features"])
+    .filter(
+      (file) =>
+        /^src\/features\/[^/]+\/index\.ts$/.test(file) &&
+        !COMPONENT_BARRELS.includes(file),
+    )
+    .flatMap((file) =>
+      [...repo.read(file).matchAll(VALUE_REEXPORT)].flatMap((match) => {
+        const source = match[1] ?? "";
+
+        return source.includes("/components/")
+          ? [
+              `${file} re-exports ${source}; list that module in the feature's -api zone in .fallowrc.json instead`,
+            ]
+          : [];
+      }),
+    );
+}
+
 // `fallow --save-baseline` grandfathers every finding kind, so a careless
 // re-save could hide new dead code behind the boundary ratchet.
 export function boundaryBaselineScope(repo: Repo) {
@@ -299,6 +331,7 @@ export function sourceChecks(repo: Repo) {
     ...unoWiring(repo),
     ...componentModuleLayout(repo),
     ...boundaryBaselineScope(repo),
+    ...noComponentBarrels(repo),
     ...styleChecks(repo),
   ];
 }

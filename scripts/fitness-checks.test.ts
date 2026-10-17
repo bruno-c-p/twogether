@@ -9,6 +9,7 @@ import {
   headerCheckFailure,
   headerFailures,
   noApiRouteFiles,
+  noComponentBarrels,
   noCommandBusSource,
   noGithubMedia,
   sourceChecks,
@@ -158,6 +159,26 @@ describe("fitness source checks", () => {
     ).toEqual([
       "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
       "src/routes/__root.tsx must import virtual:uno.css",
+    ]);
+  });
+
+  test("a feature index may not re-export a component", () => {
+    expect(
+      noComponentBarrels(
+        repoWith({
+          "src/features/a/index.ts": [
+            'export { load } from "@/features/a/workspace";',
+            'export type { Slot } from "@/features/a/components/shell";',
+            'export {\n  Screen,\n} from "@/features/a/components/screen";',
+          ].join("\n"),
+          "src/features/a/components/index.ts":
+            'export { Row } from "@/features/a/components/row";',
+          "src/features/theme/index.ts":
+            'export { Toggle } from "@/features/theme/components/toggle";',
+        }),
+      ),
+    ).toEqual([
+      "src/features/a/index.ts re-exports @/features/a/components/screen; list that module in the feature's -api zone in .fallowrc.json instead",
     ]);
   });
 

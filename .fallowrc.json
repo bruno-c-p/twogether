@@ -27,8 +27,9 @@
   "rules": {
     "unused-dependencies": "warn"
   },
-  // First matching zone wins, so each feature's index.ts zone precedes its
-  // internals. Older violations live in scripts/boundary-baseline.json.
+  // First matching zone wins, so each feature's public zones (*-store, *-api)
+  // precede its internals. Older violations live in
+  // scripts/boundary-baseline.json.
   "boundaries": {
     "zones": [
       // The composition root: the only code that may import feature stores,
@@ -58,8 +59,9 @@
         "patterns": ["src/features/budget/domain/**"]
       },
       // A feature's public API: index.ts for functions and types, plus the
-      // route-level components, which stay separate modules so a route's
-      // lazy chunk does not pull a barrel's other components in with it.
+      // component modules routes or other features render. They stay
+      // separate modules so a lazy route chunk does not pull a barrel's other
+      // components in with it. Every export of a listed module is public.
       {
         "name": "budget-api",
         "patterns": [
