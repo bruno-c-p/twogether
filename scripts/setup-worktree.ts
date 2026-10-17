@@ -27,6 +27,7 @@ export type SetupState = {
 function databaseUrls(contents: string) {
   return contents.split("\n").flatMap((line) => {
     const match = /^\s*(?:export\s+)?([A-Z_][A-Z0-9_]*)\s*=\s*(.*)$/.exec(line);
+
     if (!match || !DATABASE_KEYS.has(match[1])) return [];
 
     return [
@@ -49,6 +50,7 @@ export function setupRefusal({
   const remote = databaseUrls(sourceContents).find(({ value }) =>
     REMOTE_DATABASE.test(value),
   );
+
   if (remote)
     return `${source} sets ${remote.key} to a remote database. Remove that line so the app uses local SQLite, or point TWOGETHER_DEV_ENV at a dev-only env file.`;
 
@@ -62,6 +64,7 @@ function run(command: string[]) {
   const { exitCode } = Bun.spawnSync(command, {
     stdio: ["inherit", "inherit", "inherit"],
   });
+
   if (exitCode !== 0) {
     console.error(
       `setup: \`${command.join(" ")}\` failed with exit code ${exitCode}.`,
@@ -75,6 +78,7 @@ if (import.meta.main) {
     process.env.TWOGETHER_DEV_ENV ??
       join(homedir(), "workspaces/twogether/.env.local"),
   );
+
   process.chdir(join(import.meta.dir, ".."));
   const localEnv = lstatSync(".env.local", { throwIfNoEntry: false });
 
@@ -85,12 +89,14 @@ if (import.meta.main) {
       : undefined,
     localEnvIsFile: localEnv !== undefined && !localEnv.isSymbolicLink(),
   });
+
   if (refusal) {
     console.error(`setup: ${refusal}`);
     process.exit(1);
   }
 
   run(["bun", "install", "--frozen-lockfile"]);
+
   if (localEnv) unlinkSync(".env.local");
   symlinkSync(source, ".env.local");
   run(["bunx", "playwright", "install", "chromium"]);
