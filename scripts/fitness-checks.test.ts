@@ -583,8 +583,17 @@ describe("mutation wiring", () => {
   .validator(defs.${validator}.parse)
   .handler(serve(defs.${handler}));`;
 
+  const householdEntry = (key: string) => `  ${key}: define("${key}", {
+    gate: "household",
+    run: (store, actor, input) => store.${key}(actor.user, input),
+  }),`;
+
+  const defaultRegistry = `const budgetMutations = {
+${["settleSplit", "unsettleSplit", "restoreTransaction"].map(householdEntry).join("\n")}
+};`;
+
   const check = (files: Record<string, string>) =>
-    mutationRules(repoWith({ [registry]: "", ...files }));
+    mutationRules(repoWith({ [registry]: defaultRegistry, ...files }));
 
   test("accepts statements that name one definition", () => {
     expect(
@@ -675,6 +684,37 @@ export const budgetActions = {
 })();`,
       }),
     ).toEqual([`${barrel}: a server fn must be a top-level const`]);
+  });
+
+  test("rejects a statement whose middleware is not its gate's", () => {
+    const settle = statement("settleSplit", "settleSplit", "settleSplit");
+    const message = `${barrel}: settleSplit must run .middleware([householdMiddleware]) for its "household" gate`;
+
+    expect(
+      check({
+        [barrel]: settle.replace("  .middleware([householdMiddleware])\n", ""),
+      }),
+    ).toEqual([message]);
+    expect(
+      check({
+        [barrel]: settle.replace("householdMiddleware", "authMiddleware"),
+      }),
+    ).toEqual([message]);
+  });
+
+  test("rejects a statement that calls middleware twice", () => {
+    expect(
+      check({
+        [barrel]: statement(
+          "settleSplit",
+          "settleSplit",
+          "settleSplit",
+        ).replace(
+          ".middleware([householdMiddleware])",
+          ".middleware([otherMiddleware])\n  .middleware([householdMiddleware])",
+        ),
+      }),
+    ).toEqual([`${barrel}: settleSplit must call .middleware() once`]);
   });
 
   test("rejects a barrel statement that is not POST", () => {

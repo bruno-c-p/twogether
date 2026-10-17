@@ -267,14 +267,18 @@
   compatible input still fails to compile. Add the entry and the store
   method, then run `bun run typecheck`: it names each surface below that
   still lacks it.
-  Typecheck does not check that an optimistic update mirrors its store
-  method, and MCP tools are still wired by hand.
   - The server fn in `actions/index.ts`: one private
     `const <name> = createServerFn(...).validator(defs.<name>.parse).handler(serve(defs.<name>))`,
     listed in the feature's actions object (`budgetActions`), which
     `satisfies` the registry.
   - The client handle in `useBudgetMutations`.
   - The break-ui fake in `src/features/break-ui/actions.ts`.
+  - The MCP tool in `budgetTools` (`src/features/mcp/tools.server.ts`): a
+    `writeTool(definition, spec)` whose spec owns the agent's arguments and
+    answer, or `null` when agents should not reach it.
+  - A parity scenario in `src/features/budget/optimistic.server.test.ts` when
+    the entry has an optimistic update. `bun run test` fails when the paint
+    disagrees with what the store writes.
 - The Start compiler extracts only a top-level `const x = createServerFn()`,
   so never build server fns in a helper or an object literal; both leak
   server code into the client build.
@@ -286,7 +290,8 @@
   goes on the wire.
 - `bun run fitness` (`scripts/fitness-mutations.ts`) fails, in a feature
   with a registry, on a registry entry whose `define` name or `run` store
-  method differs from its key, on an exported server fn statement, on a
+  method differs from its key, on a statement whose `.middleware([...])` is
+  not its definition's gate, on an exported server fn statement, on a
   statement whose validator or handler names another definition, on a
   statement used
   anywhere but as its own entry in the one exported actions object, on an
