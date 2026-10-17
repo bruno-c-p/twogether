@@ -3,7 +3,7 @@ import { GoalPercentagesDialog } from "@/features/budget/components/goal-percent
 import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { SettleDialog } from "@/features/budget/components/settle-dialog";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
-import { laterOccurrences } from "@/features/budget/domain/recurrence";
+import { laterInSeries } from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
 import { today } from "@/lib/clock";
 import { browserTimeZone } from "@/lib/time-zone";
@@ -16,7 +16,7 @@ function transactionDefaultDate(month: string) {
 
 function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
   const { budget, dialogs, mutations, actions } = useWorkspace();
-  const following = laterOccurrences(budget.state.transactions, transaction);
+  const following = laterInSeries(budget.state.transactions, transaction);
 
   return (
     <DeleteRecurrenceDialog

@@ -14,47 +14,42 @@ import {
   optimisticSettle,
   optimisticUnsettle,
 } from "@/features/budget/workspace";
-import type { SettleInput } from "@/features/budget/components/settle-dialog";
-import type {
-  GoalPercentages,
-  Transaction,
-} from "@/features/budget/domain/types";
+import type { DeleteTransactionInput } from "@/features/budget/actions/delete-transaction";
+import type { RestoreTransactionInput } from "@/features/budget/actions/restore-transaction";
+import type { SavePercentagesInput } from "@/features/budget/actions/save-percentages";
+import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
+import type { SettleSplitInput } from "@/features/budget/actions/settle-split";
+import type { UnsettleSplitInput } from "@/features/budget/actions/unsettle-split";
+import type { Transaction } from "@/features/budget/domain/types";
 
 export function useBudgetMutations() {
   const saveTx = useMutation(
-    (data: { transaction: Transaction; occurrences?: number }) =>
-      saveTransaction({ data }),
+    (data: SaveTransactionInput) => saveTransaction({ data }),
     optimisticSave,
   );
 
   const deleteTx = useMutation(
-    (data: {
-      id: string;
-      revision: number;
-      following?: { id: string; revision: number }[];
-    }) => deleteTransaction({ data }),
+    (data: DeleteTransactionInput) => deleteTransaction({ data }),
     optimisticDelete,
   );
 
   const restoreTx = useMutation(
-    (data: { id: string; revision: number; transaction: Transaction }) =>
+    (data: RestoreTransactionInput & { transaction: Transaction }) =>
       restoreTransaction({ data: { id: data.id, revision: data.revision } }),
     (snapshot, data) => optimisticRestore(snapshot, data.transaction),
   );
 
-  const savePct = useMutation(
-    (data: { percentages: GoalPercentages; revision: number }) =>
-      savePercentages({ data }),
+  const savePct = useMutation((data: SavePercentagesInput) =>
+    savePercentages({ data }),
   );
 
   const settleTx = useMutation(
-    (data: SettleInput & { id: string; revision: number }) =>
-      settleSplit({ data }),
+    (data: SettleSplitInput) => settleSplit({ data }),
     optimisticSettle,
   );
 
   const unsettleTx = useMutation(
-    (data: { id: string; revision: number }) => unsettleSplit({ data }),
+    (data: UnsettleSplitInput) => unsettleSplit({ data }),
     optimisticUnsettle,
   );
 

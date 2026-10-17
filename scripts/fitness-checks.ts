@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
 import { styleChecks } from "./fitness-styles";
 
 export type Repo = {
@@ -284,11 +285,54 @@ function ratchetBase(git: Git, warn: (message: string) => void) {
     return git(["merge-base", "HEAD", "origin/main"]);
   } catch {
     warn(
-      "boundary ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
+      "baseline ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
     );
 
     return "origin/main";
   }
+}
+
+function baselineGrowth(
+  repo: Repo,
+  git: Git,
+  warn: (message: string) => void,
+  file: string,
+  entries: (text: string) => string[],
+  fix: string,
+) {
+  const base = ratchetBase(git, warn);
+
+  if (!succeeds(git, ["rev-parse", "--verify", "--quiet", `${base}^{commit}`]))
+    return [
+      `cannot resolve ${base} to check that ${file} only shrinks; run git fetch origin main (CI needs fetch-depth: 0)`,
+    ];
+
+  if (!succeeds(git, ["cat-file", "-e", `${base}:${file}`])) {
+    warn(
+      `baseline ratchet: ${base} has no ${file}; nothing to compare against`,
+    );
+
+    return [];
+  }
+
+  const left = new Map<string, number>();
+
+  for (const entry of entries(git(["show", `${base}:${file}`])))
+    left.set(entry, (left.get(entry) ?? 0) + 1);
+
+  const added = entries(repo.read(file)).filter((entry) => {
+    const count = left.get(entry) ?? 0;
+
+    left.set(entry, count - 1);
+
+    return count <= 0;
+  });
+
+  if (!added.length) return [];
+
+  return [
+    `${file} gained ${added.length} ${added.length === 1 ? "entry" : "entries"} since ${base}; it may only shrink. ${fix}:\n${added.join("\n")}`,
+  ];
 }
 
 // A re-save absorbs new violations, so the entry count must not exceed the
@@ -298,31 +342,29 @@ export function boundaryBaselineGrowth(
   git: Git,
   warn: (message: string) => void,
 ) {
-  const base = ratchetBase(git, warn);
+  return baselineGrowth(
+    repo,
+    git,
+    warn,
+    BOUNDARY_BASELINE,
+    boundaryEntries,
+    "Fix the new boundary violation instead of re-saving the baseline",
+  );
+}
 
-  if (!succeeds(git, ["rev-parse", "--verify", "--quiet", `${base}^{commit}`]))
-    return [
-      `cannot resolve ${base} to check that ${BOUNDARY_BASELINE} only shrinks; run git fetch origin main (CI needs fetch-depth: 0)`,
-    ];
-
-  if (!succeeds(git, ["cat-file", "-e", `${base}:${BOUNDARY_BASELINE}`])) {
-    warn(
-      `boundary ratchet: ${base} has no ${BOUNDARY_BASELINE}; nothing to compare against`,
-    );
-
-    return [];
-  }
-
-  const before = boundaryEntries(git(["show", `${base}:${BOUNDARY_BASELINE}`]));
-  const now = boundaryEntries(repo.read(BOUNDARY_BASELINE));
-
-  if (now.length <= before.length) return [];
-
-  const added = now.filter((entry) => !before.includes(entry));
-
-  return [
-    `${BOUNDARY_BASELINE} grew from ${before.length} to ${now.length} entries since ${base}; it may only shrink. Fix the new boundary violation instead of re-saving the baseline:\n${added.join("\n")}`,
-  ];
+export function domainBaselineGrowth(
+  repo: Repo,
+  git: Git,
+  warn: (message: string) => void,
+) {
+  return baselineGrowth(
+    repo,
+    git,
+    warn,
+    DOMAIN_BASELINE,
+    (text) => text.split("\n").filter(Boolean),
+    "Read the new hit through transactionStatus or z.infer instead of grandfathering it",
+  );
 }
 
 export function sourceChecks(repo: Repo) {
@@ -336,6 +378,7 @@ export function sourceChecks(repo: Repo) {
     ...boundaryBaselineScope(repo),
     ...noComponentBarrels(repo),
     ...styleChecks(repo),
+    ...domainModelRules(repo),
   ];
 }
 

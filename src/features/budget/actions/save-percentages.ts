@@ -1,10 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
+import type { z } from "zod";
 import { getStore } from "@/server/store.server";
 import {
   goalPercentagesSchema,
   revisionSchema,
 } from "@/features/budget/domain/schemas";
-import type { GoalPercentages } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -13,10 +13,9 @@ const savePercentagesSchema = inputSchema({
   revision: revisionSchema,
 });
 
-export const parseSavePercentages = actionInput<{
-  percentages: GoalPercentages;
-  revision: number;
-}>(savePercentagesSchema);
+export type SavePercentagesInput = z.infer<typeof savePercentagesSchema>;
+
+export const parseSavePercentages = actionInput(savePercentagesSchema);
 
 export const savePercentages = createServerFn({ method: "POST" })
   .middleware([householdMiddleware])

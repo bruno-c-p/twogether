@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { money, shortDay } from "@/features/budget/domain/format";
 import { centsSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
+import type { TransactionStatus } from "@/features/budget/domain/status";
 import type { Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
@@ -12,12 +13,12 @@ const capitalize = (value: string) =>
   value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
 
 function splitHint(
-  transaction: Transaction | null,
+  status: TransactionStatus | undefined,
   checked: boolean,
   share: number,
   names: { payer: string; debtor: string },
 ) {
-  if (transaction?.split?.paidAt)
+  if (status?.paidAt)
     return "Pagamento registrado. Valor, tipo e divisão ficam travados enquanto estiver pago.";
 
   if (checked && share)
@@ -28,11 +29,10 @@ function splitHint(
 
 function settlementStatus(
   transaction: Transaction,
+  paidAt: string | undefined,
   debtorName: string,
   userIsDebtor: boolean,
 ) {
-  const paidAt = transaction.split?.paidAt;
-
   if (paidAt) {
     return `Pago por ${debtorName} em ${shortDay(paidAt)}.`;
   }
@@ -44,6 +44,7 @@ function settlementStatus(
 
 function SettlementRow({
   transaction,
+  paidAt,
   debtorName,
   userIsDebtor,
   busy,
@@ -51,18 +52,19 @@ function SettlementRow({
   onUnsettle,
 }: {
   transaction: Transaction;
+  paidAt: string | undefined;
   debtorName: string;
   userIsDebtor: boolean;
   busy: boolean;
   onSettle: () => void;
   onUnsettle: () => void;
 }) {
-  const paid = Boolean(transaction.split?.paidAt);
+  const paid = Boolean(paidAt);
 
   return (
     <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3 [border-top:1px_solid_var(--line)] text-xs">
       <span className="text-text-muted leading-[1.6]">
-        {settlementStatus(transaction, debtorName, userIsDebtor)}
+        {settlementStatus(transaction, paidAt, debtorName, userIsDebtor)}
       </span>
       {userIsDebtor && (
         <Button
@@ -82,6 +84,7 @@ export function SplitPanel({
   checked,
   amount,
   transaction,
+  status,
   title,
   payerName,
   debtorName,
@@ -94,6 +97,7 @@ export function SplitPanel({
   checked: boolean;
   amount: number;
   transaction: Transaction | null;
+  status: TransactionStatus | undefined;
   title: string;
   payerName: string;
   debtorName: string;
@@ -103,7 +107,7 @@ export function SplitPanel({
   onSettle: () => void;
   onUnsettle: () => void;
 }) {
-  const paidAt = transaction?.split?.paidAt;
+  const paidAt = status?.paidAt;
   const cents = centsSchema.safeParse(amount).data;
   const share = cents && cents >= 2 ? partnerShare(cents) : 0;
   const id = useId();
@@ -133,7 +137,7 @@ export function SplitPanel({
             id={`${id}-hint`}
             className="block text-text-muted text-xs leading-[1.6]"
           >
-            {splitHint(transaction, checked, share, {
+            {splitHint(status, checked, share, {
               payer: payerName,
               debtor: debtorName,
             })}
@@ -147,9 +151,10 @@ export function SplitPanel({
           onCheckedChange={(next) => onChange(next)}
         />
       </div>
-      {transaction?.split && (
+      {transaction && status?.split && (
         <SettlementRow
           transaction={transaction}
+          paidAt={paidAt}
           debtorName={debtorName}
           userIsDebtor={userIsDebtor}
           busy={busy}

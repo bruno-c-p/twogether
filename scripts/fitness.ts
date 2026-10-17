@@ -5,6 +5,7 @@ import { setTimeout as sleep } from "node:timers/promises";
 import { z } from "zod";
 import {
   boundaryBaselineGrowth,
+  domainBaselineGrowth,
   headerCheckFailure,
   headerFailures,
   sourceChecks,
@@ -141,6 +142,7 @@ const failures = process.argv.includes("--headers")
   : [
       ...sourceChecks(repo),
       ...boundaryBaselineGrowth(repo, git, (message) => console.warn(message)),
+      ...domainBaselineGrowth(repo, git, (message) => console.warn(message)),
     ];
 
 if (failures.length) {

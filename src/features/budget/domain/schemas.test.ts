@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import type { z } from "zod";
+import { describe, expect, expectTypeOf, test } from "vitest";
 import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import {
   dateSchema,
@@ -6,12 +7,54 @@ import {
   GOAL_IDS,
   goalPercentagesSchema,
   transactionFormSchema,
+  transactionSchema,
 } from "@/features/budget/domain/schemas";
+import type { Transaction } from "@/features/budget/domain/types";
 import { firstIssueMessage } from "@/lib/zod-errors";
 
 describe("schemas", () => {
   test("goal ids follow the goal list", () => {
     expect(GOAL_IDS).toEqual(GOALS.map((goal) => goal.id));
+  });
+
+  test("a parsed transaction is typed without the loose index signature", () => {
+    expectTypeOf<
+      z.output<typeof transactionSchema>
+    >().toEqualTypeOf<Transaction>();
+  });
+
+  test("a stored transaction keeps keys this version does not know", () => {
+    const parsed = transactionSchema.parse({
+      id: "t1",
+      description: "Mercado",
+      amount: 4590,
+      kind: "expense",
+      date: "2026-10-01",
+      goal: "fixed",
+      split: { paidAt: "2026-10-02", note: "pix" },
+      future: true,
+    });
+
+    expect(parsed).toMatchObject({
+      future: true,
+      split: { paidAt: "2026-10-02", note: "pix" },
+    });
+  });
+
+  test("a split that is not an object reports the split message", () => {
+    const parsed = transactionSchema.safeParse({
+      id: "t1",
+      description: "Mercado",
+      amount: 4590,
+      kind: "expense",
+      date: "2026-10-01",
+      goal: "fixed",
+      split: "yes",
+    });
+
+    expect(parsed.success || firstIssueMessage(parsed.error)).toBe(
+      "Divisão inválida.",
+    );
   });
 
   test("a date must exist on the calendar", () => {

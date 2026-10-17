@@ -234,6 +234,28 @@
   (`sumCents`, `minusCents`, `halfDown`, `percentageOf`); never cast a
   number to `Cents`. Tests use `cents()` from `src/test/cents.ts`.
 
+## One definition per domain concept
+
+- A domain type backed by a schema is `z.infer` of that schema
+  (`Transaction` is `z.infer<typeof transactionObjectSchema>`). Add a field
+  to the schema, never to a hand-written interface in `domain/types.ts`.
+- A mutation's input type is `z.infer` of its action schema, exported from
+  the action as `<Name>Input`. The store parameter, the client wrapper in
+  `useBudgetMutations` and any optimistic updater that takes the whole input
+  use that type instead of an object literal.
+- Lock, settlement and ownership state comes from
+  `transactionStatus(t, userId)` in `domain/status.ts`: `repayment`,
+  `split`, `paidAt`, `userOwes` and `lock`. Outside `domain/`, do not branch
+  on `settlementOf` or `split.paidAt`; map `lock` to copy at the edge, as
+  `LOCKED` in `budget.server.ts` and `deleteLock` in `domain/view.ts` do.
+- `bun run fitness` fails on a new interface in `domain/types.ts`, on a
+  type there that is anything but exactly `z.infer`, `z.input` or
+  `z.output` of a schema (no intersections or extra members), and on a new
+  `settlementOf` or `split.paidAt` outside `domain/` and tests.
+  `scripts/fitness-domain-baseline.tsv` grandfathers the existing ones, and
+  fitness fails when it has more lines than at the merge-base with
+  `origin/main`.
+
 ---
 
 <!-- fallow:setup-hooks:start -->

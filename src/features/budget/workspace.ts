@@ -1,5 +1,6 @@
 import { queryOptions, type QueryClient } from "@tanstack/react-query";
 import { loadWorkspace } from "@/features/budget/actions";
+import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
 import { shiftMonth } from "@/features/budget/domain/format";
 import { now } from "@/lib/clock";
 import type {
@@ -56,7 +57,7 @@ export function prefetchNearbyMonths(queryClient: QueryClient, month: string) {
 
 export function optimisticSave(
   snapshot: WorkspaceSnapshot,
-  input: { transaction: Transaction; occurrences?: number },
+  input: SaveTransactionInput,
 ): WorkspaceSnapshot {
   const existing = snapshot.budget.transactions.find(
     (item) => item.id === input.transaction.id,

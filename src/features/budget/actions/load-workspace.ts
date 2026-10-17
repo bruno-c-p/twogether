@@ -6,9 +6,7 @@ import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { householdMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
-const parseLoadWorkspace = actionInput<{ month: string }>(
-  inputSchema({ month: monthSchema }),
-);
+const parseLoadWorkspace = actionInput(inputSchema({ month: monthSchema }));
 
 export const loadWorkspace = createServerFn({ method: "GET" })
   .middleware([householdMiddleware])
