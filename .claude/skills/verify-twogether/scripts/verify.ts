@@ -102,11 +102,16 @@ function sourceDigest() {
     execFileSync("git", args, { cwd: ROOT, encoding: "utf8" });
   const paths = ["src", "public", "vite.config.ts", "uno.config.ts"];
 
-  return createHash("sha1")
+  const hash = createHash("sha1")
     .update(git("rev-parse", "HEAD"))
-    .update(git("diff", "HEAD", "--", ...paths))
-    .update(git("ls-files", "--others", "--exclude-standard", "--", ...paths))
-    .digest("hex");
+    .update(git("diff", "HEAD", "--", ...paths));
+
+  for (const file of git("ls-files", "--others", "--exclude-standard", "--", ...paths)
+    .split("\n")
+    .filter(Boolean))
+    hash.update(file).update(readFileSync(join(ROOT, file)));
+
+  return hash.digest("hex");
 }
 
 function canListen(port: number, host?: string) {
