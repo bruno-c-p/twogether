@@ -247,8 +247,8 @@ simple or low-impact.
   in `scripts/fitness-px-baseline.tsv`; never add entries to that file.
   Fractional steps are fine: `--spacing` is `4px`, so `gap-3.5` is 14px and
   `w-4.5` is 18px, and the check only flags tokens that spell out `px`. Its
-  suggestion names a step only for multiples of 4px; for other values use
-  the fractional step, not a new token.
+  suggestion names a step only for multiples of 4px; a fractional step
+  works for the rest just as well.
 - The phone nav height lives once in `--mobile-nav-height` (`h-mobile-nav`,
   `pb-mobile-nav`). Anything that clears the nav reads that token, not a
   pixel guess.
