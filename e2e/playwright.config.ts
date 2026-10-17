@@ -1,5 +1,6 @@
 import { config } from "dotenv";
 import { mkdtempSync } from "node:fs";
+import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -18,7 +19,27 @@ const databasePath =
 // Workers and retries share this run's throwaway database, never the app's.
 process.env.E2E_DATABASE_PATH = databasePath;
 
-const port = process.env.E2E_PORT ?? "3400";
+function isFree(port: number) {
+  return new Promise<boolean>((resolve) => {
+    const server = createServer();
+
+    server.once("error", () => resolve(false));
+    server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
+  });
+}
+
+// Worktrees run e2e side by side, so a busy 3400 moves to the next free
+// port. Workers inherit the choice through the environment.
+async function freePort() {
+  for (let port = 3400; port < 3500; port += 1)
+    if (await isFree(port)) return String(port);
+
+  throw new Error("No free e2e port in 3400-3499");
+}
+
+process.env.E2E_PORT ??= await freePort();
+
+const port = process.env.E2E_PORT;
 
 const baseURL = `http://127.0.0.1:${port}`;
 

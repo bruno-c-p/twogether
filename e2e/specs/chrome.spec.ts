@@ -12,6 +12,7 @@ import {
   withMobile,
   monthText,
   monthTrigger,
+  monthSummary,
 } from "../fixtures/app";
 
 async function seedMoney(page: Page) {
@@ -42,7 +43,7 @@ test.describe("chrome", () => {
   test("M9 hide values masks money until shown again", async ({ page }) => {
     await seedMoney(page);
     await page.getByRole("button", { name: "Ocultar valores" }).click();
-    await expect(page.getByText("R$ ••••").first()).toBeVisible();
+    await expect(monthSummary(page)).toContainText("R$ ••••");
 
     await openView(page, "Orçamento");
 
@@ -61,7 +62,7 @@ test.describe("chrome", () => {
     await openView(page, "Visão geral");
 
     await page.getByRole("button", { name: "Mostrar valores" }).click();
-    await expect(page.getByText(/R\$\s*4\.954,10/).first()).toBeVisible();
+    await expect(monthSummary(page)).toContainText(/R\$\s*4\.954,10/);
     await expect(page.getByText("R$ ••••")).toHaveCount(0);
 
     await withMobile(page, async () => {
@@ -69,7 +70,7 @@ test.describe("chrome", () => {
         page.getByRole("button", { name: "Ocultar valores" }),
       ).toBeVisible();
       await page.getByRole("button", { name: "Ocultar valores" }).click();
-      await expect(page.getByText("R$ ••••").first()).toBeVisible();
+      await expect(monthSummary(page)).toContainText("R$ ••••");
       await expectNoHorizontalOverflow(page);
     });
   });

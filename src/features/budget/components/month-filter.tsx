@@ -109,6 +109,23 @@ function MonthGrid({
   );
 }
 
+// "setembro 2026", or "set 2026" on phones. Every pt-BR short month is the
+// start of the long one, so phones hide the rest of the word instead of
+// rendering a second label.
+function MonthText({ month }: { month: string }) {
+  const short = monthName(month, true);
+
+  return (
+    <span aria-hidden="true">
+      {short}
+      <span className="max-bp620:hidden">
+        {monthName(month).slice(short.length)}
+      </span>
+      {` ${month.slice(0, 4)}`}
+    </span>
+  );
+}
+
 // `pending` while a picked month loads; the current one stays on screen.
 export function MonthFilter({
   month,
@@ -133,12 +150,7 @@ export function MonthFilter({
           aria-busy={pending}
           className={cx(chipTrigger, "capitalize", pending && "opacity-60")}
         >
-          <span aria-hidden="true" className="max-bp620:hidden">
-            {monthLabel(month)}
-          </span>
-          <span aria-hidden="true" className="hidden max-bp620:inline">
-            {monthLabel(month, true)}
-          </span>
+          <MonthText month={month} />
           <ChevronDown size={14} aria-hidden="true" className="shrink-0" />
         </SheetTrigger>
       }

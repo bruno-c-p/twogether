@@ -16,6 +16,7 @@ import {
   personFilter,
   monthTrigger,
   setMonth,
+  transactionRow,
 } from "../fixtures/app";
 
 async function addExpense(page: Page, description: string, date: string) {
@@ -152,10 +153,10 @@ test.describe("overview and goals", () => {
     await openView(page, "Visão geral");
     await page.getByRole("button", { name: "Ocultar valores" }).click();
     await openView(page, "Transações");
-    await expect(page.getByText("R$ ••••").first()).toBeVisible();
+    await expect(transactionRow(page, "Bia café")).toContainText("R$ ••••");
     await reloadApp(page);
     await expect(page.getByText("R$ ••••")).toHaveCount(0);
-    await expect(page.getByText(/R\$\s*10,00/).first()).toBeVisible();
+    await expect(transactionRow(page, "Bia café")).toContainText(/R\$\s*10,00/);
 
     await withMobile(page, async () => {
       await expect(personFilter(page)).toBeVisible();

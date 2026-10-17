@@ -50,6 +50,12 @@
   stable values (test title/project), never by file paths, timestamps, or
   worker indexes: every new email burns a user slot and the dev instance
   stops sign-ups at its user quota.
+- E2E specs locate with `getByRole` or `getByLabel`, scoped to the visible
+  region or row. Breakpoints can render the same text twice and hide one
+  copy with CSS, so `bun run lint` bans `locator("span"|"p"|"div")` and
+  `.first()`/`.nth()`/`.last()` after `getByText`. A copy hidden for a
+  breakpoint must be `display: none` (`hidden`, `max-bpN:hidden`) so it
+  leaves the accessibility tree.
 - Automated tests, code analysis, and build do not replace in-browser
   validation. Do not declare the task complete based only on those checks.
 - Use isolated test data; preserve real data and unrelated work.
