@@ -54,6 +54,14 @@
     "rules": [
       { "from": "budget-domain", "allow": ["lib"] },
       {
+        "from": "budget-api",
+        "allow": ["budget", "theme-api", "server", "lib", "components"]
+      },
+      {
+        "from": "theme-api",
+        "allow": ["theme", "budget-api", "server", "lib", "components"]
+      },
+      {
         "from": "budget",
         "allow": [
           "budget-domain",
