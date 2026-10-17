@@ -4,7 +4,7 @@
   "type": "module",
   "packageManager": "bun@1.3.14",
   "scripts": {
-    "setup": "bun scripts/setup-worktree.ts",
+    "setup": "bun --no-env-file scripts/setup-worktree.ts",
     "dev": "NODE_ENV=development bun --bun vite --host 0.0.0.0 --port 3000",
     "dev:break-ui": "bun --bun vite --config tools/break-ui/vite.config.ts",
     "build": "bun scripts/check-env.ts && vite build",

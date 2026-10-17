@@ -11,7 +11,7 @@ import { basename, dirname, join, resolve } from "node:path";
 
 const LIVE_CLERK_KEY = /[sp]k_live_/;
 
-const REMOTE_DATABASE = /^(?:libsql|turso|https?|wss?):\/\//i;
+const LOCAL_DATABASE = /^(?::memory:|file:[^$`]*|[^:$`]*)$/;
 
 const DATABASE_KEYS = new Set(["TURSO_DATABASE_URL", "BUDGET_DATABASE_PATH"]);
 
@@ -30,7 +30,7 @@ function databaseUrls(contents: string) {
     if (!match || !DATABASE_KEYS.has(match[1])) return [];
 
     return [
-      { key: match[1], value: match[2].trim().replace(/^["']|["']$/g, "") },
+      { key: match[1], value: match[2].trim().replace(/^["'`]|["'`]$/g, "") },
     ];
   });
 }
@@ -54,12 +54,12 @@ export function setupRefusal({
   if (LIVE_CLERK_KEY.test(sourceContents))
     return `${source} holds live Clerk keys (sk_live_/pk_live_). Replace them with development keys (sk_test_/pk_test_), or point TWOGETHER_DEV_ENV at a dev-only env file.`;
 
-  const remote = databaseUrls(sourceContents).find(({ value }) =>
-    REMOTE_DATABASE.test(value),
+  const remote = databaseUrls(sourceContents).find(
+    ({ value }) => !LOCAL_DATABASE.test(value),
   );
 
   if (remote)
-    return `${source} sets ${remote.key} to a remote database. Remove that line so the app uses local SQLite, or point TWOGETHER_DEV_ENV at a dev-only env file.`;
+    return `${source} sets ${remote.key} to something other than a local SQLite path. Remove that line so the app uses local SQLite, or point TWOGETHER_DEV_ENV at a dev-only env file.`;
 
   if (localEnvIsFile)
     return `.env.local is a regular file, not a link to the dev env. It may be a copied production env: move it aside (\`mv .env.local .env.local.bak\`) and rerun \`bun run setup\`.`;

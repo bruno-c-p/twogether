@@ -51,10 +51,21 @@ describe("setupRefusal", () => {
     "BUDGET_DATABASE_PATH=http://db.example.com",
     "TURSO_DATABASE_URL='wss://db.example.com'",
     "TURSO_DATABASE_URL=ws://db.example.com",
-  ])("refuses a remote database URL: %s", (line) => {
+    "TURSO_DATABASE_URL=$REMOTE_DB",
+    "BUDGET_DATABASE_PATH=${REMOTE_DB}",
+    "TURSO_DATABASE_URL=`libsql://twogether-prod.turso.io`",
+  ])("refuses a remote or unresolved database URL: %s", (line) => {
     expect(refusal({ sourceContents: `${devEnv}\n${line}` })).toMatch(
-      /sets \w+ to a remote database\. Remove that line/,
+      /sets \w+ to something other than a local SQLite path\. Remove that line/,
     );
+  });
+
+  test.each([
+    "BUDGET_DATABASE_PATH=:memory:",
+    "BUDGET_DATABASE_PATH=file:./data/dev.sqlite",
+    'BUDGET_DATABASE_PATH="/tmp/twogether.sqlite"',
+  ])("accepts a local database: %s", (line) => {
+    expect(refusal({ sourceContents: `${devEnv}\n${line}` })).toBeUndefined();
   });
 
   test("ignores database variables the app does not read", () => {
