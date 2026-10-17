@@ -49,6 +49,13 @@
         "rules": ["react-doctor/query-mutation-missing-invalidation"]
       },
       {
+        // The month-load mutation fills the workspace cache through
+        // queryClient.query() before the URL changes; it writes nothing the
+        // cache would need to refetch.
+        "files": ["src/features/budget/hooks/use-workspace-search.ts"],
+        "rules": ["react-doctor/query-mutation-missing-invalidation"]
+      },
+      {
         // The test harness replays a user story against a single in-memory
         // SQLite connection, so its steps run in order on purpose.
         "files": ["src/features/budget/services/store-test-harness.ts"],

@@ -60,9 +60,17 @@ export const transactionFilterParams = {
   kind: urlParam(kindFilterSchema),
 };
 
-// The transactions list page, 1-based in the URL. Any filter, month or
-// person change drops it so the list starts over.
-export const pageParam = parseAsIndex.withDefault(0);
+// The transactions list page, 1-based in the URL; anything below 1 reads as
+// the first page. Any filter, month or person change drops it so the list
+// starts over.
+export const pageParam = createParser({
+  parse: (value) => {
+    const index = parseAsIndex.parse(value);
+
+    return index !== null && index >= 0 ? index : null;
+  },
+  serialize: parseAsIndex.serialize,
+}).withDefault(0);
 
 // Workspace dialogs: `transaction` is "new" or the id being edited,
 // `percentages` the revision the editor opened at, `delete` and `settle`

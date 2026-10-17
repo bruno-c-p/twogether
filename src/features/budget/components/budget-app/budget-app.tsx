@@ -100,7 +100,9 @@ export function BudgetWorkspace({
   );
 
   const alert =
-    budget.syncError || listErrorFor(mutations, Boolean(dialogs.deleting));
+    budget.syncError ||
+    search.monthError ||
+    listErrorFor(mutations, Boolean(dialogs.deleting));
 
   const workspace: Workspace = {
     budget,

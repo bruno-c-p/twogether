@@ -97,8 +97,11 @@ export function useMutation<TArgs extends unknown[], TResult>(
   return {
     run,
     // Dialogs call this when they open or close so an old failure never
-    // shows up on the next attempt.
-    reset: mutation.reset,
+    // shows up on the next attempt. Skipped mid-run: resetting would hide
+    // `pending` and drop its eventual failure.
+    reset: () => {
+      if (!inFlight.current) mutation.reset();
+    },
     pending: mutation.isPending,
     error: error && !isRedirect(error) ? failureMessage(error) : "",
   };

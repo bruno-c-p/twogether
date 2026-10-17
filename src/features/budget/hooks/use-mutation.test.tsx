@@ -148,6 +148,29 @@ describe("useMutation", () => {
     expect(fn).toHaveBeenCalledTimes(1);
   });
 
+  test("reset during a run keeps it pending and still reports its failure", async () => {
+    let fail: (cause: Error) => void = () => undefined;
+
+    const fn = vi.fn<Run>(
+      () =>
+        new Promise((_resolve, reject) => {
+          fail = reject;
+        }),
+    );
+
+    const { screen, user, onResult } = await setup(fn);
+
+    await user.click(screen.getByRole("button", { name: "run" }));
+    await user.click(screen.getByRole("button", { name: "reset" }));
+    expect(screen.getByRole("status").textContent).toBe("pending");
+
+    fail(new Error("Mudou."));
+    await vi.waitFor(() => expect(onResult).toHaveBeenCalledWith(false));
+    await vi.waitFor(() =>
+      expect(screen.getByRole("status").textContent).toBe("Mudou."),
+    );
+  });
+
   test("a redirect navigates instead of showing an error", async () => {
     const { screen, user, onResult, router } = await setup(async () => {
       throw redirect({ to: "/orcamento", search: { month: "2026-09" } });
