@@ -7,16 +7,28 @@ import { createHouseholdStore } from "@/features/household/household.server";
 import { createStoreContext } from "@/server/db.server";
 import { databaseUrl } from "@/server/env.server";
 
-// The composition root: the only module that knows every feature's store.
+// A plain spread would let a method name in two stores silently replace the
+// other; here a shared name fails to compile.
+function merge<A extends object, B extends object>(
+  a: A,
+  b: B & Partial<Record<keyof A, never>>,
+): A & B {
+  return { ...a, ...b };
+}
+
 export function createStore(filename: string) {
   const ctx = createStoreContext(filename);
 
-  return {
-    ...createAuthStore(ctx, NEW_USER_PERCENTAGES),
-    ...createHouseholdStore(ctx),
-    ...createBudgetStore(ctx),
-    close: () => ctx.close(),
-  };
+  return merge(
+    merge(
+      merge(
+        createAuthStore(ctx, NEW_USER_PERCENTAGES),
+        createHouseholdStore(ctx),
+      ),
+      createBudgetStore(ctx),
+    ),
+    { close: () => ctx.close() },
+  );
 }
 
 export type Store = ReturnType<typeof createStore>;

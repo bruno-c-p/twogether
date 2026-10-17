@@ -617,7 +617,6 @@ async function savePercentages(
   });
 }
 
-// The JSON every new user's goal percentages start from.
 export const NEW_USER_PERCENTAGES = JSON.stringify(DEFAULT_PERCENTAGES);
 
 export function createBudgetStore(ctx: StoreContext) {

@@ -13,7 +13,7 @@ import {
   view,
   withHousehold,
 } from "@/server/store-test-harness";
-import { transaction } from "@/features/budget/transaction-fixture";
+import { transaction } from "@/test/store-transaction";
 import { cents } from "@/test/cents";
 
 const ctx = setupMemoryStore();
