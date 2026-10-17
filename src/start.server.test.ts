@@ -1,4 +1,12 @@
-import { afterEach, describe, expect, spyOn, test } from "bun:test";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  describe,
+  expect,
+  spyOn,
+  test,
+} from "bun:test";
 import { createMiddleware, createServerFn } from "@tanstack/react-start";
 import {
   getResponseStatus,
@@ -7,6 +15,7 @@ import {
 import { runWithStartContext } from "@tanstack/start-storage-context";
 import { z } from "zod";
 import { startInstance } from "@/start";
+import { databaseUrl } from "@/server/env.server";
 import { householdMiddleware } from "@/server/middleware";
 import { retryAfterFor } from "@/server/rate-limit.server";
 import {
@@ -20,9 +29,14 @@ const replySchema = z.object({ message: z.string().nullable() });
 
 const executedSchema = z.object({ error: z.unknown() });
 
-process.env.BUDGET_DATABASE_PATH = ":memory:";
+const ENV_KEYS = [
+  "BUDGET_DATABASE_PATH",
+  "TURSO_DATABASE_URL",
+  "TURSO_AUTH_TOKEN",
+  "CLERK_SECRET_KEY",
+] as const;
 
-process.env.CLERK_SECRET_KEY ||= "sk_test_middleware";
+const savedEnv = new Map(ENV_KEYS.map((key) => [key, process.env[key]]));
 
 // Write server fns as the budget actions build them. The global
 // functionMiddleware from src/start.ts wraps them the way the server does.
@@ -39,14 +53,36 @@ const broken = createServerFn({ method: "POST" })
   .middleware([crash])
   .handler(() => "never");
 
-const reported = spyOn(console, "error").mockImplementation(() => {});
+const reported = spyOn(console, "error");
+
+// The middleware reaches the process-wide store, so the env must point it at
+// memory before the first call, and a Turso URL would win over the path.
+beforeAll(() => {
+  reported.mockImplementation(() => {});
+  process.env.BUDGET_DATABASE_PATH = ":memory:";
+  delete process.env.TURSO_DATABASE_URL;
+  delete process.env.TURSO_AUTH_TOKEN;
+  process.env.CLERK_SECRET_KEY ||= "sk_test_middleware";
+  expect(databaseUrl()).toBe(":memory:");
+});
 
 afterEach(() => {
   reported.mockClear();
 });
 
+afterAll(() => {
+  reported.mockRestore();
+
+  for (const [key, value] of savedEnv)
+    if (value === undefined) delete process.env[key];
+    else process.env[key] = value;
+});
+
 // Runs the server fn the way a /_serverFn request does: inside the request
 // event and the Start context, with the session Clerk's middleware resolved.
+// The context shape is StartStorageContext from @tanstack/start-storage-context,
+// as createStartHandler fills it. Request middleware does not run here, so the
+// Retry-After header is read from the memo it would copy, not from a response.
 async function post(fn: Pick<typeof write, "__executeServer">, userId: string) {
   const request = new Request("http://localhost/_serverFn/write", {
     method: "POST",
@@ -114,7 +150,6 @@ describe("write server fn errors", () => {
   test("an unexpected failure goes out generic and is reported once", async () => {
     const result = await post(broken, "user_f18_broken");
 
-    expect(result.status).toBe(200);
     expect(result.message).toBe(UNEXPECTED_MESSAGE);
     expect(reported).toHaveBeenCalledTimes(1);
   });

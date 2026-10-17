@@ -13,7 +13,6 @@ import { getStore } from "@/server/store.server";
 import type { UserRow } from "@/server/db.server";
 import {
   errorForLogs,
-  RATE_LIMITED_MESSAGE,
   RequestError,
   UNEXPECTED_MESSAGE,
 } from "@/server/request-error";
@@ -29,10 +28,14 @@ export const errorMiddleware = createMiddleware({ type: "function" }).server(
 
       if (cause instanceof RequestError) {
         setResponseStatus(cause.status);
+
+        if (cause.retryAfterSeconds !== undefined)
+          rememberRetryAfter(getRequest(), cause.retryAfterSeconds);
+
         throw new Error(cause.message);
       }
 
-      reportError(errorForLogs(cause), { context: "Budget mutation failed" });
+      reportError(errorForLogs(cause), { context: "Server function failed" });
       throw new Error(UNEXPECTED_MESSAGE);
     }
   },
@@ -45,10 +48,7 @@ export const rateLimitMiddleware = createMiddleware({
   const { userId } = await auth();
   const key = userId ?? getRequestIP({ xForwardedFor: true }) ?? "anonymous";
 
-  assertWritable(key, (retryAfterSeconds) => {
-    rememberRetryAfter(getRequest(), retryAfterSeconds);
-    throw new RequestError(RATE_LIMITED_MESSAGE, 429);
-  });
+  assertWritable(key);
 
   return next();
 });

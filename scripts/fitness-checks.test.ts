@@ -177,7 +177,7 @@ describe("fitness source checks", () => {
         }),
       ),
     ).toEqual([
-      "src/server/request-error.ts calls setResponseStatus; throw a RequestError and let errorMiddleware in src/server/middleware.ts map it",
+      "src/server/request-error.ts mentions setResponseStatus; only errorMiddleware in src/server/middleware.ts may, so throw a RequestError instead",
     ]);
   });
 

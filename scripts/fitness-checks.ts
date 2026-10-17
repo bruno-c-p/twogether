@@ -368,9 +368,9 @@ export function domainBaselineGrowth(
   );
 }
 
-// A RequestError becomes an HTTP status once, in the outermost middleware.
-// A second mapping below it hands errorMiddleware a plain Error, which it
-// reports and replaces with the generic message.
+// A name ban, not a full guard: errorMiddleware alone turns a RequestError
+// into an HTTP status, and an inner layer that calls setResponseStatus is the
+// shape the bug took. Rethrowing a plain Error below it slips past this.
 const HTTP_STATUS_OWNER = "src/server/middleware.ts";
 
 export function httpStatusBoundary(repo: Repo) {
@@ -383,7 +383,7 @@ export function httpStatusBoundary(repo: Repo) {
     )
     .map(
       (file) =>
-        `${file} calls setResponseStatus; throw a RequestError and let errorMiddleware in ${HTTP_STATUS_OWNER} map it`,
+        `${file} mentions setResponseStatus; only errorMiddleware in ${HTTP_STATUS_OWNER} may, so throw a RequestError instead`,
     );
 }
 

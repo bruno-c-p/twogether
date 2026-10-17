@@ -7,6 +7,7 @@ export class RequestError extends Error {
   constructor(
     message: string,
     public status = 400,
+    public retryAfterSeconds?: number,
   ) {
     super(message);
   }
