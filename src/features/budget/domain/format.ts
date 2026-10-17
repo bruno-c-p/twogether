@@ -61,11 +61,11 @@ export function monthName(month: string, short = false) {
   return formatter.format(date).replace(".", "");
 }
 
-// "2026-09" → "setembro 2026", or "set 2026" when short.
-export function monthLabel(month: string, short = false) {
+// "2026-09" → "setembro 2026".
+export function monthLabel(month: string) {
   if (!MONTH.test(month)) return "Mês";
 
-  return `${monthName(month, short)} ${month.slice(0, 4)}`;
+  return `${monthName(month)} ${month.slice(0, 4)}`;
 }
 
 // "2026-09-17" → "17 set". An ISO instant (such as split.paidAt) shows the
