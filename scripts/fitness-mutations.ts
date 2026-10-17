@@ -8,6 +8,7 @@ type Statement = {
   name?: string;
   exported: boolean;
   calls: Map<string, string>;
+  repeated: Set<string>;
 };
 
 const compact = (node: ts.Node) => node.getText().replace(/\s+/g, "");
@@ -52,6 +53,7 @@ function hasExportModifier(node: ts.Node) {
 // up to the declaration that holds it.
 function statementOf(call: ts.CallExpression): Statement {
   const calls = new Map<string, string>();
+  const repeated = new Set<string>();
   let node: ts.Expression = call;
 
   while (
@@ -61,6 +63,7 @@ function statementOf(call: ts.CallExpression): Statement {
   ) {
     const [argument] = node.parent.parent.arguments;
 
+    if (calls.has(node.parent.name.text)) repeated.add(node.parent.name.text);
     calls.set(node.parent.name.text, argument ? compact(argument) : "");
     node = node.parent.parent;
   }
@@ -73,13 +76,15 @@ function statementOf(call: ts.CallExpression): Statement {
     (declaration.parent.flags & ts.NodeFlags.Const) !== 0 &&
     ts.isSourceFile(declaration.parent.parent.parent);
 
-  if (!topLevelConst) return { post: isPost(call), exported: false, calls };
+  if (!topLevelConst)
+    return { post: isPost(call), exported: false, calls, repeated };
 
   return {
     post: isPost(call),
     name: declaration.name.text,
     exported: hasExportModifier(declaration.parent.parent),
     calls,
+    repeated,
   };
 }
 
@@ -229,9 +234,15 @@ function actionsObjectFailures(
   return failures;
 }
 
+const GATE_MIDDLEWARE = new Map([
+  ["household", "[householdMiddleware]"],
+  ["auth", "[authMiddleware]"],
+]);
+
 function statementFailures(
   file: string,
-  { post, name, exported, calls }: Statement,
+  { post, name, exported, calls, repeated }: Statement,
+  gates: Map<string, string>,
 ) {
   if (!name) return [`${file}: a server fn must be a top-level const`];
 
@@ -254,12 +265,31 @@ function statementFailures(
   if (validator !== undefined && validator !== `defs.${name}.parse`)
     failures.push(`${file}: ${name} must validate with defs.${name}.parse`);
 
+  // TanStack concatenates repeated calls, so a second .middleware() adds to
+  // the chain the check below reads.
+  for (const method of repeated)
+    failures.push(`${file}: ${name} must call .${method}() once`);
+
+  // A dropped or swapped middleware still type-checks when serve() needs no
+  // more context than the remaining middleware gives.
+  const gate = gates.get(name);
+  const middleware = gate ? GATE_MIDDLEWARE.get(gate) : undefined;
+
+  if (!middleware || calls.get("middleware") !== middleware)
+    failures.push(
+      `${file}: ${name} must run .middleware(${middleware ?? "<its gate>"}) for its "${gate ?? "?"}" gate`,
+    );
+
   return failures;
 }
 
 // Types catch a missing or extra mutation, but not a statement or an
 // actions entry wired to another definition whose input is compatible.
-function barrelFailures(file: string, text: string) {
+function barrelFailures(
+  file: string,
+  text: string,
+  gates: Map<string, string>,
+) {
   const source = parse(file, text);
   const statements = serverFns(source);
 
@@ -268,7 +298,9 @@ function barrelFailures(file: string, text: string) {
   );
 
   return [
-    ...statements.flatMap((statement) => statementFailures(file, statement)),
+    ...statements.flatMap((statement) =>
+      statementFailures(file, statement, gates),
+    ),
     ...strayReferences(file, source, names),
     ...actionsObjectFailures(file, source, names),
   ];
@@ -299,6 +331,42 @@ function entryFailures(file: string, entry: ts.CallExpression) {
     failures.push(`${file}: ${key} must run store.${key}`);
 
   return failures;
+}
+
+function entryGate(entry: ts.CallExpression) {
+  const [, spec] = entry.arguments;
+
+  if (!spec || !ts.isObjectLiteralExpression(spec)) return undefined;
+
+  const gate = spec.properties.find(
+    (field) =>
+      ts.isPropertyAssignment(field) && field.name.getText() === "gate",
+  );
+
+  return gate &&
+    ts.isPropertyAssignment(gate) &&
+    ts.isStringLiteral(gate.initializer)
+    ? gate.initializer.text
+    : undefined;
+}
+
+function registryGates(file: string, text: string) {
+  const gates = new Map<string, string>();
+
+  visitAll(parse(file, text), (node) => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === "define" &&
+      ts.isPropertyAssignment(node.parent)
+    ) {
+      const gate = entryGate(node);
+
+      if (gate) gates.set(node.parent.name.getText(), gate);
+    }
+  });
+
+  return gates;
 }
 
 // A copied entry that keeps another entry's name or store call still
@@ -342,7 +410,11 @@ export function mutationRules(repo: Repo) {
 
     return [
       ...registryFailures(registry, repo.read(registry)),
-      ...barrelFailures(barrel, repo.read(barrel)),
+      ...barrelFailures(
+        barrel,
+        repo.read(barrel),
+        registryGates(registry, repo.read(registry)),
+      ),
       ...strays,
     ];
   });

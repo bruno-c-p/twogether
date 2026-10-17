@@ -9,5 +9,3 @@ src/features/budget/domain/types.ts	interface WorkspaceHousehold
 src/features/budget/domain/types.ts	interface WorkspaceSnapshot
 src/features/budget/domain/types.ts	type GoalPercentages
 src/features/mcp/budget-view.ts	settlementOf
-src/features/mcp/budget-view.ts	split.paidAt
-src/features/mcp/budget-view.ts	split.paidAt

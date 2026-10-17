@@ -15,7 +15,6 @@ import {
   occurrencesSchema,
   revisionSchema,
   transactionKindSchema,
-  transactionSchema,
 } from "@/features/budget/domain/schemas";
 import type {
   Transaction,
@@ -30,11 +29,16 @@ import {
 } from "@/features/mcp/budget-view";
 import { currentMonth, today } from "@/lib/clock";
 import { reportError } from "@/lib/errors";
-import { parseInput } from "@/server/action-input";
-import { consumeRateLimit } from "@/server/rate-limit.server";
+import { budgetMutations } from "@/features/budget/registry";
+import {
+  writeTool,
+  type WriteSession,
+  type WriteTool,
+} from "@/features/mcp/write-tool.server";
+import { assertWritable, householdActor } from "@/server/actor.server";
+import type { ActorFor } from "@/server/mutation";
 import {
   errorForLogs,
-  RATE_LIMITED_MESSAGE,
   RequestError,
   UNEXPECTED_MESSAGE,
 } from "@/server/request-error";
@@ -179,6 +183,163 @@ function editedTransaction(
   };
 }
 
+type Actor = ActorFor<"household">;
+
+async function snapshotOf(session: WriteSession) {
+  const { user, householdId } = await session.actor();
+
+  return session.store.snapshot(user, householdId);
+}
+
+async function described(session: WriteSession, id: string) {
+  const snapshot = await snapshotOf(session);
+
+  return describeTransaction(snapshot, findTransaction(snapshot, id));
+}
+
+type Mutations = typeof budgetMutations;
+
+type BudgetTools = {
+  [K in keyof Mutations]: WriteTool<K> | null;
+};
+
+const idRevision = { id: idSchema, revision: revisionSchema };
+
+const budgetTools = {
+  saveTransaction: writeTool(budgetMutations.saveTransaction, {
+    tool: "save_transaction",
+    title: "Add or edit a transaction",
+    description:
+      "Without id, adds a transaction for you (description and amount required; kind defaults to expense, date to today; expenses need a goal). With id and revision, edits it; omitted fields keep their current value. Repayments and paid splits are locked.",
+    annotations: { ...write, destructiveHint: false, idempotentHint: false },
+    inputSchema: {
+      id: idSchema.optional().describe("Existing transaction id to edit."),
+      revision: revisionSchema
+        .optional()
+        .describe("Current revision, required when editing."),
+      description: descriptionSchema.optional(),
+      amount: centsSchema
+        .optional()
+        .describe("Integer cents: R$ 45,90 is 4590."),
+      date: dateSchema.optional().describe("YYYY-MM-DD."),
+      kind: transactionKindSchema.optional(),
+      goal: goalIdSchema
+        .nullable()
+        .optional()
+        .describe("Required for expenses; null for income."),
+      split: z
+        .boolean()
+        .optional()
+        .describe("Expense only: the partner owes half."),
+      occurrences: occurrencesSchema
+        .optional()
+        .describe(
+          "New transactions only: repeat monthly this many times (1-120).",
+        ),
+    },
+    input: async (args, session) => {
+      if (!args.id && args.revision !== undefined)
+        throw new RequestError("Informe o id da transação para editar.");
+
+      const previous = args.id
+        ? findTransaction(await snapshotOf(session), args.id)
+        : undefined;
+
+      return {
+        transaction: previous
+          ? editedTransaction(previous, args)
+          : createdTransaction(args),
+        occurrences: args.id ? undefined : args.occurrences,
+      };
+    },
+    output: async (session, input) => ({
+      saved: await described(session, input.transaction.id),
+    }),
+  }),
+  deleteTransaction: writeTool(budgetMutations.deleteTransaction, {
+    tool: "delete_transaction",
+    title: "Delete a transaction",
+    description:
+      "Deletes a transaction. Returns the id and revision of every deleted transaction to pass to restore_transaction to undo it.",
+    annotations: { ...write, destructiveHint: true, idempotentHint: false },
+    inputSchema: {
+      ...idRevision,
+      following: followingSchema
+        .optional()
+        .describe(
+          "Also delete the later occurrences of its recurring series: every one of them with the revision from list_transactions with recurrence.",
+        ),
+    },
+    input: (args) => args,
+    output: (_session, { id, revision, following }) => ({
+      undo: [{ id, revision }, ...(following ?? [])].map((item) => ({
+        id: item.id,
+        revision: item.revision + 1,
+      })),
+    }),
+  }),
+  restoreTransaction: writeTool(budgetMutations.restoreTransaction, {
+    tool: "restore_transaction",
+    title: "Restore a deleted transaction",
+    description:
+      "Undoes delete_transaction with the id and revision it returned.",
+    annotations: { ...write, destructiveHint: false, idempotentHint: false },
+    inputSchema: idRevision,
+    input: (args) => args,
+    output: async (session, { id }) => ({
+      restored: await described(session, id),
+    }),
+  }),
+  settleSplit: writeTool(budgetMutations.settleSplit, {
+    tool: "settle_split",
+    title: "Mark a split expense as paid",
+    description:
+      "Marks your half of a split expense your partner paid as repaid, recording an income for them and an expense for you. Only the person who owes can settle.",
+    annotations: { ...write, destructiveHint: false, idempotentHint: false },
+    inputSchema: {
+      ...idRevision,
+      date: dateSchema
+        .optional()
+        .describe("Payment date, YYYY-MM-DD. Defaults to today."),
+    },
+    input: ({ id, revision, date }) => ({
+      id,
+      revision,
+      date: date ?? today(HOUSEHOLD_TIME_ZONE),
+    }),
+    output: async (session, { id }) => ({
+      settled: await described(session, id),
+    }),
+  }),
+  unsettleSplit: writeTool(budgetMutations.unsettleSplit, {
+    tool: "unsettle_split",
+    title: "Undo a split payment",
+    description:
+      "Unmarks a settled split expense and removes its repayment entries.",
+    annotations: { ...write, destructiveHint: true, idempotentHint: false },
+    inputSchema: idRevision,
+    input: (args) => args,
+    output: async (session, { id }) => ({
+      unsettled: await described(session, id),
+    }),
+  }),
+  savePercentages: writeTool(budgetMutations.savePercentages, {
+    tool: "save_goal_percentages",
+    title: "Change your goal percentages",
+    description:
+      "Replaces your own percentages for all six goals. Values must sum to 100.",
+    annotations: { ...write, destructiveHint: false, idempotentHint: true },
+    inputSchema: {
+      percentages: goalPercentagesSchema,
+      revision: revisionSchema.describe(
+        "Your current revision from get_goal_percentages.",
+      ),
+    },
+    input: (args) => args,
+    output: async (session) => goalPercentages(await snapshotOf(session)),
+  }),
+} satisfies BudgetTools;
+
 export function createBudgetMcpServer(store: Store, userId: string) {
   const server = new McpServer(
     { name: "twogether", version: "1.0.0" },
@@ -191,7 +352,7 @@ export function createBudgetMcpServer(store: Store, userId: string) {
     if (!user.name || !user.household_id)
       throw new RequestError(SETUP_REQUIRED);
 
-    return { user, householdId: user.household_id };
+    return householdActor(user);
   }
 
   async function workspace() {
@@ -201,11 +362,18 @@ export function createBudgetMcpServer(store: Store, userId: string) {
   }
 
   // Rate-limited before any read, keyed like the app's rate limit middleware.
-  async function writable() {
-    if (!consumeRateLimit(userId).ok)
-      throw new RequestError(RATE_LIMITED_MESSAGE, 429);
+  function session(): WriteSession {
+    let actor: Promise<Actor> | undefined;
 
-    return member();
+    return {
+      store,
+      actor: () =>
+        (actor ??= Promise.resolve().then(() => {
+          assertWritable(userId);
+
+          return member();
+        })),
+    };
   }
 
   server.registerTool(
@@ -265,195 +433,6 @@ export function createBudgetMcpServer(store: Store, userId: string) {
   );
 
   server.registerTool(
-    "save_transaction",
-    {
-      title: "Add or edit a transaction",
-      description:
-        "Without id, adds a transaction for you (description and amount required; kind defaults to expense, date to today; expenses need a goal). With id and revision, edits it; omitted fields keep their current value. Repayments and paid splits are locked.",
-      inputSchema: {
-        id: idSchema.optional().describe("Existing transaction id to edit."),
-        revision: revisionSchema
-          .optional()
-          .describe("Current revision, required when editing."),
-        description: descriptionSchema.optional(),
-        amount: centsSchema
-          .optional()
-          .describe("Integer cents: R$ 45,90 is 4590."),
-        date: dateSchema.optional().describe("YYYY-MM-DD."),
-        kind: transactionKindSchema.optional(),
-        goal: goalIdSchema
-          .nullable()
-          .optional()
-          .describe("Required for expenses; null for income."),
-        split: z
-          .boolean()
-          .optional()
-          .describe("Expense only: the partner owes half."),
-        occurrences: occurrencesSchema
-          .optional()
-          .describe(
-            "New transactions only: repeat monthly this many times (1-120).",
-          ),
-      },
-      annotations: { ...write, destructiveHint: false, idempotentHint: false },
-    },
-    (input) =>
-      run(async () => {
-        if (!input.id && input.revision !== undefined)
-          throw new RequestError("Informe o id da transação para editar.");
-
-        const { user, householdId } = await writable();
-
-        const previous = input.id
-          ? findTransaction(await store.snapshot(user, householdId), input.id)
-          : undefined;
-
-        const transaction = parseInput(
-          transactionSchema,
-          previous
-            ? editedTransaction(previous, input)
-            : createdTransaction(input),
-          rejected,
-        );
-
-        await store.saveTransaction(user, householdId, {
-          transaction,
-          occurrences: input.id ? undefined : input.occurrences,
-        });
-
-        const saved = await store.snapshot(user, householdId);
-
-        return {
-          saved: describeTransaction(
-            saved,
-            findTransaction(saved, transaction.id),
-          ),
-        };
-      }),
-  );
-
-  server.registerTool(
-    "delete_transaction",
-    {
-      title: "Delete a transaction",
-      description:
-        "Deletes a transaction. Returns the id and revision of every deleted transaction to pass to restore_transaction to undo it.",
-      inputSchema: {
-        id: idSchema,
-        revision: revisionSchema,
-        following: followingSchema
-          .optional()
-          .describe(
-            "Also delete the later occurrences of its recurring series: every one of them with the revision from list_transactions with recurrence.",
-          ),
-      },
-      annotations: { ...write, destructiveHint: true, idempotentHint: false },
-    },
-    ({ id, revision, following }) =>
-      run(async () => {
-        const { user, householdId } = await writable();
-
-        await store.deleteTransaction(user, householdId, {
-          id,
-          revision,
-          following,
-        });
-
-        return {
-          undo: [{ id, revision }, ...(following ?? [])].map((item) => ({
-            id: item.id,
-            revision: item.revision + 1,
-          })),
-        };
-      }),
-  );
-
-  server.registerTool(
-    "restore_transaction",
-    {
-      title: "Restore a deleted transaction",
-      description:
-        "Undoes delete_transaction with the id and revision it returned.",
-      inputSchema: { id: idSchema, revision: revisionSchema },
-      annotations: { ...write, destructiveHint: false, idempotentHint: false },
-    },
-    ({ id, revision }) =>
-      run(async () => {
-        const { user, householdId } = await writable();
-
-        await store.restoreTransaction(user, householdId, { id, revision });
-
-        const restored = await store.snapshot(user, householdId);
-
-        return {
-          restored: describeTransaction(
-            restored,
-            findTransaction(restored, id),
-          ),
-        };
-      }),
-  );
-
-  server.registerTool(
-    "settle_split",
-    {
-      title: "Mark a split expense as paid",
-      description:
-        "Marks your half of a split expense your partner paid as repaid, recording an income for them and an expense for you. Only the person who owes can settle.",
-      inputSchema: {
-        id: idSchema,
-        revision: revisionSchema,
-        date: dateSchema
-          .optional()
-          .describe("Payment date, YYYY-MM-DD. Defaults to today."),
-      },
-      annotations: { ...write, destructiveHint: false, idempotentHint: false },
-    },
-    ({ id, revision, date }) =>
-      run(async () => {
-        const { user, householdId } = await writable();
-
-        await store.settleSplit(user, householdId, {
-          id,
-          revision,
-          date: date ?? today(HOUSEHOLD_TIME_ZONE),
-        });
-
-        const settled = await store.snapshot(user, householdId);
-
-        return {
-          settled: describeTransaction(settled, findTransaction(settled, id)),
-        };
-      }),
-  );
-
-  server.registerTool(
-    "unsettle_split",
-    {
-      title: "Undo a split payment",
-      description:
-        "Unmarks a settled split expense and removes its repayment entries.",
-      inputSchema: { id: idSchema, revision: revisionSchema },
-      annotations: { ...write, destructiveHint: true, idempotentHint: false },
-    },
-    ({ id, revision }) =>
-      run(async () => {
-        const { user, householdId } = await writable();
-
-        await store.unsettleSplit(user, householdId, { id, revision });
-
-        const unsettled = await store.snapshot(user, householdId);
-
-        return {
-          unsettled: describeTransaction(
-            unsettled,
-            findTransaction(unsettled, id),
-          ),
-        };
-      }),
-  );
-
-  server.registerTool(
     "get_goal_percentages",
     {
       title: "Goal percentages",
@@ -464,29 +443,8 @@ export function createBudgetMcpServer(store: Store, userId: string) {
     () => run(async () => goalPercentages(await workspace())),
   );
 
-  server.registerTool(
-    "save_goal_percentages",
-    {
-      title: "Change your goal percentages",
-      description:
-        "Replaces your own percentages for all six goals. Values must sum to 100.",
-      inputSchema: {
-        percentages: goalPercentagesSchema,
-        revision: revisionSchema.describe(
-          "Your current revision from get_goal_percentages.",
-        ),
-      },
-      annotations: { ...write, destructiveHint: false, idempotentHint: true },
-    },
-    ({ percentages, revision }) =>
-      run(async () => {
-        const { user, householdId } = await writable();
-
-        await store.savePercentages(user, { percentages, revision });
-
-        return goalPercentages(await store.snapshot(user, householdId));
-      }),
-  );
+  for (const tool of Object.values(budgetTools))
+    tool?.({ server, session, run, rejected });
 
   return server;
 }

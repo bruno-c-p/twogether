@@ -2,6 +2,7 @@ import type {
   RestoreTransactionInput,
   SaveTransactionInput,
 } from "@/features/budget/actions/mutations";
+import { ownerOf } from "@/features/budget/domain/recurrence";
 import { isRepaymentOf } from "@/features/budget/domain/status";
 import { now } from "@/lib/clock";
 import type {
@@ -19,7 +20,7 @@ export function optimisticSave(
 
   const next: Transaction = {
     ...input.transaction,
-    memberId: existing?.memberId ?? snapshot.user.id,
+    memberId: ownerOf(existing, snapshot.user.id),
     createdBy: existing?.createdBy ?? snapshot.user.id,
     revision: existing ? (existing.revision ?? 0) + 1 : 1,
     recurrenceId: existing?.recurrenceId,

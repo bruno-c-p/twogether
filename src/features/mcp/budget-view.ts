@@ -17,6 +17,7 @@ import {
   matchesQuery,
   transactionsFor,
 } from "@/features/budget/domain/view";
+import { transactionStatus } from "@/features/budget";
 import { RequestError } from "@/server/request-error";
 
 export interface TransactionFilters {
@@ -70,7 +71,7 @@ export function describeTransaction(
   snapshot: WorkspaceSnapshot,
   transaction: Transaction,
 ) {
-  const { split } = transaction;
+  const status = transactionStatus(transaction, snapshot.user.id);
 
   return {
     id: transaction.id,
@@ -83,11 +84,13 @@ export function describeTransaction(
     goalName: goalName(transaction.goal),
     memberId: transaction.memberId,
     memberName: memberName(snapshot, transaction.memberId),
-    split: split && {
-      partnerShare: amount(partnerShare(transaction.amount)),
-      paid: Boolean(split.paidAt),
-      paidAt: split.paidAt,
-    },
+    split: status.split
+      ? {
+          partnerShare: amount(partnerShare(transaction.amount)),
+          paid: Boolean(status.paidAt),
+          paidAt: status.paidAt,
+        }
+      : undefined,
     repaymentOf: transaction.settlementOf,
     recurrence: transaction.recurrenceId && {
       id: transaction.recurrenceId,
@@ -144,7 +147,7 @@ function splitBalance(snapshot: WorkspaceSnapshot, today: string) {
           : `Você deve para ${partner?.name ?? "a outra pessoa"}.`,
     unpaid: unpaid.map((t) => ({
       ...describeTransaction(snapshot, t),
-      owedByYou: t.memberId !== snapshot.user.id,
+      owedByYou: transactionStatus(t, snapshot.user.id).userOwes,
     })),
   };
 }

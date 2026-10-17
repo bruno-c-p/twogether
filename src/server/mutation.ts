@@ -17,10 +17,11 @@ export interface Mutation<
   Result,
   Optimistic,
   Name extends string = string,
+  RawInput = Input,
 > {
   readonly name: Name;
   readonly gate: G;
-  readonly parse: (input: Input, fail?: (message: string) => never) => Input;
+  readonly parse: (input: RawInput, fail?: (message: string) => never) => Input;
   readonly run: (
     store: Store,
     actor: ActorFor<G>,
@@ -61,6 +62,7 @@ export function mutations<Store, Snapshot = never>() {
     Name extends string,
     G extends Gate,
     Input,
+    RawInput,
     Result,
     Optimistic extends
       | ((snapshot: Snapshot, input: NoInfer<Input>, extra: never) => Snapshot)
@@ -69,7 +71,7 @@ export function mutations<Store, Snapshot = never>() {
     name: Name,
     spec: {
       gate: G;
-      schema: z.ZodType<Input>;
+      schema: z.ZodType<Input, RawInput>;
       run: (
         store: Store,
         actor: ActorFor<G>,
@@ -77,7 +79,7 @@ export function mutations<Store, Snapshot = never>() {
       ) => Promise<Result>;
       optimistic?: Optimistic;
     },
-  ): Mutation<G, Store, Input, Result, Optimistic, Name> {
+  ): Mutation<G, Store, Input, Result, Optimistic, Name, RawInput> {
     return {
       name,
       gate: spec.gate,
