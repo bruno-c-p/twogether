@@ -184,13 +184,16 @@ export async function expectToast(page: Page, message: string) {
   await dismissToast(page, message);
 }
 
-export async function expectNoHorizontalOverflow(page: Page) {
+export async function expectNoHorizontalOverflow(page: Page, screen = "page") {
   const box = await page.evaluate(() => ({
     scrollWidth: document.documentElement.scrollWidth,
     innerWidth: window.innerWidth,
   }));
 
-  expect(box.scrollWidth).toBeLessThanOrEqual(box.innerWidth);
+  expect(
+    box.scrollWidth,
+    `${screen} overflows at ${box.innerWidth}px`,
+  ).toBeLessThanOrEqual(box.innerWidth);
 }
 
 export async function withMobile(page: Page, run: () => Promise<void>) {

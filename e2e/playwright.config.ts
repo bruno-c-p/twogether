@@ -19,20 +19,32 @@ const databasePath =
 // Workers and retries share this run's throwaway database, never the app's.
 process.env.E2E_DATABASE_PATH = databasePath;
 
-function isFree(port: number) {
+function canListen(port: number, host?: string) {
   return new Promise<boolean>((resolve) => {
     const server = createServer();
 
     server.once("error", () => resolve(false));
-    server.listen(port, "127.0.0.1", () => server.close(() => resolve(true)));
+    server.listen(port, host, () => server.close(() => resolve(true)));
   });
 }
 
-// Worktrees run e2e side by side, so a busy 3400 moves to the next free
-// port. Workers inherit the choice through the environment.
+// On macOS a wildcard listener leaves 127.0.0.1 bindable and a loopback
+// listener leaves the wildcard bindable, so a port is free only if both bind.
+async function isFree(port: number) {
+  return (await canListen(port)) && (await canListen(port, "127.0.0.1"));
+}
+
+// Worktrees run e2e side by side. Starting at a random port in the range
+// keeps simultaneous runs from probing, and picking, the same one first.
+// Workers inherit the choice through the environment.
 async function freePort() {
-  for (let port = 3400; port < 3500; port += 1)
+  const start = Math.floor(Math.random() * 100);
+
+  for (let step = 0; step < 100; step += 1) {
+    const port = 3400 + ((start + step) % 100);
+
     if (await isFree(port)) return String(port);
+  }
 
   throw new Error("No free e2e port in 3400-3499");
 }
@@ -51,7 +63,8 @@ env.TURSO_AUTH_TOKEN = "";
 
 export default defineConfig({
   testDir: "./specs",
-  outputDir: "../test-results",
+  // Per port, so side-by-side runs never clean up each other's traces.
+  outputDir: `../test-results/${port}`,
   fullyParallel: false,
   workers: 1,
   forbidOnly: !!process.env.CI,

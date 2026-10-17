@@ -1,6 +1,7 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import {
   desktop,
+  expectNoHorizontalOverflow,
   expectToast,
   mobile,
   monthTrigger,
@@ -13,24 +14,13 @@ import {
   waitForHydrated,
 } from "../fixtures/app";
 
-async function expectFits(page: Page, screen: string) {
-  const box = await page.evaluate(() => ({
-    scrollWidth: document.documentElement.scrollWidth,
-    innerWidth: window.innerWidth,
-  }));
-
-  expect
-    .soft(box.scrollWidth, `${screen} overflows at ${box.innerWidth}px`)
-    .toBeLessThanOrEqual(box.innerWidth);
-}
-
 test("V1 key screens have no horizontal overflow at 320px", async ({
   page,
 }) => {
   await page.goto("/");
   await waitForGate(page);
   await page.setViewportSize(mobile);
-  await expectFits(page, "/entrar");
+  await expectNoHorizontalOverflow(page, "/entrar");
 
   await page.setViewportSize(desktop);
   await onboard(
@@ -62,7 +52,7 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
     await expect(
       page.getByRole("heading", { level: 1, name: heading }),
     ).toBeVisible();
-    await expectFits(page, heading);
+    await expectNoHorizontalOverflow(page, heading);
   }
 
   await nav(page, "mobile")
@@ -71,7 +61,7 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
   await expect(
     page.getByRole("dialog", { name: "Nova transação" }),
   ).toBeVisible();
-  await expectFits(page, "Nova transação");
+  await expectNoHorizontalOverflow(page, "Nova transação");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
@@ -79,7 +69,7 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
   await expect(
     page.getByRole("dialog", { name: "Escolher mês" }),
   ).toBeVisible();
-  await expectFits(page, "Escolher mês");
+  await expectNoHorizontalOverflow(page, "Escolher mês");
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
@@ -87,5 +77,5 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
   await expect(
     page.getByRole("heading", { name: "Nosso espaço" }),
   ).toBeVisible();
-  await expectFits(page, "Nosso espaço");
+  await expectNoHorizontalOverflow(page, "Nosso espaço");
 });

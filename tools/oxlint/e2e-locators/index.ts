@@ -12,6 +12,18 @@ function calledMethod(node: ESTree.CallExpression) {
   return callee.property.type === "Identifier" ? callee.property.name : null;
 }
 
+// "span" or `span`; anything built at runtime is not a bare tag.
+function staticString(
+  node: ESTree.CallExpression["arguments"][number] | undefined,
+) {
+  if (node?.type === "Literal") return String(node.value);
+
+  if (node?.type === "TemplateLiteral" && node.expressions.length === 0)
+    return node.quasis[0].value.cooked ?? "";
+
+  return "";
+}
+
 function followsGetByText(node: ESTree.Expression | ESTree.Super) {
   let current = node;
 
@@ -49,10 +61,7 @@ const noAmbiguousLocatorRule = defineRule({
         const method = calledMethod(node);
 
         if (method === "locator") {
-          const [selector] = node.arguments;
-
-          const tag =
-            selector?.type === "Literal" ? String(selector.value) : "";
+          const tag = staticString(node.arguments[0]);
 
           if (BARE_TAGS.has(tag))
             context.report({ node, messageId: "bareTag", data: { tag } });

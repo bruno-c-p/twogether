@@ -43,7 +43,8 @@
 - `doctor` (React Doctor, `doctor.config.json`) and `fallow`
   (`.fallowrc.json`) fail on any finding. Suppress one only when it is a
   proven false positive, with the reason written next to the suppression.
-- `e2e` runs on its own port (3400) against a throwaway SQLite file and
+- `e2e` runs on the first free port in 3400-3499, from a random start
+  (`E2E_PORT` overrides), against a throwaway SQLite file and
   never reuses a running dev server, so a `bun run dev` on 3000 is safe.
   Do not point it back at 3000 or at `data/twogether.sqlite`.
 - Clerk test accounts are reused across runs. Keep `uniqueEmail` seeded by

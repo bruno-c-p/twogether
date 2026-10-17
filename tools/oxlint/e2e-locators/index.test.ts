@@ -16,11 +16,16 @@ new RuleTester().run(
       'page.locator("[data-slot=toast]").getByText("Salvo");',
       'page.locator("html");',
       "row.getByText(label);",
+      "page.locator(`${tag}`);",
     ],
     invalid: [
       {
         // e2e/specs/transactions.spec.ts:66 on red main before #106.
         code: 'list.locator("span").getByText("Custo fixo", { exact: true });',
+        errors: [{ messageId: "bareTag" }],
+      },
+      {
+        code: 'list.locator(`span`).getByText("Custo fixo");',
         errors: [{ messageId: "bareTag" }],
       },
       {
