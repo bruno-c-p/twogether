@@ -1,7 +1,11 @@
 import { Pencil, Trash2 } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
-import { REPAYMENT_LOCK, deleteLock } from "@/features/budget/domain/view";
+import {
+  transactionStatus,
+  type TransactionStatus,
+} from "@/features/budget/domain/status";
+import { deleteLock, editLock } from "@/features/budget/domain/view";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
@@ -14,14 +18,14 @@ function amountLabel(transaction: Transaction, hidden: boolean) {
   return `${transaction.kind === "income" ? "+" : "−"} ${money(transaction.amount)}`;
 }
 
-function splitLabel(t: Transaction, userId: string) {
-  if (t.settlementOf) return t.kind === "income" ? "reembolso" : "parte paga";
+function splitLabel(t: Transaction, status: TransactionStatus) {
+  if (status.repayment) return t.kind === "income" ? "reembolso" : "parte paga";
 
-  if (!t.split) return "";
+  if (!status.split) return "";
 
-  if (t.split.paidAt) return "dividida · paga";
+  if (status.paidAt) return "dividida · paga";
 
-  return t.memberId === userId ? "dividida · a receber" : "dividida · a pagar";
+  return status.userOwes ? "dividida · a pagar" : "dividida · a receber";
 }
 
 function withLock(label: string, lock: string) {
@@ -96,9 +100,10 @@ export function TransactionRow({
   onDelete: (transaction: Transaction) => void;
 }) {
   const t = transaction;
-  const status = splitLabel(t, userId);
-  const editLock = t.settlementOf ? REPAYMENT_LOCK : "";
-  const removeLock = deleteLock(t);
+  const state = transactionStatus(t, userId);
+  const status = splitLabel(t, state);
+  const lock = editLock(state);
+  const removeLock = deleteLock(state);
 
   return (
     <li
@@ -119,8 +124,8 @@ export function TransactionRow({
             "block max-w-full truncate border-0 bg-transparent p-0 text-left text-md font-500 text-text",
             "after:content-[''] after:absolute after:inset-0 active:![transform:none] disabled:opacity-100 disabled:cursor-default",
           )}
-          disabled={busy || Boolean(editLock)}
-          title={editLock || undefined}
+          disabled={busy || Boolean(lock)}
+          title={lock || undefined}
           onClick={() => onEdit(t)}
         >
           {t.description}
@@ -149,8 +154,8 @@ export function TransactionRow({
         <Button
           variant="icon"
           className="text-text-muted"
-          disabled={busy || Boolean(editLock)}
-          aria-label={withLock(`Editar ${t.description}`, editLock)}
+          disabled={busy || Boolean(lock)}
+          aria-label={withLock(`Editar ${t.description}`, lock)}
           onClick={() => onEdit(t)}
         >
           <Pencil size={15} />

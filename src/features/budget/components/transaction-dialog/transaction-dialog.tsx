@@ -9,6 +9,7 @@ import {
   parseAmount,
 } from "@/features/budget/domain/format";
 import { transactionFormSchema } from "@/features/budget/domain/schemas";
+import { transactionStatus } from "@/features/budget/domain/status";
 import { deleteLock } from "@/features/budget/domain/view";
 import { fieldErrors } from "@/lib/zod-errors";
 import type {
@@ -153,9 +154,13 @@ function useTransactionForm({
   for (const field of VALIDATED_FIELDS)
     errors[field] = form.formState.errors[field]?.message;
 
+  const status = transaction
+    ? transactionStatus(transaction, currentUserId)
+    : undefined;
+
   // Only expenses between the two partners split; repayments never do.
   const canSplit =
-    kind === "expense" && members.length === 2 && !transaction?.settlementOf;
+    kind === "expense" && members.length === 2 && !status?.repayment;
 
   const memberId = transaction?.memberId ?? currentUserId;
 
@@ -228,7 +233,8 @@ function useTransactionForm({
     split,
     setSplit: (next: boolean) => setValue("split", next),
     canSplit,
-    paid: Boolean(transaction?.split?.paidAt),
+    status,
+    paid: Boolean(status?.paidAt),
     memberId,
   };
 }
@@ -348,6 +354,7 @@ function SplitSection({
       checked={form.split}
       amount={parseAmount(form.amount) ?? 0}
       transaction={transaction}
+      status={form.status}
       title={
         userIsDebtor
           ? `Dividir entre ${payerName} e você`
@@ -371,12 +378,14 @@ function SplitSection({
 // On phones the list has no delete icon, so the dialog is where it lives.
 function DeleteButton({
   transaction,
+  userId,
   onDelete,
 }: {
   transaction: Transaction;
+  userId: string;
   onDelete: (transaction: Transaction) => void;
 }) {
-  const lock = deleteLock(transaction);
+  const lock = deleteLock(transactionStatus(transaction, userId));
 
   return (
     <div className="grid gap-1.5 mt-2">
@@ -485,7 +494,11 @@ export function TransactionDialog({
             {serverError && <FormError>{serverError}</FormError>}
             <AuditHint transaction={transaction} members={members} />
             {transaction && (
-              <DeleteButton transaction={transaction} onDelete={onDelete} />
+              <DeleteButton
+                transaction={transaction}
+                userId={currentUserId}
+                onDelete={onDelete}
+              />
             )}
             <DialogFooter>
               <DialogDismiss>Cancelar</DialogDismiss>

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { OverviewCard } from "@/features/budget/components/overview-card";
 import { shortDay } from "@/features/budget/domain/format";
 import { partnerShare, type splitDebt } from "@/features/budget/domain/split";
+import { transactionStatus } from "@/features/budget/domain/status";
 import type { Member, Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
@@ -86,7 +87,9 @@ function DebtCard({
   onSettle: (transaction: Transaction) => void;
 }) {
   // The oldest split the user owes; settling it exposes the next one.
-  const owed = unpaid.find((transaction) => transaction.memberId !== userId);
+  const owed = unpaid.find(
+    (transaction) => transactionStatus(transaction, userId).userOwes,
+  );
 
   const Icon = net > 0 ? ArrowDownLeft : net < 0 ? ArrowUpRight : Check;
 
@@ -187,9 +190,9 @@ function UnpaidList({
                   {transaction.description}
                 </span>
                 <span className="truncate text-text-muted text-sm">
-                  {transaction.memberId === userId
-                    ? `${partner.name} deve`
-                    : "Você deve"}
+                  {transactionStatus(transaction, userId).userOwes
+                    ? "Você deve"
+                    : `${partner.name} deve`}
                   {" · "}
                   {shortDay(transaction.date)}
                 </span>

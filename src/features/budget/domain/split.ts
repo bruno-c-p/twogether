@@ -1,25 +1,27 @@
+import {
+  isRepayment,
+  transactionStatus,
+} from "@/features/budget/domain/status";
 import type { Transaction } from "@/features/budget/domain/types";
 import { halfDown, minusCents, sumCents } from "@/lib/decimal";
 
 export const partnerShare = halfDown;
-
-const isRepayment = (transaction: Transaction) =>
-  Boolean(transaction.settlementOf);
 
 export function usTransactions(transactions: Transaction[]) {
   return transactions.filter((transaction) => !isRepayment(transaction));
 }
 
 // Splits dated after `today` (e.g. upcoming recurrences) are not owed yet.
-function unpaidSplits(transactions: Transaction[], today: string) {
-  return transactions.filter(
-    (transaction) =>
-      transaction.kind === "expense" &&
-      transaction.split &&
-      !transaction.split.paidAt &&
-      !isRepayment(transaction) &&
-      transaction.date <= today,
-  );
+function unpaidSplits(
+  transactions: Transaction[],
+  userId: string,
+  today: string,
+) {
+  return transactions.filter((transaction) => {
+    const status = transactionStatus(transaction, userId);
+
+    return status.split && !status.paidAt && transaction.date <= today;
+  });
 }
 
 /**
@@ -31,7 +33,7 @@ export function splitDebt(
   userId: string,
   today: string,
 ) {
-  const unpaid = unpaidSplits(transactions, today).sort((a, b) =>
+  const unpaid = unpaidSplits(transactions, userId, today).sort((a, b) =>
     a.date.localeCompare(b.date),
   );
 
@@ -39,7 +41,8 @@ export function splitDebt(
     sumCents(
       unpaid
         .filter(
-          (transaction) => (transaction.memberId === userId) === paidByUser,
+          (transaction) =>
+            transactionStatus(transaction, userId).userOwes !== paidByUser,
         )
         .map((transaction) => partnerShare(transaction.amount)),
     );

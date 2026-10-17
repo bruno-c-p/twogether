@@ -13,6 +13,11 @@ import {
   transactionSchema,
 } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
+import {
+  transactionStatus,
+  type TransactionLock,
+  type TransactionStatus,
+} from "@/features/budget/domain/status";
 import type {
   GoalPercentages,
   Transaction,
@@ -90,10 +95,15 @@ const REPAYMENT_LOCKED =
 const PAID_LOCKED =
   "Esta despesa dividida já foi paga. Desmarque o pagamento antes de alterar valor, tipo, divisão ou excluí-la.";
 
-function assertUnlocked(stored: Transaction) {
-  if (stored.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+const LOCKED = {
+  repayment: REPAYMENT_LOCKED,
+  paid: PAID_LOCKED,
+} satisfies Record<TransactionLock, string>;
 
-  if (stored.split?.paidAt) throw new RequestError(PAID_LOCKED);
+function assertUnlocked(stored: Transaction, user: UserRow) {
+  const { lock } = transactionStatus(stored, user.id);
+
+  if (lock) throw new RequestError(LOCKED[lock]);
 }
 
 function touched(stored: Transaction, user: UserRow) {
@@ -206,26 +216,40 @@ function isRetriedCreate(stored: Transaction, t: Transaction, userId: string) {
 
 // Repayments and paid splits are locked; a new split needs both partners.
 // Editing an existing split keeps its stored settlement state.
-function lockedEditError(t: Transaction, previous: Transaction | undefined) {
+function lockedEditError(
+  t: Transaction,
+  previous: Transaction | undefined,
+  user: UserRow,
+) {
   if (!previous) return undefined;
 
-  if (previous.settlementOf) return REPAYMENT_LOCKED;
+  const { lock } = transactionStatus(previous, user.id);
 
-  if (!previous.split?.paidAt) return undefined;
+  switch (lock) {
+    case undefined:
+      return undefined;
+    case "repayment":
+      return REPAYMENT_LOCKED;
+    case "paid": {
+      const changed =
+        !t.split || t.amount !== previous.amount || t.kind !== previous.kind;
 
-  const changed =
-    !t.split || t.amount !== previous.amount || t.kind !== previous.kind;
+      return changed ? PAID_LOCKED : undefined;
+    }
 
-  return changed ? PAID_LOCKED : undefined;
+    default:
+      return lock satisfies never;
+  }
 }
 
 async function assertSplitEditable(
   transaction: DatabaseTransaction,
   householdId: string,
+  user: UserRow,
   t: Transaction,
   previous: Transaction | undefined,
 ) {
-  const locked = lockedEditError(t, previous);
+  const locked = lockedEditError(t, previous, user);
 
   if (locked) throw new RequestError(locked);
 
@@ -319,7 +343,7 @@ async function saveTransaction(
     assertRevision(old, given);
     assertSingleEdit(old, occurrences);
 
-    await assertSplitEditable(transaction, householdId, t, previous);
+    await assertSplitEditable(transaction, householdId, user, t, previous);
 
     const first = firstOccurrence({
       transaction: t,
@@ -388,7 +412,7 @@ async function deleteFollowing(
 
   if (!matchesExpected(following, expected)) throw conflict();
 
-  for (const row of following) assertUnlocked(row.item);
+  for (const row of following) assertUnlocked(row.item, user);
 
   if (!following.length) return;
 
@@ -417,7 +441,7 @@ async function deleteTransaction(
     if (!previous) throw conflict();
     const item = storedTransaction(previous.payload);
 
-    if (!previous.deleted) assertUnlocked(item);
+    if (!previous.deleted) assertUnlocked(item, user);
 
     if (input.following !== undefined)
       await deleteFollowing(
@@ -455,7 +479,8 @@ async function restoreTransaction(
     if (!previous) throw conflict();
     const item = storedTransaction(previous.payload);
 
-    if (item.settlementOf) throw new RequestError(REPAYMENT_LOCKED);
+    if (transactionStatus(item, user.id).repayment)
+      throw new RequestError(REPAYMENT_LOCKED);
 
     const result = await execute(
       transaction,
@@ -467,7 +492,12 @@ async function restoreTransaction(
   });
 }
 
-type SplitSource = { id: string; revision: number; stored: Transaction };
+type SplitSource = {
+  id: string;
+  revision: number;
+  stored: Transaction;
+  status: TransactionStatus;
+};
 
 async function splitSource(
   transaction: DatabaseTransaction,
@@ -484,14 +514,15 @@ async function splitSource(
 
   if (!row || row.deleted || row.revision !== input.revision) throw conflict();
   const stored = storedTransaction(row.payload);
+  const status = transactionStatus(stored, user.id);
 
-  if (!stored.split || stored.kind !== "expense" || stored.settlementOf)
+  if (!status.split)
     throw new RequestError("Esta transação não está dividida.");
 
-  if (stored.memberId === user.id)
+  if (!status.userOwes)
     throw new RequestError("Só quem deve pode marcar este pagamento.", 403);
 
-  return { id: input.id, revision: row.revision, stored };
+  return { id: input.id, revision: row.revision, stored, status };
 }
 
 // Runs the split update last in the batch and fails when it hit no row.
@@ -528,7 +559,7 @@ async function settleSplit(
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, householdId, input);
 
-    if (source.stored.split?.paidAt) throw conflict();
+    if (source.status.paidAt) throw conflict();
 
     const now = clockNow().toISOString();
     const { stored } = source;
@@ -583,7 +614,7 @@ async function unsettleSplit(
   await ctx.atomic(async (transaction) => {
     const source = await splitSource(transaction, user, householdId, input);
 
-    if (!source.stored.split?.paidAt) throw conflict();
+    if (!source.status.paidAt) throw conflict();
 
     await batchWithSplit(
       transaction,
@@ -591,7 +622,7 @@ async function unsettleSplit(
       user,
       source,
       {},
-      (source.stored.split.entryIds ?? []).map((entryId) => ({
+      (source.stored.split?.entryIds ?? []).map((entryId) => ({
         sql: "UPDATE transactions SET deleted = 1, revision = revision + 1 WHERE household_id = ? AND id = ? AND deleted = 0",
         args: [householdId, entryId],
       })),

@@ -1,5 +1,9 @@
 import { GOALS } from "@/features/budget/constants";
 import { usTransactions } from "@/features/budget/domain/split";
+import type {
+  TransactionLock,
+  TransactionStatus,
+} from "@/features/budget/domain/status";
 import type { Transaction } from "@/features/budget/domain/types";
 
 // Without a member, the couple's shared view ("Nós"): repayments between the
@@ -31,13 +35,19 @@ export function matchesKind(
   return transaction.kind === kind;
 }
 
-export const REPAYMENT_LOCK =
-  "reembolso: desmarque o pagamento na transação original";
+const REPAYMENT_LOCK = "reembolso: desmarque o pagamento na transação original";
 
 // Repayments are edited through the original split; a paid split must be
 // unmarked before it can be deleted.
-export function deleteLock(t: Transaction) {
-  if (t.settlementOf) return REPAYMENT_LOCK;
+const DELETE_LOCKS = {
+  repayment: REPAYMENT_LOCK,
+  paid: "desmarque o pagamento antes",
+} satisfies Record<TransactionLock, string>;
 
-  return t.split?.paidAt ? "desmarque o pagamento antes" : "";
+export function deleteLock(status: TransactionStatus) {
+  return status.lock ? DELETE_LOCKS[status.lock] : "";
+}
+
+export function editLock(status: TransactionStatus) {
+  return status.repayment ? REPAYMENT_LOCK : "";
 }
