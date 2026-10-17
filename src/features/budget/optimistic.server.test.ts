@@ -87,17 +87,29 @@ function idsIn(input: BudgetInput<OptimisticName>) {
   );
 }
 
-function fieldGaps(id: string, painted: Transaction, server: Transaction) {
+// The server mints a new series' id, so the paint of a row it has never seen
+// leaves the series fields to the refetch.
+const SERIES_FIELDS = new Set(["recurrenceId", "recurrenceIndex"]);
+
+function fieldGaps(
+  id: string,
+  painted: Transaction,
+  server: Transaction,
+  isNew: boolean,
+) {
   const mine = new Map(Object.entries(comparable(painted)));
   const theirs = new Map(Object.entries(comparable(server)));
+  const minted = isNew && painted.recurrenceId === undefined;
 
-  return [...new Set([...mine.keys(), ...theirs.keys()])].flatMap((key) =>
-    Bun.deepEquals(mine.get(key), theirs.get(key))
-      ? []
-      : [
-          `${id}.${key}: painted ${JSON.stringify(mine.get(key))}, server ${JSON.stringify(theirs.get(key))}`,
-        ],
-  );
+  return [...new Set([...mine.keys(), ...theirs.keys()])]
+    .filter((key) => !(minted && SERIES_FIELDS.has(key)))
+    .flatMap((key) =>
+      Bun.deepEquals(mine.get(key), theirs.get(key))
+        ? []
+        : [
+            `${id}.${key}: painted ${JSON.stringify(mine.get(key))}, server ${JSON.stringify(theirs.get(key))}`,
+          ],
+    );
 }
 
 // The server may add rows (repayments, later occurrences) the client cannot
@@ -116,6 +128,8 @@ function gaps(
 
   const served = new Map(after.budget.transactions.map((t) => [t.id, t]));
 
+  const beforeIds = new Set(before.budget.transactions.map((t) => t.id));
+
   const known = new Set([
     ...before.budget.transactions.map((t) => t.id),
     ...named,
@@ -124,7 +138,7 @@ function gaps(
   for (const [id, row] of paint) {
     const server = served.get(id);
 
-    if (server) found.push(...fieldGaps(id, row, server));
+    if (server) found.push(...fieldGaps(id, row, server, !beforeIds.has(id)));
     else found.push(`${id} is painted but not on the server`);
   }
 
@@ -197,6 +211,18 @@ const scenarios = {
       }),
     },
     {
+      title: "adds a monthly series",
+      arrange: async (store, people) => ({
+        actor: await withHousehold(store, people.a.user),
+        args: [
+          {
+            transaction: { ...transaction("ana"), id: "new-series" },
+            occurrences: 3,
+          },
+        ],
+      }),
+    },
+    {
       title: "edits the partner's transaction",
       arrange: async (store, people) => {
         const { saved } = await seeded(store, people, {
@@ -221,8 +247,9 @@ const scenarios = {
   ],
   deleteTransaction: [
     {
-      title: "deletes a transaction",
+      title: "deletes a transaction and leaves the others",
       arrange: async (store, people) => {
+        await seeded(store, people, { ...transaction("ana"), id: "bystander" });
         const { ana, saved } = await seeded(store, people, transaction("ana"));
 
         return {
@@ -335,6 +362,17 @@ describe("optimistic updates agree with the server", () => {
   // are those names.
   for (const name of Object.keys(byName) as OptimisticName[]) suite(name);
 
+  test("an updater that drops unrelated rows fails parity", async () => {
+    const [deleteOne] = scenarios.deleteTransaction;
+
+    expect(
+      await parity(ctx.store, "deleteTransaction", deleteOne, (snapshot) => ({
+        ...snapshot,
+        budget: { ...snapshot.budget, transactions: [] },
+      })),
+    ).toEqual(["bystander is on the server but not painted"]);
+  });
+
   test("an updater that paints nothing fails parity", async () => {
     const [restore] = scenarios.restoreTransaction;
 
@@ -349,7 +387,11 @@ describe("optimistic updates agree with the server", () => {
   });
 
   test("an updater that keeps the stale row next to the edit fails parity", async () => {
-    const [, edit] = scenarios.saveTransaction;
+    const edit = scenarios.saveTransaction.find(
+      (scenario) => scenario.title === "edits the partner's transaction",
+    );
+
+    if (!edit) throw new Error("edit scenario missing");
 
     const appended = await parity(
       ctx.store,
