@@ -25,8 +25,6 @@ const SELF = [
   "scripts/fitness.ts",
   "scripts/fitness-checks.ts",
   "scripts/fitness-checks.test.ts",
-  "scripts/fitness-styles.ts",
-  "scripts/fitness-styles.test.ts",
 ];
 
 const MEDIA = /\.(png|jpe?g|webp|gif|mp4|webm|mov)$/i;

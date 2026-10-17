@@ -36,13 +36,32 @@ const BOX_SIDES = new Map([
 
 const BOX_UTILITY = /^-?(p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml)-./;
 
+const PX = String.raw`\d+(?:\.\d+)?px`;
+
+const BRACKET_PX = new RegExp(
+  String.raw`^(-?[a-z][a-z0-9-]*?)-\[([^\]]*${PX}[^\]]*)\]$`,
+);
+
+const PROPERTY_PX = new RegExp(String.raw`^\[[a-z-]+:([^\]]*${PX}[^\]]*)\]$`);
+
+const BARE_PX = new RegExp(`^(-?[a-z][a-z0-9-]*?)-(${PX})$`);
+
 const NAV_TOKEN_USES: [string, string][] = [
   ["src/features/budget/components/workspace-navigation.tsx", "h-mobile-nav"],
   ["src/features/budget/components/workspace-shell.tsx", "pb-mobile-nav"],
   ["src/components/ui/toaster.tsx", "var(--mobile-nav-height)"],
 ];
 
-type ClassToken = { token: string; line: number; literal: number };
+// One className attribute or cx() call is one element's class list. Every
+// other string literal is its own group. A ternary's two branches never
+// apply together, so pieces under opposite branches never conflict.
+type ClassToken = {
+  token: string;
+  line: number;
+  group: number;
+  inClass: boolean;
+  branches: string[];
+};
 
 function styledSources(repo: Repo) {
   return repo
@@ -50,38 +69,71 @@ function styledSources(repo: Repo) {
     .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file));
 }
 
-function literalTexts(file: string, text: string) {
-  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
-  const literals: { text: string; line: number }[] = [];
+function isClassExpression(node: ts.Node) {
+  if (ts.isJsxAttribute(node)) return node.name.getText() === "className";
 
-  const visit = (node: ts.Node) => {
-    if (
-      ts.isStringLiteral(node) ||
-      ts.isNoSubstitutionTemplateLiteral(node) ||
-      ts.isTemplateHead(node) ||
-      ts.isTemplateMiddle(node) ||
-      ts.isTemplateTail(node)
-    )
-      literals.push({
-        text: node.text,
-        line: source.getLineAndCharacterOfPosition(node.getStart()).line + 1,
-      });
-
-    ts.forEachChild(node, visit);
-  };
-
-  visit(source);
-
-  return literals;
+  return (
+    ts.isCallExpression(node) &&
+    ts.isIdentifier(node.expression) &&
+    node.expression.text === "cx"
+  );
 }
 
-function classTokens(file: string, text: string): ClassToken[] {
-  return literalTexts(file, text).flatMap(({ text: literal, line }, index) =>
-    literal
-      .split(/\s+/)
-      .filter(Boolean)
-      .map((token) => ({ token, line, literal: index })),
+function isStaticPiece(node: ts.Node): node is ts.LiteralLikeNode {
+  return (
+    ts.isStringLiteral(node) ||
+    ts.isNoSubstitutionTemplateLiteral(node) ||
+    ts.isTemplateHead(node) ||
+    ts.isTemplateMiddle(node) ||
+    ts.isTemplateTail(node)
   );
+}
+
+function classTokens(file: string, text: string) {
+  const source = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true);
+  const tokens: ClassToken[] = [];
+  let groups = 0;
+
+  const visit = (node: ts.Node, group: number, branches: string[]) => {
+    const inClass = group >= 0;
+    const own = !inClass && isClassExpression(node) ? groups++ : group;
+
+    if (isStaticPiece(node)) {
+      const line =
+        source.getLineAndCharacterOfPosition(node.getStart()).line + 1;
+
+      const piece = own >= 0 ? own : groups++;
+
+      for (const token of node.text.split(/\s+/).filter(Boolean))
+        tokens.push({ token, line, group: piece, inClass, branches });
+
+      return;
+    }
+
+    if (ts.isConditionalExpression(node)) {
+      const id = node.getStart();
+
+      visit(node.condition, own, branches);
+      visit(node.whenTrue, own, [...branches, `${id}:true`]);
+      visit(node.whenFalse, own, [...branches, `${id}:false`]);
+
+      return;
+    }
+
+    ts.forEachChild(node, (child) => visit(child, own, branches));
+  };
+
+  visit(source, -1, []);
+
+  return tokens;
+}
+
+function exclusive(a: string[], b: string[]) {
+  return a.some((branch) => {
+    const [id, side] = branch.split(":");
+
+    return b.includes(`${id}:${side === "true" ? "false" : "true"}`);
+  });
 }
 
 function splitVariant(token: string) {
@@ -96,18 +148,22 @@ function splitVariant(token: string) {
     else if (char === ":" && depth === 0) cut = index;
   }
 
-  return { variant: token.slice(0, cut + 1), utility: token.slice(cut + 1) };
+  return {
+    variant: token.slice(0, cut + 1),
+    utility: token.slice(cut + 1).replace(/^!|!$/g, ""),
+  };
 }
 
 function arbitraryPx(token: string) {
   const { utility } = splitVariant(token);
 
-  const match =
-    /^(?:(-?[a-z][a-z0-9-]*?)-)?\[([^\]]*\d+(?:\.\d+)?px[^\]]*)\]$/.exec(
-      utility,
-    );
+  const match = BRACKET_PX.exec(utility) ?? BARE_PX.exec(utility);
 
-  return match ? { prefix: match[1] ?? "", value: match[2] ?? "" } : undefined;
+  if (match) return { prefix: match[1] ?? "", value: match[2] ?? "" };
+
+  const property = PROPERTY_PX.exec(utility);
+
+  return property ? { prefix: "", value: property[1] ?? "" } : undefined;
 }
 
 const GENERIC_SUGGESTION =
@@ -141,7 +197,7 @@ function baselineCounts(repo: Repo) {
 export function noNewArbitraryPx(repo: Repo) {
   const allowed = baselineCounts(repo);
 
-  return styledSources(repo).flatMap((file) =>
+  const added = styledSources(repo).flatMap((file) =>
     classTokens(file, repo.read(file)).flatMap(({ token, line }) => {
       const px = arbitraryPx(token);
 
@@ -161,6 +217,16 @@ export function noNewArbitraryPx(repo: Repo) {
       ];
     }),
   );
+
+  const stale = [...allowed].flatMap(([key, left]) =>
+    left > 0
+      ? [
+          `${PX_BASELINE} lists ${key.replace("\t", " ")} ${left} more time(s) than the code uses it; delete those lines so the value cannot come back`,
+        ]
+      : [],
+  );
+
+  return [...added, ...stale];
 }
 
 function overlaps(a: string, b: string) {
@@ -173,24 +239,29 @@ function overlaps(a: string, b: string) {
 
 export function conflictingBoxUtilities(file: string, text: string) {
   const failures: string[] = [];
-  const seen = new Map<string, { property: string; token: string }[]>();
+  const seen = new Map<string, (ClassToken & { property: string })[]>();
 
-  for (const { token, line, literal } of classTokens(file, text)) {
-    const { variant, utility } = splitVariant(token);
+  for (const piece of classTokens(file, text)) {
+    const { variant, utility } = splitVariant(piece.token);
     const property = BOX_UTILITY.exec(utility)?.[1];
 
     if (!property) continue;
 
-    const key = `${literal}|${variant}`;
+    const key = `${piece.group}|${variant}`;
     const earlier = seen.get(key) ?? [];
-    const clash = earlier.find((other) => overlaps(other.property, property));
+
+    const clash = earlier.find(
+      (other) =>
+        overlaps(other.property, property) &&
+        !exclusive(other.branches, piece.branches),
+    );
 
     if (clash)
       failures.push(
-        `${file}:${line} sets ${clash.token} and ${token} on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)`,
+        `${file}:${piece.line} sets ${clash.token} and ${piece.token} on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)`,
       );
 
-    seen.set(key, [...earlier, { property, token }]);
+    seen.set(key, [...earlier, { ...piece, property }]);
   }
 
   return failures;
@@ -202,12 +273,21 @@ function noConflictingBoxUtilities(repo: Repo) {
   );
 }
 
+function usesClass(repo: Repo, file: string, use: string) {
+  return (
+    repo.exists(file) &&
+    classTokens(file, repo.read(file)).some(
+      ({ token, inClass }) => inClass && token.includes(use),
+    )
+  );
+}
+
 export function mobileNavToken(repo: Repo) {
   return NAV_TOKEN_USES.flatMap(([file, use]) =>
-    repo.exists(file) && repo.read(file).includes(use)
+    usesClass(repo, file, use)
       ? []
       : [
-          `${file} must use ${use}: the mobile nav height lives in --mobile-nav-height (src/styles.css) so the nav and what clears it cannot drift`,
+          `${file} must use ${use} in its className: the mobile nav height lives in --mobile-nav-height (src/styles.css) so the nav and what clears it cannot drift`,
         ],
   );
 }
