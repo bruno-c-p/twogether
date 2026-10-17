@@ -42,7 +42,7 @@ export function AccountDrawer({
           <SheetTrigger
             aria-label={`Abrir nosso espaço: ${memberLabel}`}
             title={`Nosso espaço: ${memberLabel}`}
-            className="flex items-center pl-2 border-0 bg-transparent p-0 cursor-pointer"
+            className="flex items-center py-0 pr-0 pl-2 border-0 bg-transparent cursor-pointer"
           >
             <MemberAvatars
               members={members}

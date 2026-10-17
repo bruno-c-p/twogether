@@ -88,6 +88,8 @@
   --on-balance: var(--on-hero);
   --on-balance-muted: var(--on-hero-muted);
   --danger-on-brand: #f3a3a6;
+  /* Phone nav: 1px border + pt-2 + 52px tab row + bottom inset. Whatever clears the nav reads this. */
+  --mobile-nav-height: calc(61px + max(20px, env(safe-area-inset-bottom, 0px)));
 }
 
 :root[data-theme="dark"] {

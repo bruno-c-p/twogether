@@ -99,7 +99,7 @@ export function MobileNavigation({
     <nav
       aria-label="Navegação mobile"
       className={cx(
-        "hidden max-bp1000:grid grid-cols-[1fr_1fr_auto_1fr_1fr] fixed bottom-0 inset-x-0 z-30 items-center",
+        "hidden max-bp1000:grid grid-cols-[1fr_1fr_auto_1fr_1fr] fixed bottom-0 inset-x-0 z-30 h-mobile-nav items-center",
         "bg-mobile-nav backdrop-blur [border-width:1px_0_0] border-solid border-border",
         "pl-[max(8px,env(safe-area-inset-left,0px))] pr-[max(8px,env(safe-area-inset-right,0px))] pt-2 pb-[max(20px,env(safe-area-inset-bottom,0px))]",
       )}

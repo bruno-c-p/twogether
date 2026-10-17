@@ -56,7 +56,7 @@ export function HouseholdBillsCard({
       </div>
       {goals.length ? (
         <>
-          <p className="m-0 mb-4 text-sm text-text-muted tabular-nums">
+          <p className="mb-4 text-sm text-text-muted tabular-nums">
             {displayMoney(total)} no mês · {displayMoney(share)} para cada
           </p>
           <div

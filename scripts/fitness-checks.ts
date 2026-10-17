@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { styleChecks } from "./fitness-styles";
 
 export type Repo = {
   tracked: (patterns: string[]) => string[];
@@ -211,6 +212,7 @@ export function sourceChecks(repo: Repo) {
     ...cssHouseStyle(repo),
     ...unoWiring(repo),
     ...componentModuleLayout(repo),
+    ...styleChecks(repo),
   ];
 }
 

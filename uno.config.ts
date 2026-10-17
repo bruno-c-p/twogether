@@ -74,6 +74,7 @@ export default defineConfig({
     // Fixed 4px base: p-4 is 16px at every root font size.
     spacing: {
       DEFAULT: "4px",
+      "mobile-nav": "var(--mobile-nav-height)",
     },
     radius: {
       sm: "6px",
