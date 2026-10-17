@@ -20,6 +20,7 @@ import {
   type Repo,
 } from "./fitness-checks";
 import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
+import { mutationRules } from "./fitness-mutations";
 import {
   conflictingBoxUtilities,
   mobileNavToken,
@@ -569,5 +570,183 @@ describe("domain baseline ratchet", () => {
       ).toEqual([
         `${DOMAIN_BASELINE} gained 1 entry since abc123; it may only shrink. Read the new hit through transactionStatus or z.infer instead of grandfathering it:\n${added}`,
       ]);
+  });
+});
+
+describe("mutation wiring", () => {
+  const registry = "src/features/budget/actions/mutations.ts";
+  const barrel = "src/features/budget/actions/index.ts";
+
+  const statement = (name: string, validator: string, handler: string) =>
+    `const ${name} = createServerFn({ method: "POST" })
+  .middleware([householdMiddleware])
+  .validator(defs.${validator}.parse)
+  .handler(serve(defs.${handler}));`;
+
+  const check = (files: Record<string, string>) =>
+    mutationRules(repoWith({ [registry]: "", ...files }));
+
+  test("accepts statements that name one definition", () => {
+    expect(
+      check({
+        [barrel]: statement("settleSplit", "settleSplit", "settleSplit"),
+      }),
+    ).toEqual([]);
+  });
+
+  test("rejects a handler or validator from another definition", () => {
+    expect(
+      check({
+        [barrel]: statement("settleSplit", "unsettleSplit", "unsettleSplit"),
+      }),
+    ).toEqual([
+      `${barrel}: settleSplit must end in .handler(serve(defs.settleSplit))`,
+      `${barrel}: settleSplit must validate with defs.settleSplit.parse`,
+    ]);
+  });
+
+  test("rejects an exported statement", () => {
+    expect(
+      check({
+        [barrel]: `export ${statement("settleSplit", "settleSplit", "settleSplit")}`,
+      }),
+    ).toEqual([
+      `${barrel}: settleSplit is exported; call it through the feature's actions object`,
+    ]);
+  });
+
+  test("sees through extra createServerFn options", () => {
+    expect(
+      check({
+        [barrel]: statement(
+          "settleSplit",
+          "settleSplit",
+          "unsettleSplit",
+        ).replace('{ method: "POST" }', '{ method: "POST", strict: false }'),
+      }),
+    ).toEqual([
+      `${barrel}: settleSplit must end in .handler(serve(defs.settleSplit))`,
+    ]);
+  });
+
+  test("rejects a statement exported by an export list", () => {
+    expect(
+      check({
+        [barrel]: `${statement("settleSplit", "settleSplit", "settleSplit")}\nexport { settleSplit };`,
+      }),
+    ).toEqual([
+      `${barrel}: settleSplit may only appear as its own entry in the actions object`,
+    ]);
+  });
+
+  test("rejects an intermediate object that re-keys a statement", () => {
+    expect(
+      check({
+        [barrel]: `${statement("settleSplit", "settleSplit", "settleSplit")}
+${statement("unsettleSplit", "unsettleSplit", "unsettleSplit")}
+const internal = { settleSplit, unsettleSplit };
+export const budgetActions = { settleSplit: internal.unsettleSplit, unsettleSplit } satisfies BudgetActions;`,
+      }),
+    ).toEqual([
+      `${barrel}: unsettleSplit must appear in exactly one actions object`,
+    ]);
+  });
+
+  test("rejects a statement that is not a top-level const", () => {
+    expect(
+      check({
+        [barrel]: `const settleSplit = (() => {
+  ${statement("inner", "inner", "inner")}
+  return inner;
+})();`,
+      }),
+    ).toEqual([`${barrel}: a server fn must be a top-level const`]);
+  });
+
+  test("rejects a barrel statement that is not POST", () => {
+    expect(
+      check({
+        [barrel]: statement(
+          "settleSplit",
+          "settleSplit",
+          "settleSplit",
+        ).replace('{ method: "POST" }', ""),
+      }),
+    ).toEqual([
+      `${barrel}: settleSplit must be createServerFn({ method: "POST" })`,
+    ]);
+  });
+
+  test("rejects a serve() handler outside the barrel", () => {
+    const stray = "src/features/budget/actions/archive.ts";
+
+    expect(
+      check({
+        [barrel]: "",
+        [stray]: "const x = createServerFn().handler(serve(defs.archive));",
+      }),
+    ).toEqual([`${stray}: mutation server fns belong in ${barrel}`]);
+  });
+
+  test("rejects an actions entry wired to another statement", () => {
+    expect(
+      check({
+        [barrel]: `${statement("settleSplit", "settleSplit", "settleSplit")}
+${statement("unsettleSplit", "unsettleSplit", "unsettleSplit")}
+const budgetActions = { settleSplit: unsettleSplit, unsettleSplit } satisfies BudgetActions;
+export { budgetActions };`,
+      }),
+    ).toEqual([
+      `${barrel}: unsettleSplit may only appear as its own entry in the actions object`,
+    ]);
+  });
+
+  test("rejects a POST server fn outside the barrel", () => {
+    const stray = "src/features/budget/actions/archive.ts";
+
+    expect(
+      check({
+        [barrel]: "",
+        [stray]: 'const x = createServerFn({ strict: false, method: "POST" });',
+      }),
+    ).toEqual([`${stray}: mutation server fns belong in ${barrel}`]);
+  });
+
+  test("rejects a registry entry named or run as another mutation", () => {
+    const entry = (
+      key: string,
+      method: string,
+      name = key,
+    ) => `const budgetMutations = {
+  ${key}: define("${name}", {
+    gate: "household",
+    schema: s,
+    run: (store, actor, input) =>
+      store.${method}(actor.user, actor.householdId, input),
+  }),
+};`;
+
+    expect(check({ [registry]: entry("settleSplit", "settleSplit") })).toEqual(
+      [],
+    );
+    expect(
+      check({ [registry]: entry("settleSplit", "unsettleSplit") }),
+    ).toEqual([`${registry}: settleSplit must run store.settleSplit`]);
+    expect(
+      check({
+        [registry]: entry("settleSplit", "settleSplit", "unsettleSplit"),
+      }),
+    ).toEqual([`${registry}: settleSplit must be define("settleSplit", ...)`]);
+  });
+
+  test("leaves features without a registry alone", () => {
+    expect(
+      mutationRules(
+        repoWith({
+          "src/features/auth/actions/set-name.ts":
+            'export const setName = createServerFn({ method: "POST" })',
+        }),
+      ),
+    ).toEqual([]);
   });
 });
