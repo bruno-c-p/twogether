@@ -12,7 +12,6 @@ The budget screen (`Orçamento`, route `/orcamento`) splits income across six fi
 ## How to get to it (user POV)
 
 - Desktop: link `Orçamento` in `Navegação principal`. Phone: link `Orçamento` in `Navegação mobile`.
-- A goal link on the overview opens the budget.
 
 ## Driving it with verify.ts
 
@@ -30,6 +29,6 @@ Preconditions:
 
 ## Gotchas
 
-- Planned amounts use the couple's total income even when a person is selected.
+- Under a person filter, planned amounts come from that person's income, not the couple's. Goal links open `/transacoes` filtered by that goal, not this screen.
 - Hidden values zero the bar widths (`0%`); show values before judging bars.
 - Concurrent edits to percentages from both partners are rejected with a message to review the current version.

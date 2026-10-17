@@ -186,7 +186,10 @@ function listener(port: number) {
 }
 
 function ours(run: Run) {
-  return alive(run.pid) && command(run.pid).includes(SERVER_ENTRY);
+  return (
+    alive(run.pid) &&
+    command(run.pid).includes(`${SERVER_ENTRY} ${run.scratch}`)
+  );
 }
 
 async function fetchOk(url: string, text?: string) {
@@ -224,7 +227,8 @@ async function launch(args: string[]) {
   const log = join(scratch, "server.log");
   const out = openSync(log, "a");
 
-  const server = spawn("node", [SERVER_ENTRY], {
+  // The scratch path in argv makes the process identifiable per run.
+  const server = spawn("node", [SERVER_ENTRY, scratch], {
     cwd: ROOT,
     detached: true,
     stdio: ["ignore", out, out],
@@ -322,7 +326,7 @@ async function doctor(dir: string | undefined) {
 async function cleanup(dir: string | undefined) {
   const run = readRun(dir);
 
-  if (ours(run)) {
+  if (!run.cleanedAt && ours(run)) {
     process.kill(-run.pid, "SIGTERM");
 
     for (let attempt = 0; attempt < 20 && alive(run.pid); attempt += 1)

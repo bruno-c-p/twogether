@@ -1,5 +1,6 @@
-// Transactions journey: add, persist, edit, filter, search, month switch,
-// delete and undo, value hiding, then the responsive/theme sweep.
+// Transactions journey: add, persist, edit, kind and goal filters, search,
+// filtered empty state, phone entry, month switch, delete and undo, value
+// hiding, then the responsive/theme sweep.
 // Run: .claude/skills/verify-twogether/scripts/verify.ts drive "$RUN" .claude/skills/verify-twogether/journeys/transactions.ts
 import type { Kit } from "../scripts/verify.ts";
 
@@ -90,6 +91,32 @@ export default async function transactions(kit: Kit) {
   await shot(page, "05-search");
   await page.getByRole("button", { name: "Limpar busca" }).click();
   await expect(row("Mercado")).toBeVisible();
+
+  step("goal filter Custo fixo, then the filtered empty state");
+  await page.getByLabel("Filtrar por meta").click();
+  await page.getByRole("option", { name: "Custo fixo" }).click();
+  await expect(row("Mercado")).toBeVisible();
+  await expect(row("Salário")).toHaveCount(0);
+  await page.getByLabel("Buscar transações").fill("zzz");
+  await expect(list.getByText("Nenhuma transação encontrada.")).toBeVisible();
+  await shot(page, "05b-filtered-empty");
+  await list.getByRole("button", { name: "Limpar filtros" }).click();
+  await expect(row("Salário")).toBeVisible();
+  await expect(row("Mercado")).toBeVisible();
+
+  step("phone entry: Registrar transação opens the sheet, Escape closes it");
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page
+    .getByRole("navigation", { name: "Navegação mobile" })
+    .getByRole("button", { name: "Registrar transação" })
+    .click();
+  const sheet = page.getByRole("dialog", { name: "Nova transação" });
+
+  await expect(sheet).toBeVisible();
+  await shot(page, "05c-phone-sheet");
+  await page.keyboard.press("Escape");
+  await expect(sheet).toHaveCount(0);
+  await page.setViewportSize({ width: 1280, height: 800 });
 
   step("month switch: 2026-10 is empty, 2026-09 keeps its rows");
   await kit.setMonth(page, "2026-10");

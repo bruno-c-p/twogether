@@ -6,8 +6,8 @@ The overview (`Visão geral`, route `/`) summarizes the selected month for the s
 
 - `balance` shows `Sobra de <mês>` (or `Sobra desta pessoa em <mês>` under a person filter) and the remaining amount.
 - `totals` shows `Entradas` and `Saídas` for the month.
-- `goals` lists each goal as a link named `<Meta>: R$ x de R$ y planejados`.
-- `household-bills` (`Contas da casa`) shows fixed costs and each person's share, `<Meta>: R$ x, R$ y para cada`.
+- `goals` lists each goal as a link named `<Meta>: R$ x de R$ y planejados` that opens `/transacoes` filtered by that goal.
+- `household-bills` (`Contas da casa`) totals split expenses per goal with each person's share, `<Meta>: R$ x, R$ y para cada`.
 - `split-debt` (`Acerto entre vocês`) shows who owes whom, or `Nada pendente entre vocês`.
 - `latest` (`Últimas transações`) lists recent rows with `Editar <descrição>` buttons and a `Ver todas` link.
 - `hide-values` masks every amount as `R$ ••••` until shown again or the page reloads.
@@ -29,8 +29,8 @@ Preconditions:
 
 - **Empty state.** Before adding anything: `getByRole("region", { name: "Resumo mensal" })` contains `Sobra de`, and `Nenhuma transação neste mês.` plus `Nenhuma conta dividida neste mês.` are visible. `sweep(page, "overview-empty")`.
 - **Balance and totals.** With the two rows: `Resumo mensal` contains `/R\$\s*4\.954,10/`. `getByRole("region", { name: "Entradas e saídas do mês" })` contains `Entradas` and `Saídas` with `/R\$\s*45,90/`.
-- **Goals.** `getByRole("link", { name: /Custo fixo: R\$\s*45,90 de R\$\s*1\.500,00 planejados/ })` is visible.
-- **Household bills.** `getByRole("heading", { name: "Contas da casa" })` is visible and the card lists `Custo fixo` with a per-person share.
+- **Goals.** `getByRole("link", { name: /Custo fixo: R\$\s*45,90 de R\$\s*1\.500,00 planejados/ })` is visible. Choosing it opens `/transacoes` with `goal=` in the URL and only `Custo fixo` rows.
+- **Household bills.** Couple journey with the split `Aluguel` from [splits](./splits.md): `getByRole("heading", { name: "Contas da casa" })` is visible and the card has a link named `/Custo fixo: R\$\s*2\.000,00, R\$\s*1\.000,00 para cada/`. A solo household has no split expenses, so the card has no goal rows.
 - **Latest transactions.** `getByRole("heading", { name: "Últimas transações" })`, `getByRole("button", { name: "Editar Mercado" })`, `getByRole("link", { name: /Ver todas/ })` are visible. `Ver todas` opens `/transacoes` with the same `month`.
 - **Hide values.** Choose `getByRole("button", { name: "Ocultar valores" })`. `Resumo mensal` contains `R$ ••••`, the button becomes `Mostrar valores`, and the URL has no `hidden`. `kit.reload(page)`: amounts are back.
 - **Split debt.** Couple journey, `ana` adds a split expense (see [splits](./splits.md)). `getByRole("region", { name: "Acerto entre vocês" })` shows `Bia te deve R$ 1.000,00` on Ana's page and `Você deve R$ 1.000,00 a Ana` on Bia's.
@@ -41,6 +41,6 @@ Preconditions:
 ## Gotchas
 
 - The goal-card bar fill reads `0%` while values are hidden; that is intended, not a broken bar.
-- Planned amounts always use the couple's total income, even under a person filter.
+- Under a person filter, planned amounts come from that person's income, not the couple's.
 - Repayment entries from a settled split count in individual views but not in `Nós`.
 - The overview and the transactions screen share the month and person in the URL; switching on one carries to the other.

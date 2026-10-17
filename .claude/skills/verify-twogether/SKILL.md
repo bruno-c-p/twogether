@@ -54,7 +54,7 @@ Read-only. Run it first, and again whenever anything looks off. Every line must 
 - the run was not cleaned up
 - the port is in 3500-3599 (never 3000)
 - the database lives in this run's scratch dir, not `data/`
-- the recorded pid is alive and is `.output/server/index.mjs`
+- the recorded pid is alive and is `.output/server/index.mjs` started with this run's scratch path
 - that pid owns the listening port
 - `/manifest.webmanifest` and `/entrar` respond
 - the build matches the working tree (HEAD + diff of `src`, `public`, Vite/Uno config). If this fails, `cleanup` and `launch` again
@@ -133,12 +133,12 @@ Proof standards:
 .claude/skills/verify-twogether/scripts/verify.ts cleanup "$RUN"
 ```
 
-Stops the recorded pid only if it is still our `.output/server/index.mjs` (never by name, never anything on another port), copies `server.log` into the run dir, deletes the scratch dir and its SQLite file, and stamps `cleanedAt` in `run.json`. Evidence stays. Run cleanup after every run, including failed launches and failed drives, before trying again.
+Stops the recorded pid only if its command line is still `.output/server/index.mjs <this run's scratch dir>` and the run was not already cleaned (never by name, so a recycled pid is left alone), copies `server.log` into the run dir, deletes the scratch dir and its SQLite file, and stamps `cleanedAt` in `run.json`. Evidence stays. Run cleanup after every run, including failed launches and failed drives, before trying again.
 
 ## Helpers
 
 - `scripts/verify.ts`: the launch/doctor/drive/cleanup helper above. Executable with Bun (`#!/usr/bin/env bun`); it resolves Playwright, `@clerk/testing` and `@clerk/backend` from the repo's `node_modules`.
-- `journeys/transactions.ts`: maintained proof for [transactions](features/transactions.md). Signs in, covers empty state, add, reload, edit, filters, search, month switch, delete with undo, value hiding, and the filled sweep.
+- `journeys/transactions.ts`: maintained proof for [transactions](features/transactions.md). Signs in, covers empty state, add, reload, edit, kind and goal filters, search, filtered empty state, phone entry, month switch, delete with undo, value hiding, and the filled sweep.
 
 ## Gotchas
 
