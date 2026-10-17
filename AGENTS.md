@@ -176,10 +176,14 @@ simple or low-impact.
   Track pending, error, and success through the mutation instead of flags.
 - Form fields and local picker values: React Hook Form (`useForm`,
   `useWatch`, `setValue`), with `zodResolver` when a schema exists.
-- URL state (month, person, filters, list page, open dialogs): nuqs, with
-  parsers in `src/features/budget/search.ts` built from the route schemas.
-- Open/closed UI (sheets, dialogs): let Base UI own it uncontrolled; close
-  from code through the `actions` ref.
+- URL state (month, person, filters, list page): nuqs, with parsers in
+  `src/features/budget/search.ts` built from the route schemas.
+- Workspace dialogs (transaction, percentages, delete, settle) open through
+  the URL: nuqs `dialogParams` in `src/features/budget/search.ts`, read by
+  `hooks/use-workspace-dialogs.ts`.
+- Every other sheet and popover: let Base UI own it uncontrolled; close from
+  code through the `actions` ref, as `account-drawer.tsx` and
+  `month-filter.tsx` do.
 - Side effects: run them in the event handler, a route lifecycle hook
   (`onLeave`, `beforeLoad`), the router's `defaultOnCatch`, or
   `useBrowserSync` (`src/lib/use-browser-sync.ts`) for browser-only syncs.
