@@ -23,6 +23,7 @@
   end to end. For changes with no direct UI effect, do at least a basic
   load-and-navigate test of the app and also validate the specific behavior
   of the change.
+- Do this with the `verify-twogether` skill (`.claude/skills/verify-twogether/`).
 - Check the visual result and responsiveness on desktop, tablet, and phone,
   including 320px-wide screens. Verify clipping, overlaps, and unintended
   horizontal scrolling. Inspect light and dark themes when there is UI.
