@@ -1,4 +1,7 @@
-import { describe, expect, test } from "bun:test";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import {
   budgetMutations,
   type BudgetExtra,
@@ -10,7 +13,8 @@ import type {
   WorkspaceSnapshot,
 } from "@/features/budget/domain/types";
 import type { ActorFor } from "@/server/mutation";
-import type { Store } from "@/server/store.server";
+import { createStoreContext, type StoreContext } from "@/server/db.server";
+import { createStore, type Store } from "@/server/store.server";
 import {
   couple,
   setupMemoryStore,
@@ -284,5 +288,57 @@ describe("optimistic updates agree with the server", () => {
         budgetMutations.unsettleSplit.optimistic,
       ),
     ).not.toEqual([]);
+  });
+});
+
+// Rows saved before memberId existed: the server reads the owner from
+// createdBy, and the optimistic paint must agree.
+describe("legacy rows without a memberId", () => {
+  let dir = "";
+  let store: Store | undefined;
+  let raw: StoreContext | undefined;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "twogether-parity-"));
+    store = createStore(join(dir, "db.sqlite"));
+    raw = createStoreContext(join(dir, "db.sqlite"));
+  });
+
+  afterEach(() => {
+    store?.close();
+    raw?.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("saveTransaction: the partner edits a legacy row", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const db = raw.db;
+
+    const legacyEdit: Scenario<"saveTransaction"> = {
+      title: "the partner edits a legacy row",
+      arrange: async (current, people) => {
+        await seeded(current, people, { ...transaction("ana"), id: "legacy" });
+        await db.execute({
+          sql: "UPDATE transactions SET payload = json_remove(payload, '$.memberId') WHERE id = ?",
+          args: ["legacy"],
+        });
+
+        const bia = await withHousehold(current, people.b.user);
+
+        const row = (await view(current, bia.user)).budget.transactions.find(
+          (t) => t.id === "legacy",
+        );
+
+        if (!row) throw new Error("legacy row missing");
+
+        return {
+          actor: bia,
+          args: [{ transaction: { ...row, description: "Feira" } }],
+        };
+      },
+    };
+
+    expect(await parity(store, "saveTransaction", legacyEdit)).toEqual([]);
   });
 });

@@ -1,5 +1,10 @@
 import type { Transaction } from "@/features/budget/domain/types";
 
+// Rows saved before memberId existed belong to whoever created them.
+export function ownerOf(previous: Transaction | undefined, userId: string) {
+  return previous?.memberId ?? previous?.createdBy ?? userId;
+}
+
 // The stored row keeps its recurrence and authorship; a new recurring
 // transaction starts a series at index 0.
 export function firstOccurrence({
@@ -19,7 +24,7 @@ export function firstOccurrence({
     ...transaction,
     recurrenceId: previous?.recurrenceId ?? (recurring ? newId() : undefined),
     recurrenceIndex: previous?.recurrenceIndex ?? (recurring ? 0 : undefined),
-    memberId: previous?.memberId ?? previous?.createdBy ?? userId,
+    memberId: ownerOf(previous, userId),
     createdBy: previous?.createdBy ?? userId,
   };
 }
