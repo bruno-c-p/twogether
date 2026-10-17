@@ -1,4 +1,9 @@
-import { createParser, parseAsIndex, parseAsInteger, parseAsString } from "nuqs";
+import {
+  createParser,
+  parseAsIndex,
+  parseAsInteger,
+  parseAsString,
+} from "nuqs";
 import { z } from "zod";
 import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import {

@@ -57,9 +57,7 @@ describe("progressText", () => {
   });
 
   test("an empty plan drops the share", () => {
-    expect(progressText(goalProgress(0, 0), false, money)).toBe(
-      "restam R$0",
-    );
+    expect(progressText(goalProgress(0, 0), false, money)).toBe("restam R$0");
   });
 
   test("hidden values keep only the over-plan warning", () => {

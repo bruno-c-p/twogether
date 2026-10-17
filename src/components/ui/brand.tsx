@@ -39,9 +39,7 @@ export function Brand({
       {children ?? (
         <>
           <span className={textClassName}>twogether</span>
-          <span className={cx("text-text-muted -ml-2", textClassName)}>
-            .
-          </span>
+          <span className={cx("text-text-muted -ml-2", textClassName)}>.</span>
         </>
       )}
     </Link>

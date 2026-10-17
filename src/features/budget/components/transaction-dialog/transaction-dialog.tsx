@@ -389,11 +389,7 @@ function DeleteButton({
       >
         <Trash2 size={16} /> Excluir transação
       </Button>
-      {lock && (
-        <FieldHint id="delete-lock">
-          Para excluir: {lock}.
-        </FieldHint>
-      )}
+      {lock && <FieldHint id="delete-lock">Para excluir: {lock}.</FieldHint>}
     </div>
   );
 }

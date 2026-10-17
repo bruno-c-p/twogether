@@ -47,12 +47,36 @@
   --category-targets: #e03a64;
   --category-knowledge: #8a4ff0;
   --category-freedom: #00897d;
-  --category-fixed-bg: color-mix(in srgb, var(--category-fixed) 14%, var(--surface));
-  --category-pleasure-bg: color-mix(in srgb, var(--category-pleasure) 14%, var(--surface));
-  --category-comfort-bg: color-mix(in srgb, var(--category-comfort) 14%, var(--surface));
-  --category-targets-bg: color-mix(in srgb, var(--category-targets) 14%, var(--surface));
-  --category-knowledge-bg: color-mix(in srgb, var(--category-knowledge) 14%, var(--surface));
-  --category-freedom-bg: color-mix(in srgb, var(--category-freedom) 14%, var(--surface));
+  --category-fixed-bg: color-mix(
+    in srgb,
+    var(--category-fixed) 14%,
+    var(--surface)
+  );
+  --category-pleasure-bg: color-mix(
+    in srgb,
+    var(--category-pleasure) 14%,
+    var(--surface)
+  );
+  --category-comfort-bg: color-mix(
+    in srgb,
+    var(--category-comfort) 14%,
+    var(--surface)
+  );
+  --category-targets-bg: color-mix(
+    in srgb,
+    var(--category-targets) 14%,
+    var(--surface)
+  );
+  --category-knowledge-bg: color-mix(
+    in srgb,
+    var(--category-knowledge) 14%,
+    var(--surface)
+  );
+  --category-freedom-bg: color-mix(
+    in srgb,
+    var(--category-freedom) 14%,
+    var(--surface)
+  );
   /* Legacy names, kept until components move to the roles above. */
   --green: var(--brand);
   --accent: var(--brand);
