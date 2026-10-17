@@ -27,8 +27,9 @@
   "rules": {
     "unused-dependencies": "warn"
   },
-  // First matching zone wins, so each feature's index.ts zone precedes its
-  // internals. Older violations live in scripts/boundary-baseline.json.
+  // First matching zone wins, so each feature's public zones (*-store, *-api)
+  // precede its internals. Older violations live in
+  // scripts/boundary-baseline.json.
   "boundaries": {
     "zones": [
       // The composition root: the only code that may import feature stores,
@@ -57,8 +58,40 @@
         "name": "budget-domain",
         "patterns": ["src/features/budget/domain/**"]
       },
-      { "name": "budget-api", "patterns": ["src/features/budget/index.ts"] },
+      // A feature's public API: index.ts for functions and types, plus the
+      // component modules routes or other features render. They stay
+      // separate modules so a lazy route chunk does not pull a barrel's other
+      // components in with it. Every export of a listed module is public.
+      {
+        "name": "budget-api",
+        "patterns": [
+          "src/features/budget/index.ts",
+          "src/features/budget/components/budget-app/budget-app.tsx",
+          "src/features/budget/components/screens/*.tsx",
+          "src/features/budget/components/workspace-skeleton.tsx"
+        ]
+      },
       { "name": "theme-api", "patterns": ["src/features/theme/index.ts"] },
+      {
+        "name": "auth-api",
+        "patterns": [
+          "src/features/auth/index.ts",
+          "src/features/auth/components/account-drawer.tsx",
+          "src/features/auth/components/account-gate/account-gate.tsx"
+        ]
+      },
+      {
+        "name": "household-api",
+        "patterns": [
+          "src/features/household/index.ts",
+          "src/features/household/components/member-list/member-list.tsx"
+        ]
+      },
+      // The MCP feature's public surface is its HTTP endpoint module.
+      {
+        "name": "mcp-api",
+        "patterns": ["src/features/mcp/endpoint.server.ts"]
+      },
       { "name": "auth", "patterns": ["src/features/auth/**"] },
       { "name": "break-ui", "patterns": ["src/features/break-ui/**"] },
       { "name": "budget", "patterns": ["src/features/budget/**"] },
@@ -93,11 +126,53 @@
       { "from": "budget-domain", "allow": ["lib"] },
       {
         "from": "budget-api",
-        "allow": ["budget", "theme-api", "server", "lib", "components"]
+        "allow": [
+          "budget",
+          "budget-domain",
+          "theme-api",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "theme-api",
         "allow": ["theme", "budget-api", "server", "lib", "components"]
+      },
+      {
+        "from": "auth-api",
+        "allow": [
+          "auth",
+          "budget-api",
+          "theme-api",
+          "server",
+          "lib",
+          "components",
+          "household-api"
+        ]
+      },
+      {
+        "from": "household-api",
+        "allow": [
+          "household",
+          "budget-api",
+          "theme-api",
+          "server",
+          "lib",
+          "components"
+        ]
+      },
+      {
+        "from": "mcp-api",
+        "allow": [
+          "mcp",
+          "budget-api",
+          "theme-api",
+          "store",
+          "server",
+          "lib",
+          "components"
+        ]
       },
       {
         "from": "budget",
@@ -115,11 +190,13 @@
         "from": "auth",
         "allow": [
           "budget-api",
+          "household-api",
           "theme-api",
           "store",
           "server",
           "lib",
-          "components"
+          "components",
+          "auth-api"
         ]
       },
       {
@@ -134,13 +211,15 @@
           "store",
           "server",
           "lib",
-          "components"
+          "components",
+          "household-api"
         ]
       },
       {
         "from": "mcp",
         "allow": [
           "budget-api",
+          "mcp-api",
           "theme-api",
           "store",
           "server",
@@ -156,6 +235,8 @@
         "from": "app",
         "allow": [
           "budget-api",
+          "auth-api",
+          "mcp-api",
           "theme-api",
           "store",
           "server",

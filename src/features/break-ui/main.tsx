@@ -18,7 +18,7 @@ import {
 import { UserRound } from "lucide-react";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
-import { MobileTabContent } from "@/features/budget/components/workspace-navigation";
+import { MobileTabContent } from "@/components/ui/mobile-tab-content";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";

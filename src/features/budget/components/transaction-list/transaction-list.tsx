@@ -17,7 +17,7 @@ import type {
 import { pageParam, type KindFilter } from "@/features/budget/search";
 import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
 import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/features/budget/components/empty-state";
+import { EmptyState } from "@/components/ui/empty-state";
 import { cx } from "@/lib/cx";
 import { minusCents, ZERO_CENTS } from "@/lib/decimal";
 

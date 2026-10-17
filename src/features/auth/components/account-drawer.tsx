@@ -2,7 +2,7 @@ import { useRef } from "react";
 import { useClerk } from "@clerk/tanstack-react-start";
 import { AccountSettings } from "@/features/auth/components/account-settings";
 import { ThemeToggle } from "@/features/theme";
-import type { Member } from "@/features/budget/domain/types";
+import type { Member, AccountPlacement } from "@/features/budget";
 import {
   Sheet,
   SheetHeader,
@@ -11,8 +11,7 @@ import {
 } from "@/components/ui/sheet";
 import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import { PersonAvatar } from "@/components/ui/person-avatar";
-import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
-import { MobileTabContent } from "@/features/budget/components/workspace-navigation";
+import { MobileTabContent } from "@/components/ui/mobile-tab-content";
 import { cx } from "@/lib/cx";
 
 export function AccountDrawer({

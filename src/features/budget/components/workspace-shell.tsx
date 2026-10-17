@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { AppFooter } from "@/features/budget/components/app-footer/app-footer";
+import { AppFooter } from "@/components/ui/app-footer/app-footer";
 import {
   DesktopNavigation,
   MobileNavigation,

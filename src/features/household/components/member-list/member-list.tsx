@@ -1,4 +1,4 @@
-import type { Member } from "@/features/budget/domain/types";
+import type { Member } from "@/features/budget";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import styles from "@/features/household/components/member-list/member-list.module.css";
 
