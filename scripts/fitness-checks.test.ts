@@ -172,6 +172,13 @@ describe("fitness source checks", () => {
             'export {\n  Screen,\n} from "@/features/a/components/screen";',
             'export * from "@/features/a/components/panel";',
             'export * as Rows from "@/features/a/components/rows";',
+            'import { Card } from "@/features/a/components/card";',
+            'import {\n  Grid,\n} from "@/features/a/components/grid";',
+            'import * as Tiles from "@/features/a/components/tiles";',
+            'import "@/features/a/components/styles";',
+            'import type { CardProps } from "@/features/a/components/card";',
+            'import { parse } from "@/features/a/search";',
+            "export { Card, Grid, Tiles };",
           ].join("\n"),
           "src/features/a/components/index.ts":
             'export { Row } from "@/features/a/components/row";',
@@ -180,9 +187,13 @@ describe("fitness source checks", () => {
         }),
       ),
     ).toEqual([
-      "src/features/a/index.ts re-exports @/features/a/components/screen; list that module in the feature's -api zone in .fallowrc.json instead",
-      "src/features/a/index.ts re-exports @/features/a/components/panel; list that module in the feature's -api zone in .fallowrc.json instead",
-      "src/features/a/index.ts re-exports @/features/a/components/rows; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/screen; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/panel; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/rows; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/card; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/grid; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/tiles; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts links @/features/a/components/styles; list that module in the feature's -api zone in .fallowrc.json instead",
     ]);
   });
 

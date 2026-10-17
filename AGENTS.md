@@ -184,8 +184,9 @@
   `validateSearch`) loads eagerly, and a barrel that re-exports a component
   drags that component and its CSS into the main chunk. A component another
   feature or a route renders joins its feature's `-api` zone as its own
-  module instead. `bun run fitness` fails on a component re-export from a
-  feature `index.ts`; `theme/index.ts` is the one listed exception.
+  module instead. `bun run fitness` fails when a feature `index.ts`
+  re-exports or value-imports a component module; `theme/index.ts` is the
+  one listed exception.
 - `oxlint.config.ts` keeps `domain/` free of React, TanStack, server modules
   and `node:*`. Only server-side files may import `*.server` modules or
   `@/server/**`: `*.server.ts`, `src/server/`, `actions/`, `src/start.ts`,

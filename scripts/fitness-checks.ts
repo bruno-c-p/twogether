@@ -221,8 +221,10 @@ const COMPONENT_BARRELS = [
   "src/features/theme/index.ts",
 ];
 
-const VALUE_REEXPORT =
-  /^export\s+(?:\*(?:\s+as\s+\w+)?|\{[^}]*\})\s+from\s+"([^"]+)"/gm;
+// Value re-exports, value imports (an import plus a later `export { X }`
+// links the module just the same) and bare imports. Type-only ones are erased.
+const VALUE_LINK =
+  /^(?:export\s+(?:\*(?:\s+as\s+\w+)?|\{[^}]*\})|import\s+(?!type\s)[^;"]*?)\s+from\s+"([^"]+)"|^import\s+"([^"]+)"/gm;
 
 export function noComponentBarrels(repo: Repo) {
   return repo
@@ -233,12 +235,12 @@ export function noComponentBarrels(repo: Repo) {
         !COMPONENT_BARRELS.includes(file),
     )
     .flatMap((file) =>
-      [...repo.read(file).matchAll(VALUE_REEXPORT)].flatMap((match) => {
-        const source = match[1] ?? "";
+      [...repo.read(file).matchAll(VALUE_LINK)].flatMap((match) => {
+        const source = match[1] ?? match[2] ?? "";
 
         return source.includes("/components/")
           ? [
-              `${file} re-exports ${source}; list that module in the feature's -api zone in .fallowrc.json instead`,
+              `${file} links ${source}; list that module in the feature's -api zone in .fallowrc.json instead`,
             ]
           : [];
       }),
