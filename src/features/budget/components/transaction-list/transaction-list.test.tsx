@@ -237,6 +237,27 @@ describe("TransactionList", () => {
     expect(rowNames(screen)).toEqual(["Editar Compra 0"]);
   });
 
+  test("a page link below 1 opens the first page", () => {
+    const transactions = Array.from({ length: 51 }, (_, index) =>
+      transaction({
+        id: String(index).padStart(3, "0"),
+        description: `Compra ${index}`,
+        date: "2026-09-10",
+      }),
+    );
+
+    const { screen } = renderPlain(
+      <List transactions={transactions} />,
+      "?page=0",
+    );
+
+    expect(screen.getByText(/Página 1 de 2/)).toBeTruthy();
+    expect(rowNames(screen)).toHaveLength(50);
+    expect(
+      screen.getByRole("button", { name: "Anterior" }).hasAttribute("disabled"),
+    ).toBe(true);
+  });
+
   test("row actions edit and delete, and hidden values mask amounts", async () => {
     const onEdit = vi.fn();
     const onDelete = vi.fn();
