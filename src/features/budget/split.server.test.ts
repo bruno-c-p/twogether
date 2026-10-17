@@ -8,6 +8,7 @@ import {
   view,
   withHousehold,
 } from "@/features/budget/services/store-test-harness";
+import { cents } from "@/test/cents";
 
 const ctx = setupMemoryStore();
 
@@ -16,7 +17,7 @@ function rent(memberId: string): Transaction {
     ...transaction(memberId),
     id: "rent",
     description: "Aluguel",
-    amount: 200001,
+    amount: cents(200001),
     split: {},
   };
 }
@@ -82,7 +83,7 @@ describe("split transactions", () => {
       date: "2026-09-20",
       goal: "fixed",
     });
-    expect((await find()).amount).toBe(200001);
+    expect((await find()).amount).toBe(cents(200001));
   });
 
   test("only the person who owes can settle or unsettle", async () => {
@@ -146,7 +147,7 @@ describe("split transactions", () => {
     const paid = await find();
 
     for (const change of [
-      { amount: 1000 },
+      { amount: cents(1000) },
       { split: undefined },
       { kind: "income" as const, goal: null },
     ])
@@ -180,7 +181,7 @@ describe("split transactions", () => {
 
     await expect(
       store.saveTransaction(ana.user, ana.householdId, {
-        transaction: { ...entry, amount: 5 },
+        transaction: { ...entry, amount: cents(5) },
       }),
     ).rejects.toThrow("reembolso");
     await expect(

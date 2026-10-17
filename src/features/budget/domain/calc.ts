@@ -1,23 +1,22 @@
-import Big from "big.js";
 import { GOALS } from "@/features/budget/constants";
 import type { Transaction, MemberBudget } from "@/features/budget/domain/types";
-import { percentOf, sum } from "@/lib/decimal";
+import { minusCents, percentageOf, percentOf, sumCents } from "@/lib/decimal";
+
+const total = (
+  transactions: Transaction[],
+  include: (transaction: Transaction) => boolean,
+) => sumCents(transactions.flatMap((t) => (include(t) ? [t.amount] : [])));
 
 export function summarize(transactions: Transaction[]) {
-  const income = sum(
-    transactions.map((t) => (t.kind === "income" ? t.amount : 0)),
-  );
+  const income = total(transactions, (t) => t.kind === "income");
 
-  const expenses = sum(
-    transactions.map((t) => (t.kind === "expense" ? t.amount : 0)),
-  );
+  const expenses = total(transactions, (t) => t.kind === "expense");
 
   const goals = GOALS.map((goal) => ({
     ...goal,
-    amount: sum(
-      transactions.map((t) =>
-        t.kind === "expense" && t.goal === goal.id ? t.amount : 0,
-      ),
+    amount: total(
+      transactions,
+      (t) => t.kind === "expense" && t.goal === goal.id,
     ),
     count: transactions.filter(
       (t) => t.kind === "expense" && t.goal === goal.id,
@@ -27,7 +26,7 @@ export function summarize(transactions: Transaction[]) {
   return {
     income,
     expenses,
-    balance: new Big(income).minus(expenses).toNumber(),
+    balance: minusCents(income, expenses),
     goals,
   };
 }
@@ -39,8 +38,8 @@ export function memberTotals(transactions: Transaction[], memberIds: string[]) {
 
     return {
       memberId,
-      income: sum(own.map((t) => (t.kind === "income" ? t.amount : 0))),
-      expenses: sum(own.map((t) => (t.kind === "expense" ? t.amount : 0))),
+      income: total(own, (t) => t.kind === "income"),
+      expenses: total(own, (t) => t.kind === "expense"),
     };
   });
 }
@@ -51,29 +50,23 @@ export function planGoals(
 ) {
   const incomes = members.map((member) => ({
     member,
-    income: sum(
-      transactions.map((transaction) =>
-        transaction.kind === "income" && transaction.memberId === member.id
-          ? transaction.amount
-          : 0,
-      ),
+    income: total(
+      transactions,
+      (transaction) =>
+        transaction.kind === "income" && transaction.memberId === member.id,
     ),
   }));
 
-  const income = sum(incomes.map((item) => item.income));
+  const income = sumCents(incomes.map((item) => item.income));
 
   return GOALS.map((goal) => {
     const shares = incomes.map((item) => ({
       memberId: item.member.id,
-      planned: new Big(item.income)
-        .times(item.member.percentages[goal.id])
-        .div(100)
-        .round(0, Big.roundHalfUp)
-        .toNumber(),
+      planned: percentageOf(item.income, item.member.percentages[goal.id]),
       percentage: item.member.percentages[goal.id],
     }));
 
-    const planned = sum(shares.map((share) => share.planned));
+    const planned = sumCents(shares.map((share) => share.planned));
 
     return {
       id: goal.id,

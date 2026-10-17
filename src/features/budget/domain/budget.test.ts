@@ -20,12 +20,13 @@ import {
 } from "@/features/budget/domain/schemas";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { Transaction } from "@/features/budget/domain/types";
+import { cents } from "@/test/cents";
 
 const transactions: Transaction[] = [
   {
     id: "income",
     description: "Salário",
-    amount: 100000,
+    amount: cents(100000),
     kind: "income",
     date: "2026-09-01",
     goal: null,
@@ -33,7 +34,7 @@ const transactions: Transaction[] = [
   {
     id: "fixed",
     description: "Aluguel",
-    amount: 30000,
+    amount: cents(30000),
     kind: "expense",
     date: "2026-09-05",
     goal: "fixed",
@@ -41,7 +42,7 @@ const transactions: Transaction[] = [
   {
     id: "pleasure",
     description: "Jantar",
-    amount: 10000,
+    amount: cents(10000),
     kind: "expense",
     date: "2026-09-11",
     goal: "pleasure",
@@ -243,7 +244,7 @@ describe("individual goal planning", () => {
   const income = (memberId: string, amount: number): Transaction => ({
     id: memberId,
     memberId,
-    amount,
+    amount: cents(amount),
     kind: "income",
     description: "Salário",
     date: "2026-09-14",
@@ -314,7 +315,7 @@ describe("memberTotals", () => {
   ): Transaction => ({
     id: `${memberId}-${kind}-${amount}`,
     memberId,
-    amount,
+    amount: cents(amount),
     kind,
     description: "x",
     date: "2026-09-14",

@@ -1,9 +1,7 @@
-import Big from "big.js";
 import type { Transaction } from "@/features/budget/domain/types";
-import { sum } from "@/lib/decimal";
+import { halfDown, minusCents, sumCents } from "@/lib/decimal";
 
-export const partnerShare = (amount: number) =>
-  new Big(amount).div(2).round(0, Big.roundDown).toNumber();
+export const partnerShare = halfDown;
 
 const isRepayment = (transaction: Transaction) =>
   Boolean(transaction.settlementOf);
@@ -37,13 +35,16 @@ export function splitDebt(
     a.date.localeCompare(b.date),
   );
 
-  const net = sum(
-    unpaid.map((transaction) => {
-      const share = partnerShare(transaction.amount);
+  const shares = (paidByUser: boolean) =>
+    sumCents(
+      unpaid
+        .filter(
+          (transaction) => (transaction.memberId === userId) === paidByUser,
+        )
+        .map((transaction) => partnerShare(transaction.amount)),
+    );
 
-      return transaction.memberId === userId ? share : -share;
-    }),
-  );
+  const net = minusCents(shares(true), shares(false));
 
   return { net, unpaid };
 }

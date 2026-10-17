@@ -14,6 +14,7 @@ import {
   view,
   withHousehold,
 } from "@/features/budget/services/store-test-harness";
+import { cents } from "@/test/cents";
 
 const ctx = setupMemoryStore();
 
@@ -31,11 +32,11 @@ describe("budget store", () => {
     expect(received.createdBy).toBe(a.user.id);
     const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.householdId, {
-      transaction: { ...received, amount: 15000 },
+      transaction: { ...received, amount: cents(15000) },
     });
     const edited = (await view(store, a.user)).budget.transactions[0];
     expect(edited.memberId).toBe(a.user.id);
-    expect(edited.amount).toBe(15000);
+    expect(edited.amount).toBe(cents(15000));
     expect(edited.updatedBy).toBe(b.user.id);
     expect(edited.createdBy).toBe(a.user.id);
   });
@@ -50,11 +51,11 @@ describe("budget store", () => {
     const old = (await view(store, a.user)).budget.transactions[0];
     const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.householdId, {
-      transaction: { ...old, amount: 20000 },
+      transaction: { ...old, amount: cents(20000) },
     });
     await expect(
       store.saveTransaction(ana.user, ana.householdId, {
-        transaction: { ...old, amount: 1 },
+        transaction: { ...old, amount: cents(1) },
       }),
     ).rejects.toThrow("mudou");
     await store.saveTransaction(bia.user, bia.householdId, {
@@ -65,7 +66,7 @@ describe("budget store", () => {
       (await view(store, a.user)).budget.transactions.find(
         (row) => row.id === old.id,
       )?.amount,
-    ).toBe(20000);
+    ).toBe(cents(20000));
   });
 
   test("retrying a create whose response was lost succeeds instead of conflicting", async () => {
@@ -78,7 +79,7 @@ describe("budget store", () => {
     expect((await view(store, a.user)).budget.transactions).toHaveLength(1);
     await expect(
       store.saveTransaction(ana.user, ana.householdId, {
-        transaction: { ...t, amount: 999 },
+        transaction: { ...t, amount: cents(999) },
       }),
     ).rejects.toThrow("mudou");
   });
@@ -105,9 +106,11 @@ describe("budget store", () => {
     const restored = (await view(store, b.user)).budget.transactions;
     expect(restored).toHaveLength(2);
     expect(restored.find((row) => row.id === "transaction-1")?.amount).toBe(
-      10000,
+      cents(10000),
     );
-    expect(restored.find((row) => row.id === "second")?.amount).toBe(10000);
+    expect(restored.find((row) => row.id === "second")?.amount).toBe(
+      cents(10000),
+    );
     await expect(
       store.restoreTransaction(ana.user, ana.householdId, {
         id: "transaction-1",
@@ -192,7 +195,7 @@ describe("budget store", () => {
 
       expect(reopened).toHaveLength(1);
       expect(reopened[0]?.id).toBe("transaction-1");
-      expect(reopened[0]?.amount).toBe(10000);
+      expect(reopened[0]?.amount).toBe(cents(10000));
       expect(reopened[0]?.description).toBe("Mercado");
     } finally {
       disk.close();
@@ -230,7 +233,7 @@ describe("monthly recurring transactions", () => {
     expect((await view(store, b.user)).budget.transactions).toHaveLength(3);
     const bia = await withHousehold(store, b.user);
     await store.saveTransaction(bia.user, bia.householdId, {
-      transaction: { ...rows[1], amount: 20000 },
+      transaction: { ...rows[1], amount: cents(20000) },
     });
     expect(
       (await view(store, a.user)).budget.transactions.filter(

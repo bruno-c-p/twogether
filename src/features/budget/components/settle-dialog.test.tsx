@@ -6,12 +6,13 @@ import {
 } from "@/features/budget/components/settle-dialog";
 import type { Transaction } from "@/features/budget/domain/types";
 import { ana, transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderPlain } from "@/test/render";
 import { today } from "@/lib/clock";
 import { browserTimeZone } from "@/lib/time-zone";
 
 function setup({
-  source = transaction({ amount: 10000, memberId: "ana", split: {} }),
+  source = transaction({ amount: cents(10000), memberId: "ana", split: {} }),
   busy = false,
   serverError = "",
 }: {

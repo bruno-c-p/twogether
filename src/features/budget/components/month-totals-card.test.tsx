@@ -3,11 +3,12 @@ import { MonthTotalsCard } from "@/features/budget/components/month-totals-card"
 import { summarize } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import { transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderPlain } from "@/test/render";
 
 const summary = summarize([
-  transaction({ id: "s", kind: "income", goal: null, amount: 500000 }),
-  transaction({ id: "m", amount: 4590 }),
+  transaction({ id: "s", kind: "income", goal: null, amount: cents(500000) }),
+  transaction({ id: "m", amount: cents(4590) }),
 ]);
 
 const partners = [

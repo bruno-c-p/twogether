@@ -12,11 +12,11 @@ export function inputSchema<Fields extends Record<string, z.ZodType>>(
 }
 
 // `fail` lets callers outside server functions raise their own error type.
-export function parseInput<Input>(
-  schema: z.ZodType<Input>,
+export function parseInput<Output, Input = Output>(
+  schema: z.ZodType<Output, Input>,
   input: Input,
   fail: (message: string) => never = invalid,
-): Input {
+): Output {
   const result = schema.safeParse(input);
 
   if (!result.success) fail(firstIssueMessage(result.error));

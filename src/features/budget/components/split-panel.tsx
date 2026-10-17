@@ -3,6 +3,7 @@ import { useId } from "react";
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { money, shortDay } from "@/features/budget/domain/format";
+import { centsSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { Transaction } from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
@@ -103,7 +104,8 @@ export function SplitPanel({
   onUnsettle: () => void;
 }) {
   const paidAt = transaction?.split?.paidAt;
-  const share = amount >= 2 ? partnerShare(amount) : 0;
+  const cents = centsSchema.safeParse(amount).data;
+  const share = cents && cents >= 2 ? partnerShare(cents) : 0;
   const id = useId();
 
   return (

@@ -2,20 +2,26 @@ import { describe, expect, test } from "vitest";
 import { HouseholdBillsCard } from "@/features/budget/components/household-bills-card";
 import { money } from "@/features/budget/domain/format";
 import { transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderWithProviders } from "@/test/render";
 
 const bills = [
-  transaction({ id: "rent", amount: 300000, goal: "fixed", split: {} }),
+  transaction({ id: "rent", amount: cents(300000), goal: "fixed", split: {} }),
   transaction({
     id: "power",
-    amount: 25001,
+    amount: cents(25001),
     goal: "fixed",
     memberId: "bia",
     split: { paidAt: "2026-09-13" },
   }),
-  transaction({ id: "dinner", amount: 75000, goal: "pleasure", split: {} }),
-  transaction({ id: "solo", amount: 9999, goal: "comfort" }),
-  transaction({ id: "in", kind: "income", goal: null, amount: 500000 }),
+  transaction({
+    id: "dinner",
+    amount: cents(75000),
+    goal: "pleasure",
+    split: {},
+  }),
+  transaction({ id: "solo", amount: cents(9999), goal: "comfort" }),
+  transaction({ id: "in", kind: "income", goal: null, amount: cents(500000) }),
 ];
 
 function renderCard(transactions = bills, hidden = false) {

@@ -2,6 +2,7 @@ import { describe, expect, test, vi } from "vitest";
 import { LatestTransactionsCard } from "@/features/budget/components/latest-transactions-card";
 import { money } from "@/features/budget/domain/format";
 import { transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderWithProviders } from "@/test/render";
 
 async function renderCard(transactions = [transaction()]) {
@@ -37,7 +38,7 @@ describe("LatestTransactionsCard", () => {
         goal: null,
         description: "Freela",
         date: "2026-09-07",
-        amount: 120000,
+        amount: cents(120000),
       }),
     ]);
 

@@ -5,11 +5,12 @@ import {
   usTransactions,
 } from "@/features/budget/domain/split";
 import type { Transaction } from "@/features/budget/domain/types";
+import { cents } from "@/test/cents";
 
 const base: Transaction = {
   id: "t",
   description: "Aluguel",
-  amount: 200000,
+  amount: cents(200000),
   kind: "expense",
   date: "2026-09-05",
   goal: "fixed",
@@ -18,15 +19,21 @@ const base: Transaction = {
 
 describe("split helpers", () => {
   test("partner owes the lower half on odd cents", () => {
-    expect(partnerShare(200000)).toBe(100000);
-    expect(partnerShare(10001)).toBe(5000);
-    expect(partnerShare(3)).toBe(1);
+    expect(partnerShare(cents(200000))).toBe(cents(100000));
+    expect(partnerShare(cents(10001))).toBe(cents(5000));
+    expect(partnerShare(cents(3))).toBe(cents(1));
   });
 
   test("net debt counts unpaid splits in both directions", () => {
     const transactions: Transaction[] = [
       { ...base, id: "rent", split: {} },
-      { ...base, id: "market", amount: 30001, memberId: "bia", split: {} },
+      {
+        ...base,
+        id: "market",
+        amount: cents(30001),
+        memberId: "bia",
+        split: {},
+      },
       { ...base, id: "paid", split: { paidAt: "2026-09-10" } },
       { ...base, id: "plain" },
       { ...base, id: "repay", settlementOf: "old", split: {} },

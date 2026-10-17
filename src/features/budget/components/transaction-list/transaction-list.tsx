@@ -19,6 +19,7 @@ import { TransactionRow } from "@/features/budget/components/transaction-row/tra
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/features/budget/components/empty-state";
 import { cx } from "@/lib/cx";
+import { minusCents, ZERO_CENTS } from "@/lib/decimal";
 
 interface TransactionFilters {
   query: string;
@@ -91,7 +92,9 @@ function groupByDay(transactions: Transaction[]) {
   const groups: Array<{ date: string; items: Transaction[]; net: number }> = [];
 
   for (const t of transactions) {
-    const signed = t.kind === "income" ? t.amount : -t.amount;
+    const signed =
+      t.kind === "income" ? t.amount : minusCents(ZERO_CENTS, t.amount);
+
     const last = groups.at(-1);
 
     if (last?.date === t.date) {

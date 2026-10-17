@@ -4,16 +4,17 @@ import { summarize } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import type { Transaction } from "@/features/budget/domain/types";
 import { transaction } from "@/test/fixtures";
+import { cents } from "@/test/cents";
 import { renderPlain } from "@/test/render";
 
 const salary = transaction({
   id: "s",
   kind: "income",
   goal: null,
-  amount: 500000,
+  amount: cents(500000),
 });
 
-const market = transaction({ id: "m", amount: 4590 });
+const market = transaction({ id: "m", amount: cents(4590) });
 
 function renderCard(month: string, memberFilter = "all", hidden = false) {
   return renderPlain(
@@ -81,7 +82,7 @@ describe("BalanceCard", () => {
   });
 
   test("spending past income fills the bar and turns it red", () => {
-    const overspent = transaction({ id: "big", amount: 900000 });
+    const overspent = transaction({ id: "big", amount: cents(900000) });
 
     const withIncome = spendBar([salary, overspent]);
     expect(withIncome.style.width).toBe("100%");
