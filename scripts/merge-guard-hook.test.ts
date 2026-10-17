@@ -21,6 +21,12 @@ describe("invokesGhPrMerge", () => {
     "bash -c 'gh pr merge 1'",
     'sh -c "bun run lint && gh pr merge 1"',
     'eval "gh pr merge 1"',
+    "bash -lc 'gh pr merge 1 --squash'",
+    "bash --noprofile -c 'gh pr merge 1 --squash'",
+    "gh pr \\\nmerge 1 --squash",
+    "cat <<EOF\n$(gh pr merge 1 --squash)\nEOF",
+    "cat <<EOF\n`gh pr merge 1`\nEOF",
+    "echo \"$(printf ')'; gh pr merge 1 --squash)\"",
   ])("blocks %j", (command) => {
     expect(invokesGhPrMerge(command)).toBe(true);
   });

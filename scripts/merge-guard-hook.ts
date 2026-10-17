@@ -10,7 +10,7 @@ type Parsed = { commands: string[][]; substitutions: string[] };
 
 type Parser = Parsed & {
   source: string;
-  heredocs: string[];
+  heredocs: { delimiter: string; expands: boolean }[];
   words: string[];
   word: string | null;
 };
@@ -27,17 +27,27 @@ export function invokesGhPrMerge(command: string): boolean {
 const program = (word: string) => word.split("/").pop() ?? "";
 
 function isRawMerge(words: string[]): boolean {
-  const shell = words.findIndex((word) => shells.has(program(word)));
+  const script = shellScript(words);
 
-  if (shell !== -1 && words[shell + 1] === "-c") {
-    return invokesGhPrMerge(words[shell + 2] ?? "");
-  }
+  if (script !== undefined) return invokesGhPrMerge(script);
 
   if (words[0] === "eval") return invokesGhPrMerge(words.slice(1).join(" "));
 
   const [group, command] = ghSubcommand(words);
 
   return group === "pr" && command === "merge";
+}
+
+function shellScript(words: string[]): string | undefined {
+  const shell = words.findIndex((word) => shells.has(program(word)));
+
+  if (shell === -1) return undefined;
+
+  const flag = words.findIndex(
+    (word, i) => i > shell && /^-[a-z]*c[a-z]*$/i.test(word),
+  );
+
+  return flag === -1 ? undefined : (words[flag + 1] ?? "");
 }
 
 function ghSubcommand(words: string[]): string[] {
@@ -64,9 +74,12 @@ function closingParen(source: string, from: number) {
   let depth = 1;
 
   for (let i = from; i < source.length; i++) {
-    if (source[i] === "(") depth++;
+    const char = source[i];
 
-    if (source[i] === ")" && --depth === 0) return i;
+    if (char === "\\") i++;
+    else if (char === "'" || char === '"') i = closing(source, i + 1, char);
+    else if (char === "(") depth++;
+    else if (char === ")" && --depth === 0) return i;
   }
 
   return source.length;
@@ -172,7 +185,9 @@ function substitute(parser: Parser, from: number, end: number): number {
 }
 
 function readEscape(parser: Parser, i: number): number {
-  append(parser, parser.source[i + 1] ?? "");
+  const next = parser.source[i + 1] ?? "";
+
+  if (next !== "\n") append(parser, next);
 
   return i + 2;
 }
@@ -182,7 +197,9 @@ function readHeredocStart(parser: Parser, i: number): number {
 
   const match = /^-?\s*(['"]?)([\w.-]+)\1/.exec(parser.source.slice(i + 2));
 
-  if (match) parser.heredocs.push(match[2]);
+  if (match) {
+    parser.heredocs.push({ delimiter: match[2], expands: match[1] === "" });
+  }
 
   return i + 2 + (match?.[0].length ?? 0);
 }
@@ -192,11 +209,44 @@ function readNewline(parser: Parser, i: number): number {
 
   let at = i + 1;
 
-  for (const delimiter of parser.heredocs.splice(0)) {
-    at = afterHeredoc(parser.source, at, delimiter);
+  for (const { delimiter, expands } of parser.heredocs.splice(0)) {
+    const end = afterHeredoc(parser.source, at, delimiter);
+
+    if (expands) {
+      parser.substitutions.push(
+        ...substitutionsIn(parser.source.slice(at, end)),
+      );
+    }
+
+    at = end;
   }
 
   return at;
+}
+
+function substitutionsIn(text: string): string[] {
+  const found: string[] = [];
+  let i = 0;
+
+  while (i < text.length) {
+    if (text[i] === "\\") {
+      i += 2;
+    } else if (text.startsWith("$(", i)) {
+      const end = closingParen(text, i + 2);
+
+      found.push(text.slice(i + 2, end));
+      i = end + 1;
+    } else if (text[i] === "`") {
+      const end = closing(text, i + 1, "`");
+
+      found.push(text.slice(i + 1, end));
+      i = end + 1;
+    } else {
+      i++;
+    }
+  }
+
+  return found;
 }
 
 function append(parser: Parser, text: string) {

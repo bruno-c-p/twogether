@@ -1,53 +1,68 @@
+export type Gh = {
+  head(pr: string): string | null;
+  run(args: string[]): number;
+};
+
 const usage = "usage: bun run merge-guard <pr> [--dry-run]";
 
-const [pr, ...flags] = process.argv.slice(2);
+export function mergeGuard(argv: string[], gh: Gh): number {
+  const [pr, ...flags] = argv;
 
-const dryRun = flags.includes("--dry-run");
+  if (!pr || !/^\d+$/.test(pr) || flags.some((flag) => flag !== "--dry-run")) {
+    console.error(usage);
 
-if (!pr || !/^\d+$/.test(pr) || flags.some((flag) => flag !== "--dry-run")) {
-  console.error(usage);
-  process.exit(2);
+    return 2;
+  }
+
+  const head = gh.head(pr);
+
+  if (!head) return 1;
+
+  const checks = gh.run([
+    "pr",
+    "checks",
+    pr,
+    "--watch",
+    "--fail-fast",
+    "--interval",
+    "10",
+  ]);
+
+  if (checks !== 0) {
+    console.error(
+      `merge-guard: refusing to merge #${pr}: checks on ${head} are not green (gh pr checks exited ${checks})`,
+    );
+
+    return 1;
+  }
+
+  if (flags.includes("--dry-run")) {
+    console.log(`merge-guard: #${pr} is green at ${head}, would merge`);
+
+    return 0;
+  }
+
+  // --match-head-commit makes GitHub reject the merge if a new head landed after the checks passed.
+  return gh.run(["pr", "merge", pr, "--squash", "--match-head-commit", head]);
 }
 
-function gh(args: string[]) {
-  return Bun.spawnSync(["gh", ...args], {
-    stdout: "inherit",
-    stderr: "inherit",
-  });
+if (import.meta.main) {
+  const gh: Gh = {
+    head(pr) {
+      const view = Bun.spawnSync(
+        ["gh", "pr", "view", pr, "--json", "headRefOid", "--jq", ".headRefOid"],
+        { stderr: "inherit" },
+      );
+
+      return view.success ? view.stdout.toString().trim() : null;
+    },
+    run(args) {
+      return Bun.spawnSync(["gh", ...args], {
+        stdout: "inherit",
+        stderr: "inherit",
+      }).exitCode;
+    },
+  };
+
+  process.exit(mergeGuard(process.argv.slice(2), gh));
 }
-
-const view = Bun.spawnSync(
-  ["gh", "pr", "view", pr, "--json", "headRefOid", "--jq", ".headRefOid"],
-  { stderr: "inherit" },
-);
-
-if (!view.success) process.exit(1);
-
-const head = view.stdout.toString().trim();
-
-const checks = gh([
-  "pr",
-  "checks",
-  pr,
-  "--watch",
-  "--fail-fast",
-  "--interval",
-  "10",
-]);
-
-if (checks.exitCode !== 0) {
-  console.error(
-    `merge-guard: refusing to merge #${pr}: checks on ${head} are not green (gh pr checks exited ${checks.exitCode})`,
-  );
-  process.exit(1);
-}
-
-if (dryRun) {
-  console.log(`merge-guard: #${pr} is green at ${head}, would merge`);
-  process.exit(0);
-}
-
-// --match-head-commit makes GitHub reject the merge if a new head landed after the checks passed.
-const merge = gh(["pr", "merge", pr, "--squash", "--match-head-commit", head]);
-
-process.exit(merge.exitCode);
