@@ -221,7 +221,8 @@ const COMPONENT_BARRELS = [
   "src/features/theme/index.ts",
 ];
 
-const VALUE_REEXPORT = /^export\s+\{[^}]*\}\s+from\s+"([^"]+)"/gm;
+const VALUE_REEXPORT =
+  /^export\s+(?:\*(?:\s+as\s+\w+)?|\{[^}]*\})\s+from\s+"([^"]+)"/gm;
 
 export function noComponentBarrels(repo: Repo) {
   return repo

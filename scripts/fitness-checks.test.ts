@@ -170,6 +170,8 @@ describe("fitness source checks", () => {
             'export { load } from "@/features/a/workspace";',
             'export type { Slot } from "@/features/a/components/shell";',
             'export {\n  Screen,\n} from "@/features/a/components/screen";',
+            'export * from "@/features/a/components/panel";',
+            'export * as Rows from "@/features/a/components/rows";',
           ].join("\n"),
           "src/features/a/components/index.ts":
             'export { Row } from "@/features/a/components/row";',
@@ -179,6 +181,8 @@ describe("fitness source checks", () => {
       ),
     ).toEqual([
       "src/features/a/index.ts re-exports @/features/a/components/screen; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts re-exports @/features/a/components/panel; list that module in the feature's -api zone in .fallowrc.json instead",
+      "src/features/a/index.ts re-exports @/features/a/components/rows; list that module in the feature's -api zone in .fallowrc.json instead",
     ]);
   });
 
