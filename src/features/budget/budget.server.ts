@@ -7,7 +7,10 @@ import type { SavePercentagesInput } from "@/features/budget/actions/save-percen
 import type { SaveTransactionInput } from "@/features/budget/actions/save-transaction";
 import type { SettleSplitInput } from "@/features/budget/actions/settle-split";
 import type { UnsettleSplitInput } from "@/features/budget/actions/unsettle-split";
-import { firstOccurrence } from "@/features/budget/domain/recurrence";
+import {
+  firstOccurrence,
+  clampedMonthsAfter,
+} from "@/features/budget/domain/recurrence";
 import {
   goalPercentagesSchema,
   transactionSchema,
@@ -286,35 +289,26 @@ function assertSingleEdit(
     throw new RequestError("Edite cada ocorrência individualmente.");
 }
 
-function occurrenceDate(date: string, index: number) {
-  const [year, month, day] = date.split("-").map(Number);
-  const target = new Date(Date.UTC(year, month - 1 + index, 1));
-
-  if (target.getUTCFullYear() > 9999)
-    throw new RequestError("A recorrência ultrapassa a data máxima permitida.");
-
-  const lastDay = new Date(
-    Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0),
-  ).getUTCDate();
-
-  target.setUTCDate(Math.min(day, lastDay));
-
-  return target.toISOString().slice(0, 10);
-}
-
-function laterOccurrences(
+function seriesInserts(
   householdId: string,
   first: Transaction,
   occurrences: number,
 ) {
-  return Array.from({ length: occurrences - 1 }, (_, offset) =>
-    insertTransaction(householdId, {
+  return Array.from({ length: occurrences - 1 }, (_, offset) => {
+    const date = clampedMonthsAfter(first.date, offset + 1);
+
+    if (!date)
+      throw new RequestError(
+        "A recorrência ultrapassa a data máxima permitida.",
+      );
+
+    return insertTransaction(householdId, {
       ...first,
       id: randomUUID(),
       recurrenceIndex: offset + 1,
-      date: occurrenceDate(first.date, offset + 1),
-    }),
-  );
+      date,
+    });
+  });
 }
 
 async function saveTransaction(
@@ -358,7 +352,7 @@ async function saveTransaction(
         sql: "INSERT INTO transactions(id,household_id,payload,revision) VALUES (?,?,?,1) ON CONFLICT(household_id,id) DO UPDATE SET payload = excluded.payload, revision = transactions.revision + 1",
         args: [t.id, householdId, JSON.stringify(first)],
       },
-      ...laterOccurrences(householdId, first, occurrences),
+      ...seriesInserts(householdId, first, occurrences),
     ]);
   });
 }
