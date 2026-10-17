@@ -3,6 +3,7 @@ import {
   BOUNDARY_BASELINE,
   boundaryBaselineGrowth,
   boundaryBaselineScope,
+  domainBaselineGrowth,
   cacheControlSource,
   componentModuleLayout,
   cssHouseStyle,
@@ -18,6 +19,7 @@ import {
   type Git,
   type Repo,
 } from "./fitness-checks";
+import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
 import {
   conflictingBoxUtilities,
   mobileNavToken,
@@ -254,7 +256,7 @@ describe("boundary baseline ratchet", () => {
     });
 
     expect(boundaryBaselineGrowth(grown, gitWith(base), warn)).toEqual([
-      `${BOUNDARY_BASELINE} grew from 2 to 3 entries since abc123; it may only shrink. Fix the new boundary violation instead of re-saving the baseline:\ne->f`,
+      `${BOUNDARY_BASELINE} gained 1 entry since abc123; it may only shrink. Fix the new boundary violation instead of re-saving the baseline:\ne->f`,
     ]);
   });
 
@@ -273,7 +275,7 @@ describe("boundary baseline ratchet", () => {
 
     expect(boundaryBaselineGrowth(grown, tip, warn)).toHaveLength(1);
     expect(warnings).toEqual([
-      "boundary ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
+      "baseline ratchet: no merge-base with origin/main (shallow clone?); comparing against the origin/main tip instead",
     ]);
   });
 
@@ -459,5 +461,113 @@ describe("fitness style checks", () => {
         }),
       ),
     ).toEqual([missing]);
+  });
+});
+
+describe("domain model rules", () => {
+  const types = "src/features/budget/domain/types.ts";
+  const row = "src/features/budget/components/row.tsx";
+  const grandfathered = `Existing ones are grandfathered in ${DOMAIN_BASELINE}; do not add to it.`;
+
+  test("domain types and status reads inside domain/ or tests pass", () => {
+    expect(
+      domainModelRules(
+        repoWith({
+          [types]: "export type Transaction = z.infer<typeof schema>;",
+          "src/features/budget/domain/status.ts": "t.split?.paidAt",
+          "src/features/budget/components/row.test.tsx": "t.settlementOf",
+        }),
+      ),
+    ).toEqual([]);
+  });
+
+  test("a hand-written domain type or a raw status read fails", () => {
+    expect(
+      domainModelRules(
+        repoWith({
+          [types]:
+            'export interface Note {}\nexport type Tag = { id: string };\nexport type Draft = Omit<T, "a"> & { a: number };\nexport type Extra = z.infer<typeof s> & { extra: string };\nexport type Ok = z.input<typeof s>;\nexport type Wrapped =\n  z.output<typeof s>;',
+          [row]: "if (t.settlementOf || t.split?.paidAt || split.paidAt) {}",
+        }),
+      ),
+    ).toEqual([
+      `${types} adds interface Note; derive it with z.infer from its schema. ${grandfathered}`,
+      `${types} adds type Tag; derive it with z.infer from its schema. ${grandfathered}`,
+      `${types} adds type Draft; derive it with z.infer from its schema. ${grandfathered}`,
+      `${types} adds type Extra; derive it with z.infer from its schema. ${grandfathered}`,
+      ...["settlementOf", "split.paidAt", "split.paidAt"].map(
+        (token) =>
+          `${row} adds ${token}; read repayment, split, paidAt, userOwes or lock from transactionStatus (domain/status.ts). ${grandfathered}`,
+      ),
+    ]);
+  });
+
+  test("the baseline grandfathers each hit once and may only shrink", () => {
+    expect(
+      domainModelRules(
+        repoWith({
+          [row]: "t.settlementOf",
+          [DOMAIN_BASELINE]: `${row}\tsettlementOf\n${row}\tsettlementOf\n`,
+        }),
+      ),
+    ).toEqual([
+      `${DOMAIN_BASELINE} lists ${row} settlementOf 1 more time(s) than the code uses it; delete those lines`,
+    ]);
+  });
+});
+
+describe("domain baseline ratchet", () => {
+  const row = "src/features/budget/components/row.tsx";
+
+  const git = gitWith({
+    "merge-base HEAD origin/main": "abc123",
+    "rev-parse --verify --quiet abc123^{commit}": "abc123",
+    [`cat-file -e abc123:${DOMAIN_BASELINE}`]: "",
+    [`show abc123:${DOMAIN_BASELINE}`]: `${row}\tsettlementOf\n`,
+  });
+
+  test("a baseline that shrinks or holds passes", () => {
+    for (const text of ["", `${row}\tsettlementOf\n`])
+      expect(
+        domainBaselineGrowth(
+          repoWith({ [DOMAIN_BASELINE]: text }),
+          git,
+          () => undefined,
+        ),
+      ).toEqual([]);
+  });
+
+  test("grandfathering a new hit fails even when the code matches it", () => {
+    const grown = `${row}\tsettlementOf\n${row}\tsplit.paidAt\n`;
+
+    const files = {
+      [row]: "t.settlementOf; t.split?.paidAt",
+      [DOMAIN_BASELINE]: grown,
+    };
+
+    expect(domainModelRules(repoWith(files))).toEqual([]);
+    expect(domainBaselineGrowth(repoWith(files), git, () => undefined)).toEqual(
+      [
+        `${DOMAIN_BASELINE} gained 1 entry since abc123; it may only shrink. Read the new hit through transactionStatus or z.infer instead of grandfathering it:\n${row}\tsplit.paidAt`,
+      ],
+    );
+  });
+
+  test("swapping a grandfathered hit or duplicating one fails and names it", () => {
+    const other = "src/features/budget/components/other.tsx";
+
+    for (const [text, added] of [
+      [`${other}\tsettlementOf\n`, `${other}\tsettlementOf`],
+      [`${row}\tsettlementOf\n${row}\tsettlementOf\n`, `${row}\tsettlementOf`],
+    ])
+      expect(
+        domainBaselineGrowth(
+          repoWith({ [DOMAIN_BASELINE]: text }),
+          git,
+          () => undefined,
+        ),
+      ).toEqual([
+        `${DOMAIN_BASELINE} gained 1 entry since abc123; it may only shrink. Read the new hit through transactionStatus or z.infer instead of grandfathering it:\n${added}`,
+      ]);
   });
 });
