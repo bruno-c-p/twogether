@@ -1,8 +1,9 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import {
+  bindContext,
   execute,
+  memberCount,
   one,
-  type DatabaseExecutor,
   type DatabaseTransaction,
   type StoreContext,
   type UserRow,
@@ -18,20 +19,6 @@ const token = () => randomBytes(32).toString("hex");
 
 const ALREADY_MEMBER =
   "Você já faz parte de um orçamento. Use a conta convidada para entrar em outro.";
-
-export async function memberCount(
-  database: DatabaseExecutor,
-  householdId: string,
-) {
-  const row = await one(
-    database,
-    z.object({ total: z.number() }),
-    "SELECT count(*) AS total FROM users WHERE household_id = ?",
-    [householdId],
-  );
-
-  return row?.total ?? 0;
-}
 
 function requireOpenSeat(user: UserRow) {
   if (!user.name)
@@ -56,7 +43,7 @@ async function claimSeat(
   if (result.rowsAffected !== 1) throw new RequestError(ALREADY_MEMBER, 409);
 }
 
-export async function createHousehold(ctx: StoreContext, user: UserRow) {
+async function createHousehold(ctx: StoreContext, user: UserRow) {
   requireOpenSeat(user);
   await ctx.atomic(async (transaction) => {
     const id = randomUUID();
@@ -65,7 +52,7 @@ export async function createHousehold(ctx: StoreContext, user: UserRow) {
   });
 }
 
-export async function joinHousehold(
+async function joinHousehold(
   ctx: StoreContext,
   user: UserRow,
   tokenValue: string,
@@ -94,7 +81,7 @@ export async function joinHousehold(
   });
 }
 
-export async function createInvite(ctx: StoreContext, householdId: string) {
+async function createInvite(ctx: StoreContext, householdId: string) {
   const inviteToken = token();
   await ctx.atomic(async (transaction) => {
     if ((await memberCount(transaction, householdId)) >= 2)
@@ -109,10 +96,21 @@ export async function createInvite(ctx: StoreContext, householdId: string) {
   return { inviteToken };
 }
 
-export async function revokeInvite(ctx: StoreContext, householdId: string) {
+async function revokeInvite(ctx: StoreContext, householdId: string) {
   await ctx.atomic(async (transaction) => {
     await execute(transaction, "DELETE FROM invites WHERE household_id = ?", [
       householdId,
     ]);
   });
+}
+
+export function createHouseholdStore(ctx: StoreContext) {
+  const bind = bindContext(ctx);
+
+  return {
+    createHousehold: bind(createHousehold),
+    joinHousehold: bind(joinHousehold),
+    createInvite: bind(createInvite),
+    revokeInvite: bind(revokeInvite),
+  };
 }

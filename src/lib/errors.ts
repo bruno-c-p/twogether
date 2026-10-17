@@ -13,3 +13,12 @@ export function reportError(
   if (details.componentStack) payload.push(details.componentStack);
   console.error(...payload);
 }
+
+const OFFLINE_MESSAGE =
+  "Sem conexão. Confira o orçamento antes de tentar novamente.";
+
+export function failureMessage(cause: unknown, offline = OFFLINE_MESSAGE) {
+  return cause instanceof Error && !(cause instanceof TypeError)
+    ? cause.message
+    : offline;
+}

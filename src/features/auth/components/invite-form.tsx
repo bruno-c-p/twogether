@@ -2,7 +2,7 @@ import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { inviteFormSchema } from "@/features/budget/domain/schemas";
+import { inviteFormSchema } from "@/lib/account-schemas";
 import { inviteToken } from "@/features/auth/invite-token";
 import { Button } from "@/components/ui/button";
 import {

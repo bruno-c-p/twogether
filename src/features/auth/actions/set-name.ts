@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import { getBudgetStore } from "@/features/budget/budget.server";
-import { nameSchema } from "@/features/budget/domain/schemas";
+import { getStore } from "@/server/store.server";
+import { nameSchema } from "@/lib/account-schemas";
 import { authMiddleware } from "@/server/middleware";
 import { actionInput, inputSchema } from "@/server/action-input";
 
@@ -12,5 +12,5 @@ export const setName = createServerFn({ method: "POST" })
   .middleware([authMiddleware])
   .validator(parseSetName)
   .handler(async ({ data, context }) =>
-    getBudgetStore().setName(context.user, data.name),
+    getStore().setName(context.user, data.name),
   );

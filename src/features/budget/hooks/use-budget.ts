@@ -1,6 +1,6 @@
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { isRedirect } from "@tanstack/react-router";
-import { failureMessage } from "@/features/budget/hooks/use-mutation";
+import { failureMessage } from "@/lib/errors";
 import { workspaceQueryOptions } from "@/features/budget/workspace";
 
 const SYNC_OFFLINE_MESSAGE =

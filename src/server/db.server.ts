@@ -136,3 +136,25 @@ export function createStoreContext(filename: string) {
 }
 
 export type StoreContext = ReturnType<typeof createStoreContext>;
+
+export function bindContext(ctx: StoreContext) {
+  return <Args extends unknown[], Result>(
+      fn: (ctx: StoreContext, ...args: Args) => Result,
+    ) =>
+    (...args: Args) =>
+      fn(ctx, ...args);
+}
+
+export async function memberCount(
+  database: DatabaseExecutor,
+  householdId: string,
+) {
+  const row = await one(
+    database,
+    z.object({ total: z.number() }),
+    "SELECT count(*) AS total FROM users WHERE household_id = ?",
+    [householdId],
+  );
+
+  return row?.total ?? 0;
+}

@@ -2,9 +2,9 @@ import { z } from "zod";
 import { fixture, readDataset } from "@/features/break-ui/fixtures";
 import {
   goalPercentagesSchema,
-  nameSchema,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
+import { nameSchema } from "@/lib/account-schemas";
 import type {
   GoalPercentages,
   Transaction,

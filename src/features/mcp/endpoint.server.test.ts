@@ -11,11 +11,7 @@ import {
   serveMcp,
   unauthorized,
 } from "@/features/mcp/endpoint.server";
-import {
-  couple,
-  setupMemoryStore,
-  signup,
-} from "@/features/budget/services/store-test-harness";
+import { couple, setupMemoryStore, signup } from "@/server/store-test-harness";
 
 const ctx = setupMemoryStore();
 

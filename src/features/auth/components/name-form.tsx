@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
-import { nameFormSchema } from "@/features/budget/domain/schemas";
+import { nameFormSchema } from "@/lib/account-schemas";
 import { Button } from "@/components/ui/button";
 import {
   FieldError,

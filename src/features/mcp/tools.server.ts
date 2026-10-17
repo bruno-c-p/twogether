@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import { z } from "zod";
-import type { BudgetStore } from "@/features/budget/budget.server";
+import type { Store } from "@/server/store.server";
 import {
   centsSchema,
   dateSchema,
@@ -179,7 +179,7 @@ function editedTransaction(
   };
 }
 
-export function createBudgetMcpServer(store: BudgetStore, userId: string) {
+export function createBudgetMcpServer(store: Store, userId: string) {
   const server = new McpServer(
     { name: "twogether", version: "1.0.0" },
     { instructions: INSTRUCTIONS },

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
-import { setupMemoryStore } from "@/features/budget/services/store-test-harness";
+import { setupMemoryStore } from "@/server/store-test-harness";
 
 const ctx = setupMemoryStore();
 

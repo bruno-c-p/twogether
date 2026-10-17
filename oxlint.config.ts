@@ -143,7 +143,6 @@ const SERVER_SIDE = [
   "src/routes/mcp.ts",
   "src/routes/*well-known*.ts",
   // Server-only helpers imported only by *.server modules and their tests.
-  "src/features/budget/services/store-test-harness.ts",
   "src/features/mcp/budget-view.ts",
 ];
 
