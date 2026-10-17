@@ -57,10 +57,13 @@ if (import.meta.main) {
       return view.success ? view.stdout.toString().trim() : null;
     },
     run(args) {
-      return Bun.spawnSync(["gh", ...args], {
+      const result = Bun.spawnSync(["gh", ...args], {
         stdout: "inherit",
         stderr: "inherit",
-      }).exitCode;
+      });
+
+      // A signal-killed gh has no exit code; report it as a failure, never as 0.
+      return result.success ? 0 : result.exitCode || 1;
     },
   };
 

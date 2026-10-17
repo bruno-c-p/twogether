@@ -2,6 +2,8 @@ import { z } from "zod";
 
 const shells = new Set(["sh", "bash", "zsh", "dash", "fish"]);
 
+const valueFlags = new Set(["-R", "--repo", "--hostname", "--config"]);
+
 const separators = new Set([";", "&", "|", "(", ")", "`", "\n"]);
 
 const bashInput = z.object({ tool_input: z.object({ command: z.string() }) });
@@ -57,7 +59,7 @@ function ghSubcommand(words: string[]): string[] {
   if (gh === -1) return positional;
 
   for (let i = gh + 1; i < words.length && positional.length < 2; i++) {
-    if (words[i] === "-R" || words[i] === "--repo") i++;
+    if (valueFlags.has(words[i])) i++;
     else if (!words[i].startsWith("-")) positional.push(words[i]);
   }
 

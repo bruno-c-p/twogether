@@ -14,6 +14,7 @@ describe("invokesGhPrMerge", () => {
     "/opt/homebrew/bin/gh pr merge 1",
     "gh pr --repo bruno-c-p/twogether merge 1",
     "gh -R bruno-c-p/twogether pr merge 1",
+    "gh --hostname example.com pr merge 1",
     "(cd /repo && gh pr merge 1)",
     "echo $(gh pr merge 1)",
     'out="$(gh pr merge 1)"',
