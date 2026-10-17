@@ -120,7 +120,7 @@ const optionalText = z
   .string({ error: "Confira os dados da transação." })
   .optional();
 
-const splitSchema = z.looseObject(
+const splitObjectSchema = z.object(
   {
     paidAt: optionalText,
     paidBy: optionalText,
@@ -132,27 +132,34 @@ const splitSchema = z.looseObject(
   { error: "Divisão inválida." },
 );
 
+export const transactionObjectSchema = z.object({
+  id: z
+    .string({ error: "Confira os dados da transação." })
+    .min(1, { error: "Confira os dados da transação." })
+    .max(100, { error: "Confira os dados da transação." }),
+  description: descriptionSchema,
+  amount: centsSchema,
+  kind: transactionKindSchema,
+  date: dateSchema,
+  goal: goalIdSchema.nullable(),
+  recurrenceId: optionalText,
+  recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
+  memberId: optionalText,
+  revision: revisionSchema.optional(),
+  createdBy: optionalText,
+  updatedBy: optionalText,
+  updatedAt: optionalText,
+  split: splitObjectSchema.optional(),
+  settlementOf: optionalText,
+});
+
+// Stored payloads keep keys this version does not know, so a rewrite by an
+// older deploy does not drop them. The Transaction type comes from the strict
+// object, so an unknown key still fails to compile.
 export const transactionSchema = withGoalRules(
-  z.looseObject({
-    id: z
-      .string({ error: "Confira os dados da transação." })
-      .min(1, { error: "Confira os dados da transação." })
-      .max(100, { error: "Confira os dados da transação." }),
-    description: descriptionSchema,
-    amount: centsSchema,
-    kind: transactionKindSchema,
-    date: dateSchema,
-    goal: goalIdSchema.nullable(),
-    recurrenceId: optionalText,
-    recurrenceIndex: z.int({ error: "Recorrência inválida." }).optional(),
-    memberId: optionalText,
-    revision: revisionSchema.optional(),
-    createdBy: optionalText,
-    updatedBy: optionalText,
-    updatedAt: optionalText,
-    split: splitSchema.optional(),
-    settlementOf: optionalText,
-  }),
+  transactionObjectSchema
+    .extend({ split: splitObjectSchema.loose().optional() })
+    .loose(),
 )
   .refine((value) => !(value.split && value.kind !== "expense"), {
     error: "Só despesas podem ser divididas.",
