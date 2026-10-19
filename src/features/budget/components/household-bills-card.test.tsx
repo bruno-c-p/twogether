@@ -24,10 +24,15 @@ const bills = [
   transaction({ id: "in", kind: "income", goal: null, amount: cents(500000) }),
 ];
 
-function renderCard(transactions = bills, hidden = false) {
+function renderCard(
+  transactions = bills,
+  hidden = false,
+  memberFilter = "all",
+) {
   return renderWithProviders(
     <HouseholdBillsCard
       transactions={transactions}
+      memberFilter={memberFilter}
       hidden={hidden}
       displayMoney={hidden ? () => "R$ ••••" : money}
     />,
@@ -56,6 +61,16 @@ describe("HouseholdBillsCard", () => {
       }),
     ).toBeTruthy();
     expect(screen.queryByRole("link", { name: /^Conforto/ })).toBeNull();
+  });
+
+  test("one person's view shows what they paid, without a share each", async () => {
+    const { screen } = await renderCard(bills, false, "bia");
+
+    expect(screen.getByText(/^R\$\s*4\.000,01 no mês$/)).toBeTruthy();
+    expect(screen.queryByText(/cada/)).toBeNull();
+    expect(
+      screen.getByRole("link", { name: /^Custo fixo: R\$\s*3\.250,01$/ }),
+    ).toBeTruthy();
   });
 
   test("a goal opens its split bills; hidden values hide the shares", async () => {

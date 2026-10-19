@@ -53,6 +53,7 @@ export function OverviewScreen() {
         </div>
         <HouseholdBillsCard
           transactions={data.monthly}
+          memberFilter={memberFilter}
           hidden={hidden}
           displayMoney={displayMoney}
         />
