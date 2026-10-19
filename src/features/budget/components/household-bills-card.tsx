@@ -12,10 +12,12 @@ function percentLabel(amount: number, total: number) {
 
 export function HouseholdBillsCard({
   transactions,
+  memberFilter,
   hidden,
   displayMoney,
 }: {
   transactions: Transaction[];
+  memberFilter: string;
   hidden: boolean;
   displayMoney: (value: number) => string;
 }) {
@@ -23,6 +25,8 @@ export function HouseholdBillsCard({
     (transaction) => transaction.kind === "expense" && transaction.split,
   );
 
+  // One person's view holds only the bills they paid, so there is no "each".
+  const shared = memberFilter === "all";
   const total = sum(bills.map((bill) => bill.amount));
   const share = sum(bills.map((bill) => partnerShare(bill.amount)));
 
@@ -57,7 +61,8 @@ export function HouseholdBillsCard({
       {goals.length ? (
         <>
           <p className="mb-4 text-sm text-text-muted tabular-nums">
-            {displayMoney(total)} no mês · {displayMoney(share)} para cada
+            {displayMoney(total)} no mês
+            {shared && ` · ${displayMoney(share)} para cada`}
           </p>
           <div
             className="flex h-[14px] rounded-full overflow-clip bg-surface-soft gap-0.5 mb-5"
@@ -93,7 +98,7 @@ export function HouseholdBillsCard({
                   to="/transacoes"
                   search={{ kind: "split", goal: goal.id }}
                   className="flex items-center gap-3 text-md text-text"
-                  aria-label={`${goal.name}: ${displayMoney(goal.amount)}, ${displayMoney(goal.share)} para cada`}
+                  aria-label={`${goal.name}: ${displayMoney(goal.amount)}${shared ? `, ${displayMoney(goal.share)} para cada` : ""}`}
                 >
                   <span
                     className="size-[8px] rounded-full shrink-0"
@@ -110,9 +115,11 @@ export function HouseholdBillsCard({
                     <strong className="block font-600 tabular-nums">
                       {displayMoney(goal.amount)}
                     </strong>
-                    <span className="block text-xs text-text-muted tabular-nums">
-                      {displayMoney(goal.share)} cada
-                    </span>
+                    {shared && (
+                      <span className="block text-xs text-text-muted tabular-nums">
+                        {displayMoney(goal.share)} cada
+                      </span>
+                    )}
                   </span>
                 </Link>
               </li>
