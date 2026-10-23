@@ -1,34 +1,36 @@
-import {
-  createFileRoute,
-  Navigate,
-  redirect,
-  retainSearchParams,
-} from "@tanstack/react-router";
+import { createFileRoute, retainSearchParams } from "@tanstack/react-router";
 import { createIsomorphicFn } from "@tanstack/react-start";
 import { getCookie } from "@tanstack/react-start/server";
 import { AccountDrawer } from "@/features/auth/components/account-drawer";
 import {
   loadCachedWorkspace,
   validateWorkspaceSearch,
-  withDefaultMonthHref,
 } from "@/features/budget";
 import { BudgetApp } from "@/features/budget/components/budget-app/budget-app";
 import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
 import { toastManager } from "@/components/ui/toast-manager";
 import { currentMonth } from "@/lib/clock";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 import {
   browserTimeZone,
   isValidTimeZone,
+  rememberedTimeZone,
   TIME_ZONE_COOKIE,
 } from "@/lib/time-zone";
 
-const requestTimeZone = createIsomorphicFn()
+// Server and client read the same cookie, so the month the server rendered
+// is the month the client hydrates.
+const rememberedMonth = createIsomorphicFn()
   .server(() => {
     const timeZone = getCookie(TIME_ZONE_COOKIE);
 
-    return isValidTimeZone(timeZone) ? timeZone : undefined;
+    return isValidTimeZone(timeZone) ? currentMonth(timeZone) : undefined;
   })
-  .client(() => browserTimeZone());
+  .client(() => {
+    const timeZone = rememberedTimeZone();
+
+    return timeZone ? currentMonth(timeZone) : undefined;
+  });
 
 // Pathless layout for every workspace page: it owns the snapshot loader,
 // the shell, and the month/person params that carry across pages.
@@ -36,16 +38,8 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
   component: WorkspaceRoute,
   validateSearch: validateWorkspaceSearch,
   search: { middlewares: [retainSearchParams(["month", "member"])] },
-  loaderDeps: ({ search }) => ({ month: search.month }),
-  beforeLoad: ({ search, location }) => {
-    if (search.month) return;
-    const timeZone = requestTimeZone();
-
-    if (!timeZone) return;
-    throw redirect({
-      href: withDefaultMonthHref(location, currentMonth(timeZone)),
-    });
-  },
+  // A bare URL renders the current month at once instead of redirecting.
+  loaderDeps: ({ search }) => ({ month: search.month ?? rememberedMonth() }),
   loader: ({ context, deps }) =>
     deps.month
       ? loadCachedWorkspace(context.queryClient, deps.month)
@@ -59,24 +53,30 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
 
 function WorkspaceRoute() {
   const search = Route.useSearch();
+  const { month } = Route.useLoaderDeps();
+  const navigate = Route.useNavigate();
 
-  // Without a time zone cookie the server could not pick the month; the
-  // browser fills in its own current month.
-  if (!search.month)
-    return (
-      <>
-        <WorkspaceSkeleton />
-        <Navigate
-          to="."
-          search={(prev) => ({
-            ...prev,
-            month: currentMonth(browserTimeZone()),
-          })}
-          replace
-          resetScroll={false}
-        />
-      </>
-    );
+  // The URL always ends up with the month, written once: a <Navigate> would
+  // fire again on every render and overwrite a month the reader just picked.
+  // Without a time zone cookie the server could not pick it, so the browser
+  // fills in its own current month.
+  useBrowserSync(
+    ["workspace-month", month ?? "", search.month ?? ""],
+    () =>
+      void navigate({
+        search: (prev) => ({
+          ...prev,
+          month: month ?? currentMonth(browserTimeZone()),
+        }),
+        replace: true,
+        resetScroll: false,
+      }),
+    !search.month,
+  );
 
-  return <BudgetApp month={search.month} account={AccountDrawer} />;
+  return month ? (
+    <BudgetApp month={month} account={AccountDrawer} />
+  ) : (
+    <WorkspaceSkeleton />
+  );
 }

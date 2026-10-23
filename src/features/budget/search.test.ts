@@ -3,7 +3,6 @@ import {
   legacyViewHref,
   validateTransactionFilters,
   validateWorkspaceSearch,
-  withDefaultMonthHref,
 } from "@/features/budget/search";
 
 describe("validateWorkspaceSearch", () => {
@@ -35,20 +34,6 @@ describe("validateTransactionFilters", () => {
         month: "2026-09",
       }),
     ).toEqual({ kind: "income", goal: "fixed", query: "aluguel" });
-  });
-});
-
-describe("withDefaultMonthHref", () => {
-  it("builds a redirect to the same page with the month added", () => {
-    expect(
-      withDefaultMonthHref(
-        { pathname: "/transacoes", searchStr: "?goal=fixed" },
-        "2026-09",
-      ),
-    ).toBe("/transacoes?goal=fixed&month=2026-09");
-    expect(
-      withDefaultMonthHref({ pathname: "/", searchStr: "" }, "2026-09"),
-    ).toBe("/?month=2026-09");
   });
 });
 

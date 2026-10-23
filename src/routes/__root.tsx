@@ -8,6 +8,8 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
+import interTightLatin from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
+import "@fontsource-variable/inter-tight/wght.css";
 import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
@@ -58,15 +60,12 @@ export const Route = createRootRouteWithContext<{
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
-      { rel: "preconnect", href: "https://fonts.googleapis.com" },
       {
-        rel: "preconnect",
-        href: "https://fonts.gstatic.com",
+        rel: "preload",
+        href: interTightLatin,
+        as: "font",
+        type: "font/woff2",
         crossOrigin: "anonymous",
-      },
-      {
-        rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400..800&display=swap",
       },
     ],
   }),
@@ -90,7 +89,7 @@ export const Route = createRootRouteWithContext<{
               colorInputForeground: "var(--text)",
               colorDanger: "var(--danger)",
               borderRadius: "10px",
-              fontFamily: '"Inter Tight", sans-serif',
+              fontFamily: '"Inter Tight Variable", sans-serif',
               fontSize: "14px",
             },
             // Clerk fades colorBorder to ~5% alpha; text fields need a 3:1 edge.

@@ -8,7 +8,6 @@ export {
   legacyViewHref,
   validateTransactionFilters,
   validateWorkspaceSearch,
-  withDefaultMonthHref,
 } from "@/features/budget/search";
 
 export {

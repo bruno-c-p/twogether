@@ -90,24 +90,10 @@ export type WorkspaceSearch = z.infer<typeof workspaceSearchSchema>;
 
 export type TransactionFilterSearch = z.infer<typeof transactionFiltersSchema>;
 
-interface RequestLocation {
-  pathname: string;
-  searchStr: string;
-}
-
 function hrefFor(pathname: string, params: URLSearchParams) {
   const query = params.toString();
 
   return query ? `${pathname}?${query}` : pathname;
-}
-
-// Same page and params with the month filled in, for a server redirect.
-export function withDefaultMonthHref(location: RequestLocation, month: string) {
-  const params = new URLSearchParams(location.searchStr);
-
-  params.set("month", month);
-
-  return hrefFor(location.pathname, params);
 }
 
 export function validateWorkspaceSearch<

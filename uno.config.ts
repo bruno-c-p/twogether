@@ -68,8 +68,8 @@ export default defineConfig({
       "category-freedom-bg": "var(--category-freedom-bg)",
     },
     font: {
-      sans: '"Inter Tight", sans-serif',
-      heading: '"Inter Tight", sans-serif',
+      sans: '"Inter Tight Variable", sans-serif',
+      heading: '"Inter Tight Variable", sans-serif',
     },
     // Fixed 4px base: p-4 is 16px at every root font size.
     spacing: {
