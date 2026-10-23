@@ -97,8 +97,11 @@ without one is not checked.
   dependencies change. It installs dependencies from the frozen lockfile,
   links `.env.local` to the dev env, installs Playwright Chromium, and
   validates the client env. Rerunning it is safe.
-- The dev env is `~/workspaces/twogether/.env.local`. Set
-  `TWOGETHER_DEV_ENV` to use another file.
+- The dev env is `~/.config/twogether/dev.env` (under `$XDG_CONFIG_HOME`
+  when set), outside every checkout. It holds the Clerk development keys
+  and no Turso variables. Set `TWOGETHER_DEV_ENV` to use another file, but
+  never the main checkout's `.env.local`: `vercel env pull` writes
+  production credentials there.
 - Setup refuses an env file with live Clerk keys (`sk_live_`, `pk_live_`)
   or a remote database URL, and refuses to replace a regular `.env.local`.
   Fix what its message names. Never copy the main checkout's `.env.local`

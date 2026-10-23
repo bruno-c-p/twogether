@@ -52,7 +52,7 @@ export function setupRefusal({
     return `TWOGETHER_DEV_ENV points at this worktree's own .env.local (${source}), so the link would point at itself. Point it at the dev env instead.`;
 
   if (sourceContents === undefined)
-    return `no dev env at ${source}. Create it with Clerk development keys (\`npx clerk@latest init\`), or point TWOGETHER_DEV_ENV at one.`;
+    return `no dev env at ${source}. Create it with Clerk development keys (VITE_CLERK_PUBLISHABLE_KEY and CLERK_SECRET_KEY from the Clerk dashboard, pk_test_/sk_test_) and no Turso variables, or point TWOGETHER_DEV_ENV at one. Never point it at the main checkout's .env.local: \`vercel env pull\` fills that one with production credentials.`;
 
   if (LIVE_CLERK_KEY.test(sourceContents))
     return `${source} holds live Clerk keys (sk_live_/pk_live_). Replace them with development keys (sk_test_/pk_test_), or point TWOGETHER_DEV_ENV at a dev-only env file.`;
@@ -86,7 +86,10 @@ function run(command: string[]) {
 if (import.meta.main) {
   const source = resolve(
     process.env.TWOGETHER_DEV_ENV ??
-      join(homedir(), "workspaces/twogether/.env.local"),
+      join(
+        process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"),
+        "twogether/dev.env",
+      ),
   );
 
   process.chdir(join(import.meta.dir, ".."));
