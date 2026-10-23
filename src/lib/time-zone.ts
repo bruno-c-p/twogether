@@ -25,6 +25,18 @@ export function browserTimeZone(): string {
   return Intl.DateTimeFormat().resolvedOptions().timeZone;
 }
 
+// The zone rememberTimeZone stored, read the way the server reads it.
+export function rememberedTimeZone(): string | undefined {
+  const value = document.cookie
+    .split("; ")
+    .find((cookie) => cookie.startsWith(`${TIME_ZONE_COOKIE}=`))
+    ?.slice(TIME_ZONE_COOKIE.length + 1);
+
+  const timeZone = value === undefined ? undefined : decodeURIComponent(value);
+
+  return isValidTimeZone(timeZone) ? timeZone : undefined;
+}
+
 export function rememberTimeZone(timeZone: string): void {
   try {
     document.cookie = `${TIME_ZONE_COOKIE}=${encodeURIComponent(timeZone)}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; samesite=lax`;

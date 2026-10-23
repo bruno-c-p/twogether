@@ -179,13 +179,11 @@ test.describe("chrome", () => {
       )
       .toBe(true);
 
-    const redirected = await page.context().request.get("/", {
-      maxRedirects: 0,
-    });
+    const launch = await page.context().request.get("/", { maxRedirects: 0 });
 
-    expect(redirected.status()).toBe(307);
-    expect(redirected.headers()["location"] ?? "").toContain(
-      `month=${browserMonth}`,
+    expect(launch.status()).toBe(200);
+    expect(await launch.text()).toContain(
+      `Selecionar mês e ano: ${monthText(browserMonth)}`,
     );
 
     await page.context().clearCookies({ name: "twogether.tz.v1" });
