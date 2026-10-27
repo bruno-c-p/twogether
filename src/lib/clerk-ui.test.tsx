@@ -1,6 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { ComponentControls } from "@clerk/shared/ui";
-import { LazyClerkUI } from "@/lib/clerk-ui";
 
 const calls: string[] = [];
 
@@ -26,31 +25,69 @@ class FakeClerkUI {
   }
 }
 
+const signIn = () => ({
+  name: "SignIn",
+  appearanceKey: "signIn",
+  node: document.createElement("div"),
+});
+
+// A fresh module per test: the downloaded UI is cached module-wide.
+async function lazyUI() {
+  const { LazyClerkUI } = await import("@/lib/clerk-ui");
+
+  return new LazyClerkUI(
+    () => {
+      throw new Error("The stand-in never reads Clerk itself.");
+    },
+    () => null,
+    {},
+    { import: () => Promise.resolve(undefined) },
+  ).ensureMounted();
+}
+
+beforeEach(() => {
+  vi.resetModules();
+  calls.length = 0;
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+  globalThis.__internal_ClerkUICtor = undefined;
+});
+
 describe("LazyClerkUI", () => {
   test("waits for the first mount, then replays every call in order", async () => {
-    const ui = new LazyClerkUI(
-      () => {
-        throw new Error("The stand-in never reads Clerk itself.");
-      },
-      () => null,
-      {},
-      { import: () => Promise.resolve(undefined) },
-    );
-
-    const early = await ui.ensureMounted();
+    const early = await lazyUI();
 
     early.updateProps({ options: {} });
     expect(calls).toEqual([]);
 
     globalThis.__internal_ClerkUICtor = FakeClerkUI;
-    early.mountComponent({
-      name: "SignIn",
-      appearanceKey: "signIn",
-      node: document.createElement("div"),
-    });
+    early.mountComponent(signIn());
 
-    await expect.poll(() => calls).toEqual(["updateProps", "mount SignIn"]);
-    (await ui.ensureMounted()).openModal("userProfile");
+    await vi.waitFor(() =>
+      expect(calls).toEqual(["updateProps", "mount SignIn"]),
+    );
+    early.openModal("userProfile");
     expect(calls).toEqual(["updateProps", "mount SignIn", "open userProfile"]);
+  });
+
+  test("after a failed download it retries and mounts what still waits", async () => {
+    vi.useFakeTimers();
+    const reported = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const ui = await lazyUI();
+
+    ui.mountComponent(signIn());
+    ui.openModal("userProfile");
+    await vi.advanceTimersByTimeAsync(20_000);
+
+    expect(calls).toEqual([]);
+    expect(reported).toHaveBeenCalled();
+
+    globalThis.__internal_ClerkUICtor = FakeClerkUI;
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(calls).toEqual(["mount SignIn"]);
   });
 });
