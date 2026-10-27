@@ -1,13 +1,12 @@
-import { z } from "zod";
+import { z } from "zod/mini";
 
 export const TIME_ZONE_COOKIE = "twogether.tz.v1";
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 365;
 
-const timeZoneSchema = z
-  .string()
-  .min(1)
-  .refine((timeZone) => {
+const timeZoneSchema = z.string().check(
+  z.minLength(1),
+  z.refine((timeZone) => {
     try {
       new Intl.DateTimeFormat("en-CA", { timeZone });
 
@@ -15,7 +14,8 @@ const timeZoneSchema = z
     } catch {
       return false;
     }
-  });
+  }),
+);
 
 export function isValidTimeZone(value: unknown): value is string {
   return timeZoneSchema.safeParse(value).success;

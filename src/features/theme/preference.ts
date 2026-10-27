@@ -1,13 +1,14 @@
 import { useSyncExternalStore } from "react";
-import { z } from "zod";
+import { z } from "zod/mini";
 import {
   THEME_CHANGE_EVENT,
   THEME_STORAGE_KEY,
 } from "@/features/theme/constants";
 
-export const themePreferenceSchema = z
-  .enum(["system", "light", "dark"], { error: "Tema inválido." })
-  .catch("system");
+export const themePreferenceSchema = z.catch(
+  z.enum(["system", "light", "dark"], { error: "Tema inválido." }),
+  "system",
+);
 
 type Theme = z.infer<typeof themePreferenceSchema>;
 

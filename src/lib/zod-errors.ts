@@ -1,10 +1,14 @@
-import type { z } from "zod";
+import { en } from "zod/locales";
+import { z } from "zod/mini";
 
-export function firstIssueMessage(error: z.ZodError): string {
+// Classic zod installs its English messages on import; zod/mini does not.
+z.config(en());
+
+export function firstIssueMessage(error: z.core.$ZodError): string {
   return error.issues[0]?.message ?? "Requisição inválida.";
 }
 
-export function fieldErrors(error: z.ZodError) {
+export function fieldErrors(error: z.core.$ZodError) {
   const errors: Record<string, string> = {};
 
   for (const issue of error.issues) {

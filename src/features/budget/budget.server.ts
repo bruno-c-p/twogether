@@ -57,9 +57,12 @@ const storedJsonSchema = z.string().transform((payload, context) => {
   }
 });
 
-function stored<Output>(schema: z.ZodType<Output>, payload: string): Output {
+function stored<Output>(
+  schema: z.core.$ZodType<Output>,
+  payload: string,
+): Output {
   const json = storedJsonSchema.safeParse(payload);
-  const result = json.success ? schema.safeParse(json.data) : undefined;
+  const result = json.success ? z.safeParse(schema, json.data) : undefined;
 
   if (!result?.success) throw new RequestError(STORED_MESSAGE, 500);
 

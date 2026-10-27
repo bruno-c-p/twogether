@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod/mini";
 import {
   dateSchema,
   followingSchema,
@@ -29,7 +29,7 @@ const { define } = mutations<Store, WorkspaceSnapshot>();
 
 const saveTransactionSchema = inputSchema({
   transaction: transactionSchema,
-  occurrences: occurrencesSchema.optional(),
+  occurrences: z.optional(occurrencesSchema),
 });
 
 export type SaveTransactionInput = z.infer<typeof saveTransactionSchema>;
@@ -37,7 +37,7 @@ export type SaveTransactionInput = z.infer<typeof saveTransactionSchema>;
 const deleteTransactionSchema = inputSchema({
   id: idSchema,
   revision: revisionSchema,
-  following: followingSchema.optional(),
+  following: z.optional(followingSchema),
 });
 
 export type DeleteTransactionInput = z.infer<typeof deleteTransactionSchema>;

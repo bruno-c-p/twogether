@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/mini";
 import { firstIssueMessage } from "@/lib/zod-errors";
 
 const CLERK_MESSAGE =
@@ -10,9 +10,11 @@ function emptyAsUndefined<Value>(value: Value) {
 }
 
 const clientEnvSchema = z.object({
-  VITE_CLERK_PUBLISHABLE_KEY: z.preprocess(
-    emptyAsUndefined,
-    z.string({ error: CLERK_MESSAGE }).min(1, { error: CLERK_MESSAGE }),
+  VITE_CLERK_PUBLISHABLE_KEY: z.pipe(
+    z.transform(emptyAsUndefined),
+    z
+      .string({ error: CLERK_MESSAGE })
+      .check(z.minLength(1, { error: CLERK_MESSAGE })),
   ),
 });
 

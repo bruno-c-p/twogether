@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import type { z } from "zod/mini";
 import type { UserRow } from "@/server/db.server";
 import { parseInput } from "@/server/action-input";
 
@@ -71,7 +71,7 @@ export function mutations<Store, Snapshot = never>() {
     name: Name,
     spec: {
       gate: G;
-      schema: z.ZodType<Input, RawInput>;
+      schema: z.core.$ZodType<Input, RawInput>;
       run: (
         store: Store,
         actor: ActorFor<G>,

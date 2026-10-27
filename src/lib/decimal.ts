@@ -1,5 +1,5 @@
 import Big from "big.js";
-import type { z } from "zod";
+import type { z } from "zod/mini";
 
 // Money and percentages go through big.js so sums, splits, and rounding are
 // exact decimal math instead of binary floating point.

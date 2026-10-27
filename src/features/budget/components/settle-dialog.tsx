@@ -2,7 +2,7 @@ import { Form as BaseForm } from "@base-ui/react/form";
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {

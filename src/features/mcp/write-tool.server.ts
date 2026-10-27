@@ -28,7 +28,7 @@ type Definition<Name extends string, RawInput, Input, Result> = {
   run: (store: Store, actor: Actor, input: Input) => Promise<Result>;
 };
 
-type ToolInputSchema = Record<string, z.ZodType>;
+type ToolInputSchema = Record<string, z.core.$ZodType>;
 
 type Spec<Args extends ToolInputSchema, RawInput, Input, Result> = {
   tool: string;

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from "zod/mini";
 import { fixture, readDataset } from "@/features/break-ui/fixtures";
 import {
   budgetMutations,

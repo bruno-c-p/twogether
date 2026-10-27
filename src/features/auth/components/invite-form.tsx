@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { inviteFormSchema } from "@/lib/account-schemas";
 import { inviteToken } from "@/features/auth/invite-token";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,10 @@ import {
 
 // People paste the whole link; the token inside it is what gets checked.
 const pastedInviteSchema = z.object({
-  invite: z.string().transform(inviteToken).pipe(inviteFormSchema.shape.invite),
+  invite: z.pipe(
+    z.pipe(z.string(), z.transform(inviteToken)),
+    inviteFormSchema.shape.invite,
+  ),
 });
 
 export function InviteForm({

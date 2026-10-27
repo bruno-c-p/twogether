@@ -64,8 +64,8 @@ const memberFilter = z
     "Member id from get_overview to see one person's own transactions. Omit for the couple's shared view.",
   );
 
-const monthFilter = monthSchema
-  .optional()
+const monthFilter = z
+  .optional(monthSchema)
   .describe("Month as YYYY-MM. Defaults to the current month.");
 
 const readOnly = { readOnlyHint: true, openWorldHint: false } as const;
@@ -213,26 +213,26 @@ const budgetTools = {
       "Without id, adds a transaction for you (description and amount required; kind defaults to expense, date to today; expenses need a goal). With id and revision, edits it; omitted fields keep their current value. Repayments and paid splits are locked.",
     annotations: { ...write, destructiveHint: false, idempotentHint: false },
     inputSchema: {
-      id: idSchema.optional().describe("Existing transaction id to edit."),
-      revision: revisionSchema
-        .optional()
+      id: z.optional(idSchema).describe("Existing transaction id to edit."),
+      revision: z
+        .optional(revisionSchema)
         .describe("Current revision, required when editing."),
-      description: descriptionSchema.optional(),
-      amount: centsSchema
-        .optional()
+      description: z.optional(descriptionSchema),
+      amount: z
+        .optional(centsSchema)
         .describe("Integer cents: R$ 45,90 is 4590."),
-      date: dateSchema.optional().describe("YYYY-MM-DD."),
-      kind: transactionKindSchema.optional(),
-      goal: goalIdSchema
-        .nullable()
+      date: z.optional(dateSchema).describe("YYYY-MM-DD."),
+      kind: z.optional(transactionKindSchema),
+      goal: z
+        .nullable(goalIdSchema)
         .optional()
         .describe("Required for expenses; null for income."),
       split: z
         .boolean()
         .optional()
         .describe("Expense only: the partner owes half."),
-      occurrences: occurrencesSchema
-        .optional()
+      occurrences: z
+        .optional(occurrencesSchema)
         .describe(
           "New transactions only: repeat monthly this many times (1-120).",
         ),
@@ -264,8 +264,8 @@ const budgetTools = {
     annotations: { ...write, destructiveHint: true, idempotentHint: false },
     inputSchema: {
       ...idRevision,
-      following: followingSchema
-        .optional()
+      following: z
+        .optional(followingSchema)
         .describe(
           "Also delete the later occurrences of its recurring series: every one of them with the revision from list_transactions with recurrence.",
         ),
@@ -298,8 +298,8 @@ const budgetTools = {
     annotations: { ...write, destructiveHint: false, idempotentHint: false },
     inputSchema: {
       ...idRevision,
-      date: dateSchema
-        .optional()
+      date: z
+        .optional(dateSchema)
         .describe("Payment date, YYYY-MM-DD. Defaults to today."),
     },
     input: ({ id, revision, date }) => ({
@@ -331,8 +331,8 @@ const budgetTools = {
     annotations: { ...write, destructiveHint: false, idempotentHint: true },
     inputSchema: {
       percentages: goalPercentagesSchema,
-      revision: revisionSchema.describe(
-        "Your current revision from get_goal_percentages.",
+      revision: revisionSchema.check(
+        z.describe("Your current revision from get_goal_percentages."),
       ),
     },
     input: (args) => args,
@@ -409,14 +409,14 @@ export function createBudgetMcpServer(store: Store, userId: string) {
           .enum(["expense", "income", "split"])
           .optional()
           .describe("Only expenses, income, or split expenses."),
-        goal: goalIdSchema.optional(),
+        goal: z.optional(goalIdSchema),
         query: z
           .string()
           .max(200)
           .optional()
           .describe("Text to find in the description or goal name."),
-        recurrence: idSchema
-          .optional()
+        recurrence: z
+          .optional(idSchema)
           .describe(
             "A recurrence id: lists that whole series across every month instead of one month.",
           ),

@@ -4,7 +4,7 @@ import {
   parseAsInteger,
   parseAsString,
 } from "nuqs";
-import { z } from "zod";
+import { z } from "zod/mini";
 import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import {
   goalIdSchema,
@@ -12,15 +12,19 @@ import {
   viewSchema,
 } from "@/features/budget/domain/schemas";
 
-const drop = <Schema extends z.ZodType>(schema: Schema) =>
-  schema.optional().catch(undefined);
+const drop = <Schema extends z.ZodMiniType>(schema: Schema) =>
+  z.catch(z.optional(schema), undefined);
 
-const memberSchema = z.string({ error: "Pessoa inválida." }).min(1).max(64);
+const memberSchema = z
+  .string({ error: "Pessoa inválida." })
+  .check(z.minLength(1), z.maxLength(64));
 
-const querySchema = z
-  .string({ error: "Busca inválida." })
-  .refine((value) => value.trim().length > 0)
-  .transform((value) => value.slice(0, 200));
+const querySchema = z.pipe(
+  z
+    .string({ error: "Busca inválida." })
+    .check(z.refine((value) => value.trim().length > 0)),
+  z.transform((value: string) => value.slice(0, 200)),
+);
 
 // The list also filters by split expenses, which are not a stored kind.
 const kindFilterSchema = z.enum(["expense", "income", "split"], {
@@ -42,7 +46,7 @@ const transactionFiltersSchema = z.object({
 
 // nuqs reads and writes the same params in components; each parser accepts
 // exactly what the route schema keeps and treats anything else as absent.
-function urlParam<Value extends string>(schema: z.ZodType<Value, string>) {
+function urlParam<Value extends string>(schema: z.ZodMiniType<Value, string>) {
   return createParser({
     parse: (value) => schema.safeParse(value).data ?? null,
     serialize: (value: Value) => value,
