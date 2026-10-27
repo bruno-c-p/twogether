@@ -17,14 +17,21 @@ import {
   type SheetActions,
 } from "@/components/ui/sheet-context";
 import type { SheetDrawer as Drawer } from "@/components/ui/sheet-drawer";
+import { toastManager } from "@/components/ui/toast-manager";
 import { reportError } from "@/lib/errors";
 
 export type { SheetActions };
 
 // A drawer chunk that never arrived (a dropped connection, or a deploy that
-// replaced it) leaves the plain trigger; a tap reloads the page for fresh
-// chunks instead of the route showing its error screen.
-const RELOAD = { onOpen: () => window.location.reload() };
+// replaced it) leaves the plain trigger instead of the route's error screen.
+// Online, a tap reloads the page for fresh chunks; offline, a reload would
+// lose the page, so the tap says so instead.
+const RELOAD = {
+  onOpen: () => {
+    if (navigator.onLine) window.location.reload();
+    else toastManager.add({ title: "Sem conexão. Tente novamente." });
+  },
+};
 
 function DrawerUnavailable({ trigger }: ComponentProps<typeof Drawer>) {
   return <SheetTriggerContext value={RELOAD}>{trigger}</SheetTriggerContext>;
@@ -126,6 +133,21 @@ export function SheetHeader({
   );
 }
 
+// The drawer can swap this button out between a press and its release, and
+// then no click follows. A primary press whose button was swapped out still
+// counts once it is released; a cancelled press (a scroll) never does.
+function completeIfSwapped(button: HTMLButtonElement, onOpen: () => void) {
+  const settle = (event: PointerEvent) => {
+    document.removeEventListener("pointerup", settle);
+    document.removeEventListener("pointercancel", settle);
+
+    if (event.type === "pointerup" && !button.isConnected) onOpen();
+  };
+
+  document.addEventListener("pointerup", settle);
+  document.addEventListener("pointercancel", settle);
+}
+
 export function SheetTrigger(props: ComponentProps<"button">) {
   const sheet = use(SheetTriggerContext);
 
@@ -137,6 +159,10 @@ export function SheetTrigger(props: ComponentProps<"button">) {
       aria-haspopup="dialog"
       aria-expanded={false}
       {...props}
+      onPointerDown={(event) => {
+        if (event.button === 0)
+          completeIfSwapped(event.currentTarget, sheet.onOpen);
+      }}
       onClick={sheet.onOpen}
     />
   );
