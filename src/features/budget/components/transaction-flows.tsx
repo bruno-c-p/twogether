@@ -1,12 +1,40 @@
-import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";
-import { GoalPercentagesDialog } from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
-import { TransactionDialog } from "@/features/budget/components/transaction-dialog/transaction-dialog";
-import { SettleDialog } from "@/features/budget/components/settle-dialog";
+import { lazy, Suspense } from "react";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
 import { laterInSeries } from "@/features/budget/domain/recurrence";
 import type { Transaction } from "@/features/budget/domain/types";
 import { today } from "@/lib/clock";
 import { browserTimeZone } from "@/lib/time-zone";
+import { useBrowserSync } from "@/lib/use-browser-sync";
+
+// Dialogs open only on a tap, so their code (forms, pickers, validation)
+// stays off the first load and downloads once the page is interactive.
+const loaders = {
+  deleteRecurrence: () =>
+    import("@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog"),
+  goalPercentages: () =>
+    import("@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog"),
+  transaction: () =>
+    import("@/features/budget/components/transaction-dialog/transaction-dialog"),
+  settle: () => import("@/features/budget/components/settle-dialog"),
+};
+
+const DeleteRecurrenceDialog = lazy(() =>
+  loaders
+    .deleteRecurrence()
+    .then((m) => ({ default: m.DeleteRecurrenceDialog })),
+);
+
+const GoalPercentagesDialog = lazy(() =>
+  loaders.goalPercentages().then((m) => ({ default: m.GoalPercentagesDialog })),
+);
+
+const TransactionDialog = lazy(() =>
+  loaders.transaction().then((m) => ({ default: m.TransactionDialog })),
+);
+
+const SettleDialog = lazy(() =>
+  loaders.settle().then((m) => ({ default: m.SettleDialog })),
+);
 
 function transactionDefaultDate(month: string) {
   const date = today(browserTimeZone());
@@ -35,8 +63,13 @@ function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
 export function TransactionFlows() {
   const { budget, month, dialogs, mutations, actions } = useWorkspace();
 
+  useBrowserSync(["workspace-dialogs"], () => {
+    for (const load of Object.values(loaders))
+      void load().catch(() => undefined);
+  });
+
   return (
-    <>
+    <Suspense>
       {dialogs.percentagesRevision !== null && (
         <GoalPercentagesDialog
           percentages={budget.state.percentages}
@@ -78,6 +111,6 @@ export function TransactionFlows() {
           onClose={() => dialogs.setSettling(null)}
         />
       )}
-    </>
+    </Suspense>
   );
 }

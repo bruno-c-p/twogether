@@ -1,6 +1,5 @@
-import { useRef } from "react";
+import { lazy, Suspense, useRef } from "react";
 import { useClerk } from "@clerk/tanstack-react-start";
-import { AccountSettings } from "@/features/auth/components/account-settings";
 import { ThemeToggle } from "@/features/theme";
 import type { Member, AccountPlacement } from "@/features/budget";
 import {
@@ -13,6 +12,16 @@ import { Panel, SectionHeading } from "@/components/ui/panel/panel";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { MobileTabContent } from "@/components/ui/mobile-tab-content";
 import { cx } from "@/lib/cx";
+import { useBrowserSync } from "@/lib/use-browser-sync";
+
+// The settings (name form, members, invites) show only once the drawer
+// opens; they download after the page is interactive.
+const loadAccountSettings = () =>
+  import("@/features/auth/components/account-settings");
+
+const AccountSettings = lazy(() =>
+  loadAccountSettings().then((m) => ({ default: m.AccountSettings })),
+);
 
 export function AccountDrawer({
   placement,
@@ -25,6 +34,10 @@ export function AccountDrawer({
 }) {
   const sheet = useRef<SheetActions>(null);
   const { openUserProfile } = useClerk();
+  useBrowserSync(
+    ["account-settings"],
+    () => void loadAccountSettings().catch(() => undefined),
+  );
   const memberLabel = `${members.length} ${members.length === 1 ? "pessoa" : "pessoas"}`;
 
   // Clerk's modal lives outside the drawer's focus trap, so close first.
@@ -74,7 +87,9 @@ export function AccountDrawer({
           <ThemeToggle />
         </div>
       </Panel>
-      <AccountSettings user={user} members={members} onManage={manage} />
+      <Suspense>
+        <AccountSettings user={user} members={members} onManage={manage} />
+      </Suspense>
     </Sheet>
   );
 }
