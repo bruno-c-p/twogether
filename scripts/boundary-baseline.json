@@ -37,7 +37,6 @@
   "test_only_dependencies": [],
   "dev_dependencies_in_production": [],
   "boundary_violations": [
-    "src/components/ui/toaster.tsx->src/features/theme/index.ts",
     "src/features/auth/auth.server.test.ts->src/features/budget/constants.ts",
     "src/features/break-ui/actions.ts->src/features/budget/domain/schemas.ts",
     "src/features/break-ui/actions.ts->src/features/budget/domain/types.ts",
