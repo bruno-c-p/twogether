@@ -185,6 +185,8 @@ test.describe("chrome", () => {
     await expect(
       page.getByRole("heading", { name: "Transações", level: 1 }),
     ).toBeVisible();
+    await page.goto("/orcamento");
+    await expect(page).toHaveURL(/\/orcamento\?(?:.*&)?month=\d{4}-\d{2}/);
 
     const launch = await page.context().request.get("/", { maxRedirects: 0 });
 

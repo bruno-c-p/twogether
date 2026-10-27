@@ -72,7 +72,9 @@ export function MonthFilter({
       }
     >
       <SheetHeader title="Escolher mês" />
-      <Suspense>
+      {/* Holds the grid's height so a sheet opened before it loads does not
+          grow under the reader's finger. */}
+      <Suspense fallback={<div aria-hidden="true" className="h-68" />}>
         <MonthGrid
           month={month}
           prefetch={prefetch}
