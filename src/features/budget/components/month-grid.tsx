@@ -1,13 +1,10 @@
 import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
-import { useHydrated } from "@tanstack/react-router";
 import { useForm, useWatch } from "react-hook-form";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { monthLabel, monthName } from "@/features/budget/domain/format";
 import { Button } from "@/components/ui/button";
-import { currentMonth } from "@/lib/clock";
 import { cx } from "@/lib/cx";
-import { browserTimeZone } from "@/lib/time-zone";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
@@ -27,7 +24,6 @@ export function MonthGrid({
   });
 
   const year = useWatch({ control, name: "year" });
-  const today = useHydrated() ? currentMonth(browserTimeZone()) : null;
 
   return (
     <>
@@ -88,15 +84,6 @@ export function MonthGrid({
           );
         })}
       </ToggleGroup>
-      {today && month !== today && (
-        <Button
-          variant="secondary"
-          className="mt-4 w-full"
-          onClick={() => onPick(today)}
-        >
-          Voltar para este mês
-        </Button>
-      )}
     </>
   );
 }

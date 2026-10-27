@@ -1,4 +1,5 @@
 import { lazy, Suspense, useRef } from "react";
+import { useHydrated } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { monthLabel, monthName } from "@/features/budget/domain/format";
 import { chipTrigger } from "@/components/ui/chip-trigger";
@@ -8,7 +9,10 @@ import {
   SheetTrigger,
   type SheetActions,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { currentMonth } from "@/lib/clock";
 import { cx } from "@/lib/cx";
+import { browserTimeZone } from "@/lib/time-zone";
 import { useBrowserSync } from "@/lib/use-browser-sync";
 
 // The grid shows only once the sheet opens; it downloads after the page is
@@ -19,6 +23,27 @@ const loadMonthGrid = () =>
   }));
 
 const MonthGrid = lazy(loadMonthGrid);
+
+// Outside the lazy grid, so the grid's placeholder has one fixed height.
+function BackToThisMonth({
+  month,
+  onPick,
+}: {
+  month: string;
+  onPick: (month: string) => void;
+}) {
+  const today = useHydrated() ? currentMonth(browserTimeZone()) : null;
+
+  return today && month !== today ? (
+    <Button
+      variant="secondary"
+      className="mt-4 w-full"
+      onClick={() => onPick(today)}
+    >
+      Voltar para este mês
+    </Button>
+  ) : null;
+}
 
 // "setembro 2026", or "set 2026" on phones. Every pt-BR short month is the
 // start of the long one, so phones hide the rest of the word instead of
@@ -51,6 +76,11 @@ export function MonthFilter({
 }) {
   const sheet = useRef<SheetActions>(null);
 
+  function pick(next: string) {
+    setMonth(next);
+    sheet.current?.close();
+  }
+
   useBrowserSync(
     ["month-grid"],
     () => void loadMonthGrid().catch(() => undefined),
@@ -75,15 +105,9 @@ export function MonthFilter({
       {/* Holds the grid's height so a sheet opened before it loads does not
           grow under the reader's finger. */}
       <Suspense fallback={<div aria-hidden="true" className="h-68" />}>
-        <MonthGrid
-          month={month}
-          prefetch={prefetch}
-          onPick={(next) => {
-            setMonth(next);
-            sheet.current?.close();
-          }}
-        />
+        <MonthGrid month={month} prefetch={prefetch} onPick={pick} />
       </Suspense>
+      <BackToThisMonth month={month} onPick={pick} />
     </Sheet>
   );
 }
