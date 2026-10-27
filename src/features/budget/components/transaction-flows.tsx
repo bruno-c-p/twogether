@@ -10,31 +10,30 @@ import { useBrowserSync } from "@/lib/use-browser-sync";
 // stays off the first load and downloads once the page is interactive.
 const loaders = {
   deleteRecurrence: () =>
-    import("@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog"),
+    import("@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog").then(
+      ({ DeleteRecurrenceDialog }) => ({ default: DeleteRecurrenceDialog }),
+    ),
   goalPercentages: () =>
-    import("@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog"),
+    import("@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog").then(
+      ({ GoalPercentagesDialog }) => ({ default: GoalPercentagesDialog }),
+    ),
   transaction: () =>
-    import("@/features/budget/components/transaction-dialog/transaction-dialog"),
-  settle: () => import("@/features/budget/components/settle-dialog"),
+    import("@/features/budget/components/transaction-dialog/transaction-dialog").then(
+      ({ TransactionDialog }) => ({ default: TransactionDialog }),
+    ),
+  settle: () =>
+    import("@/features/budget/components/settle-dialog").then(
+      ({ SettleDialog }) => ({ default: SettleDialog }),
+    ),
 };
 
-const DeleteRecurrenceDialog = lazy(() =>
-  loaders
-    .deleteRecurrence()
-    .then((m) => ({ default: m.DeleteRecurrenceDialog })),
-);
+const DeleteRecurrenceDialog = lazy(loaders.deleteRecurrence);
 
-const GoalPercentagesDialog = lazy(() =>
-  loaders.goalPercentages().then((m) => ({ default: m.GoalPercentagesDialog })),
-);
+const GoalPercentagesDialog = lazy(loaders.goalPercentages);
 
-const TransactionDialog = lazy(() =>
-  loaders.transaction().then((m) => ({ default: m.TransactionDialog })),
-);
+const TransactionDialog = lazy(loaders.transaction);
 
-const SettleDialog = lazy(() =>
-  loaders.settle().then((m) => ({ default: m.SettleDialog })),
-);
+const SettleDialog = lazy(loaders.settle);
 
 function transactionDefaultDate(month: string) {
   const date = today(browserTimeZone());

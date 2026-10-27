@@ -17,11 +17,11 @@ import { useBrowserSync } from "@/lib/use-browser-sync";
 // The settings (name form, members, invites) show only once the drawer
 // opens; they download after the page is interactive.
 const loadAccountSettings = () =>
-  import("@/features/auth/components/account-settings");
+  import("@/features/auth/components/account-settings").then(
+    ({ AccountSettings }) => ({ default: AccountSettings }),
+  );
 
-const AccountSettings = lazy(() =>
-  loadAccountSettings().then((m) => ({ default: m.AccountSettings })),
-);
+const AccountSettings = lazy(loadAccountSettings);
 
 export function AccountDrawer({
   placement,

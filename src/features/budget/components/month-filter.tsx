@@ -13,11 +13,12 @@ import { useBrowserSync } from "@/lib/use-browser-sync";
 
 // The grid shows only once the sheet opens; it downloads after the page is
 // interactive instead of before.
-const loadMonthGrid = () => import("@/features/budget/components/month-grid");
+const loadMonthGrid = () =>
+  import("@/features/budget/components/month-grid").then(({ MonthGrid }) => ({
+    default: MonthGrid,
+  }));
 
-const MonthGrid = lazy(() =>
-  loadMonthGrid().then((m) => ({ default: m.MonthGrid })),
-);
+const MonthGrid = lazy(loadMonthGrid);
 
 // "setembro 2026", or "set 2026" on phones. Every pt-BR short month is the
 // start of the long one, so phones hide the rest of the word instead of

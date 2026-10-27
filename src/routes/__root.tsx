@@ -29,7 +29,8 @@ parseClientEnv(import.meta.env);
 function useClerkLocalization() {
   return useQuery({
     queryKey: ["clerk-localization"],
-    queryFn: () => import("@clerk/localizations/pt-BR").then((m) => m.ptBR),
+    queryFn: () =>
+      import("@clerk/localizations/pt-BR").then(({ ptBR }) => ptBR),
     staleTime: Infinity,
   }).data;
 }
@@ -38,7 +39,9 @@ const CLERK_UI = { ClerkUI: LazyClerkUI };
 
 // Toasts only follow a tap, so the toast UI loads once the page is live.
 const Toaster = lazy(() =>
-  import("@/components/ui/toaster").then((m) => ({ default: m.Toaster })),
+  import("@/components/ui/toaster").then(({ Toaster }) => ({
+    default: Toaster,
+  })),
 );
 
 function TimeZoneCookie() {

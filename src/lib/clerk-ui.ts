@@ -42,7 +42,7 @@ export function preloadClerkUI() {
 // UI only through `ensureMounted()` and the controls it returns, so the real
 // UI downloads when a control mounts or opens something. Prop updates made
 // before then replay onto it.
-export class LazyClerkUI implements ClerkUIInstance {
+export const LazyClerkUI: ClerkUIConstructor = class implements ClerkUIInstance {
   static version = "";
   version = "";
   #args: UIArgs;
@@ -104,4 +104,4 @@ export class LazyClerkUI implements ClerkUIInstance {
 
     return Promise.resolve(controls);
   }
-}
+};
