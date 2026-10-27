@@ -1,5 +1,5 @@
 import { ClerkProvider } from "@clerk/tanstack-react-start";
-import { lazy, Suspense, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
@@ -7,7 +7,6 @@ import {
   HeadContent,
   Outlet,
   Scripts,
-  useHydrated,
 } from "@tanstack/react-router";
 import interTightLatin from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
 import "@fontsource-variable/inter-tight/wght.css";
@@ -15,6 +14,7 @@ import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript, useThemePreference } from "@/features/theme";
+import { Toaster } from "@/components/ui/toaster";
 import { LazyClerkUI } from "@/lib/clerk-ui";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
@@ -36,13 +36,6 @@ function useClerkLocalization() {
 }
 
 const CLERK_UI = { ClerkUI: LazyClerkUI };
-
-// Toasts only follow a tap, so the toast UI loads once the page is live.
-const Toaster = lazy(() =>
-  import("@/components/ui/toaster").then(({ Toaster }) => ({
-    default: Toaster,
-  })),
-);
 
 function TimeZoneCookie() {
   useBrowserSync(["time-zone"], () => rememberTimeZone(browserTimeZone()));
@@ -103,14 +96,6 @@ function ThemeSync() {
   return null;
 }
 
-function DeferredToaster() {
-  return useHydrated() ? (
-    <Suspense>
-      <Toaster />
-    </Suspense>
-  ) : null;
-}
-
 const CLERK_APPEARANCE = {
   variables: {
     colorPrimary: "var(--brand)",
@@ -159,7 +144,7 @@ function RootDocument() {
             <Outlet />
           </NuqsAdapter>
           <ThemeSync />
-          <DeferredToaster />
+          <Toaster />
           <Scripts />
         </LocalizedClerkProvider>
       </body>
