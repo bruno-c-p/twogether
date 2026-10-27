@@ -1,6 +1,5 @@
 import { ClerkProvider } from "@clerk/tanstack-react-start";
-import { ptBR } from "@clerk/localizations";
-import type { QueryClient } from "@tanstack/react-query";
+import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
   createRootRouteWithContext,
@@ -21,6 +20,17 @@ import { useBrowserSync } from "@/lib/use-browser-sync";
 
 // Fails at startup when the Clerk publishable key is missing.
 parseClientEnv(import.meta.env);
+
+// Only Clerk's own screens read these strings, and they appear after
+// clerk-js downloads, so the 70 KB of copy stays off the first load.
+// ClerkProvider forwards the late prop to clerk-js.
+function useClerkLocalization() {
+  return useQuery({
+    queryKey: ["clerk-localization"],
+    queryFn: () => import("@clerk/localizations/pt-BR").then((m) => m.ptBR),
+    staleTime: Infinity,
+  }).data;
+}
 
 function TimeZoneCookie() {
   useBrowserSync(["time-zone"], () => rememberTimeZone(browserTimeZone()));
@@ -69,7 +79,14 @@ export const Route = createRootRouteWithContext<{
       },
     ],
   }),
-  component: () => (
+  component: RootDocument,
+  notFoundComponent: NotFoundPage,
+});
+
+function RootDocument() {
+  const localization = useClerkLocalization();
+
+  return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
@@ -78,7 +95,7 @@ export const Route = createRootRouteWithContext<{
       <body>
         <ClerkProvider
           afterSignOutUrl="/entrar"
-          localization={ptBR}
+          localization={localization}
           appearance={{
             variables: {
               colorPrimary: "var(--brand)",
@@ -107,6 +124,5 @@ export const Route = createRootRouteWithContext<{
         </ClerkProvider>
       </body>
     </html>
-  ),
-  notFoundComponent: NotFoundPage,
-});
+  );
+}
