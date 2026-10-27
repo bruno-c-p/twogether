@@ -1,5 +1,4 @@
 import { lazy, Suspense, useRef } from "react";
-import { useHydrated } from "@tanstack/react-router";
 import { ChevronDown } from "lucide-react";
 import { monthLabel, monthName } from "@/features/budget/domain/format";
 import { chipTrigger } from "@/components/ui/chip-trigger";
@@ -32,9 +31,10 @@ function BackToThisMonth({
   month: string;
   onPick: (month: string) => void;
 }) {
-  const today = useHydrated() ? currentMonth(browserTimeZone()) : null;
+  // Renders only inside the opened sheet, so always in the browser.
+  const today = currentMonth(browserTimeZone());
 
-  return today && month !== today ? (
+  return month !== today ? (
     <Button
       variant="secondary"
       className="mt-4 w-full"
