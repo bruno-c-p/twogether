@@ -25,6 +25,8 @@ import {
   FormStack,
   Note,
 } from "@/components/ui/field/field";
+import { preloadClerkUI } from "@/lib/clerk-ui";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 import styles from "@/features/auth/components/account-gate/account-gate.module.css";
 
 const SESSION_SYNC_INTERVAL_MS = 400;
@@ -251,6 +253,13 @@ export function AccountGate({
   const navigate = useNavigate();
   const { isSignedIn } = useAuth();
   const { user: clerkUser } = useUser();
+
+  // The sign-in form is Clerk's UI; fetch it alongside clerk-js.
+  useBrowserSync(
+    ["clerk-ui"],
+    () => void preloadClerkUI().catch(() => undefined),
+    !user,
+  );
   const actions = useGateActions(run, invite);
 
   // Clerk signs in before the server session exists; poll until it does.

@@ -1,4 +1,6 @@
 import { Input } from "@/components/ui/input";
+import { preloadClerkUI } from "@/lib/clerk-ui";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Copy } from "lucide-react";
@@ -272,6 +274,12 @@ export function AccountSettings({
 }) {
   const signOut = useSignOut();
   const queryClient = useQueryClient();
+
+  // The drawer is open: "Gerenciar conta" may open Clerk's profile modal next.
+  useBrowserSync(
+    ["clerk-ui"],
+    () => void preloadClerkUI().catch(() => undefined),
+  );
   const { user: clerkUser } = useUser();
   const { run, busy, error } = useActionRun(OFFLINE_MESSAGE);
 

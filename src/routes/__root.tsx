@@ -14,6 +14,7 @@ import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript } from "@/features/theme";
 import { Toaster } from "@/components/ui/toaster";
+import { LazyClerkUI } from "@/lib/clerk-ui";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 import { useBrowserSync } from "@/lib/use-browser-sync";
@@ -31,6 +32,8 @@ function useClerkLocalization() {
     staleTime: Infinity,
   }).data;
 }
+
+const CLERK_UI = { ClerkUI: LazyClerkUI };
 
 function TimeZoneCookie() {
   useBrowserSync(["time-zone"], () => rememberTimeZone(browserTimeZone()));
@@ -96,6 +99,7 @@ function RootDocument() {
         <ClerkProvider
           afterSignOutUrl="/entrar"
           localization={localization}
+          ui={CLERK_UI}
           appearance={{
             variables: {
               colorPrimary: "var(--brand)",
