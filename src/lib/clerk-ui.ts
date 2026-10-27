@@ -4,10 +4,9 @@ import type {
   ClerkUIInstance,
   ComponentControls,
 } from "@clerk/shared/ui";
+import { reportError } from "@/lib/errors";
 
 type UIArgs = ConstructorParameters<ClerkUIConstructor>;
-
-type UIProps = Parameters<ComponentControls["updateProps"]>[0];
 
 declare global {
   var __internal_ClerkUICtor: ClerkUIConstructor | undefined;
@@ -30,7 +29,7 @@ export function preloadClerkUI() {
 
     return ctor;
   });
-  // A failed download (a dropped connection) is retried on the next use.
+  // A failed download (a dropped connection) starts over on the next call.
   script.catch(() => {
     script = undefined;
   });
@@ -38,68 +37,83 @@ export function preloadClerkUI() {
   return script;
 }
 
+type Operation = (controls: ComponentControls) => void;
+
+const FIRST_RETRY_MS = 2_000;
+
+const LAST_RETRY_MS = 60_000;
+
 // Stands in for Clerk's UI constructor (`ui.ClerkUI`). clerk-js reaches the
-// UI only through `ensureMounted()` and the controls it returns, so the real
-// UI downloads when a control mounts or opens something. Prop updates made
-// before then replay onto it.
+// UI only through `ensureMounted()` and the controls it returns, so every
+// call waits in one ordered queue and the real UI downloads once a control
+// mounts or opens something. A failed download is reported and retried
+// with backoff, then the queue replays in order, so a sign-in form mounted
+// while offline still appears once the connection returns.
 export const LazyClerkUI: ClerkUIConstructor = class implements ClerkUIInstance {
   static version = "";
   version = "";
   #args: UIArgs;
-  #real: Promise<ComponentControls> | undefined;
-  #props: UIProps[] = [];
+  #controls: ComponentControls | undefined;
+  #queue: Operation[] = [];
+  #loading = false;
+  #retryMs = FIRST_RETRY_MS;
 
   constructor(...args: UIArgs) {
     this.#args = args;
   }
 
+  #run(operation: Operation, load: boolean) {
+    if (this.#controls) return operation(this.#controls);
+
+    this.#queue.push(operation);
+
+    if (load) this.#load();
+  }
+
   #load(preloadHint?: string) {
-    if (this.#real) return this.#real;
+    if (this.#loading || this.#controls) return;
 
-    const real = preloadClerkUI()
+    this.#loading = true;
+    preloadClerkUI()
       .then((Real) => new Real(...this.#args).ensureMounted({ preloadHint }))
-      .then((controls) => {
-        for (const props of this.#props) controls.updateProps(props);
+      .then(
+        (controls) => {
+          this.#controls = controls;
 
-        return controls;
+          for (const operation of this.#queue.splice(0)) operation(controls);
+        },
+        (error) => {
+          reportError(error, { context: "Clerk UI download" });
+          setTimeout(() => this.#load(preloadHint), this.#retryMs);
+          this.#retryMs = Math.min(this.#retryMs * 2, LAST_RETRY_MS);
+        },
+      )
+      .finally(() => {
+        this.#loading = false;
       });
-
-    this.#real = real;
-    real.catch(() => {
-      this.#real = undefined;
-    });
-
-    return real;
   }
 
   ensureMounted(opts?: { preloadHint?: string }) {
-    if (opts?.preloadHint) void this.#load(opts.preloadHint);
+    if (opts?.preloadHint) this.#load(opts.preloadHint);
 
-    // Opening or mounting fetches the UI; closing or unmounting needs it only
-    // if it already came.
-    const now = (use: (controls: ComponentControls) => void) =>
-      void this.#load().then(use);
-
-    const later = (use: (controls: ComponentControls) => void) =>
-      void this.#real?.then(use);
-
+    // Mounting or opening fetches the UI; the rest only waits for it.
     const controls: ComponentControls = {
-      updateProps: (props) => {
-        if (this.#real) later((real) => real.updateProps(props));
-        else this.#props.push(props);
-      },
-      mountComponent: (params) => now((real) => real.mountComponent(params)),
+      updateProps: (props) => this.#run((ui) => ui.updateProps(props), false),
+      mountComponent: (params) =>
+        this.#run((ui) => ui.mountComponent(params), true),
       unmountComponent: (params) =>
-        later((real) => real.unmountComponent(params)),
-      openModal: (modal, props) => now((real) => real.openModal(modal, props)),
+        this.#run((ui) => ui.unmountComponent(params), false),
+      openModal: (modal, props) =>
+        this.#run((ui) => ui.openModal(modal, props), true),
       closeModal: (modal, options) =>
-        later((real) => real.closeModal(modal, options)),
+        this.#run((ui) => ui.closeModal(modal, options), false),
       openDrawer: (drawer, props) =>
-        now((real) => real.openDrawer(drawer, props)),
+        this.#run((ui) => ui.openDrawer(drawer, props), true),
       closeDrawer: (drawer, options) =>
-        later((real) => real.closeDrawer(drawer, options)),
-      prefetch: (component) => now((real) => real.prefetch(component)),
-      mountImpersonationFab: () => now((real) => real.mountImpersonationFab()),
+        this.#run((ui) => ui.closeDrawer(drawer, options), false),
+      prefetch: (component) => this.#run((ui) => ui.prefetch(component), true),
+      mountImpersonationFab: () =>
+        this.#run((ui) => ui.mountImpersonationFab(), true),
     };
 
     return Promise.resolve(controls);
