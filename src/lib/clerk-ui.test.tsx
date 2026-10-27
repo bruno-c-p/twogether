@@ -90,4 +90,22 @@ describe("LazyClerkUI", () => {
 
     expect(calls).toEqual(["mount SignIn"]);
   });
+
+  test("a component that unmounts during the backoff stops the retries", async () => {
+    vi.useFakeTimers();
+    const reported = vi.spyOn(console, "error").mockReturnValue(undefined);
+    const ui = await lazyUI();
+    const form = signIn();
+
+    ui.mountComponent(form);
+    await vi.advanceTimersByTimeAsync(20_000);
+    ui.unmountComponent({ node: form.node });
+    const failures = reported.mock.calls.length;
+
+    globalThis.__internal_ClerkUICtor = FakeClerkUI;
+    await vi.advanceTimersByTimeAsync(120_000);
+
+    expect(calls).toEqual([]);
+    expect(reported.mock.calls.length).toBe(failures);
+  });
 });
