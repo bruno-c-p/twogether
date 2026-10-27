@@ -4,6 +4,7 @@ import {
   use,
   useId,
   type ComponentProps,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
   type RefObject,
 } from "react";
@@ -19,13 +20,15 @@ import {
 import type { SheetDrawer as Drawer } from "@/components/ui/sheet-drawer";
 import { toastManager } from "@/components/ui/toast-manager";
 import { reportError } from "@/lib/errors";
+import { useBrowserSync } from "@/lib/use-browser-sync";
 
 export type { SheetActions };
 
 // A drawer chunk that never arrived (a dropped connection, or a deploy that
 // replaced it) leaves the plain trigger instead of the route's error screen.
 // Online, a tap reloads the page for fresh chunks; offline, a reload would
-// lose the page, so the tap says so instead.
+// lose the page, so the tap says so instead. navigator.onLine only knows
+// about a hard offline; on a link that is up but failing, the reload runs.
 const RELOAD = {
   onOpen: () => {
     if (navigator.onLine) window.location.reload();
@@ -33,7 +36,13 @@ const RELOAD = {
   },
 };
 
-function DrawerUnavailable({ trigger }: ComponentProps<typeof Drawer>) {
+function DrawerUnavailable({
+  trigger,
+  defaultOpen,
+}: ComponentProps<typeof Drawer>) {
+  // A tap that landed while the chunk was failing acts now.
+  useBrowserSync(["sheet-unavailable-tap"], RELOAD.onOpen, defaultOpen);
+
   return <SheetTriggerContext value={RELOAD}>{trigger}</SheetTriggerContext>;
 }
 
@@ -134,14 +143,29 @@ export function SheetHeader({
 }
 
 // The drawer can swap this button out between a press and its release, and
-// then no click follows. A primary press whose button was swapped out still
-// counts once it is released; a cancelled press (a scroll) never does.
-function completeIfSwapped(button: HTMLButtonElement, onOpen: () => void) {
+// then no click follows. The same pointer released over the button's spot
+// still counts as the tap; a cancelled press (a scroll), another finger or a
+// release elsewhere does not.
+function completeIfSwapped(
+  press: ReactPointerEvent<HTMLButtonElement>,
+  onOpen: () => void,
+) {
+  const button = press.currentTarget;
+  const area = button.getBoundingClientRect();
+
   const settle = (event: PointerEvent) => {
+    if (event.pointerId !== press.pointerId) return;
+
     document.removeEventListener("pointerup", settle);
     document.removeEventListener("pointercancel", settle);
 
-    if (event.type === "pointerup" && !button.isConnected) onOpen();
+    const over =
+      event.clientX >= area.left &&
+      event.clientX <= area.right &&
+      event.clientY >= area.top &&
+      event.clientY <= area.bottom;
+
+    if (event.type === "pointerup" && over && !button.isConnected) onOpen();
   };
 
   document.addEventListener("pointerup", settle);
@@ -160,8 +184,7 @@ export function SheetTrigger(props: ComponentProps<"button">) {
       aria-expanded={false}
       {...props}
       onPointerDown={(event) => {
-        if (event.button === 0)
-          completeIfSwapped(event.currentTarget, sheet.onOpen);
+        if (event.button === 0) completeIfSwapped(event, sheet.onOpen);
       }}
       onClick={sheet.onOpen}
     />

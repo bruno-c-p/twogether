@@ -39,9 +39,9 @@ describe("Sheet", () => {
   test("a press the drawer swaps out mid-tap opens it on release", async () => {
     const { screen, plain } = await renderSheet();
 
-    fireEvent.pointerDown(plain, { button: 0 });
+    fireEvent.pointerDown(plain, { button: 0, pointerId: 1 });
     await vi.waitFor(() => expect(plain.isConnected).toBe(false));
-    fireEvent.pointerUp(document, { button: 0 });
+    fireEvent.pointerUp(document, { button: 0, pointerId: 1 });
 
     expect(
       await screen.findByRole("dialog", { name: "Escolher mês" }),
@@ -51,11 +51,22 @@ describe("Sheet", () => {
   test("a cancelled press, such as a scroll, does not open it", async () => {
     const { screen, plain } = await renderSheet();
 
-    fireEvent.pointerDown(plain, { button: 0 });
+    fireEvent.pointerDown(plain, { button: 0, pointerId: 1 });
     await vi.waitFor(() => expect(plain.isConnected).toBe(false));
-    fireEvent.pointerCancel(document);
-    fireEvent.pointerUp(document, { button: 0 });
+    fireEvent.pointerCancel(document, { pointerId: 1 });
+    fireEvent.pointerUp(document, { button: 0, pointerId: 1 });
     // An open would land on the next render; give it one.
+    await new Promise((resolve) => setTimeout(resolve, 100));
+
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  test("another finger's release does not complete the press", async () => {
+    const { screen, plain } = await renderSheet();
+
+    fireEvent.pointerDown(plain, { button: 0, pointerId: 1 });
+    await vi.waitFor(() => expect(plain.isConnected).toBe(false));
+    fireEvent.pointerUp(document, { button: 0, pointerId: 2 });
     await new Promise((resolve) => setTimeout(resolve, 100));
 
     expect(screen.queryByRole("dialog")).toBeNull();
