@@ -179,6 +179,13 @@ test.describe("chrome", () => {
       )
       .toBe(true);
 
+    // Writing the month into a bare page URL keeps the reader on that page.
+    await page.goto("/transacoes");
+    await expect(page).toHaveURL(/\/transacoes\?(?:.*&)?month=\d{4}-\d{2}/);
+    await expect(
+      page.getByRole("heading", { name: "Transações", level: 1 }),
+    ).toBeVisible();
+
     const launch = await page.context().request.get("/", { maxRedirects: 0 });
 
     expect(launch.status()).toBe(200);

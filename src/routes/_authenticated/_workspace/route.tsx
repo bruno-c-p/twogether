@@ -64,6 +64,10 @@ function WorkspaceRoute() {
     ["workspace-month", month ?? "", search.month ?? ""],
     () =>
       void navigate({
+        // From this pathless layout "." means "/", which would send
+        // /transacoes to the overview; stay on the page the reader opened.
+        to: ".",
+        unsafeRelative: "path",
         search: (prev) => ({
           ...prev,
           month: month ?? currentMonth(browserTimeZone()),
