@@ -1,4 +1,5 @@
 import { ClerkProvider } from "@clerk/tanstack-react-start";
+import { lazy, Suspense, type ReactNode } from "react";
 import { useQuery, type QueryClient } from "@tanstack/react-query";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import {
@@ -6,14 +7,14 @@ import {
   HeadContent,
   Outlet,
   Scripts,
+  useHydrated,
 } from "@tanstack/react-router";
 import interTightLatin from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
 import "@fontsource-variable/inter-tight/wght.css";
 import stylesheet from "@/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
-import { themeScript } from "@/features/theme";
-import { Toaster } from "@/components/ui/toaster";
+import { themeScript, useThemePreference } from "@/features/theme";
 import { LazyClerkUI } from "@/lib/clerk-ui";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
@@ -34,6 +35,11 @@ function useClerkLocalization() {
 }
 
 const CLERK_UI = { ClerkUI: LazyClerkUI };
+
+// Toasts only follow a tap, so the toast UI loads once the page is live.
+const Toaster = lazy(() =>
+  import("@/components/ui/toaster").then((m) => ({ default: m.Toaster })),
+);
 
 function TimeZoneCookie() {
   useBrowserSync(["time-zone"], () => rememberTimeZone(browserTimeZone()));
@@ -86,9 +92,57 @@ export const Route = createRootRouteWithContext<{
   notFoundComponent: NotFoundPage,
 });
 
-function RootDocument() {
-  const localization = useClerkLocalization();
+// Keeps data-theme in step with the stored choice and the system setting.
+// A leaf, so a preference that differs from the server's re-renders nothing.
+function ThemeSync() {
+  useThemePreference();
 
+  return null;
+}
+
+function DeferredToaster() {
+  return useHydrated() ? (
+    <Suspense>
+      <Toaster />
+    </Suspense>
+  ) : null;
+}
+
+const CLERK_APPEARANCE = {
+  variables: {
+    colorPrimary: "var(--brand)",
+    colorForeground: "var(--text)",
+    colorMutedForeground: "var(--text-muted)",
+    colorBackground: "var(--surface)",
+    colorInput: "var(--surface)",
+    colorInputForeground: "var(--text)",
+    colorDanger: "var(--danger)",
+    borderRadius: "10px",
+    fontFamily: '"Inter Tight Variable", sans-serif',
+    fontSize: "14px",
+  },
+  // Clerk fades colorBorder to ~5% alpha; text fields need a 3:1 edge.
+  elements: {
+    formFieldInput: "!shadow-[inset_0_0_0_1px_var(--line-strong)]",
+  },
+};
+
+// The late localization re-renders only this provider: `children` keeps its
+// identity, so React skips the app below it.
+function LocalizedClerkProvider({ children }: { children: ReactNode }) {
+  return (
+    <ClerkProvider
+      afterSignOutUrl="/entrar"
+      localization={useClerkLocalization()}
+      ui={CLERK_UI}
+      appearance={CLERK_APPEARANCE}
+    >
+      {children}
+    </ClerkProvider>
+  );
+}
+
+function RootDocument() {
   return (
     <html lang="pt-BR" suppressHydrationWarning>
       <head>
@@ -96,36 +150,15 @@ function RootDocument() {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body>
-        <ClerkProvider
-          afterSignOutUrl="/entrar"
-          localization={localization}
-          ui={CLERK_UI}
-          appearance={{
-            variables: {
-              colorPrimary: "var(--brand)",
-              colorForeground: "var(--text)",
-              colorMutedForeground: "var(--text-muted)",
-              colorBackground: "var(--surface)",
-              colorInput: "var(--surface)",
-              colorInputForeground: "var(--text)",
-              colorDanger: "var(--danger)",
-              borderRadius: "10px",
-              fontFamily: '"Inter Tight Variable", sans-serif',
-              fontSize: "14px",
-            },
-            // Clerk fades colorBorder to ~5% alpha; text fields need a 3:1 edge.
-            elements: {
-              formFieldInput: "!shadow-[inset_0_0_0_1px_var(--line-strong)]",
-            },
-          }}
-        >
+        <LocalizedClerkProvider>
           <NuqsAdapter>
             <TimeZoneCookie />
             <Outlet />
           </NuqsAdapter>
-          <Toaster />
+          <ThemeSync />
+          <DeferredToaster />
           <Scripts />
-        </ClerkProvider>
+        </LocalizedClerkProvider>
       </body>
     </html>
   );

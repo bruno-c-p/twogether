@@ -202,8 +202,6 @@ describe("fitness source checks", () => {
           ].join("\n"),
           "src/features/a/components/index.ts":
             'export { Row } from "@/features/a/components/row";',
-          "src/features/theme/index.ts":
-            'export { Toggle } from "@/features/theme/components/toggle";',
         }),
       ),
     ).toEqual([

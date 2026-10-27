@@ -75,7 +75,13 @@
           "src/features/budget/components/workspace-skeleton.tsx"
         ]
       },
-      { "name": "theme-api", "patterns": ["src/features/theme/index.ts"] },
+      {
+        "name": "theme-api",
+        "patterns": [
+          "src/features/theme/index.ts",
+          "src/features/theme/components/theme-toggle/theme-toggle.tsx"
+        ]
+      },
       {
         "name": "auth-api",
         "patterns": [

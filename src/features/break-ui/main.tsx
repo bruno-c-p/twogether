@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/sheet";
 import { Toaster } from "@/components/ui/toaster";
 import { toastManager } from "@/components/ui/toast-manager";
-import { ThemeToggle } from "@/features/theme";
+import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import { useBudget } from "@/features/budget/hooks/use-budget";
 import {
   validateTransactionFilters,

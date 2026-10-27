@@ -1,6 +1,6 @@
 import { lazy, Suspense, useRef } from "react";
 import { useClerk } from "@clerk/tanstack-react-start";
-import { ThemeToggle } from "@/features/theme";
+import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import type { Member, AccountPlacement } from "@/features/budget";
 import {
   Sheet,

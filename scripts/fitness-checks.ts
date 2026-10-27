@@ -217,11 +217,6 @@ export function unoWiring(repo: Repo) {
 // Route config loads eagerly, so a barrel that re-exports a component drags
 // it and its CSS into the main chunk. Components join the feature's -api
 // zone as their own modules instead.
-const COMPONENT_BARRELS = [
-  // themeScript and useThemePreference live in the toggle's module, and the
-  // root route that imports them is eager anyway.
-  "src/features/theme/index.ts",
-];
 
 // Value re-exports, value imports (an import plus a later `export { X }`
 // links the module just the same) and bare imports. Type-only ones are erased.
@@ -231,11 +226,7 @@ const VALUE_LINK =
 export function noComponentBarrels(repo: Repo) {
   return repo
     .tracked(["src/features"])
-    .filter(
-      (file) =>
-        /^src\/features\/[^/]+\/index\.ts$/.test(file) &&
-        !COMPONENT_BARRELS.includes(file),
-    )
+    .filter((file) => /^src\/features\/[^/]+\/index\.ts$/.test(file))
     .flatMap((file) =>
       [...repo.read(file).matchAll(VALUE_LINK)].flatMap((match) => {
         const source = match[1] ?? match[2] ?? "";

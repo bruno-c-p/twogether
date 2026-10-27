@@ -2,7 +2,7 @@ import type { ComponentProps, ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
-import { ThemeToggle } from "@/features/theme";
+import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import { ArrowRight, HeartHandshake } from "lucide-react";
 import { authActions } from "@/features/auth/actions";
 import type { SessionState } from "@/features/auth/actions/load-session";

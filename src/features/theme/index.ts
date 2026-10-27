@@ -1,5 +1,1 @@
-export {
-  ThemeToggle,
-  themeScript,
-  useThemePreference,
-} from "@/features/theme/components/theme-toggle/theme-toggle";
+export { themeScript, useThemePreference } from "@/features/theme/preference";

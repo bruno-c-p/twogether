@@ -2,7 +2,6 @@ import { Toast } from "@base-ui/react/toast";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toastManager } from "@/components/ui/toast-manager";
-import { useThemePreference } from "@/features/theme";
 
 function ToastViewport() {
   const { toasts } = Toast.useToastManager();
@@ -44,8 +43,6 @@ function ToastViewport() {
 }
 
 export function Toaster() {
-  useThemePreference();
-
   return (
     <Toast.Provider toastManager={toastManager} timeout={8000}>
       <ToastViewport />
