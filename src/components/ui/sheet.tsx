@@ -16,17 +16,33 @@ import {
   SheetTriggerContext,
   type SheetActions,
 } from "@/components/ui/sheet-context";
+import type { SheetDrawer as Drawer } from "@/components/ui/sheet-drawer";
+import { reportError } from "@/lib/errors";
 
 export type { SheetActions };
+
+// A drawer chunk that never arrived (a dropped connection, or a deploy that
+// replaced it) leaves the plain trigger; a tap reloads the page for fresh
+// chunks instead of the route showing its error screen.
+const RELOAD = { onOpen: () => window.location.reload() };
+
+function DrawerUnavailable({ trigger }: ComponentProps<typeof Drawer>) {
+  return <SheetTriggerContext value={RELOAD}>{trigger}</SheetTriggerContext>;
+}
 
 // The drawer (Base UI's Drawer, its focus trap and swipe handling) shows only
 // after a tap, so it loads once the page hydrates instead of before. A tap
 // on the plain trigger that stands in until then is remembered and opens the
 // sheet when the drawer arrives.
 const SheetDrawer = lazy(() =>
-  import("@/components/ui/sheet-drawer").then(({ SheetDrawer }) => ({
-    default: SheetDrawer,
-  })),
+  import("@/components/ui/sheet-drawer").then(
+    ({ SheetDrawer }) => ({ default: SheetDrawer }),
+    (error) => {
+      reportError(error, { context: "Sheet drawer download" });
+
+      return { default: DrawerUnavailable };
+    },
+  ),
 );
 
 /**
@@ -121,8 +137,6 @@ export function SheetTrigger(props: ComponentProps<"button">) {
       aria-haspopup="dialog"
       aria-expanded={false}
       {...props}
-      // Pointer down too: the drawer can swap this button out mid-tap.
-      onPointerDown={sheet.onOpen}
       onClick={sheet.onOpen}
     />
   );

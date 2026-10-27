@@ -12,9 +12,9 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { onTestFinished } from "vitest";
-// The app preloads its lazy parts once a page is idle; tests start from that
-// state, so a trigger they grab is not swapped out under them and an opened
-// sheet or dialog does not wait on a first import.
+// The app starts loading its lazy parts as soon as a page hydrates; tests
+// start with those modules already evaluated, so an opened sheet or dialog
+// does not wait on a first import under a loaded machine.
 import "@/components/ui/sheet-drawer";
 import "@/features/auth/components/account-settings";
 import "@/features/budget/components/month-grid";
