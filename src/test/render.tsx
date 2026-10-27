@@ -12,6 +12,16 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { ReactNode } from "react";
 import { onTestFinished } from "vitest";
+// The app preloads its lazy parts once a page is idle; tests start from that
+// state, so a trigger they grab is not swapped out under them and an opened
+// sheet or dialog does not wait on a first import.
+import "@/components/ui/sheet-drawer";
+import "@/features/auth/components/account-settings";
+import "@/features/budget/components/month-grid";
+import "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";
+import "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog";
+import "@/features/budget/components/settle-dialog";
+import "@/features/budget/components/transaction-dialog/transaction-dialog";
 import { defaultRateLimit } from "nuqs";
 import { NuqsAdapter } from "nuqs/adapters/tanstack-router";
 import { NuqsTestingAdapter } from "nuqs/adapters/testing";
