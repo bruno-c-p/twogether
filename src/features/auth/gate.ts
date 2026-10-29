@@ -54,5 +54,8 @@ export async function guardWorkspace(
 
   const session = await load();
 
-  if (!isWorkspaceReady(session)) throw redirect({ to: "/entrar" });
+  // Signed out: the landing page. Signed in but not set up yet: onboarding.
+  if (!isWorkspaceReady(session)) {
+    throw redirect({ to: session.user ? "/entrar" : "/conheca" });
+  }
 }

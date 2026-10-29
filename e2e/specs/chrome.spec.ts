@@ -76,7 +76,7 @@ test.describe("chrome", () => {
   });
 
   test("M10 theme persists on the gate and workspace", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/entrar");
     await waitForGate(page);
     await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute(

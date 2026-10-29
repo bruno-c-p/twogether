@@ -89,12 +89,28 @@ describe("workspace navigation guard", () => {
     expect(load).not.toHaveBeenCalled();
   });
 
-  test("the first visit still waits and sends a signed-out person to the gate", async () => {
+  test("the first visit still waits and sends a signed-out person to the landing page", async () => {
     try {
       await guardWorkspace(
         "",
         false,
         async () => ({ user: null, householdId: null }),
+        () => undefined,
+      );
+      expect.unreachable();
+    } catch (error) {
+      expect(isRedirect(error)).toBe(true);
+
+      if (isRedirect(error)) expect(error.options.to).toBe("/conheca");
+    }
+  });
+
+  test("the first visit sends a signed-in person without a household to the gate", async () => {
+    try {
+      await guardWorkspace(
+        "",
+        false,
+        async () => ({ user: { id: "u1", name: "Ana" }, householdId: null }),
         () => undefined,
       );
       expect.unreachable();
