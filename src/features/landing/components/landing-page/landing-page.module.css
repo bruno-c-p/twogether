@@ -121,8 +121,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dot,
-  .navLink,
-  .quietLink {
+  .navLink::after,
+  .quietLink,
+  .quietLink::before {
     transition: none;
   }
 
@@ -142,20 +143,28 @@
 
 /* The underline draws outward from the centre, like the seam opening. */
 .navLink {
+  position: relative;
   padding: 12px 0;
   border-radius: 6px;
-  background: linear-gradient(currentColor 0 0) center calc(100% - 8px) / 0%
-    1.5px no-repeat;
-  transition: background-size 0.45s var(--ease-out);
 }
 
-.navLink:focus-visible {
-  background-size: 100% 1.5px;
+.navLink::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 8px;
+  height: 1.5px;
+  background: currentColor;
+  scale: 0 1;
+  transition: scale 0.45s var(--ease-out);
+}
+
+.navLink:focus-visible::after {
+  scale: 1;
 }
 
 @media (hover: hover) {
-  .navLink:hover {
-    background-size: 100% 1.5px;
+  .navLink:hover::after {
+    scale: 1;
   }
 }
 
@@ -246,12 +255,6 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-block: 1px solid var(--line);
-  background: repeating-linear-gradient(
-      to bottom,
-      var(--line-strong) 0 6px,
-      transparent 6px 12px
-    )
-    center / 2px 100% no-repeat;
 }
 
 .ticketHalf {
@@ -267,7 +270,9 @@
 }
 
 .ticketHalf + .ticketHalf {
-  padding-left: 18px;
+  margin-left: -1px;
+  padding-left: 17px;
+  border-left: 2px dashed var(--line-strong);
 }
 
 .ticketWho {
@@ -428,12 +433,7 @@
   position: absolute;
   inset: 0 auto 0 -1px;
   z-index: 1;
-  width: 2px;
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--page) 0 6px,
-    transparent 6px 12px
-  );
+  border-left: 2px dashed var(--page);
 }
 
 /* Cover: the band reads as part of the single total until it tears off. */
@@ -562,26 +562,43 @@
 }
 
 .quietLink {
+  position: relative;
+  isolation: isolate;
   padding: 8px 2px 4px;
   border-radius: 6px;
   font-weight: 500;
-  background: linear-gradient(var(--hero) 0 0) left bottom / 100% 0% no-repeat;
   box-shadow: inset 0 -1.5px var(--text);
-  transition:
-    background-size 0.45s var(--ease-out),
-    color 0.45s var(--ease-out);
+  transition: color 0.45s var(--ease-out);
+}
+
+.quietLink::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--hero);
+  scale: 1 0;
+  transform-origin: bottom;
+  transition: scale 0.45s var(--ease-out);
 }
 
 /* The underline rises into a lime band behind the words. */
 .quietLink:focus-visible {
-  background-size: 100% 100%;
   color: var(--on-hero);
+}
+
+.quietLink:focus-visible::before {
+  scale: 1;
 }
 
 @media (hover: hover) {
   .quietLink:hover {
-    background-size: 100% 100%;
     color: var(--on-hero);
+  }
+
+  .quietLink:hover::before {
+    scale: 1;
   }
 }
 
@@ -617,13 +634,8 @@
 .mendSeam {
   position: absolute;
   inset: -12px auto -12px 50%;
-  width: 2px;
   margin-left: -1px;
-  background: repeating-linear-gradient(
-    to bottom,
-    var(--line-strong) 0 8px,
-    transparent 8px 16px
-  );
+  border-left: 2px dashed var(--line-strong);
   opacity: 0;
 }
 
