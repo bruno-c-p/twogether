@@ -17,9 +17,11 @@ import {
 test("V1 key screens have no horizontal overflow at 320px", async ({
   page,
 }) => {
-  await page.goto("/");
-  await waitForGate(page);
   await page.setViewportSize(mobile);
+  await page.goto("/conheca");
+  await expectNoHorizontalOverflow(page, "/conheca");
+  await page.goto("/entrar");
+  await waitForGate(page);
   await expectNoHorizontalOverflow(page, "/entrar");
 
   await page.setViewportSize(desktop);

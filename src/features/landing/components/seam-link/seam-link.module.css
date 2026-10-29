@@ -1,0 +1,101 @@
+.link {
+  position: relative;
+  isolation: isolate;
+  overflow: clip;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 999px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 0.45s var(--ease-out);
+}
+
+/* Two halves of ink, one from each edge, meeting at the centre. */
+.link::before,
+.link::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: var(--text);
+  scale: 0 1;
+  transition: scale 0.45s var(--ease-out);
+}
+
+.link::before {
+  right: 50%;
+  transform-origin: left center;
+}
+
+.link::after {
+  left: 50%;
+  transform-origin: right center;
+}
+
+.solid {
+  min-height: 52px;
+  padding: 0 24px;
+  font-size: 16px;
+  background: var(--hero);
+  color: var(--on-hero);
+}
+
+.outline {
+  min-height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+  color: var(--text);
+  box-shadow: inset 0 0 0 1.5px var(--text);
+}
+
+.arrow {
+  flex: none;
+  transition: translate 0.45s var(--ease-out);
+}
+
+.link:focus-visible,
+.link:active {
+  color: var(--page);
+}
+
+.link:focus-visible::before,
+.link:focus-visible::after,
+.link:active::before,
+.link:active::after {
+  scale: 1 1;
+}
+
+.link:focus-visible .arrow {
+  translate: 4px 0;
+}
+
+@media (hover: hover) {
+  .link:hover {
+    color: var(--page);
+  }
+
+  .link:hover::before,
+  .link:hover::after {
+    scale: 1 1;
+  }
+
+  .link:hover .arrow {
+    translate: 4px 0;
+  }
+}
+
+/* No closing motion: the fill and colour still change. */
+@media (prefers-reduced-motion: reduce) {
+  .link,
+  .link::before,
+  .link::after,
+  .arrow {
+    transition: none;
+  }
+
+  .link:hover .arrow,
+  .link:focus-visible .arrow {
+    translate: none;
+  }
+}

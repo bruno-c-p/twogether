@@ -102,10 +102,19 @@
         "name": "mcp-api",
         "patterns": ["src/features/mcp/endpoint.server.ts"]
       },
+      // The landing route renders the page and reads its head copy.
+      {
+        "name": "landing-api",
+        "patterns": [
+          "src/features/landing/content.ts",
+          "src/features/landing/components/landing-page/landing-page.tsx"
+        ]
+      },
       { "name": "auth", "patterns": ["src/features/auth/**"] },
       { "name": "break-ui", "patterns": ["src/features/break-ui/**"] },
       { "name": "budget", "patterns": ["src/features/budget/**"] },
       { "name": "household", "patterns": ["src/features/household/**"] },
+      { "name": "landing", "patterns": ["src/features/landing/**"] },
       { "name": "mcp", "patterns": ["src/features/mcp/**"] },
       { "name": "theme", "patterns": ["src/features/theme/**"] },
       { "name": "server", "patterns": ["src/server/**"] },
@@ -257,10 +266,19 @@
         "allow": ["budget-api", "theme-api", "server", "lib", "components"]
       },
       {
+        "from": "landing-api",
+        "allow": ["landing", "budget-api", "theme-api", "lib", "components"]
+      },
+      {
+        "from": "landing",
+        "allow": ["landing-api", "budget-api", "theme-api", "lib", "components"]
+      },
+      {
         "from": "app",
         "allow": [
           "budget-api",
           "auth-api",
+          "landing-api",
           "mcp-api",
           "theme-api",
           "store",

@@ -27,11 +27,10 @@ test.describe("auth", () => {
   }) => {
     const urls: string[] = [];
     page.on("request", (request) => urls.push(request.url()));
-    const response = await page.goto("/");
+    const response = await page.goto("/entrar");
     expect(response?.status()).toBe(200);
     expect(response?.headers()["cache-control"]).toContain("private, no-store");
     await waitForGate(page);
-    expect(new URL(page.url()).pathname).toBe("/entrar");
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
     await expect(page).toHaveTitle("twogether — Orçamento a dois");
     await expect(page.getByText("DUAS PESSOAS. UM ORÇAMENTO.")).toBeVisible();
@@ -132,11 +131,17 @@ test.describe("auth", () => {
     expect(new URL(page.url()).pathname).toBe(`/convite/${convite}`);
   });
 
-  test("M14 private routes send signed-out visitors to the gate", async ({
+  test("M14 private routes send signed-out visitors to the landing page", async ({
     page,
   }) => {
     await page.goto("/?month=2026-09");
-    await waitForGate(page);
+    await expect(page).toHaveURL(/\/conheca$/);
+    await expect(
+      page.getByRole("heading", {
+        level: 1,
+        name: "Contas a dois, sem planilha.",
+      }),
+    ).toBeVisible();
   });
 
   test("M12 logout clears the session from the workspace and the gate", async ({
