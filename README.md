@@ -2,9 +2,13 @@
 
 Shared budget for **two people**, built with TanStack Start, React, TypeScript, and Bun.
 
+Each person logs what they spend. Shared expenses are split down to the cent, and six goals, which must add up to 100%, plan the couple's combined income.
+
+Live at https://twogether.brunocardozo.com.br. The interface is in Brazilian Portuguese.
+
 ## Running
 
-Requires Bun 1.3.14+ and Node.js 22.12+ for the build tools. The server runs on Bun with its native SQLite.
+Requires Bun 1.3.14+ and Node.js 22.12+ for the build tools. The server runs on Bun and reaches SQLite through libSQL: a local file unless the Turso variables are set.
 
 ```sh
 bun install
@@ -12,6 +16,8 @@ cp .env.example .env.local
 # Fill in the Clerk keys in .env.local (or run `npx clerk@latest init`)
 bun run dev
 ```
+
+`bun run dev` serves the app at http://localhost:3000.
 
 - `VITE_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`: Clerk application keys. Development keys can be written by `npx clerk@latest init`; claim the application with `npx clerk@latest auth login` before production.
 - `CLERK_SIGN_IN_URL` and `CLERK_SIGN_UP_URL`: optional, keep Clerk redirects on `/entrar`.
@@ -50,7 +56,7 @@ The app serves a [Model Context Protocol](https://modelcontextprotocol.io) endpo
 
 ## Persistence and deployment
 
-Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Clerk stores identities and sessions; the local database stores each profile name, household membership, percentages, and invite hashes. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Secrets are not part of the client bundle.
+Turso Cloud provides the shared production SQLite over HTTP; the libSQL client initializes the schema and uses transactions on the server. Without the Turso variables, local development uses SQLite in `data/` (ignored by Git). Clerk stores identities and sessions; the database stores each profile name, household membership, percentages, transactions, and invite hashes. App reads and writes go through server functions with `.validator()`; the SSR document and authenticated payloads use `Cache-Control: private, no-store`. Secrets are not part of the client bundle.
 
 To configure locally after connecting the resource in Vercel, run `vercel env pull .env.local --yes`. Deployment uses Nitro to generate the TanStack Start handler compatible with Vercel. E-mails are transactional and sent by Clerk; the app does not automatically send invites to third parties.
 
@@ -59,6 +65,9 @@ To configure locally after connecting the resource in Vercel, run `vercel env pu
 ```sh
 bun run typecheck
 bun run lint
+bun run format:check
+bun run doctor
+bun run fallow
 bun run fitness
 bun run test
 bun run build
