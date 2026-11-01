@@ -13,7 +13,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  flex: 1;
+  flex: 1 1 auto;
   border: 0;
   background: none;
   color: var(--text-muted);
@@ -25,4 +25,11 @@
 .kindToggle button.active {
   background: var(--surface);
   color: var(--text);
+}
+
+/* Three labels, Transferência the longest, only fit a phone without icons. */
+@media (max-width: 399.9px) {
+  .kindToggle button svg {
+    display: none;
+  }
 }
