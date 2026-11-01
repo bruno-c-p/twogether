@@ -14,7 +14,9 @@ import {
   clampedMonthsAfter,
 } from "@/features/budget/domain/recurrence";
 import {
+  FREEDOM_EXPENSE_ERROR,
   goalPercentagesSchema,
+  isLegacyFreedomExpense,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
@@ -316,6 +318,19 @@ function seriesInserts(
   });
 }
 
+// The schema cannot tell a legacy freedom split from a new one; the stored
+// row can. `t` is canonical, so only a kept split makes it legacy.
+function assertNoNewFreedomExpense(
+  t: Transaction,
+  previous: Transaction | undefined,
+) {
+  const keepsLegacy =
+    previous && isLegacyFreedomExpense(previous) && isLegacyFreedomExpense(t);
+
+  if (t.kind === "expense" && t.goal === "freedom" && !keepsLegacy)
+    throw new RequestError(FREEDOM_EXPENSE_ERROR);
+}
+
 async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
@@ -341,8 +356,8 @@ async function saveTransaction(
 
     assertRevision(old, given);
     assertSingleEdit(old, occurrences);
-
     await assertSplitEditable(transaction, householdId, user, t, previous);
+    assertNoNewFreedomExpense(t, previous);
 
     const first = firstOccurrence({
       transaction: t,
@@ -581,7 +596,7 @@ async function settleSplit(
       memberId: stored.memberId,
     };
 
-    const expense: Transaction = {
+    const share: Transaction = {
       ...common,
       id: randomUUID(),
       description: `${stored.description} (sua parte)`.slice(0, 80),
@@ -595,10 +610,10 @@ async function settleSplit(
       householdId,
       user,
       source,
-      { paidAt: now, paidBy: user.id, entryIds: [income.id, expense.id] },
+      { paidAt: now, paidBy: user.id, entryIds: [income.id, share.id] },
       [
         insertTransaction(householdId, income),
-        insertTransaction(householdId, expense),
+        insertTransaction(householdId, share),
       ],
     );
   });

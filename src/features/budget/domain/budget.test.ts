@@ -146,6 +146,26 @@ describe("resumo financeiro", () => {
       count: 1,
     });
   });
+  it("conta transferências em Liberdade financeira, fora das despesas e do saldo", () => {
+    const summary = summarize([
+      ...transactions,
+      {
+        id: "transfer",
+        description: "Tesouro Direto",
+        amount: cents(25000),
+        kind: "transfer",
+        date: "2026-09-12",
+        goal: "freedom",
+      },
+    ]);
+
+    expect(summary.expenses).toBe(40000);
+    expect(summary.balance).toBe(60000);
+    expect(summary.goals.find((goal) => goal.id === "freedom")).toMatchObject({
+      amount: 25000,
+      count: 1,
+    });
+  });
   it("mantém saldo negativo e retorna zero para orçamento vazio", () => {
     expect(summarize([]).balance).toBe(0);
     expect(

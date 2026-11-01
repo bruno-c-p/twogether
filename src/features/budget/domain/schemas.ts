@@ -52,9 +52,19 @@ export const GOAL_IDS = [
 
 export const goalIdSchema = z.enum(GOAL_IDS, { error: "Meta inválida." });
 
-export const transactionKindSchema = z.enum(["expense", "income"], {
+export const transactionKindSchema = z.enum(["expense", "income", "transfer"], {
   error: "Tipo da transação inválido.",
 });
+
+// The goal a kind starts with; only expenses let the person pick one.
+export const KIND_GOAL = {
+  expense: null,
+  income: null,
+  transfer: "freedom",
+} as const satisfies Record<
+  z.infer<typeof transactionKindSchema>,
+  (typeof GOAL_IDS)[number] | null
+>;
 
 export const viewSchema = z.enum(["overview", "transactions", "goals"], {
   error: "Visão inválida.",
@@ -102,22 +112,55 @@ export const descriptionSchema = z
     z.maxLength(80, { error: "A descrição deve ter no máximo 80 caracteres." }),
   );
 
-// Expenses need one of the six goals; income never has one.
-function withGoalRules<
-  Schema extends z.ZodMiniType<{
-    kind: z.infer<typeof transactionKindSchema>;
-    goal: string | null;
-  }>,
->(schema: Schema) {
+type GoalRuleFields = {
+  kind: z.infer<typeof transactionKindSchema>;
+  goal: string | null;
+  split?: boolean | object;
+  settlementOf?: string;
+};
+
+// Freedom is a transfer's goal. An expense keeps it only when it is a split
+// saved before transfers existed, or the partner's share of one, written when
+// it is settled.
+export function isLegacyFreedomExpense(value: GoalRuleFields) {
+  return (
+    value.kind === "expense" &&
+    value.goal === "freedom" &&
+    Boolean(value.split || value.settlementOf)
+  );
+}
+
+export const FREEDOM_EXPENSE_ERROR =
+  "Use Transferência para Liberdade financeira.";
+
+// Expenses need a goal, income never has one, and transfers always fill
+// freedom.
+function withGoalRules<Schema extends z.ZodMiniType<GoalRuleFields>>(
+  schema: Schema,
+) {
   return schema.check(
     z.refine((value) => !(value.kind === "expense" && value.goal === null), {
-      error: "Escolha uma das seis metas para esta despesa.",
+      error: "Escolha uma meta para esta despesa.",
       path: ["goal"],
     }),
+    z.refine(
+      (value) =>
+        value.kind !== "expense" ||
+        value.goal !== "freedom" ||
+        isLegacyFreedomExpense(value),
+      { error: FREEDOM_EXPENSE_ERROR, path: ["goal"] },
+    ),
     z.refine((value) => !(value.kind === "income" && value.goal !== null), {
       error: "Receitas não podem ter meta.",
       path: ["goal"],
     }),
+    z.refine(
+      (value) => !(value.kind === "transfer" && value.goal !== "freedom"),
+      {
+        error: "Transferências vão para Liberdade financeira.",
+        path: ["goal"],
+      },
+    ),
   );
 }
 

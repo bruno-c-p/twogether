@@ -101,6 +101,45 @@ describe("TransactionDialog", () => {
     );
   });
 
+  test("a transfer goes to freedom with no goal picker and no split", async () => {
+    const { screen, user, onSave } = setup();
+
+    await user.click(screen.getByRole("button", { name: "Prazeres" }));
+    await user.click(screen.getByRole("button", { name: "Transferência" }));
+    expect(screen.queryByRole("group", { name: "Para qual meta?" })).toBeNull();
+    expect(
+      screen.queryByRole("switch", { name: "Dividir com Bia" }),
+    ).toBeNull();
+    await user.type(screen.getByLabelText("Valor"), "50000");
+    await user.type(screen.getByLabelText("Descrição"), "Tesouro Direto");
+    await user.click(
+      screen.getByRole("button", { name: "Adicionar transação" }),
+    );
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "transfer", goal: "freedom" }),
+      1,
+    );
+    expect(onSave.mock.calls[0][0].split).toBeUndefined();
+  });
+
+  test("an expense offers freedom only when editing a split freedom expense", async () => {
+    const freedom = { name: "Liberdade financeira" };
+    const { screen, user, unmount } = setup();
+
+    expect(screen.queryByRole("button", freedom)).toBeNull();
+    await user.click(screen.getByRole("button", { name: "Transferência" }));
+    await user.click(screen.getByRole("button", { name: "Despesa" }));
+    expect(screen.queryByRole("button", freedom)).toBeNull();
+    unmount();
+
+    const legacy = setup({
+      editing: transaction({ goal: "freedom", split: {} }),
+    });
+
+    expect(legacy.screen.getByRole("button", freedom)).toBeTruthy();
+  });
+
   test("editing keeps id, member and revision and shows who changed it", async () => {
     const editing = transaction({
       createdBy: "ana",
@@ -263,7 +302,7 @@ describe("TransactionDialog", () => {
     );
 
     expect(
-      await screen.findByText("Escolha uma das seis metas para esta despesa."),
+      await screen.findByText("Escolha uma meta para esta despesa."),
     ).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
 

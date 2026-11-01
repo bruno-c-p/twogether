@@ -28,7 +28,7 @@ const savedRow = z.object({
   description: z.string(),
   amount: z.object({ cents: z.number(), formatted: z.string() }),
   memberName: z.string().optional(),
-  kind: z.enum(["expense", "income"]),
+  kind: z.enum(["expense", "income", "transfer"]),
   goal: z.string().nullable(),
   split: z.object({ paid: z.boolean() }).optional(),
 });
@@ -277,7 +277,7 @@ describe("budget MCP tools", () => {
 
     const noGoal = await call("save_transaction", { ...groceries, goal: null });
     expect(noGoal.error).toBe(true);
-    expect(noGoal.text).toContain("Escolha uma das seis metas");
+    expect(noGoal.text).toContain("Escolha uma meta");
 
     const missing = await call("save_transaction", {
       id: "missing",
@@ -300,6 +300,92 @@ describe("budget MCP tools", () => {
 
     expect(noRevision.error).toBe(true);
     expect(noRevision.text).toContain("Informe a revision");
+  });
+
+  test("files a transfer under freedom and lists it apart from expenses", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { ok } = await connect(store, a.user.id);
+    const saved = z.object({ saved: savedRow });
+    const list = z.object({ transactions: z.array(savedRow) });
+
+    await ok("save_transaction", saved, groceries);
+
+    const transfer = (
+      await ok("save_transaction", saved, {
+        description: "Tesouro Direto",
+        amount: 50000,
+        date: "2026-09-14",
+        kind: "transfer",
+      })
+    ).saved;
+
+    expect(transfer.goal).toBe("freedom");
+
+    const listed = await ok("list_transactions", list, {
+      month: "2026-09",
+      kind: "transfer",
+    });
+
+    expect(listed.transactions.map((t) => t.description)).toEqual([
+      "Tesouro Direto",
+    ]);
+  });
+
+  test("a null goal means the kind's goal, and a new kind drops the old goal", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { call, ok } = await connect(store, a.user.id);
+    const saved = z.object({ saved: savedRow });
+
+    const created = (
+      await ok("save_transaction", saved, {
+        description: "Tesouro Direto",
+        amount: 50000,
+        kind: "transfer",
+        goal: null,
+      })
+    ).saved;
+
+    const edited = (
+      await ok("save_transaction", saved, {
+        id: created.id,
+        revision: created.revision,
+        goal: null,
+      })
+    ).saved;
+
+    expect([created.goal, edited.goal]).toEqual(["freedom", "freedom"]);
+
+    const expense = await call("save_transaction", {
+      id: edited.id,
+      revision: edited.revision,
+      kind: "expense",
+    });
+
+    expect(expense).toEqual({
+      error: true,
+      text: "Escolha uma meta para esta despesa.",
+    });
+  });
+
+  test("refuses a new freedom expense, split or not, and points at Transferência", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { call } = await connect(store, a.user.id);
+
+    for (const split of [true, false]) {
+      const result = await call("save_transaction", {
+        ...groceries,
+        goal: "freedom",
+        split,
+      });
+
+      expect(result).toEqual({
+        error: true,
+        text: "Use Transferência para Liberdade financeira.",
+      });
+    }
   });
 
   test("filters the month and computes the overview per member", async () => {

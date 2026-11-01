@@ -57,6 +57,58 @@ describe("schemas", () => {
     );
   });
 
+  test("freedom belongs to transfers, except on legacy split expenses", () => {
+    const stored = {
+      id: "t1",
+      description: "Tesouro Direto",
+      amount: 50000,
+      date: "2026-10-01",
+    };
+
+    const message = (value: Pick<Transaction, "kind" | "goal" | "split">) => {
+      const parsed = transactionSchema.safeParse({ ...stored, ...value });
+
+      return parsed.success || firstIssueMessage(parsed.error);
+    };
+
+    expect(message({ kind: "transfer", goal: "freedom" })).toBe(true);
+    expect(message({ kind: "transfer", goal: "targets" })).toBe(
+      "Transferências vão para Liberdade financeira.",
+    );
+    expect(message({ kind: "transfer", goal: "freedom", split: {} })).toBe(
+      "Só despesas podem ser divididas.",
+    );
+    expect(message({ kind: "expense", goal: "freedom" })).toBe(
+      "Use Transferência para Liberdade financeira.",
+    );
+    expect(message({ kind: "expense", goal: "freedom", split: {} })).toBe(true);
+  });
+
+  test("the form applies the same freedom rules", () => {
+    const base = {
+      amount: "500,00",
+      description: "Tesouro Direto",
+      date: "2026-10-01",
+      occurrences: 1,
+    };
+
+    const valid = (
+      value: Pick<
+        z.input<typeof transactionFormSchema>,
+        "kind" | "goal" | "split"
+      >,
+    ) => transactionFormSchema.safeParse({ ...base, ...value }).success;
+
+    expect(valid({ kind: "transfer", goal: "freedom", split: false })).toBe(
+      true,
+    );
+    expect(valid({ kind: "transfer", goal: null, split: false })).toBe(false);
+    expect(valid({ kind: "expense", goal: "freedom", split: false })).toBe(
+      false,
+    );
+    expect(valid({ kind: "expense", goal: "freedom", split: true })).toBe(true);
+  });
+
   test("a date must exist on the calendar", () => {
     expect(dateSchema.safeParse("2026-02-28").success).toBe(true);
     expect(dateSchema.safeParse("2026-02-30").success).toBe(false);

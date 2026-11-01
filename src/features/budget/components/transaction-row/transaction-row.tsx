@@ -1,5 +1,6 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { GOALS } from "@/features/budget/constants";
+import { AMOUNT_STYLE } from "@/features/budget/components/amount-style";
+import { GOALS, KINDS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import {
   transactionStatus,
@@ -15,7 +16,7 @@ import { cx } from "@/lib/cx";
 function amountLabel(transaction: Transaction, hidden: boolean) {
   if (hidden) return "R$ ••••";
 
-  return `${transaction.kind === "income" ? "+" : "−"} ${money(transaction.amount)}`;
+  return `${AMOUNT_STYLE[transaction.kind].sign}${money(transaction.amount)}`;
 }
 
 function splitLabel(t: Transaction, status: TransactionStatus) {
@@ -69,7 +70,9 @@ function GoalLabel({
         style={{ background: goal?.color ?? "var(--brand)" }}
       />
       <span className="truncate">
-        {goal?.name ?? "Receita"}
+        {transaction.kind === "expense"
+          ? goal?.name
+          : KINDS[transaction.kind].label}
         {suffix && ` · ${suffix}`}
       </span>
     </>
@@ -145,7 +148,7 @@ export function TransactionRow({
       <span
         className={cx(
           "text-md font-600 whitespace-nowrap tabular-nums bp1000:text-right",
-          t.kind === "income" && !hidden ? "text-positive" : "text-text",
+          hidden ? "text-text" : AMOUNT_STYLE[t.kind].color,
         )}
       >
         {amountLabel(t, hidden)}

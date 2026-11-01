@@ -9,6 +9,7 @@ import { WORKSPACE_PATHS } from "@/features/budget/constants";
 import {
   goalIdSchema,
   monthSchema,
+  transactionKindSchema,
   viewSchema,
 } from "@/features/budget/domain/schemas";
 
@@ -27,7 +28,7 @@ const querySchema = z.pipe(
 );
 
 // The list also filters by split expenses, which are not a stored kind.
-const kindFilterSchema = z.enum(["expense", "income", "split"], {
+const kindFilterSchema = z.enum([...transactionKindSchema.options, "split"], {
   error: "Tipo inválido.",
 });
 

@@ -1,18 +1,28 @@
 import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
-import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { OverviewCard } from "@/features/budget/components/overview-card";
-import { GOALS } from "@/features/budget/constants";
+import { AMOUNT_STYLE } from "@/features/budget/components/amount-style";
+import { GOALS, KINDS } from "@/features/budget/constants";
 import { shortDay } from "@/features/budget/domain/format";
-import type { Transaction } from "@/features/budget/domain/types";
+import type {
+  Transaction,
+  TransactionKind,
+} from "@/features/budget/domain/types";
 import { cx } from "@/lib/cx";
 
 const LATEST_COUNT = 5;
 
+// An expense shows its goal instead.
+const LABELS = {
+  income: "Entrada",
+  transfer: KINDS.transfer.label,
+} satisfies Record<Exclude<TransactionKind, "expense">, string>;
+
 function Tile({ transaction }: { transaction: Transaction }) {
   const goal = GOALS.find((item) => item.id === transaction.goal);
   const income = transaction.kind === "income";
+  const Icon = KINDS[transaction.kind].icon;
 
   return (
     <span
@@ -27,9 +37,11 @@ function Tile({ transaction }: { transaction: Transaction }) {
       }
       aria-hidden="true"
     >
-      {income && <ArrowDownLeft size={18} />}
-      {!income && goal && <GoalIcon goal={goal.id} size={18} />}
-      {!income && !goal && <ArrowUpRight size={18} />}
+      {transaction.kind === "expense" && goal ? (
+        <GoalIcon goal={goal.id} size={18} />
+      ) : (
+        <Icon size={18} />
+      )}
     </span>
   );
 }
@@ -68,7 +80,7 @@ export function LatestTransactionsCard({
         <ul className="list-none m-0 p-0 flex flex-col">
           {latest.map((transaction) => {
             const goal = GOALS.find((item) => item.id === transaction.goal);
-            const income = transaction.kind === "income";
+            const amount = AMOUNT_STYLE[transaction.kind];
 
             return (
               <li key={transaction.id}>
@@ -85,13 +97,16 @@ export function LatestTransactionsCard({
                       {transaction.description}
                     </span>
                     <span className="block text-xs text-text-muted truncate">
-                      {income ? "Entrada" : (goal?.name ?? "Sem meta")}
+                      {transaction.kind === "expense"
+                        ? (goal?.name ?? "Sem meta")
+                        : LABELS[transaction.kind]}
                       {" · "}
                       {shortDay(transaction.date)}
                     </span>
                   </span>
                   <span className="text-md font-600 tabular-nums shrink-0">
-                    {income ? "+" : "–"} {displayMoney(transaction.amount)}
+                    {amount.sign}
+                    {displayMoney(transaction.amount)}
                   </span>
                 </Button>
               </li>

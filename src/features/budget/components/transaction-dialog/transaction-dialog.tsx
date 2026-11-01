@@ -8,7 +8,11 @@ import {
   newId,
   parseAmount,
 } from "@/features/budget/domain/format";
-import { transactionFormSchema } from "@/features/budget/domain/schemas";
+import {
+  isLegacyFreedomExpense,
+  KIND_GOAL,
+  transactionFormSchema,
+} from "@/features/budget/domain/schemas";
 import { transactionStatus } from "@/features/budget/domain/status";
 import { deleteLock } from "@/features/budget/domain/view";
 import { fieldErrors } from "@/lib/zod-errors";
@@ -18,6 +22,7 @@ import type {
   TransactionKind,
   Member,
 } from "@/features/budget/domain/types";
+import { GOALS } from "@/features/budget/constants";
 import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker";
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { SplitPanel } from "@/features/budget/components/split-panel";
@@ -166,8 +171,7 @@ function useTransactionForm({
 
   function changeKind(next: TransactionKind) {
     setValue("kind", next);
-
-    if (next === "income") setValue("goal", null);
+    setValue("goal", KIND_GOAL[next]);
   }
 
   function save(values: TransactionFormValues) {
@@ -403,6 +407,12 @@ function DeleteButton({
   );
 }
 
+function expenseGoals(transaction: Transaction | null) {
+  return transaction && isLegacyFreedomExpense(transaction)
+    ? GOALS
+    : GOALS.filter((goal) => goal.id !== "freedom");
+}
+
 function ClassificationFields({
   form,
   transaction,
@@ -425,7 +435,11 @@ function ClassificationFields({
       )}
       {form.kind === "expense" && (
         <>
-          <GoalPicker value={form.goal} onChange={form.setGoal} />
+          <GoalPicker
+            goals={expenseGoals(transaction)}
+            value={form.goal}
+            onChange={form.setGoal}
+          />
           <GroupError id="goal-error">{form.errors.goal}</GroupError>
         </>
       )}

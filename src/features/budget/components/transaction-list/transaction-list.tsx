@@ -7,6 +7,7 @@ import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 import { GOALS } from "@/features/budget/constants";
+import { signedFlow } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
 import { matchesKind, matchesQuery } from "@/features/budget/domain/view";
 import type {
@@ -19,7 +20,6 @@ import { TransactionRow } from "@/features/budget/components/transaction-row/tra
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { cx } from "@/lib/cx";
-import { minusCents, ZERO_CENTS } from "@/lib/decimal";
 
 interface TransactionFilters {
   query: string;
@@ -49,6 +49,7 @@ const KIND_CHIPS: Array<{ value: KindFilter | "all"; label: string }> = [
   { value: "all", label: "Todas" },
   { value: "expense", label: "Despesas" },
   { value: "income", label: "Receitas" },
+  { value: "transfer", label: "Transferências" },
   { value: "split", label: "Divididas" },
 ];
 
@@ -92,9 +93,7 @@ function groupByDay(transactions: Transaction[]) {
   const groups: Array<{ date: string; items: Transaction[]; net: number }> = [];
 
   for (const t of transactions) {
-    const signed =
-      t.kind === "income" ? t.amount : minusCents(ZERO_CENTS, t.amount);
-
+    const signed = signedFlow(t);
     const last = groups.at(-1);
 
     if (last?.date === t.date) {
@@ -111,7 +110,9 @@ function groupByDay(transactions: Transaction[]) {
 function netLabel(net: number, hidden: boolean) {
   if (hidden) return "R$ ••••";
 
-  return `${net < 0 ? "−" : "+"} ${money(Math.abs(net))}`;
+  const sign = net < 0 ? "− " : net > 0 ? "+ " : "";
+
+  return `${sign}${money(Math.abs(net))}`;
 }
 
 export function TransactionSearch({

@@ -23,7 +23,7 @@ import { RequestError } from "@/server/request-error";
 export interface TransactionFilters {
   month: string;
   member?: string;
-  kind?: "expense" | "income" | "split";
+  kind?: Transaction["kind"] | "split";
   goal?: GoalId;
   query?: string;
   recurrence?: string;

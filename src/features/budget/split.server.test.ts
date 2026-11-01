@@ -1,5 +1,11 @@
-import { describe, expect, test } from "bun:test";
-import type { Transaction } from "@/features/budget/domain/types";
+import { afterEach, beforeEach, describe, expect, test } from "bun:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { memberTotals, summarize } from "@/features/budget/domain/calc";
+import type { GoalId, Transaction } from "@/features/budget/domain/types";
+import { createStoreContext, type StoreContext } from "@/server/db.server";
+import { createStore, type Store } from "@/server/store.server";
 import {
   couple,
   signup,
@@ -234,5 +240,163 @@ describe("split transactions", () => {
           .map((row) => ({ id: row.id, revision: row.revision! })),
       }),
     ).rejects.toThrow("Desmarque o pagamento");
+  });
+});
+
+// A freedom split predates transfers, so only raw SQL can still seed one.
+describe("a freedom split saved before transfers", () => {
+  let dir = "";
+  let store: Store | undefined;
+  let raw: StoreContext | undefined;
+
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), "twogether-freedom-"));
+    store = createStore(join(dir, "db.sqlite"));
+    raw = createStoreContext(join(dir, "db.sqlite"));
+  });
+
+  afterEach(() => {
+    store?.close();
+    raw?.close();
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  test("stays editable while a new one is refused", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: {
+        ...rent(ana.user.id),
+        goal: "freedom",
+        description: "Reserva",
+        revision: 1,
+      },
+    });
+
+    const saved = (await view(store, ana.user)).budget.transactions;
+
+    expect(saved).toMatchObject([
+      { id: "rent", goal: "freedom", description: "Reserva", split: {} },
+    ]);
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...rent(ana.user.id), id: "new", goal: "freedom" },
+      }),
+    ).rejects.toThrow("Use Transferência para Liberdade financeira.");
+  });
+
+  test("refuses an edit that drops its split, so the snapshot still reads", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: {
+          ...rent(ana.user.id),
+          goal: "freedom",
+          split: undefined,
+          settlementOf: "x",
+          revision: 1,
+        },
+      }),
+    ).rejects.toThrow("Use Transferência para Liberdade financeira.");
+    expect((await view(store, ana.user)).budget.transactions).toMatchObject([
+      { id: "rent", goal: "freedom", split: {} },
+    ]);
+  });
+
+  test("once settled, its locks answer before the freedom rule", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a, b } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+    await store.settleSplit(bia.user, bia.householdId, settleInput);
+
+    const rows = (await view(store, bia.user)).budget.transactions;
+
+    const share = rows.find(
+      (row) => row.settlementOf && row.kind === "expense",
+    )!;
+
+    const source = rows.find((row) => row.id === "rent")!;
+
+    await expect(
+      store.saveTransaction(bia.user, bia.householdId, {
+        transaction: { ...share, description: "Outra" },
+      }),
+    ).rejects.toThrow("reembolso");
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...source, split: undefined },
+      }),
+    ).rejects.toThrow("Desmarque o pagamento");
+  });
+
+  test("settling it moves the balance and member totals as any other goal does, across a restart", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a, b } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
+    const goals: GoalId[] = ["pleasure", "freedom"];
+
+    for (const goal of goals) {
+      await store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...rent(ana.user.id), id: goal },
+      });
+      await raw.db.execute({
+        sql: "UPDATE transactions SET payload = json_set(payload, '$.goal', ?) WHERE id = ?",
+        args: [goal, goal],
+      });
+      await store.settleSplit(bia.user, bia.householdId, {
+        ...settleInput,
+        id: goal,
+      });
+    }
+
+    const restarted = createStoreContext(join(dir, "db.sqlite"));
+    await restarted.ready;
+    restarted.close();
+
+    const all = (await view(store, ana.user)).budget.transactions;
+
+    const [pleasure, freedom] = goals.map((goal) => {
+      const rows = all.filter(
+        (row) => row.id === goal || row.settlementOf === goal,
+      );
+
+      return {
+        balance: summarize(rows).balance,
+        members: memberTotals(rows, [ana.user.id, bia.user.id]),
+      };
+    });
+
+    expect(freedom).toEqual(pleasure);
   });
 });

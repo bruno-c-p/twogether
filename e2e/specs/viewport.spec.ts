@@ -38,7 +38,7 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
     .fill("Supermercado Extraordinariamente Comprido Ltda Filial Centro");
   await dialog.getByLabel("Data").fill("2026-09-14");
   await dialog
-    .getByRole("button", { name: "Liberdade financeira", exact: true })
+    .getByRole("button", { name: "Transferência", exact: true })
     .click();
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
@@ -64,6 +64,59 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
     page.getByRole("dialog", { name: "Nova transação" }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, "Nova transação");
+
+  const kinds = page
+    .getByRole("dialog", { name: "Nova transação" })
+    .getByRole("group", { name: "Tipo da transação" });
+
+  // Rect widths, unlike the integer scrollWidth, see sub-pixel overflow.
+  for (const width of [mobile.width, 360, 619, 620, 768]) {
+    await page.setViewportSize({ ...mobile, width });
+
+    const headroom = await kinds.evaluate((group) => {
+      const px = (element: Element, ...properties: string[]) => {
+        const style = getComputedStyle(element);
+
+        return properties.reduce(
+          (sum, property) => sum + parseFloat(style.getPropertyValue(property)),
+          0,
+        );
+      };
+
+      const buttons = [...group.querySelectorAll("button")];
+
+      const needed = buttons.reduce(
+        (sum, button) => {
+          const content = document.createRange();
+
+          content.selectNodeContents(button);
+
+          return (
+            sum +
+            content.getBoundingClientRect().width +
+            px(button, "padding-left", "padding-right")
+          );
+        },
+        px(group, "column-gap") * (buttons.length - 1),
+      );
+
+      const inner =
+        group.getBoundingClientRect().width -
+        px(
+          group,
+          "padding-left",
+          "padding-right",
+          "border-left-width",
+          "border-right-width",
+        );
+
+      return inner - needed;
+    });
+
+    expect(headroom, `kind toggle headroom at ${width}px`).toBeGreaterThan(0);
+  }
+
+  await page.setViewportSize(mobile);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
