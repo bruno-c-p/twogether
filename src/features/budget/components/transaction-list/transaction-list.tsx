@@ -49,6 +49,7 @@ const KIND_CHIPS: Array<{ value: KindFilter | "all"; label: string }> = [
   { value: "all", label: "Todas" },
   { value: "expense", label: "Despesas" },
   { value: "income", label: "Receitas" },
+  { value: "transfer", label: "Transferências" },
   { value: "split", label: "Divididas" },
 ];
 

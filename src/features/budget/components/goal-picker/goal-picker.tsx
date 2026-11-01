@@ -2,15 +2,16 @@ import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { Fieldset } from "@base-ui/react/fieldset";
 import { Check } from "lucide-react";
-import { GOALS } from "@/features/budget/constants";
-import type { GoalId } from "@/features/budget/domain/types";
+import type { Goal, GoalId } from "@/features/budget/domain/types";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import styles from "@/features/budget/components/goal-picker/goal-picker.module.css";
 
 export function GoalPicker({
+  goals,
   value,
   onChange,
 }: {
+  goals: Goal[];
   value: GoalId | null;
   onChange: (goal: GoalId) => void;
 }) {
@@ -22,12 +23,12 @@ export function GoalPicker({
         aria-label="Para qual meta?"
         value={value ? [value] : []}
         onValueChange={(values) => {
-          const next = GOALS.find((goal) => goal.id === values[0]);
+          const next = goals.find((goal) => goal.id === values[0]);
 
           if (next) onChange(next.id);
         }}
       >
-        {GOALS.map((item) => (
+        {goals.map((item) => (
           <Toggle
             key={item.id}
             type="button"

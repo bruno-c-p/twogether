@@ -1,4 +1,7 @@
 import {
+  ArrowDownLeft,
+  ArrowRightLeft,
+  ArrowUpRight,
   Armchair,
   BookOpen,
   House,
@@ -12,6 +15,7 @@ import type {
   Goal,
   GoalId,
   GoalPercentages,
+  TransactionKind,
   View,
 } from "@/features/budget/domain/types";
 
@@ -106,3 +110,13 @@ export const GOAL_ICONS: Record<GoalId, typeof House> = {
   knowledge: BookOpen,
   freedom: Sprout,
 };
+
+// Order is the kind toggle's order.
+export const KINDS = {
+  expense: { label: "Despesa", icon: ArrowUpRight },
+  income: { label: "Receita", icon: ArrowDownLeft },
+  transfer: { label: "Transferência", icon: ArrowRightLeft },
+} as const satisfies Record<
+  TransactionKind,
+  { label: string; icon: typeof House }
+>;

@@ -18,6 +18,7 @@ import type {
   TransactionKind,
   Member,
 } from "@/features/budget/domain/types";
+import { GOALS } from "@/features/budget/constants";
 import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker";
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { SplitPanel } from "@/features/budget/components/split-panel";
@@ -87,6 +88,13 @@ const VALIDATED_FIELDS = [
 type ValidatedField = (typeof VALIDATED_FIELDS)[number];
 
 const SOMEONE = "uma pessoa do casal";
+
+// Only expenses let the person pick a goal; a transfer always fills freedom.
+const KIND_GOAL = {
+  expense: null,
+  income: null,
+  transfer: "freedom",
+} as const satisfies Record<TransactionKind, GoalId | null>;
 
 function invalidProps(error: string | undefined, id: string) {
   return {
@@ -166,8 +174,7 @@ function useTransactionForm({
 
   function changeKind(next: TransactionKind) {
     setValue("kind", next);
-
-    if (next === "income") setValue("goal", null);
+    setValue("goal", KIND_GOAL[next]);
   }
 
   function save(values: TransactionFormValues) {
@@ -403,6 +410,16 @@ function DeleteButton({
   );
 }
 
+// Freedom is a transfer's goal; only a legacy split freedom expense keeps it.
+function expenseGoals(transaction: Transaction | null) {
+  const legacy =
+    transaction?.kind === "expense" &&
+    transaction.goal === "freedom" &&
+    Boolean(transaction.split);
+
+  return legacy ? GOALS : GOALS.filter((goal) => goal.id !== "freedom");
+}
+
 function ClassificationFields({
   form,
   transaction,
@@ -425,7 +442,11 @@ function ClassificationFields({
       )}
       {form.kind === "expense" && (
         <>
-          <GoalPicker value={form.goal} onChange={form.setGoal} />
+          <GoalPicker
+            goals={expenseGoals(transaction)}
+            value={form.goal}
+            onChange={form.setGoal}
+          />
           <GroupError id="goal-error">{form.errors.goal}</GroupError>
         </>
       )}

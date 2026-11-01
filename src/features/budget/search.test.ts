@@ -18,13 +18,13 @@ describe("validateWorkspaceSearch", () => {
 
 describe("validateTransactionFilters", () => {
   it("drops junk kind, blank query and the retired tag filter", () => {
-    expect(
-      validateTransactionFilters({ kind: "transfer", query: "  " }),
-    ).toEqual({
-      query: undefined,
-      goal: undefined,
-      kind: undefined,
-    });
+    expect(validateTransactionFilters({ kind: "refund", query: "  " })).toEqual(
+      {
+        query: undefined,
+        goal: undefined,
+        kind: undefined,
+      },
+    );
     expect(
       validateTransactionFilters({
         kind: "income",
@@ -34,6 +34,9 @@ describe("validateTransactionFilters", () => {
         month: "2026-09",
       }),
     ).toEqual({ kind: "income", goal: "fixed", query: "aluguel" });
+    expect(validateTransactionFilters({ kind: "transfer" }).kind).toBe(
+      "transfer",
+    );
   });
 });
 

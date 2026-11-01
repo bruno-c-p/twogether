@@ -1,5 +1,5 @@
 import { Pencil, Trash2 } from "lucide-react";
-import { GOALS } from "@/features/budget/constants";
+import { GOALS, KINDS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import {
   transactionStatus,
@@ -69,7 +69,9 @@ function GoalLabel({
         style={{ background: goal?.color ?? "var(--brand)" }}
       />
       <span className="truncate">
-        {goal?.name ?? "Receita"}
+        {transaction.kind === "expense"
+          ? goal?.name
+          : KINDS[transaction.kind].label}
         {suffix && ` · ${suffix}`}
       </span>
     </>
