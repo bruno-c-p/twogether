@@ -319,14 +319,15 @@ function seriesInserts(
 }
 
 // The schema cannot tell a legacy freedom split from a new one; the stored
-// row can.
+// row can. `t` is canonical, so only a kept split makes it legacy.
 function assertNoNewFreedomExpense(
   t: Transaction,
   previous: Transaction | undefined,
 ) {
-  const legacy = previous && isLegacyFreedomExpense(previous);
+  const keepsLegacy =
+    previous && isLegacyFreedomExpense(previous) && isLegacyFreedomExpense(t);
 
-  if (t.kind === "expense" && t.goal === "freedom" && !legacy)
+  if (t.kind === "expense" && t.goal === "freedom" && !keepsLegacy)
     throw new RequestError(FREEDOM_EXPENSE_ERROR);
 }
 

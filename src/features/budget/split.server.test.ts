@@ -294,6 +294,35 @@ describe("a freedom split saved before transfers", () => {
     ).rejects.toThrow("Use Transferência para Liberdade financeira.");
   });
 
+  test("refuses an edit that drops its split, so the snapshot still reads", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: {
+          ...rent(ana.user.id),
+          goal: "freedom",
+          split: undefined,
+          settlementOf: "x",
+          revision: 1,
+        },
+      }),
+    ).rejects.toThrow("Use Transferência para Liberdade financeira.");
+    expect((await view(store, ana.user)).budget.transactions).toMatchObject([
+      { id: "rent", goal: "freedom", split: {} },
+    ]);
+  });
+
   test("settling it moves the balance and member totals as any other goal does, across a restart", async () => {
     if (!store || !raw) throw new Error("stores exist inside a test");
 
