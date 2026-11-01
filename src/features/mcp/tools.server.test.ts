@@ -332,6 +332,25 @@ describe("budget MCP tools", () => {
     ]);
   });
 
+  test("refuses a new freedom expense, split or not, and points at Transferência", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { call } = await connect(store, a.user.id);
+
+    for (const split of [true, false]) {
+      const result = await call("save_transaction", {
+        ...groceries,
+        goal: "freedom",
+        split,
+      });
+
+      expect(result).toEqual({
+        error: true,
+        text: "Use Transferência para Liberdade financeira.",
+      });
+    }
+  });
+
   test("filters the month and computes the overview per member", async () => {
     const { store } = ctx;
     const { a, b } = await couple(store);

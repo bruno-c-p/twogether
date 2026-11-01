@@ -244,7 +244,7 @@ describe("split transactions", () => {
 });
 
 // A freedom split predates transfers, so only raw SQL can still seed one.
-describe("settling a freedom split saved before transfers", () => {
+describe("a freedom split saved before transfers", () => {
   let dir = "";
   let store: Store | undefined;
   let raw: StoreContext | undefined;
@@ -261,7 +261,40 @@ describe("settling a freedom split saved before transfers", () => {
     rmSync(dir, { recursive: true, force: true });
   });
 
-  test("moves the balance and member totals as any other goal does, across a restart", async () => {
+  test("stays editable while a new one is refused", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: {
+        ...rent(ana.user.id),
+        goal: "freedom",
+        description: "Reserva",
+        revision: 1,
+      },
+    });
+
+    const saved = (await view(store, ana.user)).budget.transactions;
+
+    expect(saved).toMatchObject([
+      { id: "rent", goal: "freedom", description: "Reserva", split: {} },
+    ]);
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...rent(ana.user.id), id: "new", goal: "freedom" },
+      }),
+    ).rejects.toThrow("Use Transferência para Liberdade financeira.");
+  });
+
+  test("settling it moves the balance and member totals as any other goal does, across a restart", async () => {
     if (!store || !raw) throw new Error("stores exist inside a test");
 
     const { a, b } = await couple(store);

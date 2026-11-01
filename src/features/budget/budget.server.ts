@@ -14,7 +14,9 @@ import {
   clampedMonthsAfter,
 } from "@/features/budget/domain/recurrence";
 import {
+  FREEDOM_EXPENSE_ERROR,
   goalPercentagesSchema,
+  isLegacyFreedomExpense,
   transactionSchema,
 } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
@@ -316,6 +318,18 @@ function seriesInserts(
   });
 }
 
+// The schema cannot tell a legacy freedom split from a new one; the stored
+// row can.
+function assertNoNewFreedomExpense(
+  t: Transaction,
+  previous: Transaction | undefined,
+) {
+  const legacy = previous && isLegacyFreedomExpense(previous);
+
+  if (t.kind === "expense" && t.goal === "freedom" && !legacy)
+    throw new RequestError(FREEDOM_EXPENSE_ERROR);
+}
+
 async function saveTransaction(
   ctx: StoreContext,
   user: UserRow,
@@ -341,6 +355,7 @@ async function saveTransaction(
 
     assertRevision(old, given);
     assertSingleEdit(old, occurrences);
+    assertNoNewFreedomExpense(t, previous);
 
     await assertSplitEditable(transaction, householdId, user, t, previous);
 

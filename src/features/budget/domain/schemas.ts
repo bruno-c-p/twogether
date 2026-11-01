@@ -130,6 +130,9 @@ export function isLegacyFreedomExpense(value: GoalRuleFields) {
   );
 }
 
+export const FREEDOM_EXPENSE_ERROR =
+  "Use Transferência para Liberdade financeira.";
+
 // Expenses need a goal, income never has one, and transfers always fill
 // freedom.
 function withGoalRules<Schema extends z.ZodMiniType<GoalRuleFields>>(
@@ -145,7 +148,7 @@ function withGoalRules<Schema extends z.ZodMiniType<GoalRuleFields>>(
         value.kind !== "expense" ||
         value.goal !== "freedom" ||
         isLegacyFreedomExpense(value),
-      { error: "Use Transferência para Liberdade financeira.", path: ["goal"] },
+      { error: FREEDOM_EXPENSE_ERROR, path: ["goal"] },
     ),
     z.refine((value) => !(value.kind === "income" && value.goal !== null), {
       error: "Receitas não podem ter meta.",

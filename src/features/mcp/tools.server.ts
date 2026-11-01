@@ -52,7 +52,7 @@ const SETUP_REQUIRED =
   "Termine o cadastro no twogether antes de usar o agente: escolha seu nome e crie um orçamento ou aceite um convite.";
 
 const INSTRUCTIONS = `twogether is a shared budget for a couple. Amounts are integer cents in BRL (R$ 45,90 = 4590). Dates are YYYY-MM-DD and months YYYY-MM.
-Expenses belong to one of six goals (fixed, pleasure, comfort, targets, knowledge, freedom); income has no goal; transfers are money moved into savings or investments, always go to freedom and do not count as spending. Record freedom as a transfer; only a split expense may keep the freedom goal. Each person's income is split across the goals by their own percentages, which sum to 100.
+Expenses belong to one of five goals (fixed, pleasure, comfort, targets, knowledge); income has no goal; transfers are money moved into savings or investments, always go to the sixth goal, freedom, and do not count as spending. Record anything for freedom as a transfer. Some older split expenses still carry freedom; they keep it when edited, but no new expense can take it. Each person's income is split across the goals by their own percentages, which sum to 100.
 Every transaction has a revision: pass the latest one from list_transactions when editing, deleting, or settling. A stale revision means your partner changed it; list again before retrying.
 A split expense makes the partner owe half; only the person who owes can settle it.`;
 
