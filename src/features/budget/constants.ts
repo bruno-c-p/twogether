@@ -111,7 +111,6 @@ export const GOAL_ICONS: Record<GoalId, typeof House> = {
   freedom: Sprout,
 };
 
-// Order is the kind toggle's order.
 export const KINDS = {
   expense: { label: "Despesa", icon: ArrowUpRight },
   income: { label: "Receita", icon: ArrowDownLeft },

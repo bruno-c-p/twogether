@@ -156,7 +156,6 @@ function editedGoal(
   return input.goal ?? KIND_GOAL[kind];
 }
 
-// Like the goal, a split is dropped when an expense becomes income.
 function editedSplit(
   previous: Transaction,
   input: SaveInput,
