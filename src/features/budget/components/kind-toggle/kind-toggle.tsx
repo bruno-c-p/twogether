@@ -37,7 +37,7 @@ export function KindToggle({
             className={kind === value ? styles.active : ""}
             value={value}
           >
-            <Icon size={17} /> {label}
+            <Icon size={17} className="max-bp360:hidden" /> {label}
           </Toggle>
         );
       })}

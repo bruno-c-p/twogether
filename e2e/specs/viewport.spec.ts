@@ -64,6 +64,24 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
     page.getByRole("dialog", { name: "Nova transação" }),
   ).toBeVisible();
   await expectNoHorizontalOverflow(page, "Nova transação");
+
+  const kinds = page
+    .getByRole("dialog", { name: "Nova transação" })
+    .getByRole("group", { name: "Tipo da transação" });
+
+  for (const width of [mobile.width, 360]) {
+    await page.setViewportSize({ ...mobile, width });
+
+    const clipped = await kinds.evaluate((group) =>
+      [group, ...group.querySelectorAll("button")].flatMap((element) =>
+        element.scrollWidth > element.clientWidth ? [element.textContent] : [],
+      ),
+    );
+
+    expect(clipped, `kind toggle clips at ${width}px`).toEqual([]);
+  }
+
+  await page.setViewportSize(mobile);
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
