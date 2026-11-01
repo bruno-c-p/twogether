@@ -8,7 +8,10 @@ import {
   newId,
   parseAmount,
 } from "@/features/budget/domain/format";
-import { transactionFormSchema } from "@/features/budget/domain/schemas";
+import {
+  KIND_GOAL,
+  transactionFormSchema,
+} from "@/features/budget/domain/schemas";
 import { transactionStatus } from "@/features/budget/domain/status";
 import { deleteLock } from "@/features/budget/domain/view";
 import { fieldErrors } from "@/lib/zod-errors";
@@ -88,13 +91,6 @@ const VALIDATED_FIELDS = [
 type ValidatedField = (typeof VALIDATED_FIELDS)[number];
 
 const SOMEONE = "uma pessoa do casal";
-
-// Only expenses let the person pick a goal; a transfer always fills freedom.
-const KIND_GOAL = {
-  expense: null,
-  income: null,
-  transfer: "freedom",
-} as const satisfies Record<TransactionKind, GoalId | null>;
 
 function invalidProps(error: string | undefined, id: string) {
   return {

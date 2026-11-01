@@ -56,6 +56,16 @@ export const transactionKindSchema = z.enum(["expense", "income", "transfer"], {
   error: "Tipo da transação inválido.",
 });
 
+// The goal a kind starts with; only expenses let the person pick one.
+export const KIND_GOAL = {
+  expense: null,
+  income: null,
+  transfer: "freedom",
+} as const satisfies Record<
+  z.infer<typeof transactionKindSchema>,
+  (typeof GOAL_IDS)[number] | null
+>;
+
 export const viewSchema = z.enum(["overview", "transactions", "goals"], {
   error: "Visão inválida.",
 });

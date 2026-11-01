@@ -11,6 +11,7 @@ import {
   goalIdSchema,
   goalPercentagesSchema,
   idSchema,
+  KIND_GOAL,
   monthSchema,
   occurrencesSchema,
   revisionSchema,
@@ -51,7 +52,7 @@ const SETUP_REQUIRED =
   "Termine o cadastro no twogether antes de usar o agente: escolha seu nome e crie um orçamento ou aceite um convite.";
 
 const INSTRUCTIONS = `twogether is a shared budget for a couple. Amounts are integer cents in BRL (R$ 45,90 = 4590). Dates are YYYY-MM-DD and months YYYY-MM.
-Expenses belong to one of six goals (fixed, pleasure, comfort, targets, knowledge, freedom); income has no goal. Each person's income is split across the goals by their own percentages, which sum to 100.
+Expenses belong to one of six goals (fixed, pleasure, comfort, targets, knowledge, freedom); income has no goal; transfers are money moved into savings or investments, always go to freedom and do not count as spending. Record freedom as a transfer; only a split expense may keep the freedom goal. Each person's income is split across the goals by their own percentages, which sum to 100.
 Every transaction has a revision: pass the latest one from list_transactions when editing, deleting, or settling. A stale revision means your partner changed it; list again before retrying.
 A split expense makes the partner owe half; only the person who owes can settle it.`;
 
@@ -120,13 +121,15 @@ function findTransaction(snapshot: WorkspaceSnapshot, id: string) {
 }
 
 function createdTransaction(input: SaveInput): TransactionDraft {
+  const kind = input.kind ?? "expense";
+
   return {
     id: randomUUID(),
     description: input.description ?? "",
     amount: input.amount ?? 0,
     date: input.date ?? today(HOUSEHOLD_TIME_ZONE),
-    kind: input.kind ?? "expense",
-    goal: input.goal ?? null,
+    kind,
+    goal: input.goal ?? KIND_GOAL[kind],
     split: input.split ? {} : undefined,
   };
 }
@@ -150,7 +153,7 @@ function editedGoal(
 ) {
   if (input.goal !== undefined) return input.goal;
 
-  return kind === "income" ? null : previous.goal;
+  return kind === "expense" ? previous.goal : KIND_GOAL[kind];
 }
 
 // Like the goal, a split is dropped when an expense becomes income.
@@ -210,7 +213,7 @@ const budgetTools = {
     tool: "save_transaction",
     title: "Add or edit a transaction",
     description:
-      "Without id, adds a transaction for you (description and amount required; kind defaults to expense, date to today; expenses need a goal). With id and revision, edits it; omitted fields keep their current value. Repayments and paid splits are locked.",
+      "Without id, adds a transaction for you (description and amount required; kind defaults to expense, date to today; expenses need a goal; transfers go to freedom). With id and revision, edits it; omitted fields keep their current value. Repayments and paid splits are locked.",
     annotations: { ...write, destructiveHint: false, idempotentHint: false },
     inputSchema: {
       id: z.optional(idSchema).describe("Existing transaction id to edit."),
@@ -226,7 +229,9 @@ const budgetTools = {
       goal: z
         .nullable(goalIdSchema)
         .optional()
-        .describe("Required for expenses; null for income."),
+        .describe(
+          "Required for expenses; null for income; freedom for transfers, filled in when omitted.",
+        ),
       split: z
         .boolean()
         .optional()
@@ -406,9 +411,9 @@ export function createBudgetMcpServer(store: Store, userId: string) {
         month: monthFilter,
         member: memberFilter,
         kind: z
-          .enum(["expense", "income", "split"])
+          .enum(["expense", "income", "transfer", "split"])
           .optional()
-          .describe("Only expenses, income, or split expenses."),
+          .describe("Only expenses, income, transfers, or split expenses."),
         goal: z.optional(goalIdSchema),
         query: z
           .string()
