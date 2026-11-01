@@ -9,6 +9,7 @@ import {
   parseAmount,
 } from "@/features/budget/domain/format";
 import {
+  isLegacyFreedomExpense,
   KIND_GOAL,
   transactionFormSchema,
 } from "@/features/budget/domain/schemas";
@@ -406,14 +407,10 @@ function DeleteButton({
   );
 }
 
-// Freedom is a transfer's goal; only a legacy split freedom expense keeps it.
 function expenseGoals(transaction: Transaction | null) {
-  const legacy =
-    transaction?.kind === "expense" &&
-    transaction.goal === "freedom" &&
-    Boolean(transaction.split);
-
-  return legacy ? GOALS : GOALS.filter((goal) => goal.id !== "freedom");
+  return transaction && isLegacyFreedomExpense(transaction)
+    ? GOALS
+    : GOALS.filter((goal) => goal.id !== "freedom");
 }
 
 function ClassificationFields({

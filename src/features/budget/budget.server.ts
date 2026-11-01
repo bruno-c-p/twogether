@@ -585,8 +585,7 @@ async function settleSplit(
       ...common,
       id: randomUUID(),
       description: `${stored.description} (sua parte)`.slice(0, 80),
-      // An unsplit freedom row is a transfer.
-      kind: stored.goal === "freedom" ? "transfer" : "expense",
+      kind: "expense",
       goal: stored.goal,
       memberId: user.id,
     };

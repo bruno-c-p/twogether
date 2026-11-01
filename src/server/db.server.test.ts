@@ -58,7 +58,7 @@ describe("createStoreContext", () => {
     }
   });
 
-  test("turns unsplit freedom expenses into transfers once", async () => {
+  test("turns unsplit freedom expenses into transfers once, settlement shares aside", async () => {
     const dir = mkdtempSync(join(tmpdir(), "twogether-db-"));
     const file = join(dir, "freedom.sqlite");
     const legacy = createClient({ url: `file:${file}` });
@@ -67,8 +67,9 @@ describe("createStoreContext", () => {
       [
         "CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
         `INSERT INTO transactions VALUES ('saved', 'home', '{"id":"saved","kind":"expense","goal":"freedom"}', 2, 0)`,
-        `INSERT INTO transactions VALUES ('shared', 'home', '{"id":"shared","kind":"expense","goal":"freedom","split":{}}', 2, 0)`,
+        `INSERT INTO transactions VALUES ('shared', 'home', '{"id":"shared","kind":"expense","goal":"freedom","split":{"paidAt":"2026-09-20T12:00:00.000Z","entryIds":["refund","share"]}}', 2, 0)`,
         `INSERT INTO transactions VALUES ('rent', 'home', '{"id":"rent","kind":"expense","goal":"fixed"}', 2, 0)`,
+        `INSERT INTO transactions VALUES ('share', 'home', '{"id":"share","kind":"expense","goal":"freedom","settlementOf":"shared"}', 2, 0)`,
       ],
       "write",
     );
@@ -96,6 +97,7 @@ describe("createStoreContext", () => {
       expect(migrated).toEqual([
         { id: "rent", kind: "expense", revision: 2 },
         { id: "saved", kind: "transfer", revision: 3 },
+        { id: "share", kind: "expense", revision: 2 },
         { id: "shared", kind: "expense", revision: 2 },
       ]);
       expect(await rows()).toEqual(migrated);

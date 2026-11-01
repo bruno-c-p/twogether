@@ -44,8 +44,11 @@ const schema = [
   `UPDATE transactions SET payload = json_remove(payload, '$.accountId') WHERE json_extract(payload, '$.accountId') IS NOT NULL`,
   // Tags were removed; strip them from stored payloads the same way.
   `UPDATE transactions SET payload = json_remove(payload, '$.tags') WHERE json_type(payload, '$.tags') IS NOT NULL`,
-  // Unsplit freedom expenses are transfers now; the revision moves so a stale tab cannot save the old kind.
-  `UPDATE transactions SET payload = json_set(payload, '$.kind', 'transfer'), revision = revision + 1 WHERE json_extract(payload, '$.kind') = 'expense' AND json_extract(payload, '$.goal') = 'freedom' AND json_type(payload, '$.split') IS NULL`,
+  // Unsplit freedom expenses are transfers now, except a settled split's share, which its source lists in entryIds; the revision moves so a stale tab cannot save the old kind.
+  `UPDATE transactions SET payload = json_set(payload, '$.kind', 'transfer'), revision = revision + 1
+    WHERE json_extract(payload, '$.kind') = 'expense' AND json_extract(payload, '$.goal') = 'freedom' AND json_type(payload, '$.split') IS NULL
+      AND NOT EXISTS (SELECT 1 FROM transactions source, json_each(source.payload, '$.split.entryIds') entry
+                       WHERE source.household_id = transactions.household_id AND entry.value = transactions.id)`,
 ] as const;
 
 export async function execute(

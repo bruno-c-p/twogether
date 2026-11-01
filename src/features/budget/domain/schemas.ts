@@ -112,15 +112,29 @@ export const descriptionSchema = z
     z.maxLength(80, { error: "A descrição deve ter no máximo 80 caracteres." }),
   );
 
+type GoalRuleFields = {
+  kind: z.infer<typeof transactionKindSchema>;
+  goal: string | null;
+  split?: boolean | object;
+  settlementOf?: string;
+};
+
+// Freedom is a transfer's goal. An expense keeps it only when it is a split
+// saved before transfers existed, or the partner's share of one, written when
+// it is settled.
+export function isLegacyFreedomExpense(value: GoalRuleFields) {
+  return (
+    value.kind === "expense" &&
+    value.goal === "freedom" &&
+    Boolean(value.split || value.settlementOf)
+  );
+}
+
 // Expenses need a goal, income never has one, and transfers always fill
-// freedom. Freedom is a transfer's goal now; only legacy split expenses keep it.
-function withGoalRules<
-  Schema extends z.ZodMiniType<{
-    kind: z.infer<typeof transactionKindSchema>;
-    goal: string | null;
-    split?: boolean | object;
-  }>,
->(schema: Schema) {
+// freedom.
+function withGoalRules<Schema extends z.ZodMiniType<GoalRuleFields>>(
+  schema: Schema,
+) {
   return schema.check(
     z.refine((value) => !(value.kind === "expense" && value.goal === null), {
       error: "Escolha uma das seis metas para esta despesa.",
@@ -128,7 +142,9 @@ function withGoalRules<
     }),
     z.refine(
       (value) =>
-        !(value.kind === "expense" && value.goal === "freedom" && !value.split),
+        value.kind !== "expense" ||
+        value.goal !== "freedom" ||
+        isLegacyFreedomExpense(value),
       { error: "Use Transferência para Liberdade financeira.", path: ["goal"] },
     ),
     z.refine((value) => !(value.kind === "income" && value.goal !== null), {
