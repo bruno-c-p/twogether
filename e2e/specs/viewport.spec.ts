@@ -38,7 +38,7 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
     .fill("Supermercado Extraordinariamente Comprido Ltda Filial Centro");
   await dialog.getByLabel("Data").fill("2026-09-14");
   await dialog
-    .getByRole("button", { name: "Liberdade financeira", exact: true })
+    .getByRole("button", { name: "Transferência", exact: true })
     .click();
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
