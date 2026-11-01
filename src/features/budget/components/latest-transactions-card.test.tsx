@@ -45,7 +45,7 @@ describe("LatestTransactionsCard", () => {
     expect(screen.getAllByRole("button", { name: /^Editar / })).toHaveLength(5);
     expect(screen.queryByText("Gasto 01")).toBeNull();
     expect(screen.getByText(/^\+\s*R\$\s*1\.200,00$/)).toBeTruthy();
-    expect(screen.getAllByText(/^–\s*R\$/).length).toBe(4);
+    expect(screen.getAllByText(/^−\s*R\$/).length).toBe(4);
     expect(screen.getByText(/Custo fixo · 06 set/)).toBeTruthy();
     await user.click(screen.getByRole("button", { name: "Editar Freela" }));
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "in" }));

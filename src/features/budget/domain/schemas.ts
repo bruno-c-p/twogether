@@ -140,7 +140,7 @@ function withGoalRules<Schema extends z.ZodMiniType<GoalRuleFields>>(
 ) {
   return schema.check(
     z.refine((value) => !(value.kind === "expense" && value.goal === null), {
-      error: "Escolha uma das seis metas para esta despesa.",
+      error: "Escolha uma meta para esta despesa.",
       path: ["goal"],
     }),
     z.refine(

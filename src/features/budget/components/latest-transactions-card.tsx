@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Link } from "@tanstack/react-router";
 import { GoalIcon } from "@/features/budget/components/goal-icon";
 import { OverviewCard } from "@/features/budget/components/overview-card";
+import { AMOUNT_STYLE } from "@/features/budget/components/amount-style";
 import { GOALS, KINDS } from "@/features/budget/constants";
 import { shortDay } from "@/features/budget/domain/format";
 import type {
@@ -79,8 +80,7 @@ export function LatestTransactionsCard({
         <ul className="list-none m-0 p-0 flex flex-col">
           {latest.map((transaction) => {
             const goal = GOALS.find((item) => item.id === transaction.goal);
-            const income = transaction.kind === "income";
-            const transfer = transaction.kind === "transfer";
+            const amount = AMOUNT_STYLE[transaction.kind];
 
             return (
               <li key={transaction.id}>
@@ -107,10 +107,10 @@ export function LatestTransactionsCard({
                   <span
                     className={cx(
                       "text-md font-600 tabular-nums shrink-0",
-                      transfer && "text-text-muted",
+                      amount.color,
                     )}
                   >
-                    {!transfer && (income ? "+ " : "– ")}
+                    {amount.sign}
                     {displayMoney(transaction.amount)}
                   </span>
                 </Button>

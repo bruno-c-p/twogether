@@ -302,7 +302,7 @@ describe("TransactionDialog", () => {
     );
 
     expect(
-      await screen.findByText("Escolha uma das seis metas para esta despesa."),
+      await screen.findByText("Escolha uma meta para esta despesa."),
     ).toBeTruthy();
     expect(onSave).not.toHaveBeenCalled();
 

@@ -1,4 +1,5 @@
 import { Pencil, Trash2 } from "lucide-react";
+import { AMOUNT_STYLE } from "@/features/budget/components/amount-style";
 import { GOALS, KINDS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
 import {
@@ -6,22 +7,11 @@ import {
   type TransactionStatus,
 } from "@/features/budget/domain/status";
 import { deleteLock, editLock } from "@/features/budget/domain/view";
-import type {
-  Member,
-  Transaction,
-  TransactionKind,
-} from "@/features/budget/domain/types";
+import type { Member, Transaction } from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
-
-// A transfer is not spending, so it carries no sign and stays neutral.
-const AMOUNT_STYLE = {
-  income: { sign: "+ ", color: "text-positive" },
-  expense: { sign: "− ", color: "text-text" },
-  transfer: { sign: "", color: "text-text-muted" },
-} satisfies Record<TransactionKind, { sign: string; color: string }>;
 
 function amountLabel(transaction: Transaction, hidden: boolean) {
   if (hidden) return "R$ ••••";

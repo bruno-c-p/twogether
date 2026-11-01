@@ -13,7 +13,7 @@ const total = (
   include: (transaction: Transaction) => boolean,
 ) => sumCents(transactions.flatMap((t) => (include(t) ? [t.amount] : [])));
 
-/** What a transaction adds to Saldo. A transfer moves money without spending it. */
+/** What a transaction adds to its day's net. A transfer moves money without spending it. */
 export function signedFlow(t: Transaction) {
   switch (t.kind) {
     case "income":
@@ -45,7 +45,7 @@ export function summarize(transactions: Transaction[]) {
   return {
     income,
     expenses,
-    balance: sumCents(transactions.map(signedFlow)),
+    balance: minusCents(income, expenses),
     goals,
   };
 }

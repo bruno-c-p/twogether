@@ -110,7 +110,9 @@ function groupByDay(transactions: Transaction[]) {
 function netLabel(net: number, hidden: boolean) {
   if (hidden) return "R$ ••••";
 
-  return `${net < 0 ? "−" : "+"} ${money(Math.abs(net))}`;
+  const sign = net < 0 ? "− " : net > 0 ? "+ " : "";
+
+  return `${sign}${money(Math.abs(net))}`;
 }
 
 export function TransactionSearch({

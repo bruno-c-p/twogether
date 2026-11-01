@@ -151,6 +151,26 @@ describe("TransactionList", () => {
     expect(screen.queryByText(/−\sR\$\s30,00/)).toBeNull();
   });
 
+  test("a day with only a transfer shows a zero net without a sign", () => {
+    const { screen } = renderPlain(
+      <List
+        transactions={[
+          transaction({
+            id: "c",
+            description: "Tesouro Direto",
+            kind: "transfer",
+            goal: "freedom",
+            amount: cents(5000),
+            date: "2026-09-10",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByText(/^R\$\s0,00$/)).toHaveLength(1);
+    expect(screen.queryByText(/^\+\sR\$\s0,00$/)).toBeNull();
+  });
+
   test("search, goal and kind filters narrow the rows", async () => {
     const { screen, user } = renderPlain(<List />);
 

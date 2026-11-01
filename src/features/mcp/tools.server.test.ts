@@ -277,7 +277,7 @@ describe("budget MCP tools", () => {
 
     const noGoal = await call("save_transaction", { ...groceries, goal: null });
     expect(noGoal.error).toBe(true);
-    expect(noGoal.text).toContain("Escolha uma das seis metas");
+    expect(noGoal.text).toContain("Escolha uma meta");
 
     const missing = await call("save_transaction", {
       id: "missing",
@@ -365,7 +365,7 @@ describe("budget MCP tools", () => {
 
     expect(expense).toEqual({
       error: true,
-      text: "Escolha uma das seis metas para esta despesa.",
+      text: "Escolha uma meta para esta despesa.",
     });
   });
 
