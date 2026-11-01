@@ -86,6 +86,23 @@ describe("split transactions", () => {
     expect((await find()).amount).toBe(cents(200001));
   });
 
+  test("settling a freedom split books the partner's share as a transfer", async () => {
+    const { store, ana, bia } = await setup();
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: { ...rent(ana.user.id), id: "fund", goal: "freedom" },
+    });
+    await store.settleSplit(bia.user, bia.householdId, {
+      ...settleInput,
+      id: "fund",
+    });
+
+    const share = (await view(store, bia.user)).budget.transactions.find(
+      (row) => row.settlementOf === "fund" && row.memberId === bia.user.id,
+    );
+
+    expect(share).toMatchObject({ kind: "transfer", goal: "freedom" });
+  });
+
   test("only the person who owes can settle or unsettle", async () => {
     const { store, ana, bia } = await setup();
     await expect(

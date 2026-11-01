@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { z } from "zod";
 import { createClient } from "@libsql/client";
-import { createStoreContext, one } from "@/server/db.server";
+import { all, createStoreContext, one } from "@/server/db.server";
 
 const countSchema = z.object({ total: z.number() });
 
@@ -54,6 +54,52 @@ describe("createStoreContext", () => {
       expect(row).toEqual({ payload: '{"id":"t1"}', revision: 3 });
     } finally {
       ctx.close();
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  test("turns unsplit freedom expenses into transfers once", async () => {
+    const dir = mkdtempSync(join(tmpdir(), "twogether-db-"));
+    const file = join(dir, "freedom.sqlite");
+    const legacy = createClient({ url: `file:${file}` });
+
+    await legacy.batch(
+      [
+        "CREATE TABLE transactions (id TEXT NOT NULL, household_id TEXT NOT NULL, payload TEXT NOT NULL, revision INTEGER NOT NULL, deleted INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(household_id, id))",
+        `INSERT INTO transactions VALUES ('saved', 'home', '{"id":"saved","kind":"expense","goal":"freedom"}', 2, 0)`,
+        `INSERT INTO transactions VALUES ('shared', 'home', '{"id":"shared","kind":"expense","goal":"freedom","split":{}}', 2, 0)`,
+        `INSERT INTO transactions VALUES ('rent', 'home', '{"id":"rent","kind":"expense","goal":"fixed"}', 2, 0)`,
+      ],
+      "write",
+    );
+    legacy.close();
+
+    const rows = async () => {
+      const ctx = createStoreContext(file);
+
+      try {
+        await ctx.ready;
+
+        return await all(
+          ctx.db,
+          z.object({ id: z.string(), kind: z.string(), revision: z.number() }),
+          "SELECT id, json_extract(payload, '$.kind') AS kind, revision FROM transactions ORDER BY id",
+        );
+      } finally {
+        ctx.close();
+      }
+    };
+
+    try {
+      const migrated = await rows();
+
+      expect(migrated).toEqual([
+        { id: "rent", kind: "expense", revision: 2 },
+        { id: "saved", kind: "transfer", revision: 3 },
+        { id: "shared", kind: "expense", revision: 2 },
+      ]);
+      expect(await rows()).toEqual(migrated);
+    } finally {
       rmSync(dir, { recursive: true, force: true });
     }
   });

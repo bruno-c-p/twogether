@@ -581,11 +581,12 @@ async function settleSplit(
       memberId: stored.memberId,
     };
 
-    const expense: Transaction = {
+    const share: Transaction = {
       ...common,
       id: randomUUID(),
       description: `${stored.description} (sua parte)`.slice(0, 80),
-      kind: "expense",
+      // An unsplit freedom row is a transfer.
+      kind: stored.goal === "freedom" ? "transfer" : "expense",
       goal: stored.goal,
       memberId: user.id,
     };
@@ -595,10 +596,10 @@ async function settleSplit(
       householdId,
       user,
       source,
-      { paidAt: now, paidBy: user.id, entryIds: [income.id, expense.id] },
+      { paidAt: now, paidBy: user.id, entryIds: [income.id, share.id] },
       [
         insertTransaction(householdId, income),
-        insertTransaction(householdId, expense),
+        insertTransaction(householdId, share),
       ],
     );
   });
