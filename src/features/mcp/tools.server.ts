@@ -151,9 +151,9 @@ function editedGoal(
   input: SaveInput,
   kind: Transaction["kind"],
 ) {
-  if (input.goal !== undefined) return input.goal;
+  if (input.goal === undefined && kind === previous.kind) return previous.goal;
 
-  return kind === "expense" ? previous.goal : KIND_GOAL[kind];
+  return input.goal ?? KIND_GOAL[kind];
 }
 
 // Like the goal, a split is dropped when an expense becomes income.

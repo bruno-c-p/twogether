@@ -332,6 +332,43 @@ describe("budget MCP tools", () => {
     ]);
   });
 
+  test("a null goal means the kind's goal, and a new kind drops the old goal", async () => {
+    const { store } = ctx;
+    const { a } = await couple(store);
+    const { call, ok } = await connect(store, a.user.id);
+    const saved = z.object({ saved: savedRow });
+
+    const created = (
+      await ok("save_transaction", saved, {
+        description: "Tesouro Direto",
+        amount: 50000,
+        kind: "transfer",
+        goal: null,
+      })
+    ).saved;
+
+    const edited = (
+      await ok("save_transaction", saved, {
+        id: created.id,
+        revision: created.revision,
+        goal: null,
+      })
+    ).saved;
+
+    expect([created.goal, edited.goal]).toEqual(["freedom", "freedom"]);
+
+    const expense = await call("save_transaction", {
+      id: edited.id,
+      revision: edited.revision,
+      kind: "expense",
+    });
+
+    expect(expense).toEqual({
+      error: true,
+      text: "Escolha uma das seis metas para esta despesa.",
+    });
+  });
+
   test("refuses a new freedom expense, split or not, and points at Transferência", async () => {
     const { store } = ctx;
     const { a } = await couple(store);
