@@ -37,14 +37,15 @@ const worstAmounts = [99999999999, 99999999999, 99999999999, 1];
 
 function baseTransaction(index: number, dataset: Dataset): TransactionDraft {
   const income = index === 0 || (dataset === "huge" && index % 20 === 0);
+  const goal = income ? null : goals[index % goals.length];
 
   return {
     id: `fixture-${index}`,
     description: `${income ? "Salário" : "Mercado"}${dataset === "huge" ? ` ${index + 1}` : ""}`,
     amount: income ? 600000 : 4590,
     date: `${fixtureMonth}-${String(28 - (index % 28)).padStart(2, "0")}`,
-    kind: income ? "income" : "expense",
-    goal: income ? null : goals[index % goals.length],
+    kind: income ? "income" : goal === "freedom" ? "transfer" : "expense",
+    goal,
     memberId: index % 2 ? "person-b" : "person-a",
     revision: 1,
   };

@@ -16,11 +16,10 @@ export function summarize(transactions: Transaction[]) {
     ...goal,
     amount: total(
       transactions,
-      (t) => t.kind === "expense" && t.goal === goal.id,
+      (t) => t.kind !== "income" && t.goal === goal.id,
     ),
-    count: transactions.filter(
-      (t) => t.kind === "expense" && t.goal === goal.id,
-    ).length,
+    count: transactions.filter((t) => t.kind !== "income" && t.goal === goal.id)
+      .length,
   }));
 
   return {

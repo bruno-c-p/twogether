@@ -52,7 +52,7 @@ export const GOAL_IDS = [
 
 export const goalIdSchema = z.enum(GOAL_IDS, { error: "Meta inválida." });
 
-export const transactionKindSchema = z.enum(["expense", "income"], {
+export const transactionKindSchema = z.enum(["expense", "income", "transfer"], {
   error: "Tipo da transação inválido.",
 });
 
@@ -102,11 +102,13 @@ export const descriptionSchema = z
     z.maxLength(80, { error: "A descrição deve ter no máximo 80 caracteres." }),
   );
 
-// Expenses need one of the six goals; income never has one.
+// Expenses need a goal, income never has one, and transfers always fill
+// freedom. Freedom is a transfer's goal now; only legacy split expenses keep it.
 function withGoalRules<
   Schema extends z.ZodMiniType<{
     kind: z.infer<typeof transactionKindSchema>;
     goal: string | null;
+    split?: boolean | object;
   }>,
 >(schema: Schema) {
   return schema.check(
@@ -114,10 +116,22 @@ function withGoalRules<
       error: "Escolha uma das seis metas para esta despesa.",
       path: ["goal"],
     }),
+    z.refine(
+      (value) =>
+        !(value.kind === "expense" && value.goal === "freedom" && !value.split),
+      { error: "Use Transferência para Liberdade financeira.", path: ["goal"] },
+    ),
     z.refine((value) => !(value.kind === "income" && value.goal !== null), {
       error: "Receitas não podem ter meta.",
       path: ["goal"],
     }),
+    z.refine(
+      (value) => !(value.kind === "transfer" && value.goal !== "freedom"),
+      {
+        error: "Transferências vão para Liberdade financeira.",
+        path: ["goal"],
+      },
+    ),
   );
 }
 
