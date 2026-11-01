@@ -356,9 +356,8 @@ async function saveTransaction(
 
     assertRevision(old, given);
     assertSingleEdit(old, occurrences);
-    assertNoNewFreedomExpense(t, previous);
-
     await assertSplitEditable(transaction, householdId, user, t, previous);
+    assertNoNewFreedomExpense(t, previous);
 
     const first = firstOccurrence({
       transaction: t,

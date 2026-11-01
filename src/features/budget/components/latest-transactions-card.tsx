@@ -104,12 +104,7 @@ export function LatestTransactionsCard({
                       {shortDay(transaction.date)}
                     </span>
                   </span>
-                  <span
-                    className={cx(
-                      "text-md font-600 tabular-nums shrink-0",
-                      amount.color,
-                    )}
-                  >
+                  <span className="text-md font-600 tabular-nums shrink-0">
                     {amount.sign}
                     {displayMoney(transaction.amount)}
                   </span>

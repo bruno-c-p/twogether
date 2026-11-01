@@ -323,6 +323,41 @@ describe("a freedom split saved before transfers", () => {
     ]);
   });
 
+  test("once settled, its locks answer before the freedom rule", async () => {
+    if (!store || !raw) throw new Error("stores exist inside a test");
+
+    const { a, b } = await couple(store);
+    const ana = await withHousehold(store, a.user);
+    const bia = await withHousehold(store, b.user);
+
+    await store.saveTransaction(ana.user, ana.householdId, {
+      transaction: rent(ana.user.id),
+    });
+    await raw.db.execute(
+      "UPDATE transactions SET payload = json_set(payload, '$.goal', 'freedom')",
+    );
+    await store.settleSplit(bia.user, bia.householdId, settleInput);
+
+    const rows = (await view(store, bia.user)).budget.transactions;
+
+    const share = rows.find(
+      (row) => row.settlementOf && row.kind === "expense",
+    )!;
+
+    const source = rows.find((row) => row.id === "rent")!;
+
+    await expect(
+      store.saveTransaction(bia.user, bia.householdId, {
+        transaction: { ...share, description: "Outra" },
+      }),
+    ).rejects.toThrow("reembolso");
+    await expect(
+      store.saveTransaction(ana.user, ana.householdId, {
+        transaction: { ...source, split: undefined },
+      }),
+    ).rejects.toThrow("Desmarque o pagamento");
+  });
+
   test("settling it moves the balance and member totals as any other goal does, across a restart", async () => {
     if (!store || !raw) throw new Error("stores exist inside a test");
 
