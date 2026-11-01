@@ -1,11 +1,31 @@
 import { GOALS } from "@/features/budget/constants";
 import type { Transaction, MemberBudget } from "@/features/budget/domain/types";
-import { minusCents, percentageOf, percentOf, sumCents } from "@/lib/decimal";
+import {
+  minusCents,
+  percentageOf,
+  percentOf,
+  sumCents,
+  ZERO_CENTS,
+} from "@/lib/decimal";
 
 const total = (
   transactions: Transaction[],
   include: (transaction: Transaction) => boolean,
 ) => sumCents(transactions.flatMap((t) => (include(t) ? [t.amount] : [])));
+
+/** What a transaction adds to Saldo. A transfer moves money without spending it. */
+export function signedFlow(t: Transaction) {
+  switch (t.kind) {
+    case "income":
+      return t.amount;
+    case "expense":
+      return minusCents(ZERO_CENTS, t.amount);
+    case "transfer":
+      return ZERO_CENTS;
+    default:
+      return t.kind satisfies never;
+  }
+}
 
 export function summarize(transactions: Transaction[]) {
   const income = total(transactions, (t) => t.kind === "income");
@@ -25,7 +45,7 @@ export function summarize(transactions: Transaction[]) {
   return {
     income,
     expenses,
-    balance: minusCents(income, expenses),
+    balance: sumCents(transactions.map(signedFlow)),
     goals,
   };
 }

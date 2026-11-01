@@ -51,6 +51,20 @@ describe("LatestTransactionsCard", () => {
     expect(onEdit).toHaveBeenCalledWith(expect.objectContaining({ id: "in" }));
   });
 
+  test("shows a transfer unsigned", async () => {
+    const { screen } = await renderCard([
+      transaction({
+        kind: "transfer",
+        goal: "freedom",
+        description: "Tesouro Direto",
+        amount: cents(50000),
+      }),
+    ]);
+
+    expect(screen.getByText(/^R\$\s*500,00$/)).toBeTruthy();
+    expect(screen.getByText(/Transferência · /)).toBeTruthy();
+  });
+
   test("links to the full list and handles an empty month", async () => {
     const { screen, user, router } = await renderCard([]);
 

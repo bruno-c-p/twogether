@@ -116,6 +116,41 @@ describe("TransactionList", () => {
     expect(screen.getAllByText(/\+\sR\$\s20,00/)).toHaveLength(1);
   });
 
+  test("a transfer leaves the day's net alone and shows no sign", () => {
+    const { screen } = renderPlain(
+      <List
+        transactions={[
+          transaction({
+            id: "a",
+            description: "Pão",
+            amount: cents(1000),
+            date: "2026-09-10",
+          }),
+          transaction({
+            id: "b",
+            description: "Freela",
+            kind: "income",
+            goal: null,
+            amount: cents(3000),
+            date: "2026-09-10",
+          }),
+          transaction({
+            id: "c",
+            description: "Tesouro Direto",
+            kind: "transfer",
+            goal: "freedom",
+            amount: cents(5000),
+            date: "2026-09-10",
+          }),
+        ]}
+      />,
+    );
+
+    expect(screen.getAllByText(/^\+\sR\$\s20,00$/)).toHaveLength(1);
+    expect(screen.getAllByText(/^R\$\s50,00$/)).toHaveLength(1);
+    expect(screen.queryByText(/−\sR\$\s30,00/)).toBeNull();
+  });
+
   test("search, goal and kind filters narrow the rows", async () => {
     const { screen, user } = renderPlain(<List />);
 

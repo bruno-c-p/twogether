@@ -80,6 +80,7 @@ export function LatestTransactionsCard({
           {latest.map((transaction) => {
             const goal = GOALS.find((item) => item.id === transaction.goal);
             const income = transaction.kind === "income";
+            const transfer = transaction.kind === "transfer";
 
             return (
               <li key={transaction.id}>
@@ -103,8 +104,14 @@ export function LatestTransactionsCard({
                       {shortDay(transaction.date)}
                     </span>
                   </span>
-                  <span className="text-md font-600 tabular-nums shrink-0">
-                    {income ? "+" : "–"} {displayMoney(transaction.amount)}
+                  <span
+                    className={cx(
+                      "text-md font-600 tabular-nums shrink-0",
+                      transfer && "text-text-muted",
+                    )}
+                  >
+                    {!transfer && (income ? "+ " : "– ")}
+                    {displayMoney(transaction.amount)}
                   </span>
                 </Button>
               </li>

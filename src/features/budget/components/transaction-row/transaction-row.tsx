@@ -6,16 +6,27 @@ import {
   type TransactionStatus,
 } from "@/features/budget/domain/status";
 import { deleteLock, editLock } from "@/features/budget/domain/view";
-import type { Member, Transaction } from "@/features/budget/domain/types";
+import type {
+  Member,
+  Transaction,
+  TransactionKind,
+} from "@/features/budget/domain/types";
 import { Button } from "@/components/ui/button";
 import { ColorDot } from "@/components/ui/color-dot";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
 
+// A transfer is not spending, so it carries no sign and stays neutral.
+const AMOUNT_STYLE = {
+  income: { sign: "+ ", color: "text-positive" },
+  expense: { sign: "− ", color: "text-text" },
+  transfer: { sign: "", color: "text-text-muted" },
+} satisfies Record<TransactionKind, { sign: string; color: string }>;
+
 function amountLabel(transaction: Transaction, hidden: boolean) {
   if (hidden) return "R$ ••••";
 
-  return `${transaction.kind === "income" ? "+" : "−"} ${money(transaction.amount)}`;
+  return `${AMOUNT_STYLE[transaction.kind].sign}${money(transaction.amount)}`;
 }
 
 function splitLabel(t: Transaction, status: TransactionStatus) {
@@ -147,7 +158,7 @@ export function TransactionRow({
       <span
         className={cx(
           "text-md font-600 whitespace-nowrap tabular-nums bp1000:text-right",
-          t.kind === "income" && !hidden ? "text-positive" : "text-text",
+          hidden ? "text-text" : AMOUNT_STYLE[t.kind].color,
         )}
       >
         {amountLabel(t, hidden)}
