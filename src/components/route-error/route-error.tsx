@@ -1,7 +1,7 @@
 import type { ErrorComponentProps } from "@tanstack/react-router";
 import { Link, useRouter } from "@tanstack/react-router";
 import { Icon, Retry } from "@/components/glaze/icon";
-import { Button } from "@/components/glaze/ui/button";
+import { Button, buttonVariants } from "@/components/glaze/ui/button";
 import {
   Empty,
   EmptyContent,
@@ -24,9 +24,7 @@ export function RouteError({ error, reset }: ErrorComponentProps) {
     <div className={page}>
       <Empty reason="error">
         <EmptyHeader>
-          <EmptyTitle role="heading" aria-level={1}>
-            Algo deu errado.
-          </EmptyTitle>
+          <EmptyTitle>Algo deu errado.</EmptyTitle>
           <EmptyDescription>{description}</EmptyDescription>
         </EmptyHeader>
         <EmptyContent>
@@ -52,19 +50,15 @@ export function NotFoundPage() {
     <main className={page}>
       <Empty reason="no-results">
         <EmptyHeader>
-          <EmptyTitle role="heading" aria-level={1}>
-            Página não encontrada.
-          </EmptyTitle>
+          <EmptyTitle>Página não encontrada.</EmptyTitle>
         </EmptyHeader>
         <EmptyContent>
-          <Button
-            variant="secondary"
-            size="sm"
-            render={<Link to="/" />}
-            nativeButton={false}
+          <Link
+            to="/"
+            className={buttonVariants({ variant: "secondary", size: "sm" })}
           >
             Voltar para a visão geral
-          </Button>
+          </Link>
         </EmptyContent>
       </Empty>
     </main>
