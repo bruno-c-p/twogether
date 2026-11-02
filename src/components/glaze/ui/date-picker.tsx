@@ -230,11 +230,11 @@ function Calendar(props: CalendarProps) {
         const id = `${captionId}-${mi}`;
         return <div key={key(m)} data-slot="calendar-month" className="flex flex-col gap-1">
           <div className="flex h-(--control-sm) items-center justify-between gap-2">
-            <Button variant="ghost" size="icon-sm" aria-label="Previous month" onClick={() => setMonth(addMonths(month, -1))} className={cn(mi > 0 && 'invisible')}>
+            <Button variant="ghost" size="icon-sm" aria-label="Mês anterior" onClick={() => setMonth(addMonths(month, -1))} className={cn(mi > 0 && 'invisible')}>
               <Icon icon={ChevronLeft} className="rtl:-scale-x-100"/>
             </Button>
             <div id={id} aria-live="polite" className="type-label">{fmtMonth.format(m)}</div>
-            <Button variant="ghost" size="icon-sm" aria-label="Next month" onClick={() => setMonth(addMonths(month, 1))} className={cn(mi < numberOfMonths - 1 && 'invisible')}>
+            <Button variant="ghost" size="icon-sm" aria-label="Próximo mês" onClick={() => setMonth(addMonths(month, 1))} className={cn(mi < numberOfMonths - 1 && 'invisible')}>
               <Icon icon={ChevronRight} className="rtl:-scale-x-100"/>
             </Button>
           </div>
@@ -451,7 +451,7 @@ function TimeField({
         className="data"
       />
       {list && <InputTrailing>
-        <PopoverPrimitive.Trigger data-slot="time-field-trigger" disabled={disabled} aria-label="Choose a time" render={<InputAction/>}><Icon icon={Time}/></PopoverPrimitive.Trigger>
+        <PopoverPrimitive.Trigger data-slot="time-field-trigger" disabled={disabled} aria-label="Escolher horário" render={<InputAction/>}><Icon icon={Time}/></PopoverPrimitive.Trigger>
       </InputTrailing>}
       {name && <input type="hidden" name={name} value={value ?? ''} disabled={disabled}/>}
     </InputRoot>
@@ -469,7 +469,7 @@ function TimeField({
           initialFocus={() => listRef.current?.querySelector<HTMLElement>('[aria-selected=true]') ?? listRef.current?.querySelector<HTMLElement>(`[data-time="${nearest()}"]`) ?? true}
           className={cn(menuPopupClass, 'w-(--anchor-width) min-w-32 max-h-[min(var(--popup-max),var(--available-height))]')}
         >
-          <div ref={listRef} role="listbox" aria-label="Times" onKeyDown={onListKeyDown} className="flex flex-col">
+          <div ref={listRef} role="listbox" aria-label="Horários" onKeyDown={onListKeyDown} className="flex flex-col">
             {options.map(v => {
               const selected = v === value;
               return <button
@@ -691,7 +691,7 @@ function DateField(props: SingleProps | RangeProps | DateTimeProps) {
           className={cn(overlayShell, overlayMotion, 'max-h-(--available-height) max-w-(--available-width) grid-rows-[minmax(0,1fr)_auto] overflow-y-auto', popupClassName)}
         >
           <div className={cn(overlayPanel, 'gap-3 p-2', !narrow && presets && 'flex-row')}>
-            {presets && <ul aria-label="Presets" className={cn('flex gap-0.5', narrow ? 'flex-wrap' : 'w-32 shrink-0 flex-col border-e border-line-faint pe-2')}>
+            {presets && <ul aria-label="Atalhos" className={cn('flex gap-0.5', narrow ? 'flex-wrap' : 'w-32 shrink-0 flex-col border-e border-line-faint pe-2')}>
               {presets.map(p => {
                 const active = same(p.range.from, span.from) && same(p.range.to, span.to);
                 return <li key={p.label} className={narrow ? '' : 'w-full'}>
