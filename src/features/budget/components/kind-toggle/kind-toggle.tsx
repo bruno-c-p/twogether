@@ -1,11 +1,13 @@
 import {
-  SegmentedControl,
-  SegmentedControlItem,
-} from "@/components/glaze/ui/segmented-control";
+  RadioGroup,
+  RadioGroupOption,
+} from "@/components/glaze/ui/radio-group";
 import { KINDS } from "@/features/budget/constants";
 import { transactionKindSchema } from "@/features/budget/domain/schemas";
 import type { TransactionKind } from "@/features/budget/domain/types";
 
+// A radio row, not a segmented control: three labels do not fit Glaze's
+// segments inside a dialog at 320px, and a row of radios wraps instead.
 export function KindToggle({
   kind,
   disabled,
@@ -16,8 +18,8 @@ export function KindToggle({
   onChange: (kind: TransactionKind) => void;
 }) {
   return (
-    <SegmentedControl
-      fill
+    <RadioGroup
+      className="flex flex-wrap gap-x-5 gap-y-2"
       aria-label="Tipo da transação"
       value={kind}
       disabled={disabled}
@@ -28,10 +30,12 @@ export function KindToggle({
       }}
     >
       {transactionKindSchema.options.map((value) => (
-        <SegmentedControlItem key={value} value={value}>
-          {KINDS[value].label}
-        </SegmentedControlItem>
+        <RadioGroupOption
+          key={value}
+          value={value}
+          label={KINDS[value].label}
+        />
       ))}
-    </SegmentedControl>
+    </RadioGroup>
   );
 }
