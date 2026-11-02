@@ -78,25 +78,24 @@ export function TransactionFlows() {
           onClose={() => dialogs.setPercentagesRevision(null)}
         />
       )}
-      {dialogs.transaction && (
-        <TransactionDialog
-          transaction={dialogs.transaction.transaction}
-          defaultDate={transactionDefaultDate(month)}
-          members={budget.household.members}
-          currentUserId={budget.user.id}
-          busy={mutations.saveTransaction.pending}
-          serverError={mutations.saveTransaction.error}
-          splitBusy={mutations.splitBusy}
-          onSave={actions.save}
-          onSettle={actions.openSettle}
-          onUnsettle={actions.unsettle}
-          onDelete={(transaction) => {
-            dialogs.setTransaction(null);
-            void actions.remove(transaction);
-          }}
-          onClose={() => dialogs.setTransaction(null)}
-        />
-      )}
+      <TransactionDialog
+        open={dialogs.transaction !== null}
+        transaction={dialogs.transaction?.transaction ?? null}
+        defaultDate={transactionDefaultDate(month)}
+        members={budget.household.members}
+        currentUserId={budget.user.id}
+        busy={mutations.saveTransaction.pending}
+        serverError={mutations.saveTransaction.error}
+        splitBusy={mutations.splitBusy}
+        onSave={actions.save}
+        onSettle={actions.openSettle}
+        onUnsettle={actions.unsettle}
+        onDelete={(transaction) => {
+          dialogs.setTransaction(null);
+          void actions.remove(transaction);
+        }}
+        onClose={() => dialogs.setTransaction(null)}
+      />
       {dialogs.deleting && (
         <DeleteRecurrenceFlow transaction={dialogs.deleting} />
       )}
