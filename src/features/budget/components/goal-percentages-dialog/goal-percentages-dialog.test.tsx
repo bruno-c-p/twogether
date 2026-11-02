@@ -4,16 +4,6 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { renderPlain } from "@/test/render";
 
-// jsdom has no ResizeObserver; Glaze's dialog body watches its own size.
-vi.stubGlobal(
-  "ResizeObserver",
-  class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  },
-);
-
 function setup({ busy = false, error = "" } = {}) {
   const onSave = vi.fn<(values: GoalPercentages) => Promise<void>>(() =>
     Promise.resolve(),
@@ -75,6 +65,20 @@ describe("GoalPercentagesDialog", () => {
       expect.objectContaining({ fixed: 35, freedom: 20 }),
     );
     expect(view.onClose).not.toHaveBeenCalled();
+  });
+
+  test("saves fractional percentages", async () => {
+    const view = setup();
+
+    await setPercentage(view, "Custo fixo", "30,5");
+    await setPercentage(view, "Liberdade financeira", "24,5");
+    await view.user.click(
+      view.screen.getByRole("button", { name: "Salvar percentuais" }),
+    );
+
+    expect(view.onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ fixed: 30.5, freedom: 24.5 }),
+    );
   });
 
   test("while saving every control is locked", () => {

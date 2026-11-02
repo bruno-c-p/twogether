@@ -26,6 +26,8 @@ export function GoalPercentageList({
             unit="%"
             min={0}
             max={100}
+            step={0.01}
+            locale="pt-BR"
             disabled={disabled}
             required
             value={Number.isNaN(values[goal.id]) ? null : values[goal.id]}
