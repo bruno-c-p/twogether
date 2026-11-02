@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glaze/ui/button";
 import { GoalCards } from "@/features/budget/components/goal-cards";
 import { IncomeDistribution } from "@/features/budget/components/income-distribution";
 import { PageHeading } from "@/features/budget/components/page-heading";

@@ -6,6 +6,13 @@ import { ana, transaction } from "@/test/fixtures";
 import { cents } from "@/test/cents";
 import { renderWithProviders } from "@/test/render";
 
+type Screen = Awaited<ReturnType<typeof renderWithProviders>>["screen"];
+
+// The goal's link is its title; the rest of the card sits around it.
+function goalCard(screen: Screen, name: RegExp) {
+  return screen.getByRole("link", { name }).closest('[data-slot="card"]');
+}
+
 const salary = transaction({
   id: "s",
   kind: "income",
@@ -36,11 +43,11 @@ describe("GoalCards", () => {
     const fixed = screen.getByRole("link", { name: /^Custo fixo:/ });
 
     expect(fixed.getAttribute("aria-label")).toMatch(/acima do planejado$/);
-    expect(fixed.textContent).toMatch(/30%/);
-    expect(fixed.textContent).toMatch(/133% · R\$\s100,00 acima/);
-    expect(
-      screen.getByRole("link", { name: /^Prazeres:/ }).textContent,
-    ).toMatch(/0 transações/);
+    expect(goalCard(screen, /^Custo fixo:/)?.textContent).toMatch(/30%/);
+    expect(goalCard(screen, /^Custo fixo:/)?.textContent).toMatch(
+      /133% · R\$\s100,00 acima/,
+    );
+    expect(goalCard(screen, /^Prazeres:/)?.textContent).toMatch(/0 transações/);
     await user.click(fixed);
     expect(router.state.location.pathname).toBe("/transacoes");
     expect(router.state.location.search).toEqual({
@@ -60,23 +67,25 @@ describe("GoalCards", () => {
     const { container, screen } = await renderTable({ withIncome: false });
 
     const widths = [
-      ...container.querySelectorAll<HTMLElement>("a span[style]"),
+      ...container.querySelectorAll<HTMLElement>(
+        '[data-slot="progress-indicator"]',
+      ),
     ].flatMap((bar) => bar.style.width || []);
 
     expect(widths).toContain("100%");
     expect(widths).toContain("0%");
     expect(container.textContent).not.toMatch(/null/);
-    expect(
-      screen.getByRole("link", { name: /^Prazeres:/ }).textContent,
-    ).toMatch(/restam R\$\s0,00$/);
+    expect(goalCard(screen, /^Prazeres:/)?.textContent).toMatch(
+      /restam R\$\s0,00$/,
+    );
   });
 
   test("hidden values keep the warning but not the amounts", async () => {
     const { screen } = await renderTable({ hidden: true });
-    const fixed = screen.getByRole("link", { name: /^Custo fixo:/ });
+    const fixed = goalCard(screen, /^Custo fixo:/);
 
-    expect(fixed.textContent).toMatch(/Acima do planejado/);
-    expect(fixed.textContent).not.toMatch(/\d{3},\d{2}/);
+    expect(fixed?.textContent).toMatch(/Acima do planejado/);
+    expect(fixed?.textContent).not.toMatch(/\d{3},\d{2}/);
   });
 
   test("as a couple, each card shows how much of the plan each person funds", async () => {
@@ -108,17 +117,15 @@ describe("GoalCards", () => {
       "/orcamento?month=2026-09",
     );
 
-    const fixed = screen.getByRole("link", { name: /^Custo fixo:/ });
+    const fixed = goalCard(screen, /^Custo fixo:/);
 
-    expect(fixed.textContent).toMatch(/Ana:\s*R\$\s300,00\s*\(30%\)/);
-    expect(fixed.textContent).toMatch(/Bia:\s*R\$\s200,00\s*\(40%\)/);
+    expect(fixed?.textContent).toMatch(/Ana:\s*R\$\s300,00\s*\(30%\)/);
+    expect(fixed?.textContent).toMatch(/Bia:\s*R\$\s200,00\s*\(40%\)/);
   });
 
   test("a single person's card has no per-person line", async () => {
     const { screen } = await renderTable();
 
-    expect(
-      screen.getByRole("link", { name: /^Custo fixo:/ }).textContent,
-    ).not.toMatch(/Ana:/);
+    expect(goalCard(screen, /^Custo fixo:/)?.textContent).not.toMatch(/Ana:/);
   });
 });

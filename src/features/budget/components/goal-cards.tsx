@@ -1,4 +1,14 @@
-import { Link } from "@tanstack/react-router";
+import { createLink } from "@tanstack/react-router";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardLink,
+  CardTitle,
+} from "@/components/glaze/ui/card";
+import { Progress } from "@/components/glaze/ui/progress";
+import { Status } from "@/components/glaze/ui/status";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
 import {
@@ -8,14 +18,15 @@ import {
   sumPercentages,
 } from "@/features/budget/domain/goal-progress";
 import type { Member } from "@/features/budget/domain/types";
-import { cx } from "@/lib/cx";
 import { sum, ZERO_CENTS } from "@/lib/decimal";
 
 type GoalSummary = ReturnType<typeof summarize>["goals"][number];
 
 type Plan = ReturnType<typeof planGoals>[number];
 
-function Progress({
+const GoalLink = createLink(CardLink);
+
+function GoalProgress({
   goal,
   planned,
   hidden,
@@ -32,32 +43,26 @@ function Progress({
 
   return (
     <>
-      <span
-        className="block h-[10px] rounded-full overflow-clip"
-        style={{ background: over ? "var(--danger-soft)" : goal.background }}
-      >
-        <span
-          className={cx("block h-full rounded-full", over && "bg-danger")}
-          style={{
-            width: hidden ? "0%" : `${progress.fill}%`,
-            background: over ? undefined : goal.color,
-          }}
-        />
-      </span>
-      <span className="flex items-center justify-between gap-3 text-xs text-text-muted">
+      <Progress
+        mode="meter"
+        aria-label={`Gasto de ${goal.name}`}
+        value={hidden ? 0 : progress.fill}
+        warnAt={null}
+        failAt={null}
+        status={over ? "fail" : undefined}
+        statusLabel="Acima do planejado"
+      />
+      <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 type-caption text-text-2">
         <span>
           {goal.count} {goal.count === 1 ? "transação" : "transações"}
         </span>
-        <span
-          className={cx(
-            "tabular-nums text-right",
-            over &&
-              text &&
-              "px-2 py-0.5 rounded-full bg-danger-soft text-danger font-700",
-          )}
-        >
-          {text}
-        </span>
+        {over && text ? (
+          <Status status="fail" size="sm" className="tabular-nums">
+            {text}
+          </Status>
+        ) : (
+          <span className="tabular-nums">{text}</span>
+        )}
       </span>
     </>
   );
@@ -79,81 +84,72 @@ function GoalCard({
   const overBudget = goal.amount > plan.planned;
 
   return (
-    // Month and person carry over through retainSearchParams.
-    <Link
-      to="/transacoes"
-      search={{ goal: goal.id }}
-      className={cx(
-        "flex flex-col gap-3 p-5 bg-surface text-text rounded-lg",
-        "border border-solid border-border @hover:border-line-strong",
-      )}
-      aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
-    >
-      <span className="flex items-center gap-3 min-w-0">
-        <span
-          className="w-[40px] h-[40px] rounded-md grid place-items-center shrink-0"
-          style={{ background: goal.background }}
-        >
-          <span
-            className="w-[10px] h-[10px] rounded-full"
-            style={{ background: goal.color }}
-          />
-        </span>
-        <span className="flex flex-col min-w-0 flex-1">
-          <span className="text-md font-700">{goal.name}</span>
-          <span className="text-xs text-text-muted truncate">
-            {goal.description}
-          </span>
-        </span>
-        <span className="text-xl font-800 tracking-[-0.03em] tabular-nums shrink-0">
+    <Card>
+      <CardHeader>
+        <CardTitle>
+          {/* Month and person carry over through retainSearchParams. */}
+          <GoalLink
+            to="/transacoes"
+            search={{ goal: goal.id }}
+            aria-label={`${goal.name}: ${displayMoney(goal.amount)} de ${displayMoney(plan.planned)} planejados${overBudget ? ", acima do planejado" : ""}`}
+          >
+            {goal.name}
+          </GoalLink>
+        </CardTitle>
+        <CardDescription className="truncate">
+          {goal.description}
+        </CardDescription>
+        <span className="col-start-2 row-span-2 row-start-1 type-heading tabular-nums">
           {percentLabel(plan.percentage)}
         </span>
-      </span>
-      <span className="flex items-baseline justify-between gap-x-3 flex-wrap">
-        <span className="text-2xl font-800 tracking-[-0.035em] tabular-nums">
-          {displayMoney(goal.amount)}
+      </CardHeader>
+      <CardContent>
+        <span className="flex flex-wrap items-baseline justify-between gap-x-3">
+          <span className="type-heading tabular-nums">
+            {displayMoney(goal.amount)}
+          </span>
+          <span className="type-body-sm text-text-2 tabular-nums">
+            de {displayMoney(plan.planned)}
+          </span>
         </span>
-        <span className="text-sm text-text-muted tabular-nums">
-          de {displayMoney(plan.planned)}
-        </span>
-      </span>
-      {plan.shares.length > 1 && (
-        <span className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-text-muted tabular-nums">
-          {plan.shares.map((share) => {
-            const position = members.findIndex(
-              (member) => member.id === share.memberId,
-            );
+        {plan.shares.length > 1 && (
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1 type-caption text-text-2 tabular-nums">
+            {plan.shares.map((share) => {
+              const position = members.findIndex(
+                (member) => member.id === share.memberId,
+              );
 
-            const name = members[position]?.name;
+              const name = members[position]?.name;
 
-            return (
-              <span
-                key={share.memberId}
-                className="inline-flex items-center gap-1.5"
-              >
-                <PersonAvatar
-                  aria-hidden="true"
-                  name={name}
-                  position={position}
-                  className="w-[20px] h-[20px] text-xs"
-                />
-                <span className="sr-only">{name ?? "Pessoa do casal"}: </span>
-                <span className="text-text font-600">
-                  {displayMoney(share.planned)}
+              return (
+                <span
+                  key={share.memberId}
+                  className="inline-flex items-center gap-1.5"
+                >
+                  <PersonAvatar
+                    aria-hidden="true"
+                    name={name}
+                    position={position}
+                    className="size-5"
+                  />
+                  <span className="sr-only">{name ?? "Pessoa do casal"}: </span>
+                  <span className="text-text-1">
+                    {displayMoney(share.planned)}
+                  </span>
+                  ({percentLabel(share.percentage)})
                 </span>
-                ({percentLabel(share.percentage)})
-              </span>
-            );
-          })}
-        </span>
-      )}
-      <Progress
-        goal={goal}
-        planned={plan.planned}
-        hidden={hidden}
-        displayMoney={displayMoney}
-      />
-    </Link>
+              );
+            })}
+          </span>
+        )}
+        <GoalProgress
+          goal={goal}
+          planned={plan.planned}
+          hidden={hidden}
+          displayMoney={displayMoney}
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -186,7 +182,7 @@ export function GoalCards({
 
   return (
     <section aria-label="Metas do orçamento" className="flex flex-col gap-4">
-      <div className="grid grid-cols-3 gap-4 max-bp1190:grid-cols-2 max-bp620:grid-cols-1">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {rows.map(({ goal, plan }) => (
           <GoalCard
             key={goal.id}
@@ -198,27 +194,24 @@ export function GoalCards({
           />
         ))}
       </div>
-      <div
-        className={cx(
-          "flex items-baseline gap-x-8 gap-y-2 flex-wrap px-6 py-4 max-bp620:px-4",
-          "bg-surface border border-solid border-border rounded-lg tabular-nums",
-        )}
-      >
-        <span className="font-700 mr-auto">
+      <div className="flex flex-wrap items-baseline gap-x-8 gap-y-2 px-3 type-body-sm text-text-2 tabular-nums">
+        <span className="me-auto type-label text-text-1">
           Total{" "}
-          <span className={total === 100 ? "text-text" : "text-warning"}>
-            {percentLabel(total)}
-          </span>
+          {total === 100 ? (
+            percentLabel(total)
+          ) : (
+            <Status status="warn">{percentLabel(total)}</Status>
+          )}
         </span>
-        <span className="text-sm text-text-muted">
+        <span>
           Planejado{" "}
-          <span className="text-lg font-800 text-text">
+          <span className="type-label-lg text-text-1">
             {displayMoney(sum(rows.map(({ plan }) => plan.planned)))}
           </span>
         </span>
-        <span className="text-sm text-text-muted">
+        <span>
           Gasto{" "}
-          <span className="text-lg font-800 text-text">
+          <span className="type-label-lg text-text-1">
             {displayMoney(summary.expenses)}
           </span>
         </span>

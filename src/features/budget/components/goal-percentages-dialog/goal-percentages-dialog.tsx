@@ -4,16 +4,19 @@ import { DEFAULT_PERCENTAGES, GOALS } from "@/features/budget/constants";
 import { goalPercentagesSchema } from "@/features/budget/domain/schemas";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { GoalPercentageList } from "@/features/budget/components/goal-percentage-list/goal-percentage-list";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glaze/ui/button";
 import {
   Dialog,
+  DialogAction,
+  DialogBody,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
-} from "@/components/ui/dialog/dialog";
-import { FormError } from "@/components/ui/field/field";
+  DialogTitle,
+} from "@/components/glaze/ui/dialog";
+import { FieldError, FormStatus } from "@/components/glaze/ui/field";
 import { sum } from "@/lib/decimal";
-import styles from "@/features/budget/components/goal-percentages-dialog/goal-percentages-dialog.module.css";
 
 export function GoalPercentagesDialog({
   percentages,
@@ -49,41 +52,50 @@ export function GoalPercentagesDialog({
   }
 
   return (
-    <Dialog labelledBy="percentages-title" narrow onClose={onClose}>
-      <DialogContent as="form" onSubmit={submit}>
-        <DialogHeader onClose={onClose} closeLabel="Fechar percentuais">
-          <h2 id="percentages-title">Divisão da minha renda</h2>
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
+    >
+      {/* The footer sits on the shell outside the panel, so the whole popup is the form. */}
+      <DialogContent size="sm" render={<form onSubmit={submit} />}>
+        <DialogHeader>
+          <DialogTitle>Divisão da minha renda</DialogTitle>
+          <DialogDescription>
+            Defina a porcentagem da sua renda destinada a cada meta. A soma deve
+            ser 100% e vale para todos os meses. Cada pessoa define seus
+            próprios percentuais.
+          </DialogDescription>
         </DialogHeader>
-        <p className={styles.intro}>
-          Defina a porcentagem da sua renda destinada a cada meta. A soma deve
-          ser 100% e vale para todos os meses. Cada pessoa define seus próprios
-          percentuais.
-        </p>
-        <GoalPercentageList
-          values={values}
-          disabled={busy}
-          onChange={(goal, value) => setValue(goal, value)}
-        />
-        <p
-          className={`${styles.percentageTotal} tabular-nums ${valid ? "" : styles.invalid}`}
-          role="status"
-        >
-          Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}%
-          {!valid && ` · ${invalidMessage}`}
-        </p>
-        {error && <FormError>{error}</FormError>}
+        <DialogBody>
+          <GoalPercentageList
+            values={values}
+            disabled={busy}
+            onChange={(goal, value) => setValue(goal, value)}
+          />
+          <FormStatus
+            status={valid ? undefined : "fail"}
+            className="tabular-nums"
+          >
+            Total: {total.toLocaleString("pt-BR", { maximumFractionDigits: 2 })}
+            %{!valid && ` · ${invalidMessage}`}
+          </FormStatus>
+          {error && <FieldError>{error}</FieldError>}
+        </DialogBody>
         <DialogFooter>
           <Button
             type="button"
-            variant="text"
+            variant="secondary"
+            size="sm"
             disabled={busy}
             onClick={() => reset({ ...DEFAULT_PERCENTAGES })}
           >
             Restaurar padrão
           </Button>
-          <Button type="submit" disabled={!valid || busy}>
+          <DialogAction type="submit" disabled={!valid || busy} pending={busy}>
             Salvar percentuais
-          </Button>
+          </DialogAction>
         </DialogFooter>
       </DialogContent>
     </Dialog>
