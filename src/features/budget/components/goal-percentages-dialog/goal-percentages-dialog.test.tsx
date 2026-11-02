@@ -4,6 +4,16 @@ import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { GoalPercentages } from "@/features/budget/domain/types";
 import { renderPlain } from "@/test/render";
 
+// jsdom has no ResizeObserver; Glaze's dialog body watches its own size.
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
+
 function setup({ busy = false, error = "" } = {}) {
   const onSave = vi.fn<(values: GoalPercentages) => Promise<void>>(() =>
     Promise.resolve(),
@@ -29,7 +39,7 @@ async function setPercentage(
   goal: string,
   value: string,
 ) {
-  const input = view.screen.getByRole("spinbutton", {
+  const input = view.screen.getByRole("textbox", {
     name: new RegExp(`^${goal}`),
   });
 
@@ -69,10 +79,15 @@ describe("GoalPercentagesDialog", () => {
   test("while saving every control is locked", () => {
     const view = setup({ busy: true });
 
-    for (const name of ["Salvar percentuais", "Restaurar padrão"])
+    // A pending button stays focusable, so it is aria-disabled instead.
+    for (const name of ["Salvar percentuais", "Restaurar padrão"]) {
+      const button = view.screen.getByRole("button", { name });
+
       expect(
-        view.screen.getByRole("button", { name }).hasAttribute("disabled"),
+        button.hasAttribute("disabled") ||
+          button.getAttribute("aria-disabled") === "true",
       ).toBe(true);
+    }
   });
 
   test("shows the server's error, then the default can be restored", async () => {
@@ -89,7 +104,7 @@ describe("GoalPercentagesDialog", () => {
       view.screen.getByRole("button", { name: "Restaurar padrão" }),
     );
     expect(
-      view.screen.getByRole("spinbutton", { name: /^Custo fixo/ }),
+      view.screen.getByRole("textbox", { name: /^Custo fixo/ }),
     ).toHaveProperty("value", "30");
   });
 });
