@@ -1,13 +1,16 @@
-import { Switch } from "@/components/ui/switch";
-import { useId } from "react";
-import { Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldLabel,
+} from "@/components/glaze/ui/field";
+import { Switch } from "@/components/glaze/ui/switch";
 import { money, shortDay } from "@/features/budget/domain/format";
 import { centsSchema } from "@/features/budget/domain/schemas";
 import { partnerShare } from "@/features/budget/domain/split";
 import type { TransactionStatus } from "@/features/budget/domain/status";
 import type { Transaction } from "@/features/budget/domain/types";
-import { cx } from "@/lib/cx";
 
 const capitalize = (value: string) =>
   value.charAt(0).toLocaleUpperCase("pt-BR") + value.slice(1);
@@ -62,14 +65,15 @@ function SettlementRow({
   const paid = Boolean(paidAt);
 
   return (
-    <div className="flex items-center justify-between gap-3 flex-wrap px-4 py-3 [border-top:1px_solid_var(--line)] text-xs">
-      <span className="text-text-muted leading-[1.6]">
+    <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line-faint pt-3">
+      <span className="type-body-sm text-text-2">
         {settlementStatus(transaction, paidAt, debtorName, userIsDebtor)}
       </span>
       {userIsDebtor && (
         <Button
           type="button"
           variant="secondary"
+          size="sm"
           disabled={busy}
           onClick={paid ? onUnsettle : onSettle}
         >
@@ -110,47 +114,21 @@ export function SplitPanel({
   const paidAt = status?.paidAt;
   const cents = centsSchema.safeParse(amount).data;
   const share = cents && cents >= 2 ? partnerShare(cents) : 0;
-  const id = useId();
 
   return (
-    <section
-      aria-label="Divisão"
-      className="mb-6 border border-solid border-border rounded-md bg-surface-soft"
-    >
-      <div
-        className={cx(
-          "flex items-center gap-3 p-4",
-          "max-bp620:p-4 max-bp620:gap-2",
-        )}
-      >
-        <span className="flex text-text-muted max-bp620:hidden">
-          <Users size={18} />
-        </span>
-        <span className="flex-1 min-w-0">
-          <label
-            htmlFor={`${id}-switch`}
-            className="!block !text-sm font-500 !mb-1 cursor-pointer"
-          >
-            {title}
-          </label>
-          <span
-            id={`${id}-hint`}
-            className="block text-text-muted text-xs leading-[1.6]"
-          >
+    <section aria-label="Divisão" className="flex flex-col gap-3">
+      <Field orientation="horizontal" disabled={Boolean(paidAt)}>
+        <FieldContent>
+          <FieldLabel>{title}</FieldLabel>
+          <FieldDescription>
             {splitHint(status, checked, share, {
               payer: payerName,
               debtor: debtorName,
             })}
-          </span>
-        </span>
-        <Switch
-          id={`${id}-switch`}
-          aria-describedby={`${id}-hint`}
-          checked={checked}
-          disabled={Boolean(paidAt)}
-          onCheckedChange={(next) => onChange(next)}
-        />
-      </div>
+          </FieldDescription>
+        </FieldContent>
+        <Switch checked={checked} onCheckedChange={(next) => onChange(next)} />
+      </Field>
       {transaction && status?.split && (
         <SettlementRow
           transaction={transaction}

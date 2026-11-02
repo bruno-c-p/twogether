@@ -7,6 +7,7 @@ function setup(
   overrides: Partial<Parameters<typeof DeleteRecurrenceDialog>[0]> = {},
 ) {
   const props = {
+    open: true,
     transaction: transaction({ description: "Aluguel" }),
     count: 3,
     busy: false,

@@ -1,4 +1,3 @@
-import { Plus } from "lucide-react";
 import { monthName } from "@/features/budget/domain/format";
 import { PageHeading } from "@/features/budget/components/page-heading";
 import {
@@ -7,7 +6,8 @@ import {
 } from "@/features/budget/components/transaction-list/transaction-list";
 import { useTransactionFilters } from "@/features/budget/hooks/use-transaction-filters";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glaze/ui/button";
+import { Add, Icon } from "@/components/glaze/icon";
 
 function countNote(count: number, month: string) {
   const noun = count === 1 ? "transação" : "transações";
@@ -25,18 +25,18 @@ export function TransactionsScreen() {
         title="Transações"
         note={countNote(data.monthly.length, month)}
         action={
-          <div className="flex items-center gap-3 flex-wrap max-bp620:w-full">
+          <div className="flex flex-wrap items-center gap-3 max-sm:w-full">
             <TransactionSearch
               query={filters.query}
               setQuery={filters.setQuery}
             />
-            {/* Below bp1000 the mobile nav's + button adds instead. */}
+            {/* Below lg the mobile nav's + button adds instead. */}
             <Button
-              className="max-bp1000:!hidden"
+              className="max-lg:hidden"
               disabled={busy}
               onClick={() => actions.openTransaction(null)}
             >
-              <Plus size={19} /> Adicionar transação
+              <Icon icon={Add} /> Adicionar transação
             </Button>
           </div>
         }

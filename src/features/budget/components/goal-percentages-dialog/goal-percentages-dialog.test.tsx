@@ -23,6 +23,7 @@ function setup({ busy = false, error = "" } = {}) {
 
   const view = renderPlain(
     <GoalPercentagesDialog
+      open
       percentages={{ ...DEFAULT_PERCENTAGES }}
       busy={busy}
       error={error}

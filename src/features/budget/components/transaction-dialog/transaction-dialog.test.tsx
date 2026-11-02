@@ -25,6 +25,7 @@ function setup({
 
   const view = renderPlain(
     <TransactionDialog
+      open
       transaction={editing}
       defaultDate="2026-09-15"
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
@@ -71,15 +72,20 @@ describe("TransactionDialog", () => {
 
   test("while saving the form is locked and says so", () => {
     const { screen } = setup({ editing: transaction(), busy: true });
-    const submit = screen.getByRole("button", { name: "Salvando…" });
+    const submit = screen.getByRole("button", { name: "Salvar alterações" });
 
-    expect(submit.closest("fieldset")?.disabled).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
+    expect(submit.getAttribute("aria-disabled")).toBe("true");
+    expect(screen.getByText("Salvando…")).toBeTruthy();
+    expect(screen.getByLabelText("Valor").closest("fieldset")?.disabled).toBe(
+      true,
+    );
   });
 
   test("income drops the goal picker and repeats monthly when asked", async () => {
     const { screen, user, onSave } = setup();
 
-    await user.click(screen.getByRole("button", { name: "Receita" }));
+    await user.click(screen.getByRole("radio", { name: "Receita" }));
     expect(screen.queryByRole("group", { name: "Para qual meta?" })).toBeNull();
     await user.type(screen.getByLabelText("Valor"), "500000");
     await user.type(screen.getByLabelText("Descrição"), "Salário");
@@ -105,7 +111,7 @@ describe("TransactionDialog", () => {
     const { screen, user, onSave } = setup();
 
     await user.click(screen.getByRole("button", { name: "Prazeres" }));
-    await user.click(screen.getByRole("button", { name: "Transferência" }));
+    await user.click(screen.getByRole("radio", { name: "Transferência" }));
     expect(screen.queryByRole("group", { name: "Para qual meta?" })).toBeNull();
     expect(
       screen.queryByRole("switch", { name: "Dividir com Bia" }),
@@ -128,8 +134,8 @@ describe("TransactionDialog", () => {
     const { screen, user, unmount } = setup();
 
     expect(screen.queryByRole("button", freedom)).toBeNull();
-    await user.click(screen.getByRole("button", { name: "Transferência" }));
-    await user.click(screen.getByRole("button", { name: "Despesa" }));
+    await user.click(screen.getByRole("radio", { name: "Transferência" }));
+    await user.click(screen.getByRole("radio", { name: "Despesa" }));
     expect(screen.queryByRole("button", freedom)).toBeNull();
     unmount();
 
@@ -248,8 +254,8 @@ describe("TransactionDialog", () => {
     expect(
       screen
         .getByRole("switch", { name: "Dividir entre Ana e você" })
-        .hasAttribute("disabled"),
-    ).toBe(true);
+        .getAttribute("aria-disabled"),
+    ).toBe("true");
     await user.click(
       screen.getByRole("button", { name: "Desmarcar pagamento" }),
     );
@@ -288,7 +294,7 @@ describe("TransactionDialog", () => {
   test("income cannot be split", async () => {
     const { screen, user } = setup();
 
-    await user.click(screen.getByRole("button", { name: "Receita" }));
+    await user.click(screen.getByRole("radio", { name: "Receita" }));
     expect(screen.queryByRole("region", { name: "Divisão" })).toBeNull();
   });
 

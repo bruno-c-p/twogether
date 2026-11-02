@@ -1,10 +1,13 @@
-import { Toggle } from "@base-ui/react/toggle";
-import { ToggleGroup } from "@base-ui/react/toggle-group";
+import {
+  RadioGroup,
+  RadioGroupOption,
+} from "@/components/glaze/ui/radio-group";
 import { KINDS } from "@/features/budget/constants";
 import { transactionKindSchema } from "@/features/budget/domain/schemas";
 import type { TransactionKind } from "@/features/budget/domain/types";
-import styles from "@/features/budget/components/kind-toggle/kind-toggle.module.css";
 
+// A radio row, not a segmented control: three labels do not fit Glaze's
+// segments inside a dialog at 320px, and a row of radios wraps instead.
 export function KindToggle({
   kind,
   disabled,
@@ -15,32 +18,24 @@ export function KindToggle({
   onChange: (kind: TransactionKind) => void;
 }) {
   return (
-    <ToggleGroup
-      className={styles.kindToggle}
+    <RadioGroup
+      className="flex flex-wrap gap-x-5 gap-y-2"
       aria-label="Tipo da transação"
-      value={[kind]}
+      value={kind}
       disabled={disabled}
-      onValueChange={(values) => {
-        const next = transactionKindSchema.safeParse(values[0]);
+      onValueChange={(value) => {
+        const next = transactionKindSchema.safeParse(value);
 
         if (next.success) onChange(next.data);
       }}
     >
-      {transactionKindSchema.options.map((value) => {
-        const { label, icon: Icon } = KINDS[value];
-
-        return (
-          <Toggle
-            key={value}
-            type="button"
-            disabled={disabled}
-            className={kind === value ? styles.active : ""}
-            value={value}
-          >
-            <Icon size={17} className="max-bp620:hidden" /> {label}
-          </Toggle>
-        );
-      })}
-    </ToggleGroup>
+      {transactionKindSchema.options.map((value) => (
+        <RadioGroupOption
+          key={value}
+          value={value}
+          label={KINDS[value].label}
+        />
+      ))}
+    </RadioGroup>
   );
 }

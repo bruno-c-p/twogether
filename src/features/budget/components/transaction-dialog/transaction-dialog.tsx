@@ -1,8 +1,27 @@
-import { Form as BaseForm } from "@base-ui/react/form";
-import { Input } from "@/components/ui/input";
 import type { FormEvent, ReactNode } from "react";
 import { useForm, useWatch } from "react-hook-form";
-import { Check, Trash2 } from "lucide-react";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  Dialog,
+  DialogAction,
+  DialogBody,
+  DialogClose,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/glaze/ui/dialog";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  FieldSet,
+  Form,
+  FormStatus,
+} from "@/components/glaze/ui/field";
+import { Icon, TrashCan } from "@/components/glaze/icon";
+import { Input } from "@/components/glaze/ui/input";
 import {
   formatAmountInput,
   newId,
@@ -27,27 +46,10 @@ import { GoalPicker } from "@/features/budget/components/goal-picker/goal-picker
 import { KindToggle } from "@/features/budget/components/kind-toggle/kind-toggle";
 import { SplitPanel } from "@/features/budget/components/split-panel";
 import { RecurrencePanel } from "@/features/budget/components/recurrence-panel/recurrence-panel";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDismiss,
-  DialogFooter,
-  DialogHeader,
-} from "@/components/ui/dialog/dialog";
-import {
-  AmountField,
-  FieldError,
-  FieldRoot,
-  FieldLabel,
-  FieldHint,
-  FieldRow,
-  Fieldset,
-  FormError,
-  GroupError,
-} from "@/components/ui/field/field";
+import { IsoDatePicker } from "@/features/budget/components/transaction-dialog/iso-date-picker";
 
 interface Props {
+  open: boolean;
   transaction: Transaction | null;
   defaultDate: string;
   members: Member[];
@@ -93,22 +95,11 @@ type ValidatedField = (typeof VALIDATED_FIELDS)[number];
 
 const SOMEONE = "uma pessoa do casal";
 
-function invalidProps(error: string | undefined, id: string) {
-  return {
-    "aria-describedby": error ? id : undefined,
-    "aria-invalid": error ? true : undefined,
-  };
-}
-
 function memberName(members: Member[], id: string | undefined) {
   return members.find((member) => member.id === id)?.name ?? SOMEONE;
 }
 
-function submitLabel(saving: boolean, editing: boolean) {
-  if (saving) return "Salvando…";
-
-  return editing ? "Salvar alterações" : "Adicionar transação";
-}
+const FORM_ID = "transaction-form";
 
 function defaultValues(
   transaction: Transaction | null,
@@ -149,9 +140,17 @@ function useTransactionForm({
 
   const { control, setValue, setError, clearErrors } = form;
 
-  const [kind, amount, goal, recurring, occurrences, split] = useWatch({
+  const [kind, amount, date, goal, recurring, occurrences, split] = useWatch({
     control,
-    name: ["kind", "amount", "goal", "recurring", "occurrences", "split"],
+    name: [
+      "kind",
+      "amount",
+      "date",
+      "goal",
+      "recurring",
+      "occurrences",
+      "split",
+    ],
   });
 
   const errors: FieldErrors = {};
@@ -229,6 +228,8 @@ function useTransactionForm({
     goal,
     setGoal: (next: GoalId) => setValue("goal", next),
     amount,
+    date,
+    setDate: (next: string) => setValue("date", next),
     recurring,
     setRecurring: (next: boolean) => setValue("recurring", next),
     occurrences,
@@ -247,35 +248,35 @@ type TransactionFormState = ReturnType<typeof useTransactionForm>;
 
 function AmountInput({ form }: { form: TransactionFormState }) {
   const field = form.register("amount");
+  const error = form.errors.amount;
 
   return (
-    <FieldRoot>
-      <AmountField label="Valor" htmlFor="amount">
-        <Input
-          {...field}
-          id="amount"
-          data-initial-focus=""
-          autoFocus
-          type="text"
-          inputMode="numeric"
-          enterKeyHint="next"
-          placeholder="0,00"
-          maxLength={14}
-          required
-          readOnly={form.paid}
-          // Digits fill in from the cents, so the caret stays at the end.
-          onChange={(event) => {
-            const input = event.currentTarget;
+    <Field invalid={Boolean(error)}>
+      <FieldLabel>Valor</FieldLabel>
+      <Input
+        {...field}
+        size="lg"
+        leading="R$"
+        controlClassName="tabular-nums"
+        data-autofocus=""
+        inputMode="numeric"
+        enterKeyHint="next"
+        placeholder="0,00"
+        maxLength={14}
+        required
+        readOnly={form.paid}
+        aria-invalid={error ? true : undefined}
+        // Digits fill in from the cents, so the caret stays at the end.
+        onChange={(event) => {
+          const input = event.currentTarget;
 
-            input.value = formatAmountInput(input.value);
-            input.setSelectionRange(input.value.length, input.value.length);
-            void field.onChange(event);
-          }}
-          {...invalidProps(form.errors.amount, "amount-error")}
-        />
-      </AmountField>
-      <FieldError id="amount-error">{form.errors.amount}</FieldError>
-    </FieldRoot>
+          input.value = formatAmountInput(input.value);
+          input.setSelectionRange(input.value.length, input.value.length);
+          void field.onChange(event);
+        }}
+      />
+      {error && <FieldError id="amount-error">{error}</FieldError>}
+    </Field>
   );
 }
 
@@ -283,35 +284,30 @@ function DescriptionAndDate({ form }: { form: TransactionFormState }) {
   const { errors, register } = form;
 
   return (
-    <FieldRow>
-      <FieldRoot>
-        <FieldLabel>
-          Descrição
-          <Input
-            {...register("description")}
-            placeholder="Ex.: supermercado"
-            maxLength={80}
-            required
-            {...invalidProps(errors.description, "description-error")}
-          />
+    <div className="grid gap-4 sm:grid-cols-2">
+      <Field invalid={Boolean(errors.description)}>
+        <FieldLabel>Descrição</FieldLabel>
+        <Input
+          {...register("description")}
+          placeholder="Ex.: supermercado"
+          maxLength={80}
+          required
+          aria-invalid={errors.description ? true : undefined}
+        />
+        {errors.description && (
           <FieldError id="description-error">{errors.description}</FieldError>
-        </FieldLabel>
-      </FieldRoot>
-      <FieldRoot>
-        <FieldLabel>
-          Data
-          <Input
-            {...register("date")}
-            type="date"
-            min="1900-01-01"
-            max="9999-12-31"
-            required
-            {...invalidProps(errors.date, "date-error")}
-          />
-          <FieldError id="date-error">{errors.date}</FieldError>
-        </FieldLabel>
-      </FieldRoot>
-    </FieldRow>
+        )}
+      </Field>
+      <Field invalid={Boolean(errors.date)}>
+        <FieldLabel>Data</FieldLabel>
+        <IsoDatePicker
+          value={form.date}
+          onValueChange={form.setDate}
+          aria-invalid={errors.date ? true : undefined}
+        />
+        {errors.date && <FieldError id="date-error">{errors.date}</FieldError>}
+      </Field>
+    </div>
   );
 }
 
@@ -325,10 +321,10 @@ function AuditHint({
   if (!transaction?.updatedBy) return null;
 
   return (
-    <FieldHint>
+    <FieldDescription>
       Registrado por {memberName(members, transaction.createdBy)}. Última
       alteração por {memberName(members, transaction.updatedBy)}.
-    </FieldHint>
+    </FieldDescription>
   );
 }
 
@@ -392,17 +388,21 @@ function DeleteButton({
   const lock = deleteLock(transactionStatus(transaction, userId));
 
   return (
-    <div className="grid gap-1.5 mt-2">
+    <div className="flex flex-col items-start gap-1.5">
       <Button
-        variant="unstyled"
-        className="min-h-[44px] inline-flex items-center justify-center gap-2 rounded-md border-0 bg-danger-soft text-danger text-sm font-600"
+        type="button"
+        variant="secondary"
         disabled={Boolean(lock)}
         aria-describedby={lock ? "delete-lock" : undefined}
         onClick={() => onDelete(transaction)}
       >
-        <Trash2 size={16} /> Excluir transação
+        <Icon icon={TrashCan} /> Excluir transação
       </Button>
-      {lock && <FieldHint id="delete-lock">Para excluir: {lock}.</FieldHint>}
+      {lock && (
+        <FieldDescription id="delete-lock">
+          Para excluir: {lock}.
+        </FieldDescription>
+      )}
     </div>
   );
 }
@@ -440,7 +440,9 @@ function ClassificationFields({
             value={form.goal}
             onChange={form.setGoal}
           />
-          <GroupError id="goal-error">{form.errors.goal}</GroupError>
+          {form.errors.goal && (
+            <FieldError id="goal-error">{form.errors.goal}</FieldError>
+          )}
         </>
       )}
       {split}
@@ -449,6 +451,7 @@ function ClassificationFields({
 }
 
 export function TransactionDialog({
+  open,
   transaction,
   defaultDate,
   members,
@@ -462,6 +465,51 @@ export function TransactionDialog({
   onDelete,
   onClose,
 }: Props) {
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(next) => {
+        if (!next) onClose();
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {transaction ? "Editar transação" : "Nova transação"}
+          </DialogTitle>
+        </DialogHeader>
+        <TransactionForm
+          transaction={transaction}
+          defaultDate={defaultDate}
+          members={members}
+          currentUserId={currentUserId}
+          busy={busy}
+          serverError={serverError}
+          splitBusy={splitBusy}
+          onSave={onSave}
+          onSettle={onSettle}
+          onUnsettle={onUnsettle}
+          onDelete={onDelete}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Mounted with the dialog's content, so every open starts a fresh form.
+function TransactionForm({
+  transaction,
+  defaultDate,
+  members,
+  currentUserId,
+  busy,
+  serverError,
+  splitBusy,
+  onSave,
+  onSettle,
+  onUnsettle,
+  onDelete,
+}: Omit<Props, "open" | "onClose">) {
   const form = useTransactionForm({
     transaction,
     defaultDate,
@@ -472,17 +520,10 @@ export function TransactionDialog({
   });
 
   return (
-    <Dialog labelledBy="dialog-title" onClose={onClose} closeOnBackdrop>
-      <DialogContent>
-        <DialogHeader onClose={onClose}>
-          <div>
-            <h2 id="dialog-title">
-              {transaction ? "Editar transação" : "Nova transação"}
-            </h2>
-          </div>
-        </DialogHeader>
-        <BaseForm onSubmit={(event) => void form.submit(event)}>
-          <Fieldset disabled={busy}>
+    <>
+      <DialogBody>
+        <Form id={FORM_ID} onSubmit={(event) => void form.submit(event)}>
+          <FieldSet disabled={busy}>
             <KindToggle
               kind={form.kind}
               disabled={form.paid}
@@ -505,7 +546,9 @@ export function TransactionDialog({
                 />
               }
             />
-            {serverError && <FormError>{serverError}</FormError>}
+            {serverError && (
+              <FormStatus status="fail">{serverError}</FormStatus>
+            )}
             <AuditHint transaction={transaction} members={members} />
             {transaction && (
               <DeleteButton
@@ -514,16 +557,20 @@ export function TransactionDialog({
                 onDelete={onDelete}
               />
             )}
-            <DialogFooter>
-              <DialogDismiss>Cancelar</DialogDismiss>
-              <Button type="submit">
-                <Check size={17} />
-                {submitLabel(busy, Boolean(transaction))}
-              </Button>
-            </DialogFooter>
-          </Fieldset>
-        </BaseForm>
-      </DialogContent>
-    </Dialog>
+          </FieldSet>
+        </Form>
+      </DialogBody>
+      <DialogFooter>
+        <DialogClose>Cancelar</DialogClose>
+        <DialogAction
+          type="submit"
+          form={FORM_ID}
+          pending={busy}
+          pendingLabel="Salvando…"
+        >
+          {transaction ? "Salvar alterações" : "Adicionar transação"}
+        </DialogAction>
+      </DialogFooter>
+    </>
   );
 }
