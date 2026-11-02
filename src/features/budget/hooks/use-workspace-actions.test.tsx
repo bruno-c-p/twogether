@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
-import { toastManager } from "@/components/ui/toast-manager";
-import { Toaster } from "@/components/ui/toaster";
+import { Button } from "@/components/glaze/ui/button";
+import { toast } from "@/components/glaze/ui/toast";
+import { AppToaster } from "@/components/ui/toaster";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
@@ -42,17 +43,28 @@ function Harness({ mutations }: { mutations: BudgetMutations }) {
 
   return (
     <>
-      <button onClick={() => dialogs.setDeleting(series[0])}>pick</button>
-      <button onClick={() => void actions.deleteRecurring(series[0], [])}>
+      <Button
+        variant="secondary"
+        onClick={() => dialogs.setDeleting(series[0])}
+      >
+        pick
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={() => void actions.deleteRecurring(series[0], [])}
+      >
         delete one
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="secondary"
         onClick={() => void actions.deleteRecurring(series[0], series.slice(1))}
       >
         delete following
-      </button>
-      <button onClick={actions.openPercentages}>edit percentages</button>
-      <Toaster />
+      </Button>
+      <Button variant="secondary" onClick={actions.openPercentages}>
+        edit percentages
+      </Button>
+      <AppToaster />
       <p data-testid="deleting">{dialogs.deleting?.id ?? "none"}</p>
       <p data-testid="percentages">{dialogs.percentagesRevision ?? "closed"}</p>
     </>
@@ -64,7 +76,7 @@ function setup(props: Parameters<typeof Harness>[0]) {
 }
 
 describe("useWorkspaceActions", () => {
-  afterEach(() => toastManager.close());
+  afterEach(() => toast.dismiss());
   test("deleting one occurrence offers undo and closes the dialog", async () => {
     const mutations = fakeBudgetMutations(true);
     const { screen, user } = await setup({ mutations });

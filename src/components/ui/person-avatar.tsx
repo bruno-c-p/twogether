@@ -1,41 +1,36 @@
-import { Avatar } from "@base-ui/react/avatar";
 import type { ComponentPropsWithoutRef } from "react";
-import { cx } from "@/lib/cx";
+import {
+  Avatar,
+  AvatarFallback,
+  type AvatarSize,
+} from "@/components/glaze/ui/avatar";
 
 const graphemes = new Intl.Segmenter("pt-BR", { granularity: "grapheme" });
 
-/** Members keep one color by join order: the first is lime, the second ink. */
+function initialOf(name: string | undefined) {
+  return (
+    graphemes
+      .segment(name?.trim() ?? "")
+      [Symbol.iterator]()
+      .next()
+      .value?.segment.toLocaleUpperCase("pt-BR") || "?"
+  );
+}
+
+/** A member's initial; position -1 is someone outside the household. */
 export function PersonAvatar({
   name,
   position,
-  className,
+  size,
   ...props
 }: Omit<ComponentPropsWithoutRef<"span">, "children"> & {
   name: string | undefined;
   position: number;
+  size?: AvatarSize;
 }) {
   return (
-    <Avatar.Root
-      render={<span />}
-      className={cx(
-        "rounded-full inline-flex items-center justify-center shrink-0 font-700",
-        position === -1 && "bg-surface-2 text-text-muted",
-        position === 0 &&
-          "bg-person-a text-on-person-a shadow-[inset_0_0_0_2px_var(--on-person-a)]",
-        position > 0 && "bg-person-b text-on-person-b",
-        className,
-      )}
-      {...props}
-    >
-      <Avatar.Fallback>
-        {position === -1
-          ? "?"
-          : graphemes
-              .segment(name?.trim() ?? "")
-              [Symbol.iterator]()
-              .next()
-              .value?.segment.toLocaleUpperCase("pt-BR") || "?"}
-      </Avatar.Fallback>
-    </Avatar.Root>
+    <Avatar size={size} {...props}>
+      <AvatarFallback>{position === -1 ? "?" : initialOf(name)}</AvatarFallback>
+    </Avatar>
   );
 }

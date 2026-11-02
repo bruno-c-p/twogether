@@ -173,11 +173,18 @@ describe("BudgetWorkspace", () => {
     await user.click(
       screen.getByRole("button", { name: "Editar meus percentuais" }),
     );
-    expect(
-      await screen.findByRole("heading", { name: "Divisão da minha renda" }),
-    ).toBeTruthy();
+
+    const percentages = await screen.findByRole("dialog", {
+      name: "Divisão da minha renda",
+    });
+
     await user.click(
-      screen.getByRole("button", { name: "Fechar percentuais" }),
+      within(percentages).getByRole("button", { name: "Fechar" }),
+    );
+    await vi.waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Divisão da minha renda" }),
+      ).toBeNull(),
     );
     await user.click(screen.getByRole("link", { name: /^Custo fixo:/ }));
     expect(router.state.location.pathname).toBe("/transacoes");

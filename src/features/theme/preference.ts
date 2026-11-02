@@ -25,14 +25,11 @@ function applyTheme(theme: Theme, media: MediaQueryList) {
   document.head.appendChild(style);
   document.documentElement.dataset.theme =
     theme === "system" ? (media.matches ? "dark" : "light") : theme;
-  document
-    .querySelector('meta[name="theme-color"]')
-    ?.setAttribute(
-      "content",
-      getComputedStyle(document.documentElement)
-        .getPropertyValue("--page")
-        .trim(),
-    );
+  document.querySelector('meta[name="theme-color"]')?.setAttribute(
+    "content",
+    // Glaze's tokens live on the .glaze body, not on <html>.
+    getComputedStyle(document.body).getPropertyValue("--page").trim(),
+  );
   document
     .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
     ?.setAttribute(
