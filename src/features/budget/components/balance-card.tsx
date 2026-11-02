@@ -1,11 +1,18 @@
-import { Button } from "@/components/ui/button";
 import { useHydrated } from "@tanstack/react-router";
-import { Eye, EyeOff } from "lucide-react";
+import { Hide, Icon, Show } from "@/components/glaze/icon";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/glaze/ui/card";
+import { Progress, ProgressValue } from "@/components/glaze/ui/progress";
 import { monthName } from "@/features/budget/domain/format";
-import { OverviewCard } from "@/features/budget/components/overview-card";
 import type { summarize } from "@/features/budget/domain/calc";
 import { today } from "@/lib/clock";
-import { cx } from "@/lib/cx";
 import { browserTimeZone } from "@/lib/time-zone";
 import { percentOf } from "@/lib/decimal";
 
@@ -26,12 +33,12 @@ function closingLabel(days: number) {
 }
 
 // Share of the month's income already spent; spending with no income fills it.
-function spentWidth(income: number, expenses: number, hidden: boolean) {
-  if (hidden || expenses <= 0) return "0%";
+function spentShare(income: number, expenses: number, hidden: boolean) {
+  if (hidden || expenses <= 0) return 0;
 
-  if (income <= 0) return "100%";
+  if (income <= 0) return 100;
 
-  return `${Math.min(100, percentOf(expenses, income))}%`;
+  return Math.min(100, percentOf(expenses, income));
 }
 
 export function BalanceCard({
@@ -56,80 +63,62 @@ export function BalanceCard({
   const hydrated = useHydrated();
   const days = hydrated ? daysLeft(month, today(browserTimeZone())) : null;
   const overspent = summary.expenses > summary.income;
+  const toggleLabel = hidden ? "Mostrar valores" : "Ocultar valores";
 
   return (
-    <OverviewCard
-      aria-label="Resumo mensal"
-      tone="balance"
-      className={cx(
-        "flex flex-col justify-between gap-8 max-bp1000:gap-6 max-bp620:p-5",
-        className,
-      )}
-    >
-      <div className="min-w-0 [container-type:inline-size]">
-        <div className="flex items-start justify-between gap-3">
-          <p className="m-0 text-md font-500 text-on-balance max-bp620:text-sm">
-            {memberFilter === "all" ? "Sobra de" : "Sobra desta pessoa em"}{" "}
-            {monthName(month)}
-          </p>
-          <div className="flex items-center gap-2 shrink-0">
-            {days !== null && (
-              <span className="rounded-full px-4 py-1.5 text-xs bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)] text-on-balance-muted max-bp1000:hidden">
-                {closingLabel(days)}
-              </span>
-            )}
-            <Button
-              variant="unstyled"
-              type="button"
-              onClick={onToggleHidden}
-              aria-label={hidden ? "Mostrar valores" : "Ocultar valores"}
-              title={hidden ? "Mostrar valores" : "Ocultar valores"}
-              className={cx(
-                "w-[32px] h-[32px] inline-flex items-center justify-center shrink-0 relative",
-                "after:content-[''] after:absolute after:[inset:min(0px,(100%_-_44px)/2)]",
-                "border-0 bg-transparent p-0 rounded-sm text-on-balance-muted",
-                "@hover:bg-[color-mix(in_srgb,var(--on-balance)_10%,transparent)]",
-              )}
-            >
-              {hidden ? <EyeOff size={19} /> : <Eye size={19} />}
-            </Button>
-          </div>
-        </div>
-        <p
-          className="mt-2 font-heading font-800 tracking-[-0.045em] leading-none whitespace-nowrap tabular-nums [--balance-size:76px] max-bp1000:[--balance-size:56px] max-bp620:[--balance-size:40px]"
-          style={{
-            fontSize: `min(var(--balance-size), ${160 / displayMoney(summary.balance).length}cqi)`,
-          }}
-        >
+    <Card role="region" aria-label="Resumo mensal" className={className}>
+      <CardHeader>
+        <CardTitle>
+          {memberFilter === "all" ? "Sobra de" : "Sobra desta pessoa em"}{" "}
+          {monthName(month)}
+        </CardTitle>
+        {days !== null && (
+          <CardDescription>{closingLabel(days)}</CardDescription>
+        )}
+        <CardAction>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onToggleHidden}
+            aria-label={toggleLabel}
+            title={toggleLabel}
+          >
+            <Icon icon={hidden ? Hide : Show} />
+          </Button>
+        </CardAction>
+      </CardHeader>
+      <CardContent className="flex-1 justify-between gap-6">
+        <p className="type-title tabular-nums">
           {displayMoney(summary.balance)}
         </p>
-      </div>
-      <div>
-        <div
-          aria-hidden="true"
-          className="h-[8px] rounded-full overflow-clip bg-[color-mix(in_srgb,var(--on-balance)_12%,transparent)]"
-        >
-          <div
-            className={cx(
-              "h-full rounded-full",
-              overspent ? "bg-danger" : "bg-on-balance",
+        <div className="flex flex-col gap-2">
+          <Progress
+            mode="meter"
+            size="sm"
+            aria-label="Gastos sobre entradas"
+            value={spentShare(summary.income, summary.expenses, hidden)}
+            warnAt={null}
+            failAt={null}
+            status={overspent && !hidden ? "fail" : undefined}
+            statusLabel="Acima das entradas"
+          >
+            {/* Only the status words when overspent; the sentence below carries the amounts. */}
+            {overspent && !hidden && (
+              <ProgressValue>{() => null}</ProgressValue>
             )}
-            style={{
-              width: spentWidth(summary.income, summary.expenses, hidden),
-            }}
-          />
+          </Progress>
+          <p className="type-body-sm text-text-2">
+            <strong className="font-medium text-text-1 tabular-nums">
+              {displayMoney(summary.expenses)}
+            </strong>{" "}
+            gastos dos{" "}
+            <strong className="font-medium text-text-1 tabular-nums">
+              {displayMoney(summary.income)}
+            </strong>{" "}
+            que entraram
+          </p>
         </div>
-        <p className="mt-3 text-sm text-on-balance-muted max-bp620:text-xs">
-          <strong className="font-700 text-on-balance tabular-nums">
-            {displayMoney(summary.expenses)}
-          </strong>{" "}
-          gastos dos{" "}
-          <strong className="font-700 text-on-balance tabular-nums">
-            {displayMoney(summary.income)}
-          </strong>{" "}
-          que entraram
-        </p>
-      </div>
-    </OverviewCard>
+      </CardContent>
+    </Card>
   );
 }
