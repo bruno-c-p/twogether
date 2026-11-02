@@ -234,7 +234,7 @@ function ComboboxTrigger({className, children, ...props}: ComboboxPrimitive.Trig
 }
 
 function ComboboxClear({className, ...props}: ComboboxPrimitive.Clear.Props) {
-  return <ComboboxPrimitive.Clear data-slot="combobox-clear" aria-label="Clear" render={<InputAction/>} className={className} {...props}>
+  return <ComboboxPrimitive.Clear data-slot="combobox-clear" aria-label="Limpar" render={<InputAction/>} className={className} {...props}>
     <Icon icon={Close}/>
   </ComboboxPrimitive.Clear>;
 }
