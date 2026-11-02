@@ -1,5 +1,7 @@
-import { Toggle } from "@base-ui/react/toggle";
-import { ToggleGroup } from "@base-ui/react/toggle-group";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/glaze/ui/segmented-control";
 import {
   THEME_CHANGE_EVENT,
   THEME_OPTIONS,
@@ -9,21 +11,15 @@ import {
   themePreferenceSchema,
   useThemePreference,
 } from "@/features/theme/preference";
-import styles from "@/features/theme/components/theme-toggle/theme-toggle.module.css";
 
 export function ThemeToggle({ className }: { className?: string } = {}) {
   const theme = useThemePreference();
 
   return (
-    <ToggleGroup
-      className={
-        className ? `${styles.themeToggle} ${className}` : styles.themeToggle
-      }
-      value={[theme]}
-      onValueChange={(values) => {
-        const next = values[0];
-
-        if (!next) return;
+    <SegmentedControl
+      className={className}
+      value={theme}
+      onValueChange={(next) => {
         const value = themePreferenceSchema.parse(next);
         document.documentElement.dataset.themePreference = value;
 
@@ -37,22 +33,15 @@ export function ThemeToggle({ className }: { className?: string } = {}) {
       }}
       aria-label="Aparência"
     >
-      {THEME_OPTIONS.map(({ value, label, icon: Icon }) => (
-        <Toggle
+      {THEME_OPTIONS.map(({ value, label }) => (
+        <SegmentedControlItem
           key={value}
-          type="button"
-          aria-label={`Tema ${label.toLowerCase()}`}
           value={value}
-          title={
-            value === "system"
-              ? "Seguir tema do sistema"
-              : `Tema ${label.toLowerCase()}`
-          }
+          aria-label={`Tema ${label.toLowerCase()}`}
         >
-          <Icon size={16} aria-hidden="true" />
-          <span>{label}</span>
-        </Toggle>
+          {label}
+        </SegmentedControlItem>
       ))}
-    </ToggleGroup>
+    </SegmentedControl>
   );
 }
