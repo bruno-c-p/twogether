@@ -8,7 +8,7 @@ import {
 } from "@/features/budget";
 import { BudgetApp } from "@/features/budget/components/budget-app/budget-app";
 import { WorkspaceSkeleton } from "@/features/budget/components/workspace-skeleton";
-import { toastManager } from "@/components/ui/toast-manager";
+import { toast } from "@/components/glaze/ui/toast";
 import { currentMonth } from "@/lib/clock";
 import { useBrowserSync } from "@/lib/use-browser-sync";
 import {
@@ -45,7 +45,7 @@ export const Route = createFileRoute("/_authenticated/_workspace")({
       ? loadCachedWorkspace(context.queryClient, deps.month)
       : undefined,
   // Undo toasts act on this workspace; they go when the reader leaves it.
-  onLeave: () => toastManager.close(),
+  onLeave: () => toast.dismiss(),
   pendingComponent: WorkspaceSkeleton,
   pendingMs: 300,
   pendingMinMs: 0,

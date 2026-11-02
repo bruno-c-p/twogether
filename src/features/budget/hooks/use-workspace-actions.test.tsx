@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
-import { toastManager } from "@/components/ui/toast-manager";
+import { toast } from "@/components/glaze/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
@@ -64,7 +64,7 @@ function setup(props: Parameters<typeof Harness>[0]) {
 }
 
 describe("useWorkspaceActions", () => {
-  afterEach(() => toastManager.close());
+  afterEach(() => toast.dismiss());
   test("deleting one occurrence offers undo and closes the dialog", async () => {
     const mutations = fakeBudgetMutations(true);
     const { screen, user } = await setup({ mutations });

@@ -27,6 +27,30 @@ if (!window.matchMedia) {
   });
 }
 
+// jsdom has no Web Animations API; Glaze's toasts drain a timer line and
+// glide with it. An animation that never runs is enough for the DOM tests.
+if (!("animate" in Element.prototype)) {
+  Object.defineProperties(Element.prototype, {
+    animate: {
+      value: () => ({
+        playState: "idle",
+        pause: () => undefined,
+        play: () => undefined,
+        cancel: () => undefined,
+      }),
+    },
+    getAnimations: { value: () => [] },
+  });
+}
+
+// jsdom has no layout, so nothing ever resizes; Glaze components that
+// measure themselves (the segmented control's thumb) only need to observe.
+window.ResizeObserver ??= class {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};
+
 // jsdom has no scrolling; the test router's scroll restoration calls this.
 window.scrollTo = () => undefined;
 
