@@ -9,7 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/glaze/ui/card";
-import { Progress } from "@/components/glaze/ui/progress";
+import { Progress, ProgressValue } from "@/components/glaze/ui/progress";
 import { monthName } from "@/features/budget/domain/format";
 import type { summarize } from "@/features/budget/domain/calc";
 import { today } from "@/lib/clock";
@@ -101,7 +101,12 @@ export function BalanceCard({
             failAt={null}
             status={overspent && !hidden ? "fail" : undefined}
             statusLabel="Acima das entradas"
-          />
+          >
+            {/* Only the status words when overspent; the sentence below carries the amounts. */}
+            {overspent && !hidden && (
+              <ProgressValue>{() => null}</ProgressValue>
+            )}
+          </Progress>
           <p className="type-body-sm text-text-2">
             <strong className="font-medium text-text-1 tabular-nums">
               {displayMoney(summary.expenses)}

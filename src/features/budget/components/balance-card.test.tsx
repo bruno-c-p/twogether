@@ -93,6 +93,7 @@ describe("BalanceCard", () => {
     expect(withIncome.getAttribute("aria-valuetext")).toContain(
       "Acima das entradas",
     );
+    expect(withIncome.textContent).toContain("Acima das entradas");
 
     expect(spendMeter([market]).getAttribute("aria-valuenow")).toBe("100");
   });
