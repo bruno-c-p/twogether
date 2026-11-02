@@ -1,4 +1,3 @@
-import "@fontsource-variable/archivo/wdth.css";
 import { Link } from "@tanstack/react-router";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import {
@@ -12,170 +11,201 @@ import {
 } from "@/features/landing/content";
 import { SeamLink } from "@/features/landing/components/seam-link/seam-link";
 import { SplitStage } from "@/features/landing/components/split-stage/split-stage";
-import styles from "@/features/landing/components/landing-page/landing-page.module.css";
+import { Button } from "@/components/glaze/ui/button";
+import { Card, CardContent, CardFooter } from "@/components/glaze/ui/card";
+import {
+  DataList,
+  DataListItem,
+  DataListLabel,
+  DataListValue,
+} from "@/components/glaze/ui/data-list";
+import { Status } from "@/components/glaze/ui/status";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/glaze/ui/table";
+
+const SECTION = "flex flex-col gap-6 py-10 sm:py-16";
 
 export function LandingPage() {
   return (
-    <div className={styles.page}>
-      <a className={styles.skip} href="#conteudo">
+    <div className="min-h-dvh bg-page text-text-1">
+      <a
+        href="#conteudo"
+        className="sr-only focus-visible:not-sr-only focus-visible:fixed focus-visible:start-4 focus-visible:top-4 focus-visible:z-(--z-overlay) focus-visible:rounded-pill focus-visible:bg-paper focus-visible:px-4 focus-visible:py-2 focus-visible:type-label focus-visible:focus-ring"
+      >
         Pular para o conteúdo
       </a>
-      <header className={styles.header}>
-        <Link to="/conheca" className={styles.wordmark}>
-          twogether<span className={styles.dot}>.</span>
-        </Link>
-        <nav className={styles.nav} aria-label="Página">
-          <a className={styles.navLink} href="#dividir">
-            Como divide
-          </a>
-          <a className={styles.navLink} href="#metas">
-            Metas
-          </a>
-          <SeamLink to="/entrar" variant="outline">
-            Entrar
-          </SeamLink>
-        </nav>
-      </header>
+      <div className="mx-auto flex w-full max-w-280 flex-col px-4 sm:px-6">
+        <header className="flex flex-wrap items-center justify-between gap-4 py-4">
+          <Link
+            to="/conheca"
+            className="type-heading rounded-tag focus-visible:focus-ring"
+          >
+            twogether.
+          </Link>
+          <nav aria-label="Página" className="flex items-center gap-1">
+            <Button
+              render={<a href="#dividir" />}
+              nativeButton={false}
+              variant="ghost"
+              className="max-sm:hidden"
+            >
+              Como divide
+            </Button>
+            <Button
+              render={<a href="#metas" />}
+              nativeButton={false}
+              variant="ghost"
+              className="max-sm:hidden"
+            >
+              Metas
+            </Button>
+            <SeamLink to="/entrar" variant="outline">
+              Entrar
+            </SeamLink>
+          </nav>
+        </header>
 
-      <main id="conteudo" tabIndex={-1} className={styles.main}>
-        <SplitStage />
+        <main id="conteudo" tabIndex={-1}>
+          <SplitStage />
 
-        <p className={styles.statement}>{statement}</p>
+          <p className="max-w-measure py-10 type-heading text-text-1 sm:py-16">
+            {statement}
+          </p>
 
-        <section
-          id="dividir"
-          className={styles.settle}
-          aria-labelledby="dividir-title"
-        >
-          <div className={styles.settleAside}>
-            <h2 id="dividir-title" className={styles.settleTitle}>
-              {settle.title}
+          <section
+            id="dividir"
+            aria-labelledby="dividir-title"
+            className={`${SECTION} lg:grid lg:grid-cols-2 lg:items-start lg:gap-10`}
+          >
+            <div className="flex flex-col gap-6 lg:sticky lg:top-6">
+              <h2 id="dividir-title" className="type-title">
+                {settle.title}
+              </h2>
+              <SettleTicket />
+            </div>
+            <ol className="flex flex-col gap-6">
+              {settle.steps.map((step, index) => (
+                <li
+                  key={step.title}
+                  className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="type-heading-sm text-text-2 tabular-nums"
+                  >
+                    {index + 1}
+                  </span>
+                  <h3 className="type-heading-sm">{step.title}</h3>
+                  <p className="col-start-2 type-body text-text-2">
+                    {step.text}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+
+          <section id="metas" aria-labelledby="metas-title" className={SECTION}>
+            <div className="flex flex-col gap-2">
+              <h2 id="metas-title" className="type-title">
+                {goals.title}
+              </h2>
+              <p className="max-w-measure type-body text-text-2">
+                {goals.intro}
+              </p>
+            </div>
+            <Table aria-label={goals.example}>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Meta</TableHead>
+                  <TableHead numeric>Percentual</TableHead>
+                  <TableHead numeric>Planejado</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {goals.bands.map((band) => (
+                  <TableRow key={band.id}>
+                    <TableCell>{band.name}</TableCell>
+                    <TableCell numeric>{band.percent}%</TableCell>
+                    <TableCell numeric>R$ {band.planned}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <p className="type-body-sm text-text-2">{goals.example}</p>
+          </section>
+
+          <section aria-labelledby="resto-title" className={SECTION}>
+            <h2 id="resto-title" className="type-title">
+              {features.title}
             </h2>
-            <SettleTicket />
-          </div>
-          <ol className={styles.steps}>
-            {settle.steps.map((step, index) => (
-              <li key={step.title} className={styles.step}>
-                <span className={styles.stepNumber} aria-hidden="true">
-                  {index + 1}
-                </span>
-                <h3 className={styles.stepTitle}>{step.title}</h3>
-                <p className={styles.stepText}>{step.text}</p>
-              </li>
-            ))}
-          </ol>
-        </section>
+            <DataList>
+              {features.rows.map((row) => (
+                <DataListItem key={row.name}>
+                  <DataListLabel>{row.name}</DataListLabel>
+                  <DataListValue>{row.text}</DataListValue>
+                </DataListItem>
+              ))}
+            </DataList>
+          </section>
+        </main>
 
-        <section
-          id="metas"
-          className={styles.goals}
-          aria-labelledby="metas-title"
-        >
-          <div className={styles.goalsHead}>
-            <h2 id="metas-title" className={styles.sectionTitle}>
-              {goals.title}
-            </h2>
-            <p className={styles.goalsIntro}>{goals.intro}</p>
-          </div>
-          <div className={styles.bar} aria-hidden="true">
-            {goals.bands.map((band, index) => (
-              <span
-                key={band.id}
-                className={styles.band}
-                style={{
-                  flexGrow: band.percent,
-                  "--band": band.color,
-                  "--band-start": `${12 + index * 7}%`,
-                  "--band-end": `${40 + index * 7}%`,
-                }}
-              />
-            ))}
-          </div>
-          <p className={styles.example}>{goals.example}</p>
-          <ul className={styles.legend}>
-            {goals.bands.map((band) => (
-              <li
-                key={band.id}
-                className={styles.legendItem}
-                style={{ "--band": band.color }}
+        <footer className="flex flex-col gap-10 py-10 sm:py-16">
+          <div className="flex flex-col items-start gap-4">
+            <h2 className="type-title">{footer.title}</h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <SeamLink to="/entrar">{footer.cta}</SeamLink>
+              <Button
+                render={<Link to="/entrar" />}
+                nativeButton={false}
+                variant="ghost"
+                size="lg"
               >
-                <span className={styles.legendPercent}>{band.percent}%</span>
-                <span className={styles.legendName}>{band.name}</span>
-                <span className={styles.legendPlanned}>R$ {band.planned}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className={styles.features} aria-labelledby="resto-title">
-          <h2 id="resto-title" className={styles.sectionTitle}>
-            {features.title}
-          </h2>
-          <dl className={styles.rows}>
-            {features.rows.map((row) => (
-              <div key={row.name} className={styles.row}>
-                <dt className={styles.rowName}>{row.name}</dt>
-                <dd className={styles.rowText}>{row.text}</dd>
-              </div>
-            ))}
-          </dl>
-        </section>
-      </main>
-
-      <footer className={styles.footer}>
-        <div className={styles.finale}>
-          <h2 className={styles.finaleTitle}>{footer.title}</h2>
-          <div className={styles.finaleActions}>
-            <SeamLink to="/entrar">{footer.cta}</SeamLink>
-            <Link to="/entrar" className={styles.quietLink}>
-              {footer.signIn}
-            </Link>
+                {footer.signIn}
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className={styles.mend} aria-hidden="true">
-          <span className={`${styles.mendPiece} ${styles.mendLeft}`}>
-            twogether.
-          </span>
-          <span className={`${styles.mendPiece} ${styles.mendRight}`}>
-            twogether.
-          </span>
-          <span className={styles.mendSeam} />
-        </div>
-        <div className={styles.colophon}>
-          <span>{footer.tagline}</span>
-          <ThemeToggle />
-        </div>
-      </footer>
+          <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line-faint pt-4">
+            <span className="type-body-sm text-text-2">{footer.tagline}</span>
+            <ThemeToggle />
+          </div>
+        </footer>
+      </div>
     </div>
   );
 }
 
-// The grocery receipt from the hero, kept beside the steps. Each step that
-// scrolls past moves its status on; the steps say the same thing in text.
+// The grocery receipt from the hero, kept beside the steps: where the split
+// stands after each one. The steps say the same thing in text.
 function SettleTicket() {
   const [splitStatus, openStatus, paidStatus] = settle.status;
 
   return (
-    <div className={styles.ticket} aria-hidden="true">
-      <div className={styles.ticketHead}>
-        <span>{split.label}</span>
-        <span className={styles.ticketTotal}>R$ {split.total}</span>
-      </div>
-      <div className={styles.ticketSplit}>
-        <span className={styles.ticketHalf}>
-          <span className={styles.ticketWho}>{couple.payer}</span>R${" "}
-          {split.kept}
-        </span>
-        <span className={styles.ticketHalf}>
-          <span className={styles.ticketWho}>{couple.partner}</span>R${" "}
-          {split.half}
-        </span>
-      </div>
-      <div className={styles.ticketStatus}>
-        <span>{splitStatus}</span>
-        <span className={styles.statusOpen}>{openStatus}</span>
-        <span className={styles.statusPaid}>{paidStatus}</span>
-      </div>
-    </div>
+    <Card aria-hidden="true">
+      <CardContent className="flex flex-col gap-3">
+        <div className="flex items-baseline justify-between gap-3">
+          <span className="type-label">{split.label}</span>
+          <span className="type-heading-sm tabular-nums">R$ {split.total}</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 type-body-sm tabular-nums">
+          <span className="flex flex-col">
+            <span className="text-text-2">{couple.payer}</span>R$ {split.kept}
+          </span>
+          <span className="flex flex-col items-end">
+            <span className="text-text-2">{couple.partner}</span>R$ {split.half}
+          </span>
+        </div>
+      </CardContent>
+      <CardFooter className="flex-wrap justify-start gap-x-3">
+        <Status status="idle">{splitStatus}</Status>
+        <Status status="waiting">{openStatus}</Status>
+        <Status status="ok">{paidStatus}</Status>
+      </CardFooter>
+    </Card>
   );
 }
