@@ -197,7 +197,11 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
           if (next) filters.setGoalFilter(next.value);
         }}
       >
-        <SelectTrigger size="sm" aria-label="Filtrar por meta">
+        <SelectTrigger
+          size="sm"
+          className="sm:w-56"
+          aria-label="Filtrar por meta"
+        >
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
