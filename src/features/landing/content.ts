@@ -75,7 +75,6 @@ export const goals = {
     id: goal.id,
     name: goal.name,
     description: goal.description,
-    color: goal.color,
     percent: DEFAULT_PERCENTAGES[goal.id],
     planned: formatCents(
       percentageOf(EXAMPLE_INCOME, DEFAULT_PERCENTAGES[goal.id]),

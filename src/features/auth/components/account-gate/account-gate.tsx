@@ -3,7 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate, useRouter } from "@tanstack/react-router";
 import { SignIn, useAuth, useUser } from "@clerk/tanstack-react-start";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
-import { ArrowRight, HeartHandshake } from "lucide-react";
 import { authActions } from "@/features/auth/actions";
 import type { SessionState } from "@/features/auth/actions/load-session";
 import { useSignOut } from "@/features/auth/hooks/use-sign-out";
@@ -16,18 +15,18 @@ import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
 import { AppFooter } from "@/components/ui/app-footer/app-footer";
-import { LoadingState } from "@/components/ui/empty-state";
 import { Brand } from "@/components/ui/brand";
-import { Button } from "@/components/ui/button";
 import {
-  FieldHint,
-  FormError,
-  FormStack,
-  Note,
-} from "@/components/ui/field/field";
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/glaze/ui/alert";
+import { Button } from "@/components/glaze/ui/button";
+import { Card, CardContent } from "@/components/glaze/ui/card";
+import { FieldDescription, FieldSeparator } from "@/components/glaze/ui/field";
+import { Icon, ArrowRight } from "@/components/glaze/icon";
 import { preloadClerkUI } from "@/lib/clerk-ui";
 import { useBrowserSync } from "@/lib/use-browser-sync";
-import styles from "@/features/auth/components/account-gate/account-gate.module.css";
 
 const SESSION_SYNC_INTERVAL_MS = 400;
 
@@ -53,6 +52,14 @@ function gateIntro(user: GateUser) {
     : "Seu e-mail é a única chave. Sem senha: enviamos um código de acesso.";
 }
 
+function Note({ children }: { children: ReactNode }) {
+  return (
+    <Alert announce={false}>
+      <AlertDescription>{children}</AlertDescription>
+    </Alert>
+  );
+}
+
 function SignInStep({
   invitation,
   isSignedIn,
@@ -67,7 +74,16 @@ function SignInStep({
       {invitation && (
         <Note>Seu par convidou você. Entre para compartilhar o orçamento.</Note>
       )}
-      {isSignedIn ? <LoadingState>Carregando…</LoadingState> : signIn}
+      {isSignedIn ? (
+        <p
+          aria-live="polite"
+          className="py-10 text-center type-body text-text-2"
+        >
+          Carregando…
+        </p>
+      ) : (
+        signIn
+      )}
     </>
   );
 }
@@ -86,10 +102,10 @@ function ClerkSignIn({ invitation }: { invitation: string }) {
       signUpForceRedirectUrl={afterAuth(invitation)}
       appearance={{
         elements: {
-          rootBox: styles.clerkRoot,
-          cardBox: styles.clerkCardBox,
-          card: styles.clerkCard,
-          header: styles.clerkHeader,
+          rootBox: "w-full",
+          cardBox: "w-full border-0 bg-transparent overflow-visible",
+          card: "p-0 border-0 bg-transparent",
+          header: "hidden",
         },
       }}
     />
@@ -108,11 +124,11 @@ function InvitationChoice({
   return (
     <>
       <Note>Ao aceitar, vocês dois poderão ver e editar todo o orçamento.</Note>
-      <Button disabled={busy} onClick={onAccept}>
-        {busy ? "Aguarde…" : "Aceitar convite"}
-        <ArrowRight size={18} />
+      <Button pending={busy} pendingLabel="Aguarde" onClick={onAccept}>
+        Aceitar convite
+        <Icon icon={ArrowRight} />
       </Button>
-      <Button variant="text" onClick={onClear}>
+      <Button variant="ghost" onClick={onClear}>
         Usar outro convite ou começar do zero
       </Button>
     </>
@@ -132,9 +148,9 @@ function StartChoice({
     <>
       <Button disabled={busy} onClick={onStart}>
         Começar nosso orçamento
-        <ArrowRight size={18} />
+        <Icon icon={ArrowRight} />
       </Button>
-      <span className={styles.divider}>já recebeu um convite?</span>
+      <FieldSeparator>já recebeu um convite?</FieldSeparator>
       <InviteForm busy={busy} onJoin={onJoin} />
     </>
   );
@@ -188,54 +204,69 @@ export function AccountGateView({
   signIn: ReactNode;
 }) {
   return (
-    <main className={styles.accountPage}>
-      <ThemeToggle className={styles.pageTheme} />
-      <Brand className={styles.pageBrand}>twogether.</Brand>
-      <section className={styles.accountCard}>
-        <div className={styles.accountSymbol}>
-          <HeartHandshake size={30} strokeWidth={1.5} />
-        </div>
-        <p className={styles.cardEyebrow}>DUAS PESSOAS. UM ORÇAMENTO.</p>
-        <h1>{gateHeadline(user)}</h1>
-        <p className={styles.accountIntro}>{gateIntro(user)}</p>
-        {!user && (
-          <SignInStep
-            invitation={invitation}
-            isSignedIn={isSignedIn}
-            signIn={signIn}
-          />
-        )}
-        {user && !user.name && (
-          <NameForm busy={busy} onSubmit={actions.submitName} />
-        )}
-        {user?.name && (
-          <FormStack>
-            {invitation ? (
-              <InvitationChoice
-                busy={busy}
-                onAccept={() => void actions.acceptInvitation()}
-                onClear={onClearInvitation}
-              />
-            ) : (
-              <StartChoice
-                busy={busy}
-                onStart={() => void actions.startHousehold()}
-                onJoin={actions.joinWithInvite}
-              />
-            )}
-            <Button
-              variant="text"
-              disabled={busy}
-              onClick={() => void actions.leave()}
+    <main className="flex min-h-dvh w-full flex-col items-center gap-6 bg-page px-4 py-6 text-text-1 sm:gap-8 sm:px-5 sm:py-10">
+      <ThemeToggle />
+      <Brand>twogether.</Brand>
+      <Card
+        role="group"
+        aria-labelledby="account-gate-title"
+        className="w-full max-w-md"
+      >
+        <CardContent className="flex flex-col gap-6 p-6 max-sm:p-4">
+          <div className="flex flex-col gap-2">
+            <h1
+              id="account-gate-title"
+              className="type-title whitespace-pre-line [overflow-wrap:anywhere]"
             >
-              Sair de {email || "sua conta"}
-            </Button>
-          </FormStack>
-        )}
-        {error && <FormError>{error}</FormError>}
-        <FieldHint>Sem senha. Um espaço exclusivo para vocês dois.</FieldHint>
-      </section>
-      <AppFooter className={styles.pageFooter} />
+              {gateHeadline(user)}
+            </h1>
+            <p className="type-body text-text-2">{gateIntro(user)}</p>
+          </div>
+          {!user && (
+            <SignInStep
+              invitation={invitation}
+              isSignedIn={isSignedIn}
+              signIn={signIn}
+            />
+          )}
+          {user && !user.name && (
+            <NameForm busy={busy} onSubmit={actions.submitName} />
+          )}
+          {user?.name && (
+            <div className="flex flex-col gap-4">
+              {invitation ? (
+                <InvitationChoice
+                  busy={busy}
+                  onAccept={() => void actions.acceptInvitation()}
+                  onClear={onClearInvitation}
+                />
+              ) : (
+                <StartChoice
+                  busy={busy}
+                  onStart={() => void actions.startHousehold()}
+                  onJoin={actions.joinWithInvite}
+                />
+              )}
+              <Button
+                variant="ghost"
+                disabled={busy}
+                onClick={() => void actions.leave()}
+              >
+                {`Sair de ${email || "sua conta"}`}
+              </Button>
+            </div>
+          )}
+          {error && (
+            <Alert status="fail">
+              <AlertTitle>{error}</AlertTitle>
+            </Alert>
+          )}
+          <FieldDescription>
+            Sem senha. Um espaço exclusivo para vocês dois.
+          </FieldDescription>
+        </CardContent>
+      </Card>
+      <AppFooter className="mt-auto w-full max-w-md px-0" />
     </main>
   );
 }

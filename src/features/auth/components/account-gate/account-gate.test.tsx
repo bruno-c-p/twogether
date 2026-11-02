@@ -121,15 +121,23 @@ describe("AccountGateView", () => {
     ).toBeTruthy();
   });
 
-  test("busy disables the actions and says to wait", async () => {
-    const { screen } = await renderGate({
+  test("busy holds the accept action pending and blocks the rest", async () => {
+    const { screen, user, actions } = await renderGate({
       user: { id: "ana", name: "Ana" },
       invitation: token,
       busy: true,
     });
 
+    const accept = screen.getByRole("button", { name: /Aceitar convite/ });
+
+    expect(accept.getAttribute("aria-busy")).toBe("true");
+    await user.click(accept);
+    expect(actions.acceptInvitation).not.toHaveBeenCalled();
+
     expect(
-      screen.getByRole("button", { name: /Aguarde/ }).hasAttribute("disabled"),
+      screen
+        .getByRole("button", { name: "Sair de sua conta" })
+        .hasAttribute("disabled"),
     ).toBe(true);
   });
 });

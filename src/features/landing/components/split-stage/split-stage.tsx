@@ -1,82 +1,68 @@
 import { couple, hero, split } from "@/features/landing/content";
 import { SeamLink } from "@/features/landing/components/seam-link/seam-link";
-import styles from "@/features/landing/components/split-stage/split-stage.module.css";
+import { Avatar } from "@/components/glaze/ui/avatar";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/glaze/ui/card";
 
-// The signature: the grocery total tears along the seam into two halves and
-// the cent that does not divide rolls to the payer. The scroll position
-// drives it in CSS; the static markup is the torn end state, so reduced
-// motion and browsers without scroll timelines get a finished composition.
+// The grocery total split along the seam into two halves, with the cent that
+// does not divide kept by the payer.
 export function SplitStage() {
   return (
-    <section className={styles.track} aria-labelledby="landing-title">
-      <div className={styles.stage}>
-        <div className={styles.head}>
-          <h1 id="landing-title" className={styles.title}>
-            {hero.title}
-          </h1>
-          <div className={styles.lede}>
-            <p className={styles.intro}>{hero.intro}</p>
-            <SeamLink to="/entrar">{hero.cta}</SeamLink>
-          </div>
-        </div>
-
-        <figure className={styles.figure}>
-          <p className="sr-only">{hero.summary}</p>
-          <div className={styles.amount} aria-hidden="true">
-            <span className={styles.receipt}>{split.label}</span>
-            <span className={`${styles.receipt} ${styles.receiptSplit}`}>
-              Dividido com {couple.partner}
-            </span>
-            <span className={styles.seam} />
-            <span className={`${styles.piece} ${styles.pieceLeft}`}>
-              <Total />
-            </span>
-            <span className={`${styles.piece} ${styles.pieceRight}`}>
-              <Total />
-            </span>
-            <span className={`${styles.half} ${styles.halfLeft}`}>
-              <span className={styles.currency}>R$</span>
-              {split.half}
-            </span>
-            <span className={`${styles.half} ${styles.halfRight}`}>
-              <span className={styles.currency}>R$</span>
-              {split.half}
-            </span>
-            <span className={styles.coinTrack}>
-              <span className={`${styles.coin} ${styles.coinRocking}`}>
-                <span className={styles.coinValue}>+{split.odd}</span>
-              </span>
-              <span className={`${styles.coin} ${styles.coinStill}`}>
-                <span className={styles.coinValue}>+{split.odd}</span>
-              </span>
-            </span>
-          </div>
-          <figcaption className={styles.caption}>
-            <span className={`${styles.person} ${styles.personPayer}`}>
-              <span className={styles.avatar} aria-hidden="true">
-                {couple.payer[0]}
-              </span>
-              {couple.payer} pagou
-            </span>
-            <span className={styles.rule}>{hero.rule}</span>
-            <span className={`${styles.person} ${styles.personPartner}`}>
-              {couple.partner} deve
-              <span className={styles.avatar} aria-hidden="true">
-                {couple.partner[0]}
-              </span>
-            </span>
-          </figcaption>
-        </figure>
+    <section
+      aria-labelledby="landing-title"
+      className="grid gap-8 py-10 sm:py-16 lg:grid-cols-2 lg:items-center"
+    >
+      <div className="flex flex-col items-start gap-4">
+        <h1 id="landing-title" className="type-title">
+          {hero.title}
+        </h1>
+        <p className="max-w-measure type-body text-text-2">{hero.intro}</p>
+        <SeamLink to="/entrar">{hero.cta}</SeamLink>
       </div>
-    </section>
-  );
-}
 
-function Total() {
-  return (
-    <>
-      <span className={styles.currency}>R$</span>
-      {split.total}
-    </>
+      <figure className="flex flex-col gap-3">
+        <p className="sr-only">{hero.summary}</p>
+        <Card aria-hidden="true">
+          <CardHeader>
+            <CardTitle>{split.label}</CardTitle>
+            <CardDescription>Dividido com {couple.partner}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="type-title tabular-nums">R$ {split.total}</p>
+            <div className="grid grid-cols-2 divide-x divide-dashed divide-line">
+              <div className="flex flex-col gap-1 pe-3">
+                <span className="flex items-center gap-2 type-body-sm text-text-2">
+                  <Avatar name={couple.payer} decorative />
+                  {couple.payer} pagou
+                </span>
+                <span className="type-heading tabular-nums">
+                  R$ {split.half}
+                </span>
+                <span className="type-body-sm text-text-2 tabular-nums">
+                  +{split.odd}
+                </span>
+              </div>
+              <div className="flex flex-col items-end gap-1 ps-3 text-end">
+                <span className="flex items-center gap-2 type-body-sm text-text-2">
+                  {couple.partner} deve
+                  <Avatar name={couple.partner} decorative />
+                </span>
+                <span className="type-heading tabular-nums">
+                  R$ {split.half}
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+        <figcaption className="type-body-sm text-text-2">
+          {hero.rule}
+        </figcaption>
+      </figure>
+    </section>
   );
 }

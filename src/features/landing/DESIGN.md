@@ -43,51 +43,38 @@ Screenshot:  the mega number torn in two, the coin landing on the payer.
 
 ## System
 
-- Palette (app tokens, both themes): ground `--page` #f2f2f4, ink `--text`
-  #0d0d12, muted `--text-muted` #5b5b66, line `--line`, accent `--hero`
-  #c6f432 (person A, the payer), second person `--person-b` (ink). The
-  acid lime on ink is the app's own brand and stands for one of the two
-  people, so it stays; it never fills a whole section.
-- Type: Archivo Variable at width 112 to 125, weight 760 to 860, for
-  numbers and display (tabular figures, tracking -0.04 to -0.06em).
-  Inter Tight (the app face) for text and UI at 16 to 18 px.
-- Grid: 12 columns, gutter `clamp(16px, 2vw, 28px)`, outer margin equal to
-  the gutter. Text hangs from column 1 and column 7 (the seam).
-- The seam: the page's centre line. It is drawn as a perforation (dashed
-  2 px) in the hero and the footer and is the origin of every hover.
-- Shape: 999px for the coin and pills, 14px (`--radius-lg`) for blocks.
-- Motion: `--ease-out` (cubic-bezier(0.23, 1, 0.32, 1)) everywhere. Hovers
-  0.45s, reveals scroll-linked. Only transform, opacity and clip-path.
-- Idle: the coin rocks on the seam before it falls (it has not been
-  assigned yet). After it lands it settles still. The rocking copy has fixed
-  angles: keyframes that read a custom property run on the compositor with
-  the value frozen, so a var-scaled rock never moved a pixel.
-- Motion runs on CSS scroll timelines, not GSAP or Lenis: the repo bans
-  effects and component state, and every reveal only rewinds a finished
-  static frame, so no script decides what is visible.
-- Reduced motion or no `animation-timeline`: the hero shows its torn end
-  state as a static composition, the bar shows all six bands, the footer
-  wordmark is joined.
+The page is drawn on Glaze, the app's design system, like every other
+screen. That replaced the first pass (Archivo display type, the lime brand,
+scroll-timeline motion) in November 2026.
+
+- Monochrome: ink and paper from Glaze's roles. Colour only where Glaze
+  allows it, the status words on the settle receipt.
+- Type: Glaze's sans through its type roles; the amounts use `type-title`
+  and `type-heading` with tabular figures.
+- Shape: Glaze's card shell for the two receipts, Glaze buttons for the
+  calls to action, a Glaze table for the goals and a data list for the
+  feature index.
+- Motion: none. The hero shows the split's end state: the total, the two
+  halves on either side of a dashed seam and the odd cent on the payer's
+  side. Glaze rules out scroll reveals, so the tear, the band fill and the
+  footer wordmark mend are gone.
 
 ## Sections (layout family)
 
 ```
-1 Hero stage (poster)     [h1 left, CTA right] / mega 87,45 + seam / Ana | Leo
-2 Statement               one paragraph at t-l across columns 1 to 10
-3 Settle (asymmetric)     sticky h2 + the hero's receipt on cols 1-5; three
-                          real steps on 7-12. Each step adds a line to the
-                          receipt (open, then struck and stamped paid)
-4 Goals (data)            one full-width bar split into six bands + legend
+1 Hero stage              [h1, intro, CTA] / receipt card: 87,45, Ana | Leo
+2 Statement               one paragraph at the measure
+3 Settle (asymmetric)     sticky h2 + the receipt with its three statuses;
+                          three real steps beside it
+4 Goals (data)            a table of the six goals: percent and planned
 5 Index list              six rows: feature name | what it does
-6 Footer finale           CTA, then "twogether." torn and mended on entry
+6 Footer finale           CTA and sign-in link, then tagline and theme
 ```
 
 ## Genericness test
 
 - A generic answer would be a centred hero with a phone mockup and three
   feature cards. Replaced with the torn amount and an index list.
-- A generic answer would use the lime as a full-bleed field. Kept it to the
-  payer's half, the coin and the CTA.
 
 ## Open items for the owner
 
