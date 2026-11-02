@@ -252,7 +252,7 @@ export function AccountGateView({
                 disabled={busy}
                 onClick={() => void actions.leave()}
               >
-                Sair de {email || "sua conta"}
+                {`Sair de ${email || "sua conta"}`}
               </Button>
             </div>
           )}
