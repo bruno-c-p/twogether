@@ -472,7 +472,7 @@ export function TransactionDialog({
         if (!next) onClose();
       }}
     >
-      <DialogContent showCloseButton={false}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {transaction ? "Editar transação" : "Nova transação"}

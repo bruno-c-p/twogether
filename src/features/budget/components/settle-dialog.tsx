@@ -61,7 +61,7 @@ export function SettleDialog({
         if (!next) onClose();
       }}
     >
-      <DialogContent showCloseButton={false} size="sm">
+      <DialogContent size="sm">
         <DialogHeader>
           <DialogTitle>Marcar como pago</DialogTitle>
           {transaction && (

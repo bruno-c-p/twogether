@@ -10,16 +10,6 @@ import { renderPlain } from "@/test/render";
 import { today } from "@/lib/clock";
 import { browserTimeZone } from "@/lib/time-zone";
 
-// jsdom has no ResizeObserver; Glaze's dialog body watches its own size.
-vi.stubGlobal(
-  "ResizeObserver",
-  class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  },
-);
-
 function setup({
   source = transaction({ amount: cents(10000), memberId: "ana", split: {} }),
   busy = false,

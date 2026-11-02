@@ -4,16 +4,6 @@ import type { Transaction } from "@/features/budget/domain/types";
 import { ana, transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
-// jsdom has no ResizeObserver; Glaze's dialog body and segmented control watch their size.
-vi.stubGlobal(
-  "ResizeObserver",
-  class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  },
-);
-
 function setup({
   editing = null,
   busy = false,
