@@ -124,9 +124,10 @@ export function TransactionRow({
             </span>
           )}
         </ItemTitle>
-        <ItemDescription className="truncate lg:hidden">
-          {goal}
-          {status && ` · ${status}`}
+        {/* On phones the split status gets its own line, so it is never cut off. */}
+        <ItemDescription className="flex flex-col lg:hidden">
+          <span className="truncate">{goal}</span>
+          {status && <span>{status}</span>}
         </ItemDescription>
       </ItemContent>
       <ItemMeta className="hidden w-48 truncate type-body-sm text-text-1 lg:block">

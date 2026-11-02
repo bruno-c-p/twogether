@@ -216,7 +216,8 @@ describe("TransactionList", () => {
         .getByRole("button", { name: "Divididas" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("dividida · a receber")).toBeTruthy();
+    // The row carries a phone and a desktop copy; CSS shows one of them.
+    expect(screen.getAllByText("dividida · a receber")).toHaveLength(2);
   });
 
   test("an over-filtered list offers to clear every filter", async () => {

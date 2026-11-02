@@ -125,14 +125,17 @@ export function LandingPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Meta</TableHead>
-                  <TableHead numeric>Percentual</TableHead>
+                  <TableHead numeric>%</TableHead>
                   <TableHead numeric>Planejado</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {goals.bands.map((band) => (
                   <TableRow key={band.id}>
-                    <TableCell>{band.name}</TableCell>
+                    {/* Names wrap so all three columns fit a 320px screen. */}
+                    <TableCell className="whitespace-normal">
+                      {band.name}
+                    </TableCell>
                     <TableCell numeric>{band.percent}%</TableCell>
                     <TableCell numeric>R$ {band.planned}</TableCell>
                   </TableRow>
