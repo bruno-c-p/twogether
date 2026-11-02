@@ -87,7 +87,7 @@ export function BalanceCard({
           </Button>
         </CardAction>
       </CardHeader>
-      <CardContent className="justify-between gap-6">
+      <CardContent className="flex-1 justify-between gap-6">
         <p className="type-title tabular-nums">
           {displayMoney(summary.balance)}
         </p>
