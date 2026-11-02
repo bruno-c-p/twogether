@@ -1,11 +1,32 @@
 import { useRef } from "react";
 import Big from "big.js";
-import { useQueryState } from "nuqs";
-import { Select } from "@/components/ui/select";
-import { Toggle } from "@base-ui/react/toggle";
+import { createSerializer, useQueryState, useQueryStates } from "nuqs";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
-import { Input } from "@/components/ui/input";
-import { Search, X } from "lucide-react";
+import { Button } from "@/components/glaze/ui/button";
+import { Chip } from "@/components/glaze/ui/chip";
+import {
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyTitle,
+} from "@/components/glaze/ui/empty-state";
+import { Input } from "@/components/glaze/ui/input";
+import { ItemGroup } from "@/components/glaze/ui/item";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/glaze/ui/pagination";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/glaze/ui/select";
 import { GOALS } from "@/features/budget/constants";
 import { signedFlow } from "@/features/budget/domain/calc";
 import { money } from "@/features/budget/domain/format";
@@ -15,11 +36,13 @@ import type {
   Transaction,
   Member,
 } from "@/features/budget/domain/types";
-import { pageParam, type KindFilter } from "@/features/budget/search";
+import {
+  pageParam,
+  transactionFilterParams,
+  workspaceParams,
+  type KindFilter,
+} from "@/features/budget/search";
 import { TransactionRow } from "@/features/budget/components/transaction-row/transaction-row";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
-import { cx } from "@/lib/cx";
 
 interface TransactionFilters {
   query: string;
@@ -52,6 +75,16 @@ const KIND_CHIPS: Array<{ value: KindFilter | "all"; label: string }> = [
   { value: "transfer", label: "Transferências" },
   { value: "split", label: "Divididas" },
 ];
+
+const GOAL_FILTERS: Array<{ value: GoalId | "all"; label: string }> = [
+  { value: "all", label: "Todas as metas" },
+  ...GOALS.map((goal) => ({ value: goal.id, label: goal.name })),
+];
+
+// A page link keeps the month, the person and the filters it was shown with.
+const linkedParams = { ...workspaceParams, ...transactionFilterParams };
+
+const pageHref = createSerializer({ ...linkedParams, page: pageParam });
 
 const dayFormatter = new Intl.DateTimeFormat("pt-BR", {
   day: "2-digit",
@@ -120,32 +153,17 @@ export function TransactionSearch({
   setQuery,
 }: Pick<TransactionFilters, "query" | "setQuery">) {
   return (
-    <div className="relative flex items-center w-[280px] max-bp620:w-full">
-      <Search
-        size={14}
-        aria-hidden="true"
-        className="absolute left-[13px] text-text-muted pointer-events-none"
-      />
-      <Input
-        aria-label="Buscar transações"
-        inputMode="search"
-        enterKeyHint="search"
-        placeholder="Buscar…"
-        value={query}
-        onChange={(event) => setQuery(event.target.value)}
-        className="w-full min-h-[43px] pl-8 pr-10 rounded-sm border border-solid border-line-strong bg-surface text-sm"
-      />
-      {query && (
-        <Button
-          variant="icon"
-          className="!absolute right-[5px]"
-          onClick={() => setQuery("")}
-          aria-label="Limpar busca"
-        >
-          <X size={15} />
-        </Button>
-      )}
-    </div>
+    <Input
+      mode="search"
+      className="w-full sm:w-72"
+      aria-label="Buscar transações"
+      clearLabel="Limpar busca"
+      inputMode="search"
+      enterKeyHint="search"
+      placeholder="Buscar…"
+      value={query}
+      onValueChange={setQuery}
+    />
   );
 }
 
@@ -153,19 +171,9 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
   const { goalFilter, kindFilter } = filters;
 
   return (
-    <div
-      className={cx(
-        "flex items-center gap-2 flex-wrap mb-4",
-        "max-bp1000:flex-nowrap max-bp1000:overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
-        // Bleed past main's side padding (src/styles.css) so chips run off
-        // the screen edge and the row reads as scrollable.
-        "max-bp1000:mx-[-28px] max-bp1000:px-[28px]",
-        "max-bp800:mx-[-22px] max-bp800:px-[22px]",
-        "max-bp620:mx-[-19px] max-bp620:px-[19px]",
-      )}
-    >
+    <div className="mb-4 flex flex-wrap items-center gap-1">
       <ToggleGroup
-        className="flex items-center gap-2 flex-wrap max-bp1000:flex-nowrap"
+        className="flex flex-wrap items-center gap-1"
         aria-label="Tipo de transação"
         value={[kindFilter]}
         onValueChange={(values) => {
@@ -175,35 +183,31 @@ function FilterBar({ filters }: { filters: TransactionFilters }) {
         }}
       >
         {KIND_CHIPS.map((chip) => (
-          <Toggle
-            key={chip.value}
-            value={chip.value}
-            className={cx(
-              "px-4 py-2 rounded-full border border-solid text-sm whitespace-nowrap",
-              kindFilter === chip.value
-                ? "bg-green text-on-brand border-green"
-                : "bg-surface text-text border-border @hover:bg-surface-soft",
-            )}
-          >
+          <Chip key={chip.value} value={chip.value}>
             {chip.label}
-          </Toggle>
+          </Chip>
         ))}
       </ToggleGroup>
       <Select
-        label="Filtrar por meta"
+        items={GOAL_FILTERS}
         value={goalFilter}
-        onValueChange={filters.setGoalFilter}
-        items={[
-          { value: "all", label: "Todas as metas" },
-          ...GOALS.map((goal) => ({ value: goal.id, label: goal.name })),
-        ]}
-        className={cx(
-          "px-4 py-2 rounded-full border border-solid text-sm cursor-pointer shrink-0 whitespace-nowrap",
-          goalFilter === "all"
-            ? "bg-surface text-text border-border @hover:bg-surface-soft"
-            : "bg-green text-on-brand border-green",
-        )}
-      />
+        onValueChange={(value) => {
+          const next = GOAL_FILTERS.find((item) => item.value === value);
+
+          if (next) filters.setGoalFilter(next.value);
+        }}
+      >
+        <SelectTrigger size="sm" aria-label="Filtrar por meta">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {GOAL_FILTERS.map((item) => (
+            <SelectItem key={item.value} value={item.value}>
+              {item.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -215,41 +219,39 @@ function NoTransactions({
   filters: TransactionFilters;
   onAdd: () => void;
 }) {
-  const filtering = hasActiveFilters(filters);
-
   function clearFilters() {
     filters.setQuery("");
     filters.setGoalFilter("all");
     filters.setKindFilter("all");
   }
 
-  if (filtering)
+  if (hasActiveFilters(filters))
     return (
-      <EmptyState
-        icon={<Search size={25} strokeWidth={1.5} />}
-        title="Nenhuma transação encontrada."
-        action={
-          <Button variant="secondary" className="mt-2" onClick={clearFilters}>
+      <Empty reason="no-results">
+        <EmptyHeader>
+          <EmptyTitle>Nenhuma transação encontrada.</EmptyTitle>
+          <EmptyDescription>Ajuste a busca ou os filtros.</EmptyDescription>
+        </EmptyHeader>
+        <EmptyContent>
+          <Button variant="secondary" onClick={clearFilters}>
             Limpar filtros
           </Button>
-        }
-      >
-        Ajuste a busca ou os filtros.
-      </EmptyState>
+        </EmptyContent>
+      </Empty>
     );
 
   return (
-    <EmptyState
-      icon={<Search size={25} strokeWidth={1.5} />}
-      title="Nenhuma transação neste mês."
-      action={
-        <Button className="mt-2" onClick={onAdd}>
-          Adicionar transação
-        </Button>
-      }
-    >
-      Adicione uma receita ou despesa para começar.
-    </EmptyState>
+    <Empty>
+      <EmptyHeader>
+        <EmptyTitle>Nenhuma transação neste mês.</EmptyTitle>
+        <EmptyDescription>
+          Adicione uma receita ou despesa para começar.
+        </EmptyDescription>
+      </EmptyHeader>
+      <EmptyContent>
+        <Button onClick={onAdd}>Adicionar transação</Button>
+      </EmptyContent>
+    </Empty>
   );
 }
 
@@ -266,6 +268,7 @@ function TransactionPages({
     pageParam.withOptions({ history: "push" }),
   );
 
+  const [linked] = useQueryStates(linkedParams);
   const list = useRef<HTMLDivElement>(null);
   const pages = Math.ceil(transactions.length / PAGE_SIZE);
   const page = Math.min(selectedPage, pages - 1);
@@ -287,58 +290,75 @@ function TransactionPages({
     list.current?.scrollIntoView({ block: "start" });
   }
 
+  function pageLink(next: number, disabled: boolean) {
+    return {
+      href: pageHref({ ...linked, page: next }),
+      disabled,
+      onClick: (event: { preventDefault: () => void }) => {
+        event.preventDefault();
+        pickPage(next);
+      },
+    };
+  }
+
   return (
-    <div ref={list} className="grid gap-5 bp1000:gap-6">
+    <div ref={list} className="flex flex-col gap-5 lg:gap-6">
       {groups.map((group) => (
-        <section key={group.date} aria-labelledby={`day-${group.date}`}>
-          <div className="flex items-baseline justify-between gap-3 px-1 pb-2 text-xs">
+        <section
+          key={group.date}
+          aria-labelledby={`day-${group.date}`}
+          className="flex flex-col gap-2"
+        >
+          <div className="flex items-baseline justify-between gap-3 px-1">
             <time
               id={`day-${group.date}`}
               dateTime={group.date}
-              className="font-600"
+              className="type-label text-text-1"
             >
               {dayLabel(group.date)}
             </time>
             <span
-              className="text-text-muted tabular-nums"
+              className="type-caption text-text-2 tabular-nums"
               title="Total do dia nos resultados filtrados"
             >
               {netLabel(group.net, row.hidden)}
             </span>
           </div>
-          <ul className="m-0 p-0 list-none rounded-lg bg-surface overflow-clip">
+          <ItemGroup>
             {group.items.map((t) => (
               <TransactionRow key={t.id} transaction={t} {...row} />
             ))}
-          </ul>
+          </ItemGroup>
         </section>
       ))}
       {pages > 1 && (
-        <nav
+        <Pagination
           aria-label="Páginas de transações"
-          className="flex items-center justify-between flex-wrap gap-3 px-1"
+          className="flex-wrap gap-2 px-1"
         >
           <p
             aria-live="polite"
-            className="m-0 text-sm text-text-muted tabular-nums basis-full"
+            className="basis-full type-body-sm text-text-2 tabular-nums"
           >
             {`${(start + 1).toLocaleString("pt-BR")}–${Math.min(start + PAGE_SIZE, transactions.length).toLocaleString("pt-BR")} de ${transactions.length.toLocaleString("pt-BR")} transações · Página ${page + 1} de ${pages}`}
           </p>
-          <Button
-            variant="secondary"
-            disabled={page === 0}
-            onClick={() => pickPage(page - 1)}
-          >
-            Anterior
-          </Button>
-          <Button
-            variant="secondary"
-            disabled={page === pages - 1}
-            onClick={() => pickPage(page + 1)}
-          >
-            Próxima
-          </Button>
-        </nav>
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                text="Anterior"
+                aria-label="Anterior"
+                {...pageLink(page - 1, page === 0)}
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                text="Próxima"
+                aria-label="Próxima"
+                {...pageLink(page + 1, page === pages - 1)}
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       )}
     </div>
   );
@@ -360,9 +380,7 @@ export function TransactionList({
       {filtered.length ? (
         <TransactionPages transactions={filtered} {...row} />
       ) : (
-        <div className="rounded-lg bg-surface overflow-clip">
-          <NoTransactions filters={filters} onAdd={onAdd} />
-        </div>
+        <NoTransactions filters={filters} onAdd={onAdd} />
       )}
     </section>
   );

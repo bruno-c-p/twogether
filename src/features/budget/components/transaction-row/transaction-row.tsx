@@ -1,4 +1,15 @@
-import { Pencil, Trash2 } from "lucide-react";
+import { Button as ButtonPrimitive } from "@base-ui/react/button";
+import { Button } from "@/components/glaze/ui/button";
+import { Edit, Icon, TrashCan } from "@/components/glaze/icon";
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemMeta,
+  ItemTitle,
+} from "@/components/glaze/ui/item";
 import { AMOUNT_STYLE } from "@/features/budget/components/amount-style";
 import { GOALS, KINDS } from "@/features/budget/constants";
 import { money } from "@/features/budget/domain/format";
@@ -8,8 +19,6 @@ import {
 } from "@/features/budget/domain/status";
 import { deleteLock, editLock } from "@/features/budget/domain/view";
 import type { Member, Transaction } from "@/features/budget/domain/types";
-import { Button } from "@/components/ui/button";
-import { ColorDot } from "@/components/ui/color-dot";
 import { PersonAvatar } from "@/components/ui/person-avatar";
 import { cx } from "@/lib/cx";
 
@@ -48,42 +57,23 @@ function PayerAvatar({
       title={name ?? "Pessoa do casal"}
       name={name}
       position={index}
-      className="w-[32px] h-[32px] text-xs"
+      className="size-8"
     />
   );
 }
 
-// The goal with its color; `suffix` joins the same truncating line.
-function GoalLabel({
-  transaction,
-  suffix = "",
-}: {
-  transaction: Transaction;
-  suffix?: string;
-}) {
-  const goal = GOALS.find((g) => g.id === transaction.goal);
-
-  return (
-    <>
-      <ColorDot
-        className="w-[7px] h-[7px]"
-        style={{ background: goal?.color ?? "var(--brand)" }}
-      />
-      <span className="truncate">
-        {transaction.kind === "expense"
-          ? goal?.name
-          : KINDS[transaction.kind].label}
-        {suffix && ` · ${suffix}`}
-      </span>
-    </>
-  );
+// The goal by name, or the kind for income and transfers.
+function goalLabel(transaction: Transaction) {
+  return transaction.kind === "expense"
+    ? GOALS.find((g) => g.id === transaction.goal)?.name
+    : KINDS[transaction.kind].label;
 }
 
 /**
  * Phones: two lines (description, then goal and split status) with the
  * amount on the right; the whole row opens the edit dialog, which is also
- * where delete lives. From bp1000 the row spreads into columns and keeps
- * the edit and delete icons.
+ * where delete lives. From lg the goal gets its own column and the row
+ * keeps the edit and delete icons.
  */
 export function TransactionRow({
   transaction,
@@ -107,72 +97,69 @@ export function TransactionRow({
   const status = splitLabel(t, state);
   const lock = editLock(state);
   const removeLock = deleteLock(state);
+  const goal = goalLabel(t);
 
   return (
-    <li
-      className={cx(
-        "relative grid items-center gap-x-3 min-h-[62px] px-4 py-2.5 @hover:bg-surface-2 active:bg-surface-2",
-        "grid-cols-[32px_minmax(0,1fr)_auto] bp1000:grid-cols-[32px_minmax(0,1fr)_200px_150px_68px] bp1000:min-h-[56px]",
-        "[&+&]:before:content-[''] [&+&]:before:absolute [&+&]:before:top-0 [&+&]:before:left-[60px] [&+&]:before:right-0 [&+&]:before:h-px [&+&]:before:bg-border",
-      )}
-    >
-      <PayerAvatar members={members} memberId={t.memberId} />
-      <div className="min-w-0 grid gap-0.5 bp1000:flex bp1000:items-baseline bp1000:gap-2">
-        {/* Stretched over the whole row, so any tap on it edits. The global
-            press scale would make the button the ::after's containing block,
-            shrinking the target mid-press, so this button does not scale. */}
-        <Button
-          variant="unstyled"
-          className={cx(
-            "block max-w-full truncate border-0 bg-transparent p-0 text-left text-md font-500 text-text",
-            "after:content-[''] after:absolute after:inset-0 active:![transform:none] disabled:opacity-100 disabled:cursor-default",
+    <Item className="min-h-14">
+      <ItemMedia>
+        <PayerAvatar members={members} memberId={t.memberId} />
+      </ItemMedia>
+      <ItemContent>
+        <ItemTitle>
+          {/* Glaze's row link, as a button: its hit area covers the row,
+              so any tap on it edits. */}
+          <ButtonPrimitive
+            data-slot="item-link"
+            data-control=""
+            className="min-w-0 truncate text-start after:absolute after:inset-0 after:content-[''] disabled:cursor-default"
+            disabled={busy || Boolean(lock)}
+            title={lock || undefined}
+            onClick={() => onEdit(t)}
+          >
+            {t.description}
+          </ButtonPrimitive>
+          {status && (
+            <span className="hidden shrink-0 type-caption text-text-2 lg:inline">
+              {status}
+            </span>
           )}
-          disabled={busy || Boolean(lock)}
-          title={lock || undefined}
-          onClick={() => onEdit(t)}
-        >
-          {t.description}
-        </Button>
-        {status && (
-          <span className="hidden bp1000:inline shrink-0 text-xs text-text-muted">
-            {status}
-          </span>
-        )}
-        <span className="flex items-center gap-1.5 min-w-0 text-xs text-text-muted bp1000:hidden">
-          <GoalLabel transaction={t} suffix={status} />
-        </span>
-      </div>
-      <span className="hidden bp1000:flex items-center gap-2 min-w-0 text-sm text-text">
-        <GoalLabel transaction={t} />
-      </span>
+        </ItemTitle>
+        <ItemDescription className="truncate lg:hidden">
+          {goal}
+          {status && ` · ${status}`}
+        </ItemDescription>
+      </ItemContent>
+      <ItemMeta className="hidden w-48 truncate type-body-sm text-text-1 lg:block">
+        {goal}
+      </ItemMeta>
       <span
         className={cx(
-          "text-md font-600 whitespace-nowrap tabular-nums bp1000:text-right",
-          hidden ? "text-text" : AMOUNT_STYLE[t.kind].color,
+          "shrink-0 type-label whitespace-nowrap tabular-nums lg:w-36 lg:text-end",
+          hidden ? "text-text-1" : AMOUNT_STYLE[t.kind].color,
         )}
       >
         {amountLabel(t, hidden)}
       </span>
-      <div className="relative hidden bp1000:flex justify-end gap-1">
+      <ItemActions className="hidden lg:flex">
         <Button
-          variant="icon"
-          className="text-text-muted"
+          variant="ghost"
+          size="icon-sm"
           disabled={busy || Boolean(lock)}
           aria-label={withLock(`Editar ${t.description}`, lock)}
           onClick={() => onEdit(t)}
         >
-          <Pencil size={15} />
+          <Icon icon={Edit} />
         </Button>
         <Button
-          variant="icon"
-          className="text-text-muted @hover:text-danger"
+          variant="ghost"
+          size="icon-sm"
           disabled={busy || Boolean(removeLock)}
           aria-label={withLock(`Excluir ${t.description}`, removeLock)}
           onClick={() => onDelete(t)}
         >
-          <Trash2 size={15} />
+          <Icon icon={TrashCan} />
         </Button>
-      </div>
-    </li>
+      </ItemActions>
+    </Item>
   );
 }
