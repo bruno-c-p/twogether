@@ -15,8 +15,10 @@ import "@fontsource/geist/600.css";
 import "@fontsource/geist-mono/400.css";
 import "@fontsource/geist-mono/500.css";
 import stylesheet from "@/styles.css?url";
-import glazeStylesheet from "@/components/glaze/styles.css?url";
 import "virtual:uno.css";
+// After Uno, so Glaze's utilities win where both emit a class of the same name
+// (hidden, flex, px-4) and its responsive variants are not overridden.
+import "@/components/glaze/styles.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript, useThemePreference } from "@/features/theme";
 import { Toaster } from "@/components/ui/toaster";
@@ -78,7 +80,6 @@ export const Route = createRootRouteWithContext<{
     ],
     links: [
       { rel: "stylesheet", href: stylesheet },
-      { rel: "stylesheet", href: glazeStylesheet },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
