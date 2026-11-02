@@ -1,5 +1,4 @@
 import { createFileRoute } from "@tanstack/react-router";
-import archivoLatin from "@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2?url";
 import { LandingPage } from "@/features/landing/components/landing-page/landing-page";
 import { meta } from "@/features/landing/content";
 
@@ -14,15 +13,6 @@ export const Route = createFileRoute("/conheca")({
       { property: "og:title", content: meta.title },
       { property: "og:description", content: meta.description },
       { name: "twitter:card", content: "summary" },
-    ],
-    links: [
-      {
-        rel: "preload",
-        href: archivoLatin,
-        as: "font",
-        type: "font/woff2",
-        crossOrigin: "anonymous",
-      },
     ],
   }),
   component: LandingPage,

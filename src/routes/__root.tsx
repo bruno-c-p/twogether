@@ -113,6 +113,8 @@ const CLERK_APPEARANCE = {
     colorInput: "var(--paper)",
     colorInputForeground: "var(--text-1)",
     colorDanger: "var(--fail)",
+    colorBorder: "var(--line-control)",
+    colorShadow: "transparent",
     borderRadius: "var(--radius-panel)",
     fontFamily: "var(--font-sans)",
     fontSize: "14px",
