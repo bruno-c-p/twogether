@@ -178,7 +178,7 @@ function DialogContent({className, size, showCloseButton, children, ref, onKeyDo
         {children}
         {withClose && <DialogPrimitive.Close
           data-slot="dialog-close-button"
-          aria-label="Close"
+          aria-label="Fechar"
           disabled={pending}
           render={<Button variant="ghost" size="icon-sm" className="absolute end-3 top-3.5"/>}
         >

@@ -206,8 +206,8 @@ function CloseButton({docked}: {docked: boolean}) {
   const {pending} = useSheet();
   const button = <Button variant="ghost" size="icon-sm" className={closePlace}/>;
   return docked
-    ? <SheetClose data-slot="sheet-close-button" aria-label="Close" data-dialog-action={undefined} render={button}><Icon icon={CloseIcon}/></SheetClose>
-    : <DrawerPrimitive.Close data-slot="sheet-close-button" aria-label="Close" disabled={pending} render={button}><Icon icon={CloseIcon}/></DrawerPrimitive.Close>;
+    ? <SheetClose data-slot="sheet-close-button" aria-label="Fechar" data-dialog-action={undefined} render={button}><Icon icon={CloseIcon}/></SheetClose>
+    : <DrawerPrimitive.Close data-slot="sheet-close-button" aria-label="Fechar" disabled={pending} render={button}><Icon icon={CloseIcon}/></DrawerPrimitive.Close>;
 }
 
 function ModalContent({className, children, side, showCloseButton, ref, onKeyDown, initialFocus, defaultWidth: _w, minWidth: _min, maxWidth: _max, onWidthChange: _c, ...props}: Omit<SheetContentProps, 'side'> & {side: ScreenSide}) {
@@ -281,7 +281,7 @@ function DockedContent({className, children, side, showCloseButton = true, defau
     <div
       role="separator"
       tabIndex={0}
-      aria-label="Resize panel"
+      aria-label="Redimensionar painel"
       aria-orientation="vertical"
       aria-valuenow={width}
       aria-valuemin={minWidth}
