@@ -7,10 +7,8 @@ import { SettingsSection } from "@/features/auth/components/settings-section";
 import {
   Sheet,
   SheetBody,
-  SheetClose,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -69,7 +67,7 @@ export function AccountDrawer({
           </MobileTabContent>
         </SheetTrigger>
       )}
-      <SheetContent showCloseButton={false}>
+      <SheetContent>
         <SheetHeader>
           <SheetTitle>Sua conta</SheetTitle>
           <SheetDescription>
@@ -88,9 +86,6 @@ export function AccountDrawer({
             <AccountSettings user={user} members={members} onManage={manage} />
           </Suspense>
         </SheetBody>
-        <SheetFooter>
-          <SheetClose>Fechar</SheetClose>
-        </SheetFooter>
       </SheetContent>
     </Sheet>
   );
