@@ -10,7 +10,7 @@
     "build": "bun scripts/check-env.ts && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "oxlint",
-    "lint:glaze": "eslint -c glaze.eslint.config.mjs .",
+    "lint:glaze": "eslint -c glaze.eslint.config.mjs --ignore-pattern '.output/**' .",
     "fitness": "bun scripts/fitness.ts",
     "merge-guard": "bun scripts/merge-guard.ts",
     "format": "prettier --write .",

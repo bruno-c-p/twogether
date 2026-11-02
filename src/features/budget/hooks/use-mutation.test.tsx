@@ -1,5 +1,6 @@
 import { redirect } from "@tanstack/react-router";
 import { describe, expect, test, vi } from "vitest";
+import { Button } from "@/components/glaze/ui/button";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
@@ -40,8 +41,12 @@ function Harness({
 
   return (
     <>
-      <button onClick={() => void go()}>run</button>
-      <button onClick={mutation.reset}>reset</button>
+      <Button variant="secondary" onClick={() => void go()}>
+        run
+      </Button>
+      <Button variant="secondary" onClick={mutation.reset}>
+        reset
+      </Button>
       <p role="status">
         {mutation.pending ? "pending" : mutation.error || "idle"}
       </p>
