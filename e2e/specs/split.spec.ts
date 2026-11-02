@@ -13,6 +13,7 @@ import {
   choosePerson,
   monthSummary,
   transactionRow,
+  pickDate,
 } from "../fixtures/app";
 
 async function joinPartner(page: Page, browser: Browser) {
@@ -22,7 +23,7 @@ async function joinPartner(page: Page, browser: Browser) {
   await expect(invite).toHaveValue(/\/convite\/[0-9a-f]{64}$/);
   const inviteUrl = await invite.inputValue();
   await page.getByRole("button", { name: "Fechar", exact: true }).click();
-  await page.getByRole("link", { name: "twogether — início" }).click();
+  await page.getByRole("link", { name: "twogether, início" }).click();
   await expect(
     page.getByRole("heading", { name: "Visão geral" }),
   ).toBeVisible();
@@ -56,7 +57,7 @@ test.describe("split expenses", () => {
     const dialog = await openNewTransaction(page);
     await dialog.getByLabel("Valor").fill("2000,00");
     await dialog.getByLabel("Descrição").fill("Aluguel");
-    await dialog.getByLabel("Data").fill("2026-09-05");
+    await pickDate(dialog, "Data", "2026-09-05");
     await dialog
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
@@ -88,7 +89,7 @@ test.describe("split expenses", () => {
     await expect(card.getByText("Você deve R$ 1.000,00 a Ana")).toBeVisible();
     await card.getByRole("button", { name: "Marcar como pago" }).click();
     const settle = partner.getByRole("dialog", { name: "Marcar como pago" });
-    await settle.getByLabel("Data do pagamento").fill("2026-09-10");
+    await pickDate(settle, "Data do pagamento", "2026-09-10");
     await settle.getByRole("button", { name: "Confirmar pagamento" }).click();
     await expectToast(partner, "Pagamento registrado.");
     await expect(card.getByText("Nada pendente entre vocês")).toBeVisible();

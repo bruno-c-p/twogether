@@ -12,6 +12,7 @@ import {
   uniqueEmail,
   waitForGate,
   waitForHydrated,
+  pickDate,
 } from "../fixtures/app";
 
 test("V1 key screens have no horizontal overflow at 320px", async ({
@@ -36,9 +37,9 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
   await dialog
     .getByLabel("Descrição")
     .fill("Supermercado Extraordinariamente Comprido Ltda Filial Centro");
-  await dialog.getByLabel("Data").fill("2026-09-14");
+  await pickDate(dialog, "Data", "2026-09-14");
   await dialog
-    .getByRole("button", { name: "Transferência", exact: true })
+    .getByRole("radio", { name: "Transferência", exact: true })
     .click();
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
@@ -67,53 +68,22 @@ test("V1 key screens have no horizontal overflow at 320px", async ({
 
   const kinds = page
     .getByRole("dialog", { name: "Nova transação" })
-    .getByRole("group", { name: "Tipo da transação" });
+    .getByRole("radiogroup", { name: "Tipo da transação" });
 
-  // Rect widths, unlike the integer scrollWidth, see sub-pixel overflow.
+  // The kind radios wrap instead of shrinking, so every label stays whole.
   for (const width of [mobile.width, 360, 619, 620, 768]) {
     await page.setViewportSize({ ...mobile, width });
+    await expectNoHorizontalOverflow(page, `Nova transação at ${width}px`);
 
-    const headroom = await kinds.evaluate((group) => {
-      const px = (element: Element, ...properties: string[]) => {
-        const style = getComputedStyle(element);
+    expect(
+      await kinds.evaluate((group) => group.scrollWidth - group.clientWidth),
+      `kind radios clip at ${width}px`,
+    ).toBeLessThanOrEqual(0);
 
-        return properties.reduce(
-          (sum, property) => sum + parseFloat(style.getPropertyValue(property)),
-          0,
-        );
-      };
-
-      const buttons = [...group.querySelectorAll("button")];
-
-      const needed = buttons.reduce(
-        (sum, button) => {
-          const content = document.createRange();
-
-          content.selectNodeContents(button);
-
-          return (
-            sum +
-            content.getBoundingClientRect().width +
-            px(button, "padding-left", "padding-right")
-          );
-        },
-        px(group, "column-gap") * (buttons.length - 1),
-      );
-
-      const inner =
-        group.getBoundingClientRect().width -
-        px(
-          group,
-          "padding-left",
-          "padding-right",
-          "border-left-width",
-          "border-right-width",
-        );
-
-      return inner - needed;
-    });
-
-    expect(headroom, `kind toggle headroom at ${width}px`).toBeGreaterThan(0);
+    for (const name of ["Despesa", "Receita", "Transferência"])
+      await expect(
+        kinds.getByRole("radio", { name, exact: true }),
+      ).toBeInViewport();
   }
 
   await page.setViewportSize(mobile);

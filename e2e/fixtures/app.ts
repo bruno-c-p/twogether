@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 import { createClerkClient } from "@clerk/backend";
 import { clerk, setupClerkTestingToken } from "@clerk/testing/playwright";
 import { createClient } from "@libsql/client";
@@ -168,20 +168,18 @@ export async function openCouple(page: Page) {
   await waitForHydrated(page);
 }
 
-export async function dismissToast(page: Page, message: string) {
-  const close = page
-    .locator('[data-slot="toast"]')
-    .filter({ hasText: message })
-    .getByRole("button", { name: "Fechar aviso" });
-
-  if (await close.isVisible()) await close.click();
-}
-
+// Glaze stacks identical toasts, so each one is closed before the next action.
+// Base UI keeps the close button out of the accessibility tree until the
+// stack is hovered or focused, as a pointer user would do first.
 export async function expectToast(page: Page, message: string) {
-  await expect(
-    page.locator('[data-slot="toast"]').filter({ hasText: message }),
-  ).toBeVisible();
-  await dismissToast(page, message);
+  const toast = page
+    .locator('[data-slot="toast"]')
+    .filter({ hasText: message });
+
+  await expect(toast).toBeVisible();
+  await toast.hover();
+  await toast.getByRole("button", { name: "Dispensar" }).click();
+  await expect(toast).toHaveCount(0);
 }
 
 export async function expectNoHorizontalOverflow(page: Page, screen = "page") {
@@ -306,4 +304,62 @@ export async function openNewTransaction(page: Page) {
     .click();
 
   return page.getByRole("dialog", { name: "Nova transação" });
+}
+
+const monthCaption = new Intl.DateTimeFormat("pt-BR", {
+  month: "long",
+  year: "numeric",
+});
+
+const dayName = new Intl.DateTimeFormat("pt-BR", {
+  weekday: "long",
+  year: "numeric",
+  month: "long",
+  day: "numeric",
+});
+
+function escapeRegExp(text: string) {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// Glaze's date picker is a button that opens a calendar; it takes no typing.
+export async function pickDate(scope: Locator, label: string, iso: string) {
+  const page = scope.page();
+  const [year, month, day] = iso.split("-").map(Number);
+  const target = new Date(year, month - 1, day);
+
+  await scope
+    .getByRole("button", { name: new RegExp(`^${escapeRegExp(label)} `) })
+    .click();
+
+  const grid = page.getByRole("grid", { name: monthCaption.format(target) });
+
+  for (let step = 0; step < 36 && !(await grid.isVisible()); step++) {
+    const shown = await page.getByRole("grid").evaluate((table) => {
+      const caption = document.getElementById(
+        table.getAttribute("aria-labelledby") ?? "",
+      );
+
+      return caption?.textContent ?? "";
+    });
+
+    const shownIndex = Array.from({ length: 12 * 5 }, (_, offset) => {
+      const date = new Date(year - 2, offset, 1);
+
+      return { date, caption: monthCaption.format(date) };
+    }).find(({ caption }) => caption === shown)?.date;
+
+    const forward = !shownIndex || shownIndex < target;
+
+    await page
+      .getByRole("button", { name: forward ? "Próximo mês" : "Mês anterior" })
+      .click();
+  }
+
+  await grid
+    .getByRole("button", {
+      name: new RegExp(`^${escapeRegExp(dayName.format(target))}(, hoje)?$`),
+    })
+    .click();
+  await expect(page.getByRole("grid")).toHaveCount(0);
 }

@@ -17,14 +17,15 @@ import {
   monthTrigger,
   setMonth,
   transactionRow,
+  pickDate,
 } from "../fixtures/app";
 
 async function addExpense(page: Page, description: string, date: string) {
   const dialog = await openNewTransaction(page);
-  await dialog.getByRole("button", { name: "Despesa" }).click();
+  await dialog.getByRole("radio", { name: "Despesa" }).click();
   await dialog.getByLabel("Valor").fill("10,00");
   await dialog.getByLabel("Descrição").fill(description);
-  await dialog.getByLabel("Data").fill(date);
+  await pickDate(dialog, "Data", date);
   await dialog.getByRole("button", { name: "Custo fixo", exact: true }).click();
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
@@ -310,10 +311,10 @@ test.describe("overview and goals", () => {
     await setMonth(page, "2026-09");
 
     const income = await openNewTransaction(page);
-    await income.getByRole("button", { name: "Receita" }).click();
+    await income.getByRole("radio", { name: "Receita" }).click();
     await income.getByLabel("Valor").fill("5000,00");
     await income.getByLabel("Descrição").fill("Salário");
-    await income.getByLabel("Data").fill("2026-09-01");
+    await pickDate(income, "Data", "2026-09-01");
     await income.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 

@@ -13,24 +13,25 @@ import {
   monthText,
   monthTrigger,
   monthSummary,
+  pickDate,
 } from "../fixtures/app";
 
 async function seedMoney(page: Page) {
   await onboard(page, "Ana");
   await setMonth(page, "2026-09");
   const dialog = await openNewTransaction(page);
-  await dialog.getByRole("button", { name: "Receita" }).click();
+  await dialog.getByRole("radio", { name: "Receita" }).click();
   await dialog.getByLabel("Valor").fill("5000,00");
   await dialog.getByLabel("Descrição").fill("Salário");
-  await dialog.getByLabel("Data").fill("2026-09-01");
+  await pickDate(dialog, "Data", "2026-09-01");
   await dialog.getByRole("button", { name: "Adicionar transação" }).click();
   await expectToast(page, "Transação adicionada.");
   await openNewTransaction(page);
   const expense = page.getByRole("dialog", { name: "Nova transação" });
-  await expense.getByRole("button", { name: "Despesa" }).click();
+  await expense.getByRole("radio", { name: "Despesa" }).click();
   await expense.getByLabel("Valor").fill("45,90");
   await expense.getByLabel("Descrição").fill("Mercado");
-  await expense.getByLabel("Data").fill("2026-09-14");
+  await pickDate(expense, "Data", "2026-09-14");
   await expense
     .getByRole("button", { name: "Custo fixo", exact: true })
     .click();
@@ -47,17 +48,10 @@ test.describe("chrome", () => {
 
     await openView(page, "Orçamento");
 
-    const barWidth = await page
-      .getByRole("link", { name: /Custo fixo:/ })
-      .evaluate((card) => {
-        const fill = [...card.querySelectorAll("span")].find((span) =>
-          span.getAttribute("style")?.includes("width"),
-        );
-
-        return fill?.style.width ?? "";
-      });
-
-    expect(barWidth).toBe("0%");
+    // A hidden amount must not leak through the spend meter's fill.
+    await expect(
+      page.getByRole("meter", { name: "Gasto de Custo fixo" }),
+    ).toHaveAttribute("aria-valuenow", "0");
     expect(new URL(page.url()).search).not.toMatch(/hidden/);
     await openView(page, "Visão geral");
 
@@ -78,13 +72,15 @@ test.describe("chrome", () => {
   test("M10 theme persists on the gate and workspace", async ({ page }) => {
     await page.goto("/entrar");
     await waitForGate(page);
-    await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
+    await expect(
+      page.getByRole("radiogroup", { name: "Aparência" }),
+    ).toBeVisible();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme-preference",
       "system",
     );
 
-    await page.getByRole("button", { name: "Tema escuro" }).click();
+    await page.getByRole("radio", { name: "Tema escuro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme-preference",
@@ -96,7 +92,7 @@ test.describe("chrome", () => {
     await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
 
-    await page.getByRole("button", { name: "Tema claro" }).click();
+    await page.getByRole("radio", { name: "Tema claro" }).click();
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
     await reloadApp(page);
     await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
@@ -104,16 +100,17 @@ test.describe("chrome", () => {
       await page.evaluate(() => localStorage.getItem("twogether.theme.v1")),
     ).toBe("light");
 
-    await page.getByRole("button", { name: "Tema sistema" }).click();
+    await page.getByRole("radio", { name: "Tema sistema" }).click();
     await expect(page.locator("html")).toHaveAttribute(
       "data-theme-preference",
       "system",
     );
 
     const readable = await page.evaluate(() => {
-      const styles = getComputedStyle(document.documentElement);
-      const text = styles.getPropertyValue("--text").trim();
-      const surface = styles.getPropertyValue("--surface").trim();
+      // Glaze's tokens live on the .glaze body.
+      const styles = getComputedStyle(document.body);
+      const text = styles.getPropertyValue("--text-1").trim();
+      const surface = styles.getPropertyValue("--paper").trim();
 
       return { text, surface, body: getComputedStyle(document.body).color };
     });
@@ -124,23 +121,25 @@ test.describe("chrome", () => {
     expect(readable.body).toBeTruthy();
 
     await onboard(page, "Ana");
-    await expect(page.getByRole("group", { name: "Aparência" })).toBeHidden();
+    await expect(
+      page.getByRole("radiogroup", { name: "Aparência" }),
+    ).toBeHidden();
 
     await withMobile(page, async () => {
       await nav(page, "mobile").getByRole("button", { name: "Conta" }).click();
       await expect(
-        page.getByRole("group", { name: "Aparência" }),
+        page.getByRole("radiogroup", { name: "Aparência" }),
       ).toBeVisible();
-      await page.getByRole("button", { name: "Tema escuro" }).click();
+      await page.getByRole("radio", { name: "Tema escuro" }).click();
       await expect(page.locator("html")).toHaveAttribute("data-theme", "dark");
       await expect(
-        page.getByRole("button", { name: "Tema escuro" }),
+        page.getByRole("radio", { name: "Tema escuro" }),
       ).toBeEnabled();
       await expect(
-        page.getByRole("button", { name: "Tema claro" }),
+        page.getByRole("radio", { name: "Tema claro" }),
       ).toBeEnabled();
       await expect(
-        page.getByRole("button", { name: "Tema sistema" }),
+        page.getByRole("radio", { name: "Tema sistema" }),
       ).toBeEnabled();
     });
   });
@@ -215,7 +214,7 @@ test.describe("chrome", () => {
   }) => {
     await onboard(page, "Ana");
 
-    const brand = page.getByRole("link", { name: "twogether — início" });
+    const brand = page.getByRole("link", { name: "twogether, início" });
 
     await expect(brand).toHaveCount(1);
     await expect(brand).toContainText("twogether.");
