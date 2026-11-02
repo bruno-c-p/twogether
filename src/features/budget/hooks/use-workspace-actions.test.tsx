@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
+import { Button } from "@/components/glaze/ui/button";
 import { toast } from "@/components/glaze/ui/toast";
 import { Toaster } from "@/components/ui/toaster";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
@@ -42,16 +43,27 @@ function Harness({ mutations }: { mutations: BudgetMutations }) {
 
   return (
     <>
-      <button onClick={() => dialogs.setDeleting(series[0])}>pick</button>
-      <button onClick={() => void actions.deleteRecurring(series[0], [])}>
+      <Button
+        variant="secondary"
+        onClick={() => dialogs.setDeleting(series[0])}
+      >
+        pick
+      </Button>
+      <Button
+        variant="secondary"
+        onClick={() => void actions.deleteRecurring(series[0], [])}
+      >
         delete one
-      </button>
-      <button
+      </Button>
+      <Button
+        variant="secondary"
         onClick={() => void actions.deleteRecurring(series[0], series.slice(1))}
       >
         delete following
-      </button>
-      <button onClick={actions.openPercentages}>edit percentages</button>
+      </Button>
+      <Button variant="secondary" onClick={actions.openPercentages}>
+        edit percentages
+      </Button>
       <Toaster />
       <p data-testid="deleting">{dialogs.deleting?.id ?? "none"}</p>
       <p data-testid="percentages">{dialogs.percentagesRevision ?? "closed"}</p>
