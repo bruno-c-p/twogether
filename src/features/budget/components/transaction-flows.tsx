@@ -41,19 +41,29 @@ function transactionDefaultDate(month: string) {
   return date.startsWith(month) ? date : `${month}-01`;
 }
 
-function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
+function DeleteRecurrenceFlow({
+  transaction,
+}: {
+  transaction: Transaction | null;
+}) {
   const { budget, dialogs, mutations, actions } = useWorkspace();
-  const following = laterInSeries(budget.state.transactions, transaction);
+
+  const following = transaction
+    ? laterInSeries(budget.state.transactions, transaction)
+    : [];
 
   return (
     <DeleteRecurrenceDialog
+      open={transaction !== null}
       transaction={transaction}
       count={following.length + 1}
       busy={mutations.deleteTransaction.pending}
       error={mutations.deleteTransaction.error}
       onClose={() => dialogs.setDeleting(null)}
       onDelete={(all) =>
-        actions.deleteRecurring(transaction, all ? following : [])
+        transaction
+          ? actions.deleteRecurring(transaction, all ? following : [])
+          : Promise.resolve()
       }
     />
   );
@@ -96,19 +106,16 @@ export function TransactionFlows() {
         }}
         onClose={() => dialogs.setTransaction(null)}
       />
-      {dialogs.deleting && (
-        <DeleteRecurrenceFlow transaction={dialogs.deleting} />
-      )}
-      {dialogs.settling && (
-        <SettleDialog
-          transaction={dialogs.settling}
-          members={budget.household.members}
-          busy={mutations.settleSplit.pending}
-          serverError={mutations.settleSplit.error}
-          onConfirm={actions.confirmSettle}
-          onClose={() => dialogs.setSettling(null)}
-        />
-      )}
+      <DeleteRecurrenceFlow transaction={dialogs.deleting} />
+      <SettleDialog
+        open={dialogs.settling !== null}
+        transaction={dialogs.settling}
+        members={budget.household.members}
+        busy={mutations.settleSplit.pending}
+        serverError={mutations.settleSplit.error}
+        onConfirm={actions.confirmSettle}
+        onClose={() => dialogs.setSettling(null)}
+      />
     </Suspense>
   );
 }

@@ -1,4 +1,3 @@
-import { fireEvent } from "@testing-library/react";
 import { describe, expect, test, vi } from "vitest";
 import {
   SettleDialog,
@@ -10,6 +9,16 @@ import { cents } from "@/test/cents";
 import { renderPlain } from "@/test/render";
 import { today } from "@/lib/clock";
 import { browserTimeZone } from "@/lib/time-zone";
+
+// jsdom has no ResizeObserver; Glaze's dialog body watches its own size.
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
 
 function setup({
   source = transaction({ amount: cents(10000), memberId: "ana", split: {} }),
@@ -28,6 +37,7 @@ function setup({
 
   const view = renderPlain(
     <SettleDialog
+      open
       transaction={source}
       members={[ana, { ...ana, id: "bia", name: "Bia" }]}
       busy={busy}
@@ -64,27 +74,36 @@ describe("SettleDialog", () => {
 
   test("while saving the form is locked and says so", async () => {
     const { screen, user, onConfirm } = setup({ busy: true });
-    const submit = screen.getByRole("button", { name: "Salvando…" });
+    const submit = screen.getByRole("button", { name: "Confirmar pagamento" });
 
-    expect(submit.closest("fieldset")?.disabled).toBe(true);
+    expect(submit.getAttribute("aria-busy")).toBe("true");
+    expect(screen.getByText("Salvando…")).toBeTruthy();
+    expect(
+      screen
+        .getByRole("button", { name: /Data do pagamento/ })
+        .closest("fieldset")?.disabled,
+    ).toBe(true);
     await user.click(submit);
     expect(onConfirm).not.toHaveBeenCalled();
   });
 
-  test("an invalid date is rejected", async () => {
-    const { screen, onConfirm, container } = setup();
+  test("confirms with a day picked in the calendar", async () => {
+    const { screen, user, onConfirm } = setup();
+    const now = today(browserTimeZone());
+    const picked = `${now.slice(0, 8)}${now.endsWith("-01") ? "02" : "01"}`;
 
-    const date =
-      container.ownerDocument.querySelector<HTMLInputElement>(
-        "input[name=date]",
-      );
+    await user.click(screen.getByRole("button", { name: /Data do pagamento/ }));
 
-    date?.removeAttribute("required");
+    const day = document.querySelector<HTMLElement>(`[data-day="${picked}"]`);
 
-    if (date) fireEvent.change(date, { target: { value: "" } });
-    container.ownerDocument.querySelector("form")?.requestSubmit();
+    expect(day).toBeTruthy();
 
-    expect(await screen.findByText("Escolha uma data válida.")).toBeTruthy();
-    expect(onConfirm).not.toHaveBeenCalled();
+    if (day) await user.click(day);
+
+    await user.click(
+      screen.getByRole("button", { name: "Confirmar pagamento" }),
+    );
+
+    expect(onConfirm).toHaveBeenCalledWith({ date: picked });
   });
 });

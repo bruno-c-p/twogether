@@ -3,10 +3,21 @@ import { DeleteRecurrenceDialog } from "@/features/budget/components/delete-recu
 import { transaction } from "@/test/fixtures";
 import { renderPlain } from "@/test/render";
 
+// jsdom has no ResizeObserver; Glaze's dialog body watches its own size.
+vi.stubGlobal(
+  "ResizeObserver",
+  class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  },
+);
+
 function setup(
   overrides: Partial<Parameters<typeof DeleteRecurrenceDialog>[0]> = {},
 ) {
   const props = {
+    open: true,
     transaction: transaction({ description: "Aluguel" }),
     count: 3,
     busy: false,
