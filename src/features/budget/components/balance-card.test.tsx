@@ -1,3 +1,4 @@
+import { within } from "@testing-library/react";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { BalanceCard } from "@/features/budget/components/balance-card";
 import { summarize } from "@/features/budget/domain/calc";
@@ -29,7 +30,7 @@ function renderCard(month: string, memberFilter = "all", hidden = false) {
   );
 }
 
-function spendBar(transactions: Transaction[], hidden = false) {
+function spendMeter(transactions: Transaction[], hidden = false) {
   const { container } = renderPlain(
     <BalanceCard
       summary={summarize(transactions)}
@@ -41,8 +42,9 @@ function spendBar(transactions: Transaction[], hidden = false) {
     />,
   );
 
-  // SAFETY: the card always renders the decorative bar track and its fill.
-  return container.querySelector<HTMLElement>('[aria-hidden="true"] > div')!;
+  return within(container).getByRole("meter", {
+    name: "Gastos sobre entradas",
+  });
 }
 
 afterEach(() => vi.useRealTimers());
@@ -77,22 +79,30 @@ describe("BalanceCard", () => {
     expect(screen.getAllByText("R$ ••••")).toHaveLength(3);
   });
 
-  test("the spend bar fills with the share of income spent", () => {
-    expect(spendBar([salary, market]).style.width).toBe("0.918%");
+  test("the spend meter reads the share of income spent", () => {
+    expect(spendMeter([salary, market]).getAttribute("aria-valuenow")).toBe(
+      "0.918",
+    );
   });
 
-  test("spending past income fills the bar and turns it red", () => {
+  test("spending past income fills the meter and says so", () => {
     const overspent = transaction({ id: "big", amount: cents(900000) });
 
-    const withIncome = spendBar([salary, overspent]);
-    expect(withIncome.style.width).toBe("100%");
-    expect(withIncome.className).toContain("bg-danger");
+    const withIncome = spendMeter([salary, overspent]);
+    expect(withIncome.getAttribute("aria-valuenow")).toBe("100");
+    expect(withIncome.getAttribute("aria-valuetext")).toContain(
+      "Acima das entradas",
+    );
 
-    expect(spendBar([market]).style.width).toBe("100%");
+    expect(spendMeter([market]).getAttribute("aria-valuenow")).toBe("100");
   });
 
-  test("hidden values and an empty month leave the bar empty", () => {
-    expect(spendBar([salary, market], true).style.width).toBe("0%");
-    expect(spendBar([salary]).style.width).toBe("0%");
+  test("hidden values and an empty month leave the meter empty", () => {
+    const overspent = transaction({ id: "big", amount: cents(900000) });
+    const hidden = spendMeter([salary, overspent], true);
+
+    expect(hidden.getAttribute("aria-valuenow")).toBe("0");
+    expect(hidden.getAttribute("aria-valuetext")).not.toContain("Acima");
+    expect(spendMeter([salary]).getAttribute("aria-valuenow")).toBe("0");
   });
 });

@@ -1,12 +1,22 @@
-import { Collapsible } from "@base-ui/react/collapsible";
-import { ArrowDownLeft, ArrowUpRight, Check, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { OverviewCard } from "@/features/budget/components/overview-card";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/glaze/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/glaze/ui/collapsible";
+import { SkeletonText } from "@/components/glaze/ui/skeleton";
 import { shortDay } from "@/features/budget/domain/format";
 import { partnerShare, type splitDebt } from "@/features/budget/domain/split";
 import { transactionStatus } from "@/features/budget/domain/status";
 import type { Member, Transaction } from "@/features/budget/domain/types";
-import { cx } from "@/lib/cx";
 
 function headline(net: number, open: number, partner: Member, money: string) {
   if (net > 0) return `${partner.name} te deve ${money}`;
@@ -30,11 +40,6 @@ function detail(open: number, waiting: boolean, partner: Member) {
 
 type Debt = ReturnType<typeof splitDebt>;
 
-const cardLayout = cx(
-  "grid grid-cols-[auto_minmax(0,1fr)_auto] gap-x-4 items-center",
-  "max-bp620:grid-cols-[auto_minmax(0,1fr)]",
-);
-
 export function SplitDebtCard({
   debt,
   ...props
@@ -49,22 +54,14 @@ export function SplitDebtCard({
 }) {
   if (!debt) {
     return (
-      <OverviewCard
-        aria-label="Acerto entre vocês"
-        aria-busy="true"
-        className={cardLayout}
-      >
-        <span
-          aria-hidden="true"
-          className="w-[44px] h-[44px] rounded-md bg-surface-2"
-        />
-        <div className="min-w-0 flex flex-col gap-2">
-          <h2 className="m-0 font-heading text-lg font-700 leading-tight">
-            Acerto entre vocês
-          </h2>
-          <span className="h-[14px] w-[60%] rounded-sm bg-surface-2 animate-pulse" />
-        </div>
-      </OverviewCard>
+      <Card role="region" aria-label="Acerto entre vocês" aria-busy="true">
+        <CardHeader>
+          <CardTitle>
+            <h2 className="type-heading">Acerto entre vocês</h2>
+          </CardTitle>
+          <SkeletonText type="body-sm" className="col-start-1 w-3/5" />
+        </CardHeader>
+      </Card>
     );
   }
 
@@ -91,55 +88,41 @@ function DebtCard({
     (transaction) => transactionStatus(transaction, userId).userOwes,
   );
 
-  const Icon = net > 0 ? ArrowDownLeft : net < 0 ? ArrowUpRight : Check;
-
   return (
-    <OverviewCard aria-label="Acerto entre vocês" className={cardLayout}>
-      <span
-        aria-hidden="true"
-        className={cx(
-          "w-[44px] h-[44px] rounded-md inline-flex items-center justify-center",
-          net < 0 ? "bg-danger-soft text-danger" : "bg-surface-2 text-text",
-        )}
-      >
-        <Icon size={20} />
-      </span>
-      <div className="min-w-0">
-        <h2
-          className={cx(
-            "m-0 font-heading text-lg font-700 tabular-nums leading-tight",
-            net < 0 && "text-danger",
-          )}
-        >
-          {headline(net, unpaid.length, partner, displayMoney(Math.abs(net)))}
-        </h2>
-        <p className="mt-1 text-sm text-text-muted">
+    <Card role="region" aria-label="Acerto entre vocês">
+      <CardHeader>
+        <CardTitle>
+          <h2 className="type-heading tabular-nums">
+            {headline(net, unpaid.length, partner, displayMoney(Math.abs(net)))}
+          </h2>
+        </CardTitle>
+        <CardDescription>
           {detail(unpaid.length, unpaid.length > 0 && !owed, partner)}
-        </p>
-      </div>
-      {owed && (
-        <Button
-          variant="secondary"
-          className={cx(
-            "min-h-[44px] whitespace-nowrap",
-            // Phones put the button under the text so the headline keeps its width.
-            "max-bp620:col-span-2 max-bp620:mt-4 max-bp620:w-full",
-          )}
-          disabled={busy}
-          onClick={() => onSettle(owed)}
-        >
-          Marcar como pago
-        </Button>
-      )}
+        </CardDescription>
+      </CardHeader>
       {unpaid.length > 0 && (
-        <UnpaidList
-          unpaid={unpaid}
-          userId={userId}
-          partner={partner}
-          displayMoney={displayMoney}
-        />
+        <CardContent flush>
+          <UnpaidList
+            unpaid={unpaid}
+            userId={userId}
+            partner={partner}
+            displayMoney={displayMoney}
+          />
+        </CardContent>
       )}
-    </OverviewCard>
+      {owed && (
+        <CardFooter>
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={busy}
+            onClick={() => onSettle(owed)}
+          >
+            Marcar como pago
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
   );
 }
 
@@ -156,40 +139,23 @@ function UnpaidList({
   displayMoney: (value: number) => string;
 }) {
   return (
-    <Collapsible.Root className="col-span-full min-w-0 mt-4">
-      <Collapsible.Trigger
-        className={cx(
-          "group w-full min-h-[44px] flex items-center justify-between gap-3",
-          "[border-width:1px_0_0] border-solid border-border bg-transparent px-0 pt-3",
-          "text-sm font-600 text-text-muted cursor-pointer @hover:text-text",
-        )}
-      >
+    <Collapsible>
+      <CollapsibleTrigger className="m-1">
         Despesas em aberto
-        <ChevronDown
-          aria-hidden="true"
-          size={18}
-          className="shrink-0 motion-safe:transition-transform duration-200 group-data-[panel-open]:rotate-180"
-        />
-      </Collapsible.Trigger>
-      <Collapsible.Panel
-        className={cx(
-          "overflow-hidden h-[var(--collapsible-panel-height)]",
-          "motion-safe:transition-[height] duration-200 ease-[var(--ease-out)]",
-          "data-[starting-style]:h-0 data-[ending-style]:h-0",
-        )}
-      >
-        <ul className="list-none min-w-0 m-0 p-0 flex flex-col max-h-[272px] overflow-y-auto">
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <ul className="max-h-68 overflow-y-auto border-t border-line-faint">
           {unpaid.map((transaction) => (
             <li
               key={transaction.id}
-              className="flex items-center justify-between gap-3 py-2.5 text-md [border-top:1px_solid_var(--border)] first:[border-top:0] last:pb-0"
+              className="rule-row flex items-center justify-between gap-3 px-3 py-2 type-body-sm"
             >
               {/* Who owes sits on its own line so a long description can't truncate it away. */}
               <span className="min-w-0 flex flex-col">
                 <span className="truncate" title={transaction.description}>
                   {transaction.description}
                 </span>
-                <span className="truncate text-text-muted text-sm">
+                <span className="truncate type-caption text-text-2">
                   {transactionStatus(transaction, userId).userOwes
                     ? "Você deve"
                     : `${partner.name} deve`}
@@ -203,7 +169,7 @@ function UnpaidList({
             </li>
           ))}
         </ul>
-      </Collapsible.Panel>
-    </Collapsible.Root>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

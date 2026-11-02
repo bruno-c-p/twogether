@@ -21,7 +21,6 @@ function renderCard(hidden: boolean, withPartners = true) {
     <MonthTotalsCard
       summary={summary}
       partners={withPartners ? partners : undefined}
-      hidden={hidden}
       displayMoney={(value) => (hidden ? "R$ ••••" : money(value))}
     />,
   );

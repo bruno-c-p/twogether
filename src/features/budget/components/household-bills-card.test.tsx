@@ -47,9 +47,8 @@ describe("HouseholdBillsCard", () => {
     expect(
       screen.getByText(/R\$\s*4\.000,01 no mês · R\$\s*2\.000,00 para cada/),
     ).toBeTruthy();
-    expect(
-      screen.getByRole("img", { name: "Custo fixo 81%, Prazeres 19%" }),
-    ).toBeTruthy();
+    expect(screen.getByText("81%")).toBeTruthy();
+    expect(screen.getByText("19%")).toBeTruthy();
     expect(
       screen.getByRole("link", {
         name: /^Custo fixo: R\$\s*3\.250,01, R\$\s*1\.625,00 para cada$/,
@@ -76,10 +75,8 @@ describe("HouseholdBillsCard", () => {
   test("a goal opens its split bills; hidden values hide the shares", async () => {
     const { screen, user, router } = await renderCard(bills, true);
 
-    expect(
-      screen.getByRole("img", { name: "Divisão por meta oculta" }),
-    ).toBeTruthy();
     expect(screen.queryByText("81%")).toBeNull();
+    expect(screen.queryByText("19%")).toBeNull();
     await user.click(screen.getByRole("link", { name: /^Prazeres:/ }));
     expect(router.state.location.pathname).toBe("/transacoes");
     expect(router.state.location.search).toEqual({
