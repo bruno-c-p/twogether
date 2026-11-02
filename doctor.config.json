@@ -19,26 +19,6 @@
     ],
     "overrides": [
       {
-        // The native <dialog> closes on Escape through onCancel. The backdrop
-        // click is a pointer-only shortcut for the same action, and the
-        // element is a modal dialog, not static content.
-        "files": ["src/components/ui/dialog/dialog.tsx"],
-        "rules": [
-          "react-doctor/click-events-have-key-events",
-          "react-doctor/no-noninteractive-element-interactions"
-        ]
-      },
-      {
-        // These inputs live inside modal dialogs the user just opened, and
-        // HTML recommends `autofocus` to choose a dialog's initial focus.
-        // Moving focus into a modal is required, not a surprise jump.
-        "files": [
-          "src/features/budget/components/account-dialog.tsx",
-          "src/features/budget/components/transaction-dialog/transaction-dialog.tsx"
-        ],
-        "rules": ["react-doctor/no-autofocus"]
-      },
-      {
         // These mutations hold no query data. Server actions refresh what
         // they change with router.invalidate(), which reruns the route
         // loaders (the rule only counts queryClient calls); the invite copy

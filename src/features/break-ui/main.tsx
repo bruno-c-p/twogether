@@ -33,10 +33,8 @@ import {
 import { toast } from "@/components/glaze/ui/toast";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
-import {
-  MobileTabContent,
-  mobileTabClass,
-} from "@/components/ui/mobile-tab-content";
+import { MobileTabContent } from "@/components/app/mobile-tab-content";
+import { mobileTabClass } from "@/components/app/mobile-tab";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
@@ -48,7 +46,7 @@ import {
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
 import { NameForm } from "@/features/auth/components/name-form";
 import { InviteForm } from "@/features/auth/components/invite-form";
-import { AppToaster } from "@/components/ui/toaster";
+import { AppToaster } from "@/components/app/toaster";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import { useBudget } from "@/features/budget/hooks/use-budget";
 import {
@@ -70,7 +68,6 @@ import "@fontsource/geist/600.css";
 import "@fontsource/geist-mono/400.css";
 import "@fontsource/geist-mono/500.css";
 import "@/styles.css";
-import "virtual:uno.css";
 import "@/components/glaze/styles.css";
 import { GlazePortalProvider } from "@/lib/glaze/portal";
 import { overlaySurface } from "@/lib/glaze/overlay";

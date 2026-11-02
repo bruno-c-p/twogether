@@ -19,7 +19,7 @@ import {
 } from "@/features/budget/domain/status";
 import { deleteLock, editLock } from "@/features/budget/domain/view";
 import type { Member, Transaction } from "@/features/budget/domain/types";
-import { PersonAvatar } from "@/components/ui/person-avatar";
+import { PersonAvatar } from "@/components/app/person-avatar";
 import { cx } from "@/lib/cx";
 
 function amountLabel(transaction: Transaction, hidden: boolean) {

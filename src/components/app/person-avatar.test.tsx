@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { PersonAvatar } from "@/components/ui/person-avatar";
+import { PersonAvatar } from "@/components/app/person-avatar";
 import { renderPlain } from "@/test/render";
 
 describe("PersonAvatar", () => {

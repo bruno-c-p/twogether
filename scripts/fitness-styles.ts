@@ -27,7 +27,7 @@ const NAV_TOKEN_USES: [string, string][] = [
     "src/features/budget/components/workspace-shell.tsx",
     "pb-(--mobile-nav-height)",
   ],
-  ["src/components/ui/toaster.tsx", "--mobile-nav-height"],
+  ["src/components/app/toaster.tsx", "--mobile-nav-height"],
 ];
 
 // One className attribute or cx() call is one element's class list. Every

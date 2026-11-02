@@ -1,5 +1,5 @@
 import type { Member } from "@/features/budget";
-import { PersonAvatar } from "@/components/ui/person-avatar";
+import { PersonAvatar } from "@/components/app/person-avatar";
 import {
   Item,
   ItemContent,

@@ -9,7 +9,7 @@ import {
 } from "@/components/glaze/ui/card";
 import { Progress } from "@/components/glaze/ui/progress";
 import { Status } from "@/components/glaze/ui/status";
-import { PersonAvatar } from "@/components/ui/person-avatar";
+import { PersonAvatar } from "@/components/app/person-avatar";
 import type { planGoals, summarize } from "@/features/budget/domain/calc";
 import {
   goalProgress,

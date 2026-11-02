@@ -1,6 +1,6 @@
 import { Card, CardContent } from "@/components/glaze/ui/card";
 import type { summarize } from "@/features/budget/domain/calc";
-import { PersonAvatar } from "@/components/ui/person-avatar";
+import { PersonAvatar } from "@/components/app/person-avatar";
 import { cx } from "@/lib/cx";
 
 type Partner = {

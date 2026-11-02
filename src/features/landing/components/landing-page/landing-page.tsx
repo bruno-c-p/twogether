@@ -11,7 +11,7 @@ import {
 } from "@/features/landing/content";
 import { SeamLink } from "@/features/landing/components/seam-link/seam-link";
 import { SplitStage } from "@/features/landing/components/split-stage/split-stage";
-import { Button } from "@/components/glaze/ui/button";
+import { buttonVariants } from "@/components/glaze/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/glaze/ui/card";
 import {
   DataList,
@@ -49,22 +49,24 @@ export function LandingPage() {
             twogether.
           </Link>
           <nav aria-label="Página" className="flex items-center gap-1">
-            <Button
-              render={<a href="#dividir" />}
-              nativeButton={false}
-              variant="ghost"
-              className="max-sm:hidden"
+            <a
+              href="#dividir"
+              className={buttonVariants({
+                variant: "ghost",
+                className: "max-sm:hidden",
+              })}
             >
               Como divide
-            </Button>
-            <Button
-              render={<a href="#metas" />}
-              nativeButton={false}
-              variant="ghost"
-              className="max-sm:hidden"
+            </a>
+            <a
+              href="#metas"
+              className={buttonVariants({
+                variant: "ghost",
+                className: "max-sm:hidden",
+              })}
             >
               Metas
-            </Button>
+            </a>
             <SeamLink to="/entrar" variant="outline">
               Entrar
             </SeamLink>
@@ -160,14 +162,12 @@ export function LandingPage() {
             <h2 className="type-title">{footer.title}</h2>
             <div className="flex flex-wrap items-center gap-2">
               <SeamLink to="/entrar">{footer.cta}</SeamLink>
-              <Button
-                render={<Link to="/entrar" />}
-                nativeButton={false}
-                variant="ghost"
-                size="lg"
+              <Link
+                to="/entrar"
+                className={buttonVariants({ variant: "ghost", size: "lg" })}
               >
                 {footer.signIn}
-              </Button>
+              </Link>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-4 border-t border-line-faint pt-4">

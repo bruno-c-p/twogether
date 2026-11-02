@@ -12,10 +12,8 @@ import {
   WORKSPACE_NAVIGATION,
   WORKSPACE_PATHS,
 } from "@/features/budget/constants";
-import {
-  MobileTabContent,
-  mobileTabClass,
-} from "@/components/ui/mobile-tab-content";
+import { MobileTabContent } from "@/components/app/mobile-tab-content";
+import { mobileTabClass } from "@/components/app/mobile-tab";
 import { cn, controlHeight } from "@/lib/glaze/utils";
 
 // Links keep month and person through the workspace layout's

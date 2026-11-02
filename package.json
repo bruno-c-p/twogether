@@ -40,7 +40,6 @@
     "big.js": "^7.0.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^0.577.0",
     "nuqs": "2.10.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -76,7 +75,6 @@
     "prettier": "^3.9.6",
     "react-doctor": "^0.9.14",
     "typescript": "^5.9.0",
-    "unocss": "^66.10.5",
     "vite": "^7.3.0",
     "vitest": "^4.0.0"
   }

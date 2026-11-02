@@ -15,13 +15,12 @@ import "@fontsource/geist/600.css";
 import "@fontsource/geist-mono/400.css";
 import "@fontsource/geist-mono/500.css";
 import stylesheet from "@/styles.css?url";
-import "virtual:uno.css";
 // After Uno, so Glaze's utilities win where both emit a class of the same name
 // (hidden, flex, px-4) and its responsive variants are not overridden.
 import "@/components/glaze/styles.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript, useThemePreference } from "@/features/theme";
-import { AppToaster } from "@/components/ui/toaster";
+import { AppToaster } from "@/components/app/toaster";
 import { LazyClerkUI } from "@/lib/clerk-ui";
 import { GlazePortalProvider } from "@/lib/glaze/portal";
 import { parseClientEnv } from "@/lib/env";

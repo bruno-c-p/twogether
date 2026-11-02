@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/glaze/ui/skeleton";
-import { Brand } from "@/components/ui/brand";
+import { Brand } from "@/components/app/brand";
 import { cn } from "@/lib/glaze/utils";
 
 const cards = [

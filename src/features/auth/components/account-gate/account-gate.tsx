@@ -14,8 +14,8 @@ import { householdActions } from "@/features/household";
 import { InviteForm } from "@/features/auth/components/invite-form";
 import { NameForm } from "@/features/auth/components/name-form";
 import { SignInSkeleton } from "@/features/auth/components/sign-in-skeleton";
-import { AppFooter } from "@/components/ui/app-footer/app-footer";
-import { Brand } from "@/components/ui/brand";
+import { AppFooter } from "@/components/app/app-footer/app-footer";
+import { Brand } from "@/components/app/brand";
 import {
   Alert,
   AlertDescription,

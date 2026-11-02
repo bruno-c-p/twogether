@@ -37,7 +37,7 @@ const healthyFiles = {
     '<nav className="h-(--mobile-nav-height)" />',
   "src/features/budget/components/workspace-shell.tsx":
     '<div className="max-lg:pb-(--mobile-nav-height)" />',
-  "src/components/ui/toaster.tsx":
+  "src/components/app/toaster.tsx":
     '<div className="[--c:var(--mobile-nav-height)]" />',
   [BOUNDARY_BASELINE]: JSON.stringify({
     kind: "dead-code",

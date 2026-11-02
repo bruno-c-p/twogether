@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
-import { AppFooter } from "@/components/ui/app-footer/app-footer";
+import { AppFooter } from "@/components/app/app-footer/app-footer";
 import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/features/budget/components/workspace-navigation";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
-import { Brand } from "@/components/ui/brand";
+import { Brand } from "@/components/app/brand";
 import { cn } from "@/lib/glaze/utils";
 
 /** The account entry renders as header avatars on desktop and a tab on phones. */

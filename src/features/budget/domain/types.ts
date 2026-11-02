@@ -28,8 +28,6 @@ export interface Goal {
   id: GoalId;
   name: string;
   description: string;
-  color: string;
-  background: string;
 }
 
 export interface Member {

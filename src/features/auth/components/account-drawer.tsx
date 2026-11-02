@@ -13,8 +13,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/glaze/ui/sheet";
-import { PersonAvatar } from "@/components/ui/person-avatar";
-import { MobileTabContent } from "@/components/ui/mobile-tab-content";
+import { PersonAvatar } from "@/components/app/person-avatar";
+import { MobileTabContent } from "@/components/app/mobile-tab-content";
+import { mobileTabClass } from "@/components/app/mobile-tab";
 import { cn } from "@/lib/glaze/utils";
 import { useBrowserSync } from "@/lib/use-browser-sync";
 
@@ -61,7 +62,7 @@ export function AccountDrawer({
           <MemberAvatars members={members} className="size-8" />
         </SheetTrigger>
       ) : (
-        <SheetTrigger className="flex min-h-13 min-w-0 cursor-pointer select-none flex-col items-center justify-center gap-1 text-center type-caption focus-visible:focus-ring">
+        <SheetTrigger className={mobileTabClass}>
           <MobileTabContent active={false} label="Conta">
             <MemberAvatars members={members} className="size-5" />
           </MobileTabContent>

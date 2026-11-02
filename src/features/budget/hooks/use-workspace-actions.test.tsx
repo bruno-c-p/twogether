@@ -2,7 +2,7 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 import { fireEvent } from "@testing-library/react";
 import { Button } from "@/components/glaze/ui/button";
 import { toast } from "@/components/glaze/ui/toast";
-import { AppToaster } from "@/components/ui/toaster";
+import { AppToaster } from "@/components/app/toaster";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { BudgetController } from "@/features/budget/hooks/use-budget";
 import type { BudgetMutations } from "@/features/budget/hooks/use-budget-mutations";
