@@ -15,10 +15,14 @@ export function GoalPercentageList({
   return (
     <FieldGroup className="gap-3">
       {GOALS.map((goal) => (
-        <Field key={goal.id} orientation="horizontal">
+        <Field
+          key={goal.id}
+          orientation="horizontal"
+          className="flex-wrap justify-between gap-y-1.5"
+        >
           <FieldLabel>{goal.name}</FieldLabel>
           <NumberInput
-            className="w-32"
+            className="w-28"
             unit="%"
             min={0}
             max={100}
