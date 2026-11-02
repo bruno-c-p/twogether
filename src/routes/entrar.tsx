@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { loadGateSession } from "@/features/auth";
 import { AccountGate } from "@/features/auth/components/account-gate/account-gate";
-import { LoadingState } from "@/components/ui/empty-state";
 
 function GatePending() {
-  return <LoadingState>Carregando…</LoadingState>;
+  return (
+    <div
+      aria-live="polite"
+      className="grid min-h-75 place-items-center type-body text-text-2"
+    >
+      Carregando…
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/entrar")({
