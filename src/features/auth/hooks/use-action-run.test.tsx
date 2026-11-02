@@ -1,6 +1,7 @@
 import { redirect } from "@tanstack/react-router";
 import { describe, expect, test, vi } from "vitest";
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
+import { Button } from "@/components/glaze/ui/button";
 import { renderWithProviders } from "@/test/render";
 
 type Step = () => Promise<string>;
@@ -20,7 +21,7 @@ function RunHarness({
 
   return (
     <>
-      <button onClick={() => void go()}>run</button>
+      <Button onClick={() => void go()}>run</Button>
       <p role="status">{busy ? "busy" : error || "idle"}</p>
     </>
   );
