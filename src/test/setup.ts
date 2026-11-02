@@ -43,13 +43,15 @@ if (!("animate" in Element.prototype)) {
   });
 }
 
-// jsdom has no layout, so nothing ever resizes; Glaze components that
-// measure themselves (the segmented control's thumb) only need to observe.
-window.ResizeObserver ??= class {
-  observe() {}
-  unobserve() {}
-  disconnect() {}
-};
+// jsdom has no layout; Glaze's dialog, segmented control and pagination
+// observe their size, which never changes here.
+if (!window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
 
 // jsdom has no scrolling; the test router's scroll restoration calls this.
 window.scrollTo = () => undefined;
