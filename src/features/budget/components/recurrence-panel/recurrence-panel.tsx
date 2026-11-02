@@ -1,8 +1,13 @@
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Repeat2 } from "lucide-react";
-import { FieldError, FieldRoot } from "@/components/ui/field/field";
-import styles from "@/features/budget/components/recurrence-panel/recurrence-panel.module.css";
+import {
+  Field,
+  FieldContent,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+  Label,
+} from "@/components/glaze/ui/field";
+import { NumberInput } from "@/components/glaze/ui/number-input";
+import { Switch } from "@/components/glaze/ui/switch";
 
 export function RecurrencePanel({
   recurring,
@@ -18,51 +23,41 @@ export function RecurrencePanel({
   onOccurrencesChange: (value: number) => void;
 }) {
   return (
-    <section className={styles.recurrencePanel} aria-label="Recorrência">
-      <div className={styles.recurrenceHeading}>
-        <span className={styles.recurrenceIcon}>
-          <Repeat2 size={18} />
-        </span>
-        <div className={styles.recurrenceCopy}>
-          <label htmlFor="recurring">Repetir mensalmente</label>
-          <p>Para contas e entradas que se repetem.</p>
-        </div>
+    <section aria-label="Recorrência" className="flex flex-col gap-3">
+      <Field orientation="horizontal">
+        <FieldContent>
+          <FieldLabel>Repetir mensalmente</FieldLabel>
+          <FieldDescription>
+            Para contas e entradas que se repetem.
+          </FieldDescription>
+        </FieldContent>
         <Switch
-          id="recurring"
           checked={recurring}
           onCheckedChange={(checked) => onRecurringChange(checked)}
         />
-      </div>
+      </Field>
       {recurring && (
-        <div className={styles.recurrenceDetails}>
-          <FieldRoot className={styles.recurrenceCount}>
-            <label htmlFor="occurrences">Por quantos meses?</label>
-            <div className={styles.recurrenceNumber}>
-              <Input
-                id="occurrences"
-                type="number"
-                min={2}
-                max={120}
-                required
-                value={Number.isNaN(occurrences) ? "" : occurrences}
-                onChange={(event) =>
-                  onOccurrencesChange(event.target.valueAsNumber)
-                }
-                aria-describedby={
-                  error
-                    ? "recurrence-hint occurrences-error"
-                    : "recurrence-hint"
-                }
-                aria-invalid={error ? true : undefined}
-              />
-              <span>meses</span>
-            </div>
-            <FieldError id="occurrences-error">{error}</FieldError>
-          </FieldRoot>
-          <p id="recurrence-hint">
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="occurrences">Por quantos meses?</Label>
+          <NumberInput
+            id="occurrences"
+            className="w-40"
+            unit="meses"
+            min={2}
+            max={120}
+            required
+            value={Number.isNaN(occurrences) ? null : occurrences}
+            onValueChange={(value) => onOccurrencesChange(value ?? Number.NaN)}
+            aria-describedby={
+              error ? "recurrence-hint occurrences-error" : "recurrence-hint"
+            }
+            aria-invalid={error ? true : undefined}
+          />
+          {error && <FieldError id="occurrences-error">{error}</FieldError>}
+          <FieldDescription id="recurrence-hint">
             Inclui o mês da primeira transação. Em meses mais curtos, usamos o
             último dia.
-          </p>
+          </FieldDescription>
         </div>
       )}
     </section>

@@ -21,9 +21,10 @@ export function OverviewScreen() {
   return (
     <>
       <h1 className="sr-only">Visão geral</h1>
-      <div className="grid grid-cols-2 gap-5 items-stretch max-bp1000:grid-cols-1 max-bp620:gap-3">
-        <div className="col-span-2 grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-5 max-bp1190:grid-cols-2 max-bp1000:col-span-1 max-bp1000:grid-cols-1 max-bp620:gap-3">
+      <div className="grid grid-cols-2 gap-5 items-stretch max-lg:grid-cols-1 max-sm:gap-3">
+        <div className="col-span-2 grid grid-cols-5 gap-5 max-xl:grid-cols-2 max-lg:col-span-1 max-lg:grid-cols-1 max-sm:gap-3">
           <BalanceCard
+            className="col-span-3 max-xl:col-span-1"
             summary={data.summary}
             month={month}
             memberFilter={memberFilter}
@@ -31,11 +32,10 @@ export function OverviewScreen() {
             hidden={hidden}
             onToggleHidden={onToggleHidden}
           />
-          <div className="flex flex-col gap-5 min-w-0 max-bp620:gap-3">
+          <div className="col-span-2 flex flex-col gap-5 min-w-0 max-xl:col-span-1 max-sm:gap-3">
             <MonthTotalsCard
               summary={data.summary}
               partners={data.partners}
-              hidden={hidden}
               displayMoney={displayMoney}
               className="flex-1"
             />

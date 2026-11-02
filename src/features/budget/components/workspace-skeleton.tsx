@@ -1,36 +1,30 @@
-import { Brand } from "@/components/ui/brand";
-import { cx } from "@/lib/cx";
+import { Skeleton } from "@/components/glaze/ui/skeleton";
+import { Brand } from "@/components/app/brand";
+import { cn } from "@/lib/glaze/utils";
 
 const cards = [
-  ["balance", "h-[264px]"],
-  ["totals", "h-[264px]"],
-  ["budget", "h-[220px]"],
-  ["latest", "h-[220px]"],
+  ["balance", "h-66"],
+  ["totals", "h-66"],
+  ["budget", "h-55"],
+  ["latest", "h-55"],
 ] as const;
 
 export function WorkspaceSkeleton() {
   return (
-    <div className="min-h-[100dvh]">
+    <div className="min-h-dvh bg-page text-text-1">
       <span role="status" className="sr-only">
         Carregando orçamento…
       </span>
-      <header className="h-[63px] border-b border-solid border-border bg-topbar">
-        <div className="mx-auto max-w-[1450px] h-full flex items-center px-8 max-bp1190:px-6 max-bp800:px-6 max-bp620:px-4">
-          <Brand mark className="text-xl" markClassName="scale-[.8]" />
+      <header className="border-b border-line-faint bg-page">
+        <div className="mx-auto flex h-16 w-full max-w-360 items-center px-4 sm:px-6 xl:px-10">
+          <Brand mark />
         </div>
       </header>
-      <div className="max-w-[1450px] mx-auto px-10 pt-10 max-bp1190:px-8 max-bp1190:pt-8 max-bp800:px-6 max-bp800:pt-6 max-bp620:px-5 max-bp620:pt-6">
-        <div
-          aria-hidden="true"
-          className="h-[28px] w-[180px] rounded-md bg-surface-soft animate-pulse mb-6"
-        />
-        <div className="grid grid-cols-2 gap-5 max-bp1000:grid-cols-1 max-bp620:gap-3">
+      <div className="mx-auto w-full max-w-360 px-4 pt-6 sm:px-6 lg:pt-8 xl:px-10">
+        <Skeleton className="mb-6 h-8 w-44" />
+        <div className="grid grid-cols-1 gap-3 sm:gap-5 lg:grid-cols-2">
           {cards.map(([id, height]) => (
-            <div
-              key={id}
-              aria-hidden="true"
-              className={cx("rounded-lg bg-surface-soft animate-pulse", height)}
-            />
+            <Skeleton key={id} className={cn("rounded-shell", height)} />
           ))}
         </div>
       </div>

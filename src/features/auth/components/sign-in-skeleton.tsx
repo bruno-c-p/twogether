@@ -1,23 +1,15 @@
-import { cx } from "@/lib/cx";
+import { Skeleton } from "@/components/glaze/ui/skeleton";
 
-const bars = [
-  "h-[12px] w-[76px] -mb-2 rounded-sm",
-  "h-[46px] rounded-md",
-  "h-[43px] rounded-sm",
-  "h-[12px] w-[132px] self-center mt-0.5 rounded-sm",
-];
-
+// Clerk's form while its UI downloads: the email label, the field, the
+// continue button and the sign-up line.
 export function SignInSkeleton() {
   return (
     <div role="status" aria-live="polite" className="flex flex-col gap-4">
       <span className="sr-only">Carregando o formulário de acesso…</span>
-      {bars.map((bar) => (
-        <span
-          key={bar}
-          aria-hidden="true"
-          className={cx("block bg-surface-soft animate-pulse", bar)}
-        />
-      ))}
+      <Skeleton className="h-3 w-20" />
+      <Skeleton className="h-(--control) w-full rounded-pill" />
+      <Skeleton className="h-(--control) w-full rounded-pill" />
+      <Skeleton className="h-3 w-32 self-center" />
     </div>
   );
 }

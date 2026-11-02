@@ -33,9 +33,10 @@ test.describe("auth", () => {
     await waitForGate(page);
     await expect(page.locator("html")).toHaveAttribute("lang", "pt-BR");
     await expect(page).toHaveTitle("twogether — Orçamento a dois");
-    await expect(page.getByText("DUAS PESSOAS. UM ORÇAMENTO.")).toBeVisible();
     await expect(page.locator('input[name="identifier"]')).toBeVisible();
-    await expect(page.getByRole("group", { name: "Aparência" })).toBeVisible();
+    await expect(
+      page.getByRole("radiogroup", { name: "Aparência" }),
+    ).toBeVisible();
     await expect(page.locator("footer").getByText("twogether.")).toBeVisible();
     await expect(page.getByText("Orçamento a dois, com leveza.")).toBeVisible();
     expect(urls.some((url) => url.includes(commandBus))).toBe(false);
@@ -43,10 +44,10 @@ test.describe("auth", () => {
     await withMobile(page, async () => {
       await expect(page.locator('input[name="identifier"]')).toBeEnabled();
       await expect(
-        page.getByRole("group", { name: "Aparência" }),
+        page.getByRole("radiogroup", { name: "Aparência" }),
       ).toBeVisible();
       await expect(
-        page.getByRole("button", { name: "Tema escuro" }),
+        page.getByRole("radio", { name: "Tema escuro" }),
       ).toBeEnabled();
       await expectNoHorizontalOverflow(page);
     });

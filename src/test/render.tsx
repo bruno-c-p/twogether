@@ -15,7 +15,6 @@ import { onTestFinished } from "vitest";
 // The app starts loading its lazy parts as soon as a page hydrates; tests
 // start with those modules already evaluated, so an opened sheet or dialog
 // does not wait on a first import under a loaded machine.
-import "@/components/ui/sheet-drawer";
 import "@/features/auth/components/account-settings";
 import "@/features/budget/components/month-grid";
 import "@/features/budget/components/delete-recurrence-dialog/delete-recurrence-dialog";

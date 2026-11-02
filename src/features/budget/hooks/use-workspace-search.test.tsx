@@ -1,5 +1,6 @@
 import { defaultRateLimit } from "nuqs";
 import { describe, expect, test, vi } from "vitest";
+import { Button } from "@/components/glaze/ui/button";
 import { DEFAULT_PERCENTAGES } from "@/features/budget/constants";
 import type { WorkspaceSnapshot } from "@/features/budget/domain/types";
 import { useWorkspaceSearch } from "@/features/budget/hooks/use-workspace-search";
@@ -18,7 +19,9 @@ function Harness() {
 
   return (
     <>
-      <button onClick={() => search.setMonth("2026-10")}>outubro</button>
+      <Button variant="secondary" onClick={() => search.setMonth("2026-10")}>
+        outubro
+      </Button>
       <p role="status">{search.monthPending ? "pending" : "idle"}</p>
       <p role="alert">{search.monthError}</p>
     </>

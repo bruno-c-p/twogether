@@ -15,10 +15,26 @@ import {
   retainSearchParams,
   RouterProvider,
 } from "@tanstack/react-router";
-import { UserRound } from "lucide-react";
+import { Icon, UserAvatar } from "@/components/glaze/icon";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  SegmentedControl,
+  SegmentedControlItem,
+} from "@/components/glaze/ui/segmented-control";
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/glaze/ui/sheet";
+import { toast } from "@/components/glaze/ui/toast";
 import { BudgetWorkspace } from "@/features/budget/components/budget-app/budget-app";
 import type { AccountPlacement } from "@/features/budget/components/workspace-shell";
-import { MobileTabContent } from "@/components/ui/mobile-tab-content";
+import { MobileTabContent } from "@/components/app/mobile-tab-content";
+import { mobileTabClass } from "@/components/app/mobile-tab";
 import { OverviewScreen } from "@/features/budget/components/screens/overview-screen";
 import { TransactionsScreen } from "@/features/budget/components/screens/transactions-screen";
 import { BudgetScreen } from "@/features/budget/components/screens/budget-screen";
@@ -30,14 +46,7 @@ import {
 import { useActionRun } from "@/features/auth/hooks/use-action-run";
 import { NameForm } from "@/features/auth/components/name-form";
 import { InviteForm } from "@/features/auth/components/invite-form";
-import {
-  Sheet,
-  SheetHeader,
-  SheetTrigger,
-  type SheetActions,
-} from "@/components/ui/sheet";
-import { Toaster } from "@/components/ui/toaster";
-import { toastManager } from "@/components/ui/toast-manager";
+import { AppToaster } from "@/components/app/toaster";
 import { ThemeToggle } from "@/features/theme/components/theme-toggle/theme-toggle";
 import { useBudget } from "@/features/budget/hooks/use-budget";
 import {
@@ -53,8 +62,16 @@ import {
 } from "@/features/break-ui/fixtures";
 import { authActions, resetFixture } from "@/features/break-ui/actions";
 import { workspaceQueryKey } from "@/features/budget/workspace";
+import "@fontsource/geist/400.css";
+import "@fontsource/geist/500.css";
+import "@fontsource/geist/600.css";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
 import "@/styles.css";
-import "virtual:uno.css";
+import "@/components/glaze/styles.css";
+import { GlazePortalProvider } from "@/lib/glaze/portal";
+import { overlaySurface } from "@/lib/glaze/overlay";
+import { cn } from "@/lib/glaze/utils";
 
 if (!import.meta.env.DEV) throw new Error("Break UI is development-only.");
 
@@ -67,7 +84,7 @@ const workspaceApi = getRouteApi("/_authenticated/_workspace");
 function FixtureAccount({ placement }: { placement: AccountPlacement }) {
   const { month } = workspaceApi.useSearch();
   const budget = useBudget(month ?? fixtureMonth);
-  const sheet = useRef<SheetActions>(null);
+  const sheet = useRef<{ close: () => void; unmount: () => void }>(null);
   const { run, busy, error } = useActionRun();
 
   const name = useNameForm({
@@ -88,39 +105,42 @@ function FixtureAccount({ placement }: { placement: AccountPlacement }) {
   });
 
   return (
-    <Sheet
-      actions={sheet}
-      trigger={
-        placement === "header" ? (
-          <SheetTrigger>Conta</SheetTrigger>
-        ) : (
-          <SheetTrigger className="mobile-tab">
-            <MobileTabContent active={false} label="Conta">
-              <UserRound aria-hidden="true" size={20} strokeWidth={1.8} />
-            </MobileTabContent>
-          </SheetTrigger>
-        )
-      }
-    >
-      <SheetHeader title="Sua conta" description="Dados isolados de teste" />
-      <ThemeToggle />
-      <AccountSettingsView
-        user={budget.user}
-        members={budget.household.members}
-        email={
-          readDataset() === "worst"
-            ? "bartholomew.fitzgerald@northwind-industries-holdings.example.com"
-            : "ana@example.com"
-        }
-        busy={busy}
-        error={error}
-        name={name}
-        invite={invite}
-        onLeave={() => sheet.current?.close()}
-        onManage={() =>
-          toastManager.add({ title: "Clerk fora deste ambiente isolado." })
-        }
-      />
+    <Sheet actionsRef={sheet}>
+      {placement === "header" ? (
+        <SheetTrigger render={<Button variant="secondary" size="sm" />}>
+          Conta
+        </SheetTrigger>
+      ) : (
+        <SheetTrigger className={mobileTabClass}>
+          <MobileTabContent active={false} label="Conta">
+            <Icon icon={UserAvatar} size={20} />
+          </MobileTabContent>
+        </SheetTrigger>
+      )}
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>Sua conta</SheetTitle>
+          <SheetDescription>Dados isolados de teste</SheetDescription>
+        </SheetHeader>
+        <SheetBody>
+          <ThemeToggle />
+          <AccountSettingsView
+            user={budget.user}
+            members={budget.household.members}
+            email={
+              readDataset() === "worst"
+                ? "bartholomew.fitzgerald@northwind-industries-holdings.example.com"
+                : "ana@example.com"
+            }
+            busy={busy}
+            error={error}
+            name={name}
+            invite={invite}
+            onLeave={() => sheet.current?.close()}
+            onManage={() => toast("Clerk fora deste ambiente isolado.")}
+          />
+        </SheetBody>
+      </SheetContent>
     </Sheet>
   );
 }
@@ -145,8 +165,8 @@ function GateForms() {
   });
 
   return (
-    <main className="max-w-[440px] mx-auto p-6">
-      <h1>Onboarding</h1>
+    <main className="mx-auto flex max-w-md flex-col gap-4 p-6">
+      <h1 className="type-title">Onboarding</h1>
       <NameForm
         busy={false}
         onSubmit={async (name) => {
@@ -166,48 +186,47 @@ function GateForms() {
 }
 
 function DataToggle() {
-  const selected = readDataset();
   const labels = ["Demo data", "Worst case", "Empty", "One", "1,000 rows"];
 
   return (
     <div
-      role="group"
-      aria-label="Stress-test data"
-      className="fixed bottom-[92px] left-1/2 -translate-x-1/2 z-30 flex flex-wrap justify-center gap-1 w-[min(440px,calc(100vw-16px))] rounded-md p-1 bg-surface-3 border border-solid border-border font-sans"
+      className={cn(
+        overlaySurface,
+        "fixed bottom-[calc(var(--mobile-nav-height)+var(--space-3))] left-1/2 z-(--z-overlay) flex max-w-[calc(100vw-var(--space-4))] -translate-x-1/2 flex-wrap items-center justify-center gap-1 p-1",
+      )}
     >
-      {datasets.map((dataset, index) => (
-        <button
-          key={dataset}
-          type="button"
-          aria-pressed={selected === dataset}
-          className={`border-0 rounded-sm px-2 py-1 text-xs text-text ${selected === dataset ? "bg-surface" : "bg-transparent"}`}
-          onClick={() => {
-            const url = new URL(location.href);
-            url.searchParams.set("data", dataset);
-            location.assign(url);
-          }}
-        >
-          {labels[index]}
-        </button>
-      ))}
-      <button
-        type="button"
-        onClick={resetFixture}
-        className="border-0 rounded-sm px-2 py-1 text-xs bg-transparent text-text"
+      <SegmentedControl
+        size="sm"
+        aria-label="Stress-test data"
+        value={readDataset()}
+        onValueChange={(dataset) => {
+          const url = new URL(location.href);
+          url.searchParams.set("data", dataset);
+          location.assign(url);
+        }}
       >
+        {datasets.map((dataset, index) => (
+          <SegmentedControlItem key={dataset} value={dataset}>
+            {labels[index]}
+          </SegmentedControlItem>
+        ))}
+      </SegmentedControl>
+      <Button variant="ghost" size="sm" onClick={resetFixture}>
         Reset
-      </button>
+      </Button>
     </div>
   );
 }
 
 function Root() {
   return (
-    <NuqsAdapter>
-      <Outlet />
-      <DataToggle />
-      <Toaster />
-    </NuqsAdapter>
+    <GlazePortalProvider>
+      <NuqsAdapter>
+        <Outlet />
+        <DataToggle />
+        <AppToaster />
+      </NuqsAdapter>
+    </GlazePortalProvider>
   );
 }
 

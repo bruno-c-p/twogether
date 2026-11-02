@@ -1,11 +1,10 @@
 import type { ReactNode } from "react";
 import { Link, type LinkProps } from "@tanstack/react-router";
-import { ArrowRight } from "lucide-react";
-import { cx } from "@/lib/cx";
-import styles from "@/features/landing/components/seam-link/seam-link.module.css";
+import { buttonVariants } from "@/components/glaze/ui/button";
+import { Icon, ArrowRight } from "@/components/glaze/icon";
 
-// The landing page's call to action. The page tears things apart; its links
-// do the reverse: two halves of ink close from the edges and meet at the seam.
+// The landing page's call to action, a real link drawn as a Glaze button: the
+// primary one leads with the arrow, the secondary one is the quiet way in.
 export function SeamLink({
   to,
   variant = "solid",
@@ -16,11 +15,15 @@ export function SeamLink({
   children: ReactNode;
 }) {
   return (
-    <Link to={to} className={cx(styles.link, styles[variant])}>
+    <Link
+      to={to}
+      className={buttonVariants({
+        variant: variant === "solid" ? "primary" : "secondary",
+        size: variant === "solid" ? "lg" : "default",
+      })}
+    >
       {children}
-      {variant === "solid" ? (
-        <ArrowRight className={styles.arrow} size={18} aria-hidden="true" />
-      ) : null}
+      {variant === "solid" ? <Icon icon={ArrowRight} /> : null}
     </Link>
   );
 }

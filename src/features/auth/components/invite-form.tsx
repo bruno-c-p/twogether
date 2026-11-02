@@ -1,16 +1,16 @@
-import { Input } from "@/components/ui/input";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod/mini";
 import { inviteFormSchema } from "@/lib/account-schemas";
 import { inviteToken } from "@/features/auth/invite-token";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/glaze/ui/button";
 import {
+  Field,
   FieldError,
   FieldLabel,
-  FieldRoot,
   Form,
-} from "@/components/ui/field/field";
+} from "@/components/glaze/ui/field";
+import { Input } from "@/components/glaze/ui/input";
 
 // People paste the whole link; the token inside it is what gets checked.
 const pastedInviteSchema = z.object({
@@ -44,23 +44,25 @@ export function InviteForm({
         void handleSubmit((values) => onJoin(values.invite))(event)
       }
     >
-      <FieldRoot>
-        <FieldLabel>
-          Link de convite
-          <Input
-            {...register("invite")}
-            autoCapitalize="none"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="go"
-            placeholder="Cole o link do seu par"
-            required
-            aria-describedby={error ? "invite-error" : undefined}
-            aria-invalid={error ? true : undefined}
-          />
-          <FieldError id="invite-error">{error}</FieldError>
-        </FieldLabel>
-      </FieldRoot>
+      <Field invalid={Boolean(error)}>
+        <FieldLabel>Link de convite</FieldLabel>
+        <Input
+          {...register("invite")}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          enterKeyHint="go"
+          placeholder="Cole o link do seu par"
+          required
+          aria-describedby={error ? "invite-error" : undefined}
+          aria-invalid={error ? true : undefined}
+        />
+        {error && (
+          <FieldError id="invite-error" role="alert">
+            {error}
+          </FieldError>
+        )}
+      </Field>
       <Button type="submit" variant="secondary" disabled={busy}>
         Aceitar convite
       </Button>

@@ -216,7 +216,8 @@ describe("TransactionList", () => {
         .getByRole("button", { name: "Divididas" })
         .getAttribute("aria-pressed"),
     ).toBe("true");
-    expect(screen.getByText("dividida · a receber")).toBeTruthy();
+    // The row carries a phone and a desktop copy; CSS shows one of them.
+    expect(screen.getAllByText("dividida · a receber")).toHaveLength(2);
   });
 
   test("an over-filtered list offers to clear every filter", async () => {
@@ -256,13 +257,14 @@ describe("TransactionList", () => {
     expect(rowNames(screen)).toHaveLength(50);
     expect(screen.getByText(/−\sR\$\s51,00/)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Anterior" }).hasAttribute("disabled"),
+      screen.getByLabelText("Anterior").getAttribute("aria-disabled") ===
+        "true",
     ).toBe(true);
-    await user.click(screen.getByRole("button", { name: "Próxima" }));
+    await user.click(screen.getByRole("link", { name: "Próxima" }));
     expect(rowNames(screen)).toEqual(["Editar Compra 0"]);
     expect(screen.getByText(/−\sR\$\s51,00/)).toBeTruthy();
     expect(
-      screen.getByRole("button", { name: "Próxima" }).hasAttribute("disabled"),
+      screen.getByLabelText("Próxima").getAttribute("aria-disabled") === "true",
     ).toBe(true);
     // One paste, not nine keystrokes that each re-render 50 rows.
     await user.click(screen.getByLabelText("Buscar transações"));
@@ -311,7 +313,8 @@ describe("TransactionList", () => {
     expect(screen.getByText(/Página 1 de 2/)).toBeTruthy();
     expect(rowNames(screen)).toHaveLength(50);
     expect(
-      screen.getByRole("button", { name: "Anterior" }).hasAttribute("disabled"),
+      screen.getByLabelText("Anterior").getAttribute("aria-disabled") ===
+        "true",
     ).toBe(true);
   });
 

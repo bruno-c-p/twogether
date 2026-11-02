@@ -1,4 +1,5 @@
 import type { ComponentType, ReactNode } from "react";
+import { Alert, AlertTitle } from "@/components/glaze/ui/alert";
 import { useQueryClient } from "@tanstack/react-query";
 import { Outlet, useRouter } from "@tanstack/react-router";
 import {
@@ -32,7 +33,6 @@ import {
   WorkspaceShell,
   type AccountPlacement,
 } from "@/features/budget/components/workspace-shell";
-import styles from "@/features/budget/components/budget-app/budget-app.module.css";
 
 // The layout route renders this only once the URL carries a month.
 export function BudgetApp({
@@ -150,9 +150,9 @@ export function BudgetWorkspace({
         }
       >
         {alert && (
-          <div role="alert" className={styles.storageError}>
-            {alert}
-          </div>
+          <Alert status="fail" className="mb-4">
+            <AlertTitle>{alert}</AlertTitle>
+          </Alert>
         )}
         <Outlet />
       </WorkspaceShell>

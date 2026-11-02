@@ -1,10 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { loadGateSession } from "@/features/auth";
 import { AccountGate } from "@/features/auth/components/account-gate/account-gate";
-import { LoadingState } from "@/components/ui/empty-state";
 
 function InvitePending() {
-  return <LoadingState>Carregando convite…</LoadingState>;
+  return (
+    <div
+      aria-live="polite"
+      className="grid min-h-75 place-items-center type-body text-text-2"
+    >
+      Carregando convite…
+    </div>
+  );
 }
 
 export const Route = createFileRoute("/convite/$token")({

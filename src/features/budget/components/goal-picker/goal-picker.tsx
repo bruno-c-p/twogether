@@ -1,10 +1,7 @@
-import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
-import { Fieldset } from "@base-ui/react/fieldset";
-import { Check } from "lucide-react";
+import { Chip } from "@/components/glaze/ui/chip";
+import { FieldLegend, FieldSet } from "@/components/glaze/ui/field";
 import type { Goal, GoalId } from "@/features/budget/domain/types";
-import { GoalIcon } from "@/features/budget/components/goal-icon";
-import styles from "@/features/budget/components/goal-picker/goal-picker.module.css";
 
 export function GoalPicker({
   goals,
@@ -16,10 +13,10 @@ export function GoalPicker({
   onChange: (goal: GoalId) => void;
 }) {
   return (
-    <Fieldset.Root className={styles.goalField}>
-      <Fieldset.Legend render={<legend />}>Para qual meta?</Fieldset.Legend>
+    <FieldSet className="gap-1.5">
+      <FieldLegend variant="label">Para qual meta?</FieldLegend>
       <ToggleGroup
-        className={styles.goalOptions}
+        className="flex flex-wrap items-center gap-1"
         aria-label="Para qual meta?"
         value={value ? [value] : []}
         onValueChange={(values) => {
@@ -29,22 +26,11 @@ export function GoalPicker({
         }}
       >
         {goals.map((item) => (
-          <Toggle
-            key={item.id}
-            type="button"
-            className={`${styles.goalOption} ${value === item.id ? styles.selected : ""}`}
-            style={{
-              "--goal-color": item.color,
-              "--goal-bg": item.background,
-            }}
-            value={item.id}
-          >
-            <GoalIcon goal={item.id} size={19} />
-            <span>{item.name}</span>
-            {value === item.id && <Check size={14} />}
-          </Toggle>
+          <Chip key={item.id} value={item.id}>
+            {item.name}
+          </Chip>
         ))}
       </ToggleGroup>
-    </Fieldset.Root>
+    </FieldSet>
   );
 }

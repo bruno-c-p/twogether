@@ -171,6 +171,11 @@ export default defineConfig({
     ".vercel/**",
     ".output/**",
     "src/routeTree.gen.ts",
+    // Vendored from the Glaze registry (components.json); Glaze's own lint
+    // checks it and `shadcn add --overwrite` updates it.
+    "src/components/glaze/**",
+    "src/lib/glaze/**",
+    "glaze.eslint.config.mjs",
     ".agent/**",
     ".agents/**",
     ".claude/**",

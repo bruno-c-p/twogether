@@ -1,19 +1,5 @@
-import {
-  ArrowDownLeft,
-  ArrowRightLeft,
-  ArrowUpRight,
-  Armchair,
-  BookOpen,
-  House,
-  LayoutGrid,
-  ReceiptText,
-  Sprout,
-  Target,
-  Wine,
-} from "lucide-react";
 import type {
   Goal,
-  GoalId,
   GoalPercentages,
   TransactionKind,
   View,
@@ -24,43 +10,31 @@ export const GOALS: Goal[] = [
     id: "fixed",
     name: "Custo fixo",
     description: "Despesas essenciais do dia a dia.",
-    color: "var(--category-fixed)",
-    background: "var(--category-fixed-bg)",
   },
   {
     id: "pleasure",
     name: "Prazeres",
     description: "Lazer e experiências.",
-    color: "var(--category-pleasure)",
-    background: "var(--category-pleasure-bg)",
   },
   {
     id: "comfort",
     name: "Conforto",
     description: "Conforto e bem-estar.",
-    color: "var(--category-comfort)",
-    background: "var(--category-comfort-bg)",
   },
   {
     id: "targets",
     name: "Metas",
     description: "Objetivos de curto e longo prazo.",
-    color: "var(--category-targets)",
-    background: "var(--category-targets-bg)",
   },
   {
     id: "knowledge",
     name: "Conhecimento",
     description: "Cursos e desenvolvimento.",
-    color: "var(--category-knowledge)",
-    background: "var(--category-knowledge-bg)",
   },
   {
     id: "freedom",
     name: "Liberdade financeira",
     description: "Reserva e investimentos.",
-    color: "var(--category-freedom)",
-    background: "var(--category-freedom-bg)",
   },
 ];
 
@@ -87,35 +61,20 @@ export const WORKSPACE_NAVIGATION = [
     label: "Visão geral",
     // The phone bar fits four tabs and the add button in 320px.
     mobileLabel: "Início",
-    icon: LayoutGrid,
   },
   {
     to: WORKSPACE_PATHS.transactions,
     label: "Transações",
-    icon: ReceiptText,
   },
-  { to: WORKSPACE_PATHS.goals, label: "Orçamento", icon: Target },
+  { to: WORKSPACE_PATHS.goals, label: "Orçamento" },
 ] as const satisfies {
   to: WorkspacePath;
   label: string;
   mobileLabel?: string;
-  icon: typeof LayoutGrid;
 }[];
 
-export const GOAL_ICONS: Record<GoalId, typeof House> = {
-  fixed: House,
-  targets: Target,
-  pleasure: Wine,
-  comfort: Armchair,
-  knowledge: BookOpen,
-  freedom: Sprout,
-};
-
 export const KINDS = {
-  expense: { label: "Despesa", icon: ArrowUpRight },
-  income: { label: "Receita", icon: ArrowDownLeft },
-  transfer: { label: "Transferência", icon: ArrowRightLeft },
-} as const satisfies Record<
-  TransactionKind,
-  { label: string; icon: typeof House }
->;
+  expense: { label: "Despesa" },
+  income: { label: "Receita" },
+  transfer: { label: "Transferência" },
+} as const satisfies Record<TransactionKind, { label: string }>;

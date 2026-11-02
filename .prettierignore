@@ -11,6 +11,9 @@ src/routeTree.gen.ts
 playwright-report
 test-results
 tools/oxlint/anti-slop
+src/components/glaze
+src/lib/glaze
+glaze.eslint.config.mjs
 .claude
 .factory
 .goose

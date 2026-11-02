@@ -10,12 +10,23 @@
     "src/features/break-ui/actions.ts",
     "src/features/break-ui/clerk.ts"
   ],
-  // Vendored upstream code keeps its own shape (see tools/oxlint/anti-slop/UPSTREAM.md).
-  // It stays in the graph so its @oxlint/plugins import counts as a use.
-  "ignoreFindings": ["tools/oxlint/anti-slop/**"],
+  // Vendored upstream code keeps its own shape (see tools/oxlint/anti-slop/UPSTREAM.md
+  // and the Glaze registry in components.json). It stays in the graph so its
+  // imports count as uses.
+  "ignoreFindings": [
+    "tools/oxlint/anti-slop/**",
+    "src/components/glaze/**",
+    "src/lib/glaze/**",
+    "glaze.eslint.config.mjs"
+  ],
   "health": {
     // Vendored upstream code keeps its own shape.
-    "ignore": ["tools/oxlint/anti-slop/**"],
+    "ignore": [
+      "tools/oxlint/anti-slop/**",
+      "src/components/glaze/**",
+      "src/lib/glaze/**",
+      "glaze.eslint.config.mjs"
+    ],
     // Measured Vitest coverage; `bun run fallow` regenerates it first.
     "coverage": "coverage/coverage-final.json"
   },

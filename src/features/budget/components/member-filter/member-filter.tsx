@@ -1,17 +1,19 @@
-import { Button } from "@/components/ui/button";
-import { Radio } from "@base-ui/react/radio";
-import { RadioGroup } from "@base-ui/react/radio-group";
 import { useRef } from "react";
-import { chipTrigger } from "@/components/ui/chip-trigger";
-import { Check, ChevronDown } from "lucide-react";
+import type { Popover as BasePopover } from "@base-ui/react/popover";
+import { ChevronDown, Icon } from "@/components/glaze/icon";
+import { Button } from "@/components/glaze/ui/button";
 import {
-  Sheet,
-  SheetHeader,
-  SheetTrigger,
-  type SheetActions,
-} from "@/components/ui/sheet";
+  Popover,
+  PopoverContent,
+  PopoverHeader,
+  PopoverTitle,
+  PopoverTrigger,
+} from "@/components/glaze/ui/popover";
+import {
+  RadioGroup,
+  RadioGroupOption,
+} from "@/components/glaze/ui/radio-group";
 import type { Member } from "@/features/budget/domain/types";
-import { cx } from "@/lib/cx";
 
 export function MemberFilter({
   members,
@@ -24,7 +26,7 @@ export function MemberFilter({
   value: string;
   onChange: (memberId: string) => void;
 }) {
-  const sheet = useRef<SheetActions>(null);
+  const popover = useRef<BasePopover.Root.Actions>(null);
 
   const options = [
     { id: "all", label: "Nós" },
@@ -39,51 +41,38 @@ export function MemberFilter({
   const current = options.find((option) => option.id === value) ?? options[0];
 
   return (
-    <Sheet
-      actions={sheet}
-      narrow
-      trigger={
-        <SheetTrigger
-          aria-label={`Filtrar por pessoa: ${current.label}`}
-          className={chipTrigger}
-        >
-          <span className="truncate max-w-[135px]">{current.label}</span>
-          <ChevronDown size={14} aria-hidden="true" className="shrink-0" />
-        </SheetTrigger>
-      }
-    >
-      <SheetHeader title="Filtrar por pessoa" />
-      <RadioGroup<string>
-        value={current.id}
-        aria-label="Pessoa"
-        className="grid gap-1.5"
-        onValueChange={(next) => {
-          onChange(next);
-          sheet.current?.close();
-        }}
+    <Popover actionsRef={popover}>
+      <PopoverTrigger
+        render={<Button variant="secondary" size="sm" />}
+        aria-label={`Filtrar por pessoa: ${current.label}`}
       >
-        {options.map((option) => (
-          <Radio.Root
-            nativeButton
-            render={<Button variant="unstyled" />}
-            key={option.id}
-            value={option.id}
-            onClick={() => {
-              if (option.id === current.id) sheet.current?.close();
-            }}
-            className={cx(
-              "flex items-center justify-between gap-2 cursor-pointer",
-              "border border-solid rounded-md px-4 py-3 text-md text-text",
-              option.id === current.id
-                ? "border-green bg-surface-soft font-600"
-                : "border-border bg-surface",
-            )}
-          >
-            <span className="truncate">{option.label}</span>
-            {option.id === current.id && <Check size={16} aria-hidden="true" />}
-          </Radio.Root>
-        ))}
-      </RadioGroup>
-    </Sheet>
+        <span className="truncate max-w-34">{current.label}</span>
+        <Icon icon={ChevronDown} />
+      </PopoverTrigger>
+      <PopoverContent align="start">
+        <PopoverHeader>
+          <PopoverTitle>Filtrar por pessoa</PopoverTitle>
+        </PopoverHeader>
+        <RadioGroup
+          value={current.id}
+          aria-label="Pessoa"
+          onValueChange={(next) => {
+            onChange(String(next));
+            popover.current?.close();
+          }}
+        >
+          {options.map((option) => (
+            <RadioGroupOption
+              key={option.id}
+              value={option.id}
+              label={option.label}
+              onClick={() => {
+                if (option.id === current.id) popover.current?.close();
+              }}
+            />
+          ))}
+        </RadioGroup>
+      </PopoverContent>
+    </Popover>
   );
 }

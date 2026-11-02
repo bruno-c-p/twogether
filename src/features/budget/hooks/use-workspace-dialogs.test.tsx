@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { Button } from "@/components/glaze/ui/button";
 import { useMutation } from "@/features/budget/hooks/use-mutation";
 import { useWorkspaceDialogs } from "@/features/budget/hooks/use-workspace-dialogs";
 import { fakeBudgetMutations } from "@/test/budget-mutations";
@@ -16,13 +17,18 @@ function Harness() {
 
   return (
     <>
-      <button
+      <Button
+        variant="secondary"
         onClick={() => dialogs.setTransaction({ transaction: transaction() })}
       >
         open
-      </button>
-      <button onClick={() => void saveTransaction.run()}>save</button>
-      <button onClick={() => dialogs.setTransaction(null)}>close</button>
+      </Button>
+      <Button variant="secondary" onClick={() => void saveTransaction.run()}>
+        save
+      </Button>
+      <Button variant="secondary" onClick={() => dialogs.setTransaction(null)}>
+        close
+      </Button>
       <p role="status">{saveTransaction.error || "no error"}</p>
       <p data-testid="editing">
         {dialogs.transaction?.transaction?.id ?? "closed"}

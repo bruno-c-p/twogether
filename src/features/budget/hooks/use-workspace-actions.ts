@@ -1,4 +1,4 @@
-import { toastManager } from "@/components/ui/toast-manager";
+import { toast } from "@/components/glaze/ui/toast";
 import type {
   GoalPercentages,
   Transaction,
@@ -49,10 +49,7 @@ export function useWorkspaceActions({
 
     dialogs.setTransaction(null);
     setMonth(transaction.date.slice(0, 7));
-    toastManager.add({
-      title: savedMessage(isUpdate, occurrences),
-      type: "success",
-    });
+    toast.success(savedMessage(isUpdate, occurrences));
   }
 
   async function remove(transaction: Transaction) {
@@ -68,16 +65,11 @@ export function useWorkspaceActions({
   }
 
   function notifyDeleted(transaction: Transaction) {
-    const id = toastManager.add({
-      title: "Transação excluída.",
-      type: "success",
+    const id = toast.success("Transação excluída.", {
       timeout: 0,
-      actionProps: {
-        children: "Desfazer",
-        onClick: (event) => {
-          event.preventDefault();
-          void restoreDeleted(transaction, id);
-        },
+      action: {
+        label: "Desfazer",
+        onClick: () => void restoreDeleted(transaction, id),
       },
     });
   }
@@ -90,8 +82,8 @@ export function useWorkspaceActions({
 
     if (!restored) return;
 
-    toastManager.close(id);
-    toastManager.add({ title: "Alteração desfeita.", type: "success" });
+    toast.dismiss(id);
+    toast.success("Alteração desfeita.");
   }
 
   function openTransaction(transaction: Transaction | null) {
@@ -120,19 +112,15 @@ export function useWorkspaceActions({
 
     dialogs.setSettling(null);
 
-    const id = toastManager.add({
-      title: "Pagamento registrado.",
-      type: "success",
+    const id = toast.success("Pagamento registrado.", {
       timeout: 0,
-      actionProps: {
-        children: "Desfazer",
-        onClick: (event) => {
-          event.preventDefault();
+      action: {
+        label: "Desfazer",
+        onClick: () =>
           void unsettle(
             { ...source, revision: (source.revision ?? 0) + 1 },
             id,
-          );
-        },
+          ),
       },
     });
   }
@@ -143,9 +131,9 @@ export function useWorkspaceActions({
 
     dialogs.setTransaction(null);
 
-    if (toastId !== undefined) toastManager.close(toastId);
+    if (toastId !== undefined) toast.dismiss(toastId);
 
-    toastManager.add({ title: "Pagamento desmarcado.", type: "success" });
+    toast.success("Pagamento desmarcado.");
   }
 
   async function saveGoalPercentages(values: GoalPercentages) {
@@ -156,7 +144,7 @@ export function useWorkspaceActions({
     if (!(await savePercentages.run({ percentages: values, revision }))) return;
 
     dialogs.setPercentagesRevision(null);
-    toastManager.add({ title: "Percentuais atualizados.", type: "success" });
+    toast.success("Percentuais atualizados.");
   }
 
   // `following` lists the later occurrences to delete too; empty deletes
@@ -174,11 +162,7 @@ export function useWorkspaceActions({
 
     const count = following.length + 1;
 
-    if (following.length)
-      toastManager.add({
-        title: `${count} transações excluídas.`,
-        type: "success",
-      });
+    if (following.length) toast.success(`${count} transações excluídas.`);
     else notifyDeleted(transaction);
     dialogs.setDeleting(null);
   }

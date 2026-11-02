@@ -1,7 +1,7 @@
-import { Input } from "@/components/ui/input";
+import { Field, FieldGroup, FieldLabel } from "@/components/glaze/ui/field";
+import { NumberInput } from "@/components/glaze/ui/number-input";
 import { GOALS } from "@/features/budget/constants";
 import type { GoalId, GoalPercentages } from "@/features/budget/domain/types";
-import styles from "@/features/budget/components/goal-percentage-list/goal-percentage-list.module.css";
 
 export function GoalPercentageList({
   values,
@@ -13,30 +13,28 @@ export function GoalPercentageList({
   onChange: (goal: GoalId, value: number) => void;
 }) {
   return (
-    <div className={styles.percentageFields}>
+    <FieldGroup className="gap-3">
       {GOALS.map((goal) => (
-        <label key={goal.id} htmlFor={`percentage-${goal.id}`}>
-          <span>{goal.name}</span>
-          <span>
-            <Input
-              id={`percentage-${goal.id}`}
-              className="tabular-nums"
-              type="number"
-              inputMode="decimal"
-              min="0"
-              max="100"
-              step="0.01"
-              disabled={disabled}
-              required
-              value={Number.isNaN(values[goal.id]) ? "" : values[goal.id]}
-              onChange={(event) =>
-                onChange(goal.id, event.target.valueAsNumber)
-              }
-            />{" "}
-            %
-          </span>
-        </label>
+        <Field
+          key={goal.id}
+          orientation="horizontal"
+          className="flex-wrap justify-between gap-y-1.5"
+        >
+          <FieldLabel>{goal.name}</FieldLabel>
+          <NumberInput
+            className="w-28"
+            unit="%"
+            min={0}
+            max={100}
+            step={0.01}
+            locale="pt-BR"
+            disabled={disabled}
+            required
+            value={Number.isNaN(values[goal.id]) ? null : values[goal.id]}
+            onValueChange={(value) => onChange(goal.id, value ?? Number.NaN)}
+          />
+        </Field>
       ))}
-    </div>
+    </FieldGroup>
   );
 }

@@ -1,10 +1,9 @@
-import { Toggle } from "@base-ui/react/toggle";
 import { ToggleGroup } from "@base-ui/react/toggle-group";
 import { useForm, useWatch } from "react-hook-form";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Icon } from "@/components/glaze/icon";
+import { Button } from "@/components/glaze/ui/button";
+import { Chip } from "@/components/glaze/ui/chip";
 import { monthLabel, monthName } from "@/features/budget/domain/format";
-import { Button } from "@/components/ui/button";
-import { cx } from "@/lib/cx";
 
 const MONTHS = Array.from({ length: 12 }, (_, index) => index + 1);
 
@@ -27,25 +26,27 @@ export function MonthGrid({
 
   return (
     <>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between">
         <Button
-          variant="icon"
+          variant="ghost"
+          size="icon"
           aria-label="Ano anterior"
           disabled={year <= 1900}
           onClick={() => setValue("year", year - 1)}
         >
-          <ChevronLeft size={18} />
+          <Icon icon={ChevronLeft} />
         </Button>
-        <strong aria-live="polite" className="text-lg">
+        <strong aria-live="polite" className="type-label tabular-nums">
           {year}
         </strong>
         <Button
-          variant="icon"
+          variant="ghost"
+          size="icon"
           aria-label="Próximo ano"
           disabled={year >= 9999}
           onClick={() => setValue("year", year + 1)}
         >
-          <ChevronRight size={18} />
+          <Icon icon={ChevronRight} />
         </Button>
       </div>
       <ToggleGroup
@@ -60,9 +61,8 @@ export function MonthGrid({
           const value = `${String(year).padStart(4, "0")}-${String(number).padStart(2, "0")}`;
 
           return (
-            <Toggle
+            <Chip
               key={value}
-              type="button"
               aria-label={monthLabel(value)}
               value={value}
               onPointerEnter={() => prefetch(value)}
@@ -71,16 +71,10 @@ export function MonthGrid({
               onClick={() => {
                 if (value === month) onPick(value);
               }}
-              className={cx(
-                "capitalize cursor-pointer border border-solid rounded-md",
-                "py-4 text-md text-text",
-                value === month
-                  ? "border-green bg-surface-soft font-600"
-                  : "border-border bg-surface",
-              )}
+              className="w-full justify-center capitalize"
             >
               {monthName(value, true)}
-            </Toggle>
+            </Chip>
           );
         })}
       </ToggleGroup>

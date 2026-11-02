@@ -1,9 +1,7 @@
-import { Input } from "@/components/ui/input";
 import { preloadClerkUI } from "@/lib/clerk-ui";
 import { useBrowserSync } from "@/lib/use-browser-sync";
 import { useUser } from "@clerk/tanstack-react-start";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Copy } from "lucide-react";
 import { authActions } from "@/features/auth/actions";
 import type { AuthActions } from "@/features/auth/actions/mutations";
 import { NameForm } from "@/features/auth/components/name-form";
@@ -15,18 +13,23 @@ import {
 import { householdActions, type HouseholdActions } from "@/features/household";
 import { MemberList } from "@/features/household/components/member-list/member-list";
 import { workspaceQueryKey, type Member } from "@/features/budget";
-import { Button } from "@/components/ui/button";
-import { Panel, SectionHeading } from "@/components/ui/panel/panel";
+import { SettingsSection } from "@/features/auth/components/settings-section";
 import {
-  FieldHint,
-  FormError,
-  FormStack,
-  Note,
-} from "@/components/ui/field/field";
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@/components/glaze/ui/alert";
+import { Button } from "@/components/glaze/ui/button";
+import {
+  Field,
+  FieldDescription,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/glaze/ui/field";
+import { Input } from "@/components/glaze/ui/input";
+import { Icon, Copy } from "@/components/glaze/icon";
 
 const OFFLINE_MESSAGE = "Sem conexão. Tente novamente.";
-
-const PANEL_BODY = "px-6 pb-6 max-bp620:px-4 max-bp620:pb-4";
 
 // The confirmation shows once the name is saved and goes when the next
 // save starts.
@@ -135,44 +138,46 @@ function NameSection({
   busy: boolean;
 }) {
   return (
-    <Panel aria-labelledby="account-name-title">
-      <SectionHeading
-        title="Você"
-        titleId="account-name-title"
-        description="Como você aparece no orçamento."
+    <SettingsSection
+      id="account-name-title"
+      title="Você"
+      description="Como você aparece no orçamento."
+    >
+      <NameForm
+        busy={busy}
+        defaultName={defaultName}
+        submitLabel="Salvar nome"
+        status={name.notice}
+        onSubmit={name.save}
       />
-      <div className={PANEL_BODY}>
-        <NameForm
-          busy={busy}
-          defaultName={defaultName}
-          submitLabel="Salvar nome"
-          status={name.notice}
-          onSubmit={name.save}
-        />
-      </div>
-    </Panel>
+    </SettingsSection>
   );
 }
 
 function SharedLink({ invite }: { invite: InviteLinkState }) {
   return (
     <>
-      <label>
-        Link para seu par
+      <Field>
+        <FieldLabel>Link para seu par</FieldLabel>
         <Input
           readOnly
+          mono
           value={invite.link}
           onFocus={(event) => event.target.select()}
         />
-      </label>
+        <FieldDescription>
+          Expira em 48 horas. Um novo convite invalida o anterior.
+        </FieldDescription>
+      </Field>
       <Button variant="secondary" onClick={() => void invite.copyInvite()}>
-        <Copy size={16} />
+        <Icon icon={Copy} />
         {invite.copied ? "Link copiado" : "Copiar convite"}
       </Button>
-      <FieldHint>
-        Expira em 48 horas. Um novo convite invalida o anterior.
-      </FieldHint>
-      {invite.status && <p role="status">{invite.status}</p>}
+      {invite.status && (
+        <p role="status" className="type-body-sm text-text-2">
+          {invite.status}
+        </p>
+      )}
     </>
   );
 }
@@ -185,8 +190,8 @@ function InvitePanel({
   busy: boolean;
 }) {
   return (
-    <FormStack className="mt-5">
-      <p>
+    <div className="flex flex-col gap-3">
+      <p className="type-body-sm">
         Falta seu par. Gere um convite e compartilhe o link com essa pessoa.
       </p>
       <Button disabled={busy} onClick={() => void invite.makeInvite()}>
@@ -194,14 +199,18 @@ function InvitePanel({
       </Button>
       {invite.link && <SharedLink invite={invite} />}
       <Button
-        variant="text"
+        variant="ghost"
         disabled={busy}
         onClick={() => void invite.cancelInvites()}
       >
         Cancelar convites pendentes
       </Button>
-      {!invite.link && invite.status && <p role="status">{invite.status}</p>}
-    </FormStack>
+      {!invite.link && invite.status && (
+        <p role="status" className="type-body-sm text-text-2">
+          {invite.status}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -230,35 +239,43 @@ export function AccountSettingsView({
 
   return (
     <>
+      <FieldSeparator />
       <NameSection name={name} defaultName={user.name} busy={busy} />
-      <Panel aria-labelledby="account-space-title">
-        <SectionHeading
-          title="Nosso espaço"
-          titleId="account-space-title"
-          count={memberCount}
-          description="Tudo aqui é dos dois. Ambos podem ver e editar transações e percentuais."
-        />
-        <div className={PANEL_BODY}>
-          <MemberList members={members} currentUserId={user.id} />
-          {memberCount === 1 ? (
-            <InvitePanel invite={invite} busy={busy} />
-          ) : (
-            <Note>Vocês dois já estão aqui. O espaço está completo.</Note>
-          )}
-          {error && <FormError>{error}</FormError>}
+      <FieldSeparator />
+      <SettingsSection
+        id="account-space-title"
+        title="Nosso espaço"
+        count={memberCount}
+        description="Tudo aqui é dos dois. Ambos podem ver e editar transações e percentuais."
+      >
+        <MemberList members={members} currentUserId={user.id} />
+        {memberCount === 1 ? (
+          <InvitePanel invite={invite} busy={busy} />
+        ) : (
+          <Alert announce={false}>
+            <AlertDescription>
+              Vocês dois já estão aqui. O espaço está completo.
+            </AlertDescription>
+          </Alert>
+        )}
+        {error && (
+          <Alert status="fail">
+            <AlertTitle>{error}</AlertTitle>
+          </Alert>
+        )}
+      </SettingsSection>
+      <FieldSeparator />
+      <div className="flex flex-col gap-2">
+        <span className="type-body-sm text-text-2 break-all">{email}</span>
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="secondary" onClick={onManage}>
+            Gerenciar conta
+          </Button>
+          <Button variant="ghost" disabled={busy} onClick={onLeave}>
+            Sair da conta
+          </Button>
         </div>
-        <footer className="flex items-center justify-between gap-4 px-6 pb-6 max-bp620:px-4 max-bp620:pb-4 max-bp620:items-start max-bp620:flex-col">
-          <span className="text-text-muted text-xs break-all">{email}</span>
-          <div className="flex items-center gap-4">
-            <Button variant="text" onClick={onManage}>
-              Gerenciar conta
-            </Button>
-            <Button variant="text" disabled={busy} onClick={onLeave}>
-              Sair da conta
-            </Button>
-          </div>
-        </footer>
-      </Panel>
+      </div>
     </>
   );
 }

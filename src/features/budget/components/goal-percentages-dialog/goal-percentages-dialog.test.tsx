@@ -13,6 +13,7 @@ function setup({ busy = false, error = "" } = {}) {
 
   const view = renderPlain(
     <GoalPercentagesDialog
+      open
       percentages={{ ...DEFAULT_PERCENTAGES }}
       busy={busy}
       error={error}
@@ -29,7 +30,7 @@ async function setPercentage(
   goal: string,
   value: string,
 ) {
-  const input = view.screen.getByRole("spinbutton", {
+  const input = view.screen.getByRole("textbox", {
     name: new RegExp(`^${goal}`),
   });
 
@@ -66,13 +67,32 @@ describe("GoalPercentagesDialog", () => {
     expect(view.onClose).not.toHaveBeenCalled();
   });
 
+  test("saves fractional percentages", async () => {
+    const view = setup();
+
+    await setPercentage(view, "Custo fixo", "30,5");
+    await setPercentage(view, "Liberdade financeira", "24,5");
+    await view.user.click(
+      view.screen.getByRole("button", { name: "Salvar percentuais" }),
+    );
+
+    expect(view.onSave).toHaveBeenCalledWith(
+      expect.objectContaining({ fixed: 30.5, freedom: 24.5 }),
+    );
+  });
+
   test("while saving every control is locked", () => {
     const view = setup({ busy: true });
 
-    for (const name of ["Salvar percentuais", "Restaurar padrão"])
+    // A pending button stays focusable, so it is aria-disabled instead.
+    for (const name of ["Salvar percentuais", "Restaurar padrão"]) {
+      const button = view.screen.getByRole("button", { name });
+
       expect(
-        view.screen.getByRole("button", { name }).hasAttribute("disabled"),
+        button.hasAttribute("disabled") ||
+          button.getAttribute("aria-disabled") === "true",
       ).toBe(true);
+    }
   });
 
   test("shows the server's error, then the default can be restored", async () => {
@@ -89,7 +109,7 @@ describe("GoalPercentagesDialog", () => {
       view.screen.getByRole("button", { name: "Restaurar padrão" }),
     );
     expect(
-      view.screen.getByRole("spinbutton", { name: /^Custo fixo/ }),
+      view.screen.getByRole("textbox", { name: /^Custo fixo/ }),
     ).toHaveProperty("value", "30");
   });
 });

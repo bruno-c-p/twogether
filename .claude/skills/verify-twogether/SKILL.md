@@ -57,7 +57,7 @@ Read-only. Run it first, and again whenever anything looks off. Every line must 
 - the recorded pid is alive and is this run's `<scratch>/output/server/index.mjs`
 - that pid owns the listening port
 - `/manifest.webmanifest` and `/entrar` respond
-- the build matches the working tree (HEAD + diff of `src`, `public`, Vite/Uno config). If this fails, `cleanup` and `launch` again
+- the build matches the working tree (HEAD + diff of `src`, `public`, the Vite and PostCSS configs). If this fails, `cleanup` and `launch` again
 - the `solo`, `ana` and `bia` Clerk test users exist
 
 `drive` runs doctor itself and refuses an unhealthy instance.

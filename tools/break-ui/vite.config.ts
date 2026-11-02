@@ -1,7 +1,6 @@
 import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import UnoCSS from "unocss/vite";
 
 const root = fileURLToPath(new URL("../../", import.meta.url));
 
@@ -21,8 +20,7 @@ export default defineConfig({
       { find: "@", replacement: `${root}src` },
     ],
   },
-  css: { modules: { localsConvention: "camelCase" } },
-  plugins: [UnoCSS({ configFile: `${root}uno.config.ts` }), react()],
+  plugins: [react()],
   server: {
     host: "0.0.0.0",
     port: 3210,

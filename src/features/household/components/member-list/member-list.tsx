@@ -1,6 +1,13 @@
 import type { Member } from "@/features/budget";
-import { PersonAvatar } from "@/components/ui/person-avatar";
-import styles from "@/features/household/components/member-list/member-list.module.css";
+import { PersonAvatar } from "@/components/app/person-avatar";
+import {
+  Item,
+  ItemContent,
+  ItemDescription,
+  ItemGroup,
+  ItemMedia,
+  ItemTitle,
+} from "@/components/glaze/ui/item";
 
 export function MemberList({
   members,
@@ -10,18 +17,24 @@ export function MemberList({
   currentUserId: string;
 }) {
   return (
-    <div className={styles.coupleMembers}>
+    <ItemGroup variant="plain" aria-label="Membros do espaço">
       {members.map((member, index) => (
-        <div className={styles.coupleMember} key={member.id}>
-          <PersonAvatar
-            name={member.name}
-            position={index}
-            className="w-[34px] h-[34px] text-xs"
-          />
-          <strong>{member.name}</strong>
-          <span>{member.id === currentUserId ? "Você" : "Seu par"}</span>
-        </div>
+        <Item key={member.id}>
+          <ItemMedia>
+            <PersonAvatar
+              name={member.name}
+              position={index}
+              className="size-8"
+            />
+          </ItemMedia>
+          <ItemContent>
+            <ItemTitle>{member.name}</ItemTitle>
+            <ItemDescription>
+              {member.id === currentUserId ? "Você" : "Seu par"}
+            </ItemDescription>
+          </ItemContent>
+        </Item>
       ))}
-    </div>
+    </ItemGroup>
   );
 }

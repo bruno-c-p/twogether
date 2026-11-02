@@ -41,19 +41,29 @@ function transactionDefaultDate(month: string) {
   return date.startsWith(month) ? date : `${month}-01`;
 }
 
-function DeleteRecurrenceFlow({ transaction }: { transaction: Transaction }) {
+function DeleteRecurrenceFlow({
+  transaction,
+}: {
+  transaction: Transaction | null;
+}) {
   const { budget, dialogs, mutations, actions } = useWorkspace();
-  const following = laterInSeries(budget.state.transactions, transaction);
+
+  const following = transaction
+    ? laterInSeries(budget.state.transactions, transaction)
+    : [];
 
   return (
     <DeleteRecurrenceDialog
+      open={transaction !== null}
       transaction={transaction}
       count={following.length + 1}
       busy={mutations.deleteTransaction.pending}
       error={mutations.deleteTransaction.error}
       onClose={() => dialogs.setDeleting(null)}
       onDelete={(all) =>
-        actions.deleteRecurring(transaction, all ? following : [])
+        transaction
+          ? actions.deleteRecurring(transaction, all ? following : [])
+          : Promise.resolve()
       }
     />
   );
@@ -69,47 +79,42 @@ export function TransactionFlows() {
 
   return (
     <Suspense>
-      {dialogs.percentagesRevision !== null && (
-        <GoalPercentagesDialog
-          percentages={budget.state.percentages}
-          busy={mutations.savePercentages.pending}
-          error={mutations.savePercentages.error}
-          onSave={actions.saveGoalPercentages}
-          onClose={() => dialogs.setPercentagesRevision(null)}
-        />
-      )}
-      {dialogs.transaction && (
-        <TransactionDialog
-          transaction={dialogs.transaction.transaction}
-          defaultDate={transactionDefaultDate(month)}
-          members={budget.household.members}
-          currentUserId={budget.user.id}
-          busy={mutations.saveTransaction.pending}
-          serverError={mutations.saveTransaction.error}
-          splitBusy={mutations.splitBusy}
-          onSave={actions.save}
-          onSettle={actions.openSettle}
-          onUnsettle={actions.unsettle}
-          onDelete={(transaction) => {
-            dialogs.setTransaction(null);
-            void actions.remove(transaction);
-          }}
-          onClose={() => dialogs.setTransaction(null)}
-        />
-      )}
-      {dialogs.deleting && (
-        <DeleteRecurrenceFlow transaction={dialogs.deleting} />
-      )}
-      {dialogs.settling && (
-        <SettleDialog
-          transaction={dialogs.settling}
-          members={budget.household.members}
-          busy={mutations.settleSplit.pending}
-          serverError={mutations.settleSplit.error}
-          onConfirm={actions.confirmSettle}
-          onClose={() => dialogs.setSettling(null)}
-        />
-      )}
+      <GoalPercentagesDialog
+        open={dialogs.percentagesRevision !== null}
+        percentages={budget.state.percentages}
+        busy={mutations.savePercentages.pending}
+        error={mutations.savePercentages.error}
+        onSave={actions.saveGoalPercentages}
+        onClose={() => dialogs.setPercentagesRevision(null)}
+      />
+      <TransactionDialog
+        open={dialogs.transaction !== null}
+        transaction={dialogs.transaction?.transaction ?? null}
+        defaultDate={transactionDefaultDate(month)}
+        members={budget.household.members}
+        currentUserId={budget.user.id}
+        busy={mutations.saveTransaction.pending}
+        serverError={mutations.saveTransaction.error}
+        splitBusy={mutations.splitBusy}
+        onSave={actions.save}
+        onSettle={actions.openSettle}
+        onUnsettle={actions.unsettle}
+        onDelete={(transaction) => {
+          dialogs.setTransaction(null);
+          void actions.remove(transaction);
+        }}
+        onClose={() => dialogs.setTransaction(null)}
+      />
+      <DeleteRecurrenceFlow transaction={dialogs.deleting} />
+      <SettleDialog
+        open={dialogs.settling !== null}
+        transaction={dialogs.settling}
+        members={budget.household.members}
+        busy={mutations.settleSplit.pending}
+        serverError={mutations.settleSplit.error}
+        onConfirm={actions.confirmSettle}
+        onClose={() => dialogs.setSettling(null)}
+      />
     </Suspense>
   );
 }

@@ -1,13 +1,13 @@
 import type { ReactNode } from "react";
-import { AppFooter } from "@/components/ui/app-footer/app-footer";
+import { AppFooter } from "@/components/app/app-footer/app-footer";
 import {
   DesktopNavigation,
   MobileNavigation,
 } from "@/features/budget/components/workspace-navigation";
 import { TransactionFlows } from "@/features/budget/components/transaction-flows";
 import { useWorkspace } from "@/features/budget/hooks/use-workspace";
-import { Brand } from "@/components/ui/brand";
-import { cx } from "@/lib/cx";
+import { Brand } from "@/components/app/brand";
+import { cn } from "@/lib/glaze/utils";
 
 /** The account entry renders as header avatars on desktop and a tab on phones. */
 export type AccountPlacement = "header" | "tab";
@@ -24,51 +24,44 @@ export function WorkspaceShell({
   const { actions } = useWorkspace();
 
   return (
-    <div className="min-h-[100dvh] pl-[env(safe-area-inset-left,0px)] pr-[env(safe-area-inset-right,0px)]">
+    <div className="min-h-dvh bg-page ps-[env(safe-area-inset-left)] pe-[env(safe-area-inset-right)] text-text-1">
       <a
         href="#main-content"
-        className="absolute z-40 top-[16px] [inset-inline-start:-999px] focus:[inset-inline-start:16px] bg-surface text-text px-3 py-2 rounded-md"
+        className="sr-only rounded-pill bg-paper px-3 py-2 type-label focus:not-sr-only focus:absolute focus:start-4 focus:top-4 focus:z-(--z-overlay)"
       >
         Pular para o conteúdo
       </a>
-      <header
-        className={cx(
-          "sticky top-0 z-20 bg-topbar backdrop-blur pt-[env(safe-area-inset-top,0px)]",
-          "[border-width:0_0_1px] border-solid border-border max-bp1000:static",
-        )}
-      >
-        <div
-          className={cx(
-            "mx-auto max-w-[1450px] flex flex-wrap items-center gap-x-2 gap-y-3 max-bp620:gap-x-1.5",
-            "px-8 py-4 max-bp1190:px-6 max-bp800:px-6 max-bp620:px-4",
-          )}
-        >
+      <header className="sticky top-0 z-(--z-sticky) border-b border-line-faint bg-page pt-[env(safe-area-inset-top)] max-lg:static">
+        <div className="mx-auto flex w-full max-w-360 flex-wrap items-center gap-x-2 gap-y-3 px-4 py-3 max-sm:gap-x-1.5 sm:px-6 xl:px-10">
           <Brand
             mark
-            aria-label="twogether — início"
-            className="max-bp1000:order-1 mr-2 max-bp620:mr-0 text-xl"
-            markClassName="scale-[.8]"
-            textClassName="max-bp620:hidden"
+            aria-label="twogether, início"
+            className="me-2 max-lg:order-1 max-sm:me-0"
+            textClassName="max-sm:hidden"
           />
           <DesktopNavigation />
           <div
-            className={cx(
-              "ml-auto flex flex-wrap items-center gap-2",
-              "max-bp1000:order-2 max-bp1000:w-auto max-bp1000:flex-1 max-bp1000:flex-nowrap max-bp1000:ml-0",
-              "max-bp620:justify-center max-bp620:gap-1.5",
+            className={cn(
+              "ms-auto flex flex-wrap items-center gap-2",
+              "max-lg:order-2 max-lg:ms-0 max-lg:flex-1 max-lg:flex-nowrap",
+              "max-sm:justify-center max-sm:gap-1.5",
             )}
           >
             {controls}
           </div>
-          <div className="flex items-center gap-2 max-bp1000:hidden">
+          <div className="flex items-center gap-2 max-lg:hidden">
             {account("header")}
           </div>
         </div>
       </header>
-      <main id="main-content" tabIndex={-1} className="scroll-mt-[80px]">
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="mx-auto w-full max-w-360 scroll-mt-20 px-4 pt-6 sm:px-6 lg:pt-8 xl:px-10"
+      >
         {children}
       </main>
-      <div className="max-bp1000:pb-mobile-nav">
+      <div className="max-lg:pb-(--mobile-nav-height)">
         <AppFooter />
       </div>
       <MobileNavigation

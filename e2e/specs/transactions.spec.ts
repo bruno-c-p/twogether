@@ -9,6 +9,7 @@ import {
   withMobile,
   monthSummary,
   transactionRow,
+  pickDate,
 } from "../fixtures/app";
 
 // The one summary paragraph that is only an amount.
@@ -36,19 +37,19 @@ test.describe("transactions", () => {
     await expect(
       dialog.getByRole("heading", { name: "Nova transação" }),
     ).toBeVisible();
-    await dialog.getByRole("button", { name: "Receita" }).click();
+    await dialog.getByRole("radio", { name: "Receita" }).click();
     await dialog.getByLabel("Valor").fill("5000,00");
     await dialog.getByLabel("Descrição").fill("Salário");
-    await dialog.getByLabel("Data").fill("2026-09-01");
+    await pickDate(dialog, "Data", "2026-09-01");
     await expect(dialog.getByText("Para qual meta?")).toHaveCount(0);
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
     const expense = await openNewTransaction(page);
-    await expense.getByRole("button", { name: "Despesa" }).click();
+    await expense.getByRole("radio", { name: "Despesa" }).click();
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
-    await expense.getByLabel("Data").fill("2026-09-14");
+    await pickDate(expense, "Data", "2026-09-14");
     await expense
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
@@ -91,7 +92,7 @@ test.describe("transactions", () => {
       ).toBeVisible();
       // The backdrop is above the sheet on mobile.
       await page
-        .locator('[data-slot="dialog-backdrop"]')
+        .locator('[data-slot="dialog-overlay"]')
         .click({ position: { x: 16, y: 12 } });
       await expect(
         page.getByRole("dialog", { name: "Nova transação" }),
@@ -106,14 +107,14 @@ test.describe("transactions", () => {
     await setMonth(page, "2026-09");
 
     const dialog = await openNewTransaction(page);
-    await dialog.getByRole("button", { name: "Despesa" }).click();
+    await dialog.getByRole("radio", { name: "Despesa" }).click();
     await dialog.getByLabel("Valor").fill("100,00");
     await dialog.getByLabel("Descrição").fill("Aluguel");
-    await dialog.getByLabel("Data").fill("2026-09-14");
+    await pickDate(dialog, "Data", "2026-09-14");
     await dialog
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
-    await dialog.getByLabel("Repetir mensalmente").check();
+    await dialog.getByRole("switch", { name: "Repetir mensalmente" }).click();
     await dialog.getByLabel("Por quantos meses?").fill("3");
     await dialog.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "3 transações mensais adicionadas.");
@@ -145,7 +146,7 @@ test.describe("transactions", () => {
 
     await setMonth(page, "2026-10");
     await page.getByRole("button", { name: "Excluir Aluguel" }).click();
-    const remove = page.getByRole("dialog", { name: "Excluir transação" });
+    const remove = page.getByRole("alertdialog", { name: "Excluir transação" });
     await expect(remove.getByText("Aluguel")).toBeVisible();
     await remove.getByRole("radio", { name: /Esta e as seguintes/ }).check();
     await expect(
@@ -176,18 +177,18 @@ test.describe("transactions", () => {
     await setMonth(page, "2026-09");
 
     const income = await openNewTransaction(page);
-    await income.getByRole("button", { name: "Receita" }).click();
+    await income.getByRole("radio", { name: "Receita" }).click();
     await income.getByLabel("Valor").fill("200,00");
     await income.getByLabel("Descrição").fill("Salário");
-    await income.getByLabel("Data").fill("2026-09-01");
+    await pickDate(income, "Data", "2026-09-01");
     await income.getByRole("button", { name: "Adicionar transação" }).click();
     await expectToast(page, "Transação adicionada.");
 
     const expense = await openNewTransaction(page);
-    await expense.getByRole("button", { name: "Despesa" }).click();
+    await expense.getByRole("radio", { name: "Despesa" }).click();
     await expense.getByLabel("Valor").fill("45,90");
     await expense.getByLabel("Descrição").fill("Mercado");
-    await expense.getByLabel("Data").fill("2026-09-14");
+    await pickDate(expense, "Data", "2026-09-14");
     await expense
       .getByRole("button", { name: "Custo fixo", exact: true })
       .click();
