@@ -21,7 +21,7 @@ const SizeContext = React.createContext<PaginationSize>('default');
 
 function Pagination({className, size = 'default', ...props}: React.ComponentProps<'nav'> & {size?: PaginationSize}) {
   return <SizeContext.Provider value={size}>
-    <nav aria-label="Pagination" data-slot="pagination" data-size={size} className={cn('@container/pagination flex w-full min-w-0 items-center', className)} {...props}/>
+    <nav aria-label="Paginação" data-slot="pagination" data-size={size} className={cn('@container/pagination flex w-full min-w-0 items-center', className)} {...props}/>
   </SizeContext.Provider>;
 }
 
@@ -69,7 +69,7 @@ function PaginationLink({className, isActive, disabled, href, children, ...props
 
 /** The previous page: an arrow, and the word from 448px of room. Named "Previous page" either way. */
 function PaginationPrevious({className, text = 'Previous', ...props}: PaginationLinkProps & {text?: string}) {
-  return <PaginationLink aria-label="Previous page" className={cn('ps-1.5 pe-2.5 @max-md/pagination:px-1.5', className)} {...props}>
+  return <PaginationLink aria-label="Página anterior" className={cn('ps-1.5 pe-2.5 @max-md/pagination:px-1.5', className)} {...props}>
     <Icon icon={ChevronLeft} className="rtl:-scale-x-100"/>
     <span className="@max-md/pagination:hidden">{text}</span>
   </PaginationLink>;
@@ -77,7 +77,7 @@ function PaginationPrevious({className, text = 'Previous', ...props}: Pagination
 
 /** The next page: the word from 448px of room, then an arrow. Named "Next page" either way. */
 function PaginationNext({className, text = 'Next', ...props}: PaginationLinkProps & {text?: string}) {
-  return <PaginationLink aria-label="Next page" className={cn('ps-2.5 pe-1.5 @max-md/pagination:px-1.5', className)} {...props}>
+  return <PaginationLink aria-label="Próxima página" className={cn('ps-2.5 pe-1.5 @max-md/pagination:px-1.5', className)} {...props}>
     <span className="@max-md/pagination:hidden">{text}</span>
     <Icon icon={ChevronRight} className="rtl:-scale-x-100"/>
   </PaginationLink>;
