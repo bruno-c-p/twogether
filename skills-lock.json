@@ -43,11 +43,23 @@
       "skillPath": "skills/break-ui/SKILL.md",
       "computedHash": "60ada67662925f4df5e3c6ff41cac3ab241b66f8898100a5ffcd7ba7196cb868"
     },
+    "build-design-system": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/build-design-system/SKILL.md",
+      "computedHash": "68fe389da353c02a64094841f4658387883db7f2a280956e308489e479cffeaf"
+    },
     "color-system": {
       "source": "Owl-Listener/designer-skills",
       "sourceType": "github",
       "skillPath": "ui-design/skills/color-system/SKILL.md",
       "computedHash": "00668079fe31fd68331a8d51122cab722b7e3722d4464a2c8885a7fccdd0d2d0"
+    },
+    "component-docs": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/component-docs/SKILL.md",
+      "computedHash": "0cc156185f7acb88350cb02583cdad358ddd7a592c6df69fafce2a2ad146f99d"
     },
     "critique-typography": {
       "source": "Owl-Listener/designer-skills",
@@ -72,6 +84,12 @@
       "sourceType": "github",
       "skillPath": "ui-design/skills/data-visualization/SKILL.md",
       "computedHash": "ce533aae19c00c0dd7971befdae35328f837a72a479e5f8107b1e6f20543a967"
+    },
+    "design-system-boss": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/design-system-boss/SKILL.md",
+      "computedHash": "6e11bbaedb2ff96ff95fba3c420a6c378ee74610ee6270f5de55c659b5d93a5c"
     },
     "emil-design-eng": {
       "source": "emilkowalski/skills",
@@ -157,6 +175,12 @@
       "skillPath": "ui-design/skills/layout-grid/SKILL.md",
       "computedHash": "2b164fa9f3f31e3b0bd019620edf4b32cad8182216006f1ae824d1b12f2635be"
     },
+    "migrate-design-system": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/migrate-design-system/SKILL.md",
+      "computedHash": "b912ff72a22a49993d4a37cbb5cb6c8b07348682d7d7409dc2fc0cdce5053895"
+    },
     "mobile-native": {
       "source": "emilkowalski/skills",
       "sourceType": "github",
@@ -211,6 +235,12 @@
       "skillPath": "design-systems/skills/theming-system/SKILL.md",
       "computedHash": "20d34b6e083002dde59b2f5e36d50d62588291f6c918ee8e52e8f1de1e4cae98"
     },
+    "token-mapping": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/token-mapping/SKILL.md",
+      "computedHash": "9d6f299ea41b2b8c68d743af398935527fe9256f943d5640993dcab95fa47ace"
+    },
     "turso-cloud": {
       "source": "tursodatabase/agent-skills",
       "sourceType": "github",
@@ -222,6 +252,12 @@
       "sourceType": "github",
       "skillPath": "ui-design/skills/typography-scale/SKILL.md",
       "computedHash": "69390c6eca11f4318f2fc8130ff1d39ff24b504057458c8ddc3072725bdc14f5"
+    },
+    "ui-review": {
+      "source": "arla6ka/design.how",
+      "sourceType": "github",
+      "skillPath": "skills/ui-review/SKILL.md",
+      "computedHash": "d693f31476d9f94a683e5e07bdcaa51117b2aeb02f1d9895b8248313f3bcfdf7"
     },
     "visual-hierarchy": {
       "source": "Owl-Listener/designer-skills",

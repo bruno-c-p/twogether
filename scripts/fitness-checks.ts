@@ -18,7 +18,10 @@ const RESURRECTED_CSS = [
   "src/features/budget/styles/list-row.module.css",
 ];
 
-const BANNED_CSS_DEPS = ["tailwindcss", "shadcn"];
+const BANNED_CSS_DEPS = ["unocss", "shadcn"];
+
+// Glaze's glass recipe is drawn with gradients; the vendored registry files own it.
+const GLAZE_VENDORED = ["src/components/glaze/", "src/lib/glaze/"];
 
 const CACHE_CONTROL_FILES = ["src/start.ts"];
 
@@ -181,13 +184,16 @@ export function cssHouseStyle(repo: Repo) {
 
   const styled = repo
     .tracked(["*.css", "*.svg", "*.tsx", "*.ts", "*.html"])
-    .filter((file) => !SELF.includes(file));
+    .filter((file) => !SELF.includes(file))
+    .filter((file) => !GLAZE_VENDORED.some((dir) => file.startsWith(dir)));
 
   return [
     ...names
       .filter(isBannedCssDependency)
       .map((name) => `package.json must not depend on ${name}`),
-    ...(names.includes("unocss") ? [] : ["package.json must depend on unocss"]),
+    ...(names.includes("tailwindcss")
+      ? []
+      : ["package.json must depend on tailwindcss"]),
     ...repo
       .tracked(RESURRECTED_CSS)
       .map((file) => `tracked resurrected ${file}`),
@@ -197,21 +203,21 @@ export function cssHouseStyle(repo: Repo) {
   ];
 }
 
-export function unoWiring(repo: Repo) {
-  if (!repo.exists("uno.config.ts"))
-    return ["uno.config.ts is required for the styling system"];
+const GLAZE_ROOT: [string, string][] = [
+  ["@/components/glaze/styles.css", "import @/components/glaze/styles.css"],
+  ['<body className="glaze">', 'put className="glaze" on <body>'],
+  ["<GlazePortalProvider>", "wrap the app in <GlazePortalProvider>"],
+];
 
-  const failures: string[] = [];
+export function glazeWiring(repo: Repo) {
+  const root = repo.read("src/routes/__root.tsx");
 
-  if (/\bfontFamily\s*:/.test(repo.read("uno.config.ts")))
-    failures.push(
-      "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
-    );
-
-  if (!repo.read("src/routes/__root.tsx").includes("virtual:uno.css"))
-    failures.push("src/routes/__root.tsx must import virtual:uno.css");
-
-  return failures;
+  return [
+    ...(repo.exists("uno.config.ts") ? ["uno.config.ts is retired"] : []),
+    ...GLAZE_ROOT.flatMap(([marker, rule]) =>
+      root.includes(marker) ? [] : [`src/routes/__root.tsx must ${rule}`],
+    ),
+  ];
 }
 
 // Route config loads eagerly, so a barrel that re-exports a component drags
@@ -436,7 +442,7 @@ export function sourceChecks(repo: Repo) {
     ...noBudgetCommandBus(repo),
     ...cacheControlSource(repo),
     ...cssHouseStyle(repo),
-    ...unoWiring(repo),
+    ...glazeWiring(repo),
     ...componentModuleLayout(repo),
     ...boundaryBaselineScope(repo),
     ...noComponentBarrels(repo),

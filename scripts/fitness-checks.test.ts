@@ -16,7 +16,7 @@ import {
   noCommandBusSource,
   noGithubMedia,
   sourceChecks,
-  unoWiring,
+  glazeWiring,
   waitForHeader,
   type Git,
   type Repo,
@@ -31,9 +31,11 @@ import {
 } from "./fitness-styles";
 
 const healthyFiles = {
-  "package.json": JSON.stringify({ devDependencies: { unocss: "1" } }),
-  "uno.config.ts": "export default { theme: { font: {} } }",
-  "src/routes/__root.tsx": 'import "virtual:uno.css";',
+  "package.json": JSON.stringify({ dependencies: { tailwindcss: "4" } }),
+  "src/routes/__root.tsx":
+    'import "@/components/glaze/styles.css?url"; <body className="glaze"><GlazePortalProvider>',
+  "src/components/glaze/styles.css":
+    ".glass { background: linear-gradient(red, blue) }",
   "src/start.ts": "createCsrfMiddleware(); 'private, no-store'",
   "src/ui/button/button.module.css": ".root {}",
   "src/ui/button/button.tsx": "export {}",
@@ -135,11 +137,11 @@ describe("fitness source checks", () => {
     ]);
   });
 
-  test("CSS house style bans utility kits, gradients and resurrected files", () => {
+  test("CSS house style bans other kits, app gradients and resurrected files", () => {
     const failures = cssHouseStyle(
       repoWith({
         "package.json": JSON.stringify({
-          dependencies: { tailwindcss: "4", "@radix-ui/react-dialog": "1" },
+          dependencies: { unocss: "66", "@radix-ui/react-dialog": "1" },
         }),
         "src/ui.module.css": "",
         "src/a.css": "body { background: linear-gradient(red, blue) }",
@@ -147,23 +149,20 @@ describe("fitness source checks", () => {
     );
 
     expect(failures).toEqual([
-      "package.json must not depend on tailwindcss",
+      "package.json must not depend on unocss",
       "package.json must not depend on @radix-ui/react-dialog",
-      "package.json must depend on unocss",
+      "package.json must depend on tailwindcss",
       "tracked resurrected src/ui.module.css",
       "src/a.css still uses a CSS gradient or --page-glow",
     ]);
   });
 
-  test("UnoCSS must be configured with theme.font and imported by the root", () => {
-    expect(unoWiring(repoWith({}))).toEqual([
-      "uno.config.ts is required for the styling system",
-    ]);
-    expect(
-      unoWiring(repoWith({ "uno.config.ts": "theme: { fontFamily: {} }" })),
-    ).toEqual([
-      "uno.config.ts must set theme.font; preset-wind4 ignores fontFamily",
-      "src/routes/__root.tsx must import virtual:uno.css",
+  test("the root wires Glaze and UnoCSS stays retired", () => {
+    expect(glazeWiring(repoWith({ "uno.config.ts": "" }))).toEqual([
+      "uno.config.ts is retired",
+      "src/routes/__root.tsx must import @/components/glaze/styles.css",
+      'src/routes/__root.tsx must put className="glaze" on <body>',
+      "src/routes/__root.tsx must wrap the app in <GlazePortalProvider>",
     ]);
   });
 

@@ -51,19 +51,19 @@ without one is not checked.
 
 ### Styling
 
-| Rule                                                                            | Enforcer                            | Failure looks like                                                    | Details           |
-| ------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- | ----------------- |
-| A component with a CSS module lives in `<component>/` next to it                | fitness `componentModuleLayout`     | `… must live in a folder named …` / `… has no sibling ….tsx`          | Component folders |
-| New components use UnoCSS utilities and stay flat; a module only when needed    | **prose**                           | —                                                                     | Component folders |
-| Token utilities, project breakpoints, `cx(...)` groups, `shortcuts` for repeats | **prose**                           | —                                                                     | Styling           |
-| No padding/margin shorthand next to one of its sides on one element             | fitness `noConflictingBoxUtilities` | `… sets m-0 and mt-2 on one element; …`                               | Styling           |
-| No other conflicting utilities on one element (two `left-[...]`)                | **prose**                           | —                                                                     | Styling           |
-| No new arbitrary px values in class strings                                     | fitness `noNewArbitraryPx`          | `… adds arbitrary px value w-[32px]; use w-8. …`                      | Styling           |
-| Never add lines to `scripts/fitness-px-baseline.tsv`                            | **prose** (no growth ratchet)       | —                                                                     | Styling           |
-| Clear the phone nav with `--mobile-nav-height`                                  | fitness `mobileNavToken`            | `… must use h-mobile-nav in its className: …`                         | Styling           |
-| `theme.font`, not `fontFamily`; `__root.tsx` imports `virtual:uno.css`          | fitness `unoWiring`                 | `uno.config.ts must set theme.font; …`                                | Styling           |
-| UnoCSS stays; no Tailwind, shadcn, `@radix-ui`, gradients or retired CSS files  | fitness `cssHouseStyle`             | `package.json must not depend on …` / `… still uses a CSS gradient …` | Styling           |
-| `src/styles.css` holds tokens, resets and global element rules only             | **prose**                           | —                                                                     | Styling           |
+| Rule                                                                                | Enforcer                            | Failure looks like                                                    | Details           |
+| ----------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- | ----------------- |
+| A component with a CSS module lives in `<component>/` next to it                    | fitness `componentModuleLayout`     | `… must live in a folder named …` / `… has no sibling ….tsx`          | Component folders |
+| New components use UnoCSS utilities and stay flat; a module only when needed        | **prose**                           | —                                                                     | Component folders |
+| Token utilities, project breakpoints, `cx(...)` groups, `shortcuts` for repeats     | **prose**                           | —                                                                     | Styling           |
+| No padding/margin shorthand next to one of its sides on one element                 | fitness `noConflictingBoxUtilities` | `… sets m-0 and mt-2 on one element; …`                               | Styling           |
+| No other conflicting utilities on one element (two `left-[...]`)                    | **prose**                           | —                                                                     | Styling           |
+| No new arbitrary px values in class strings                                         | fitness `noNewArbitraryPx`          | `… adds arbitrary px value w-[32px]; use w-8. …`                      | Styling           |
+| Never add lines to `scripts/fitness-px-baseline.tsv`                                | **prose** (no growth ratchet)       | —                                                                     | Styling           |
+| Clear the phone nav with `--mobile-nav-height`                                      | fitness `mobileNavToken`            | `… must use h-mobile-nav in its className: …`                         | Styling           |
+| Glaze is wired in the root (`styles.css`, `glaze` body, portal); no `uno.config.ts` | fitness `glazeWiring`               | `src/routes/__root.tsx must put className="glaze" on <body>`          | Styling           |
+| UnoCSS stays; no Tailwind, shadcn, `@radix-ui`, gradients or retired CSS files      | fitness `cssHouseStyle`             | `package.json must not depend on …` / `… still uses a CSS gradient …` | Styling           |
+| `src/styles.css` holds tokens, resets and global element rules only                 | **prose**                           | —                                                                     | Styling           |
 
 ### Code structure and domain
 

@@ -13,7 +13,9 @@
       ".goose/**",
       ".kiro/**",
       ".qwen/**",
-      "tools/**"
+      "tools/**",
+      "src/components/glaze/**",
+      "src/lib/glaze/**"
     ],
     "overrides": [
       {

@@ -8,14 +8,20 @@ import {
   Outlet,
   Scripts,
 } from "@tanstack/react-router";
-import interTightLatin from "@fontsource-variable/inter-tight/files/inter-tight-latin-wght-normal.woff2?url";
-import "@fontsource-variable/inter-tight/wght.css";
+import geistLatin from "@fontsource/geist/files/geist-latin-400-normal.woff2?url";
+import "@fontsource/geist/400.css";
+import "@fontsource/geist/500.css";
+import "@fontsource/geist/600.css";
+import "@fontsource/geist-mono/400.css";
+import "@fontsource/geist-mono/500.css";
 import stylesheet from "@/styles.css?url";
+import glazeStylesheet from "@/components/glaze/styles.css?url";
 import "virtual:uno.css";
 import { NotFoundPage, RouteError } from "@/components/route-error/route-error";
 import { themeScript, useThemePreference } from "@/features/theme";
 import { Toaster } from "@/components/ui/toaster";
 import { LazyClerkUI } from "@/lib/clerk-ui";
+import { GlazePortalProvider } from "@/lib/glaze/portal";
 import { parseClientEnv } from "@/lib/env";
 import { browserTimeZone, rememberTimeZone } from "@/lib/time-zone";
 import { useBrowserSync } from "@/lib/use-browser-sync";
@@ -60,7 +66,7 @@ export const Route = createRootRouteWithContext<{
         name: "description",
         content: "Organize transações e metas em um orçamento pessoal.",
       },
-      { name: "theme-color", content: "#f2f2f4" },
+      { name: "theme-color", content: "#fbfbfa" },
       { name: "color-scheme", content: "light dark" },
       {
         name: "apple-mobile-web-app-status-bar-style",
@@ -72,12 +78,13 @@ export const Route = createRootRouteWithContext<{
     ],
     links: [
       { rel: "stylesheet", href: stylesheet },
+      { rel: "stylesheet", href: glazeStylesheet },
       { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
       { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "manifest", href: "/manifest.webmanifest" },
       {
         rel: "preload",
-        href: interTightLatin,
+        href: geistLatin,
         as: "font",
         type: "font/woff2",
         crossOrigin: "anonymous",
@@ -98,20 +105,16 @@ function ThemeSync() {
 
 const CLERK_APPEARANCE = {
   variables: {
-    colorPrimary: "var(--brand)",
-    colorForeground: "var(--text)",
-    colorMutedForeground: "var(--text-muted)",
-    colorBackground: "var(--surface)",
-    colorInput: "var(--surface)",
-    colorInputForeground: "var(--text)",
-    colorDanger: "var(--danger)",
-    borderRadius: "10px",
-    fontFamily: '"Inter Tight Variable", sans-serif',
+    colorPrimary: "var(--ink)",
+    colorForeground: "var(--text-1)",
+    colorMutedForeground: "var(--text-2)",
+    colorBackground: "var(--paper)",
+    colorInput: "var(--paper)",
+    colorInputForeground: "var(--text-1)",
+    colorDanger: "var(--fail)",
+    borderRadius: "var(--radius-panel)",
+    fontFamily: "var(--font-sans)",
     fontSize: "14px",
-  },
-  // Clerk fades colorBorder to ~5% alpha; text fields need a 3:1 edge.
-  elements: {
-    formFieldInput: "!shadow-[inset_0_0_0_1px_var(--line-strong)]",
   },
 };
 
@@ -137,16 +140,18 @@ function RootDocument() {
         <HeadContent />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
-      <body>
-        <LocalizedClerkProvider>
-          <NuqsAdapter>
-            <TimeZoneCookie />
-            <Outlet />
-          </NuqsAdapter>
-          <ThemeSync />
-          <Toaster />
-          <Scripts />
-        </LocalizedClerkProvider>
+      <body className="glaze">
+        <GlazePortalProvider>
+          <LocalizedClerkProvider>
+            <NuqsAdapter>
+              <TimeZoneCookie />
+              <Outlet />
+            </NuqsAdapter>
+            <ThemeSync />
+            <Toaster />
+            <Scripts />
+          </LocalizedClerkProvider>
+        </GlazePortalProvider>
       </body>
     </html>
   );
