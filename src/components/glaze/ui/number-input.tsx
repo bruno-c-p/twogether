@@ -58,7 +58,7 @@ function NumberInput({size = 'default', unit, leading, placeholder, className, d
     >
       {leading !== undefined && <InputLeading>{leading}</InputLeading>}
       <InputLeading>
-        <NumberFieldPrimitive.Decrement data-slot="number-input-decrement" aria-label="Decrease" tabIndex={-1} render={<InputAction className={stepperClass}/>}><Icon icon={Subtract}/></NumberFieldPrimitive.Decrement>
+        <NumberFieldPrimitive.Decrement data-slot="number-input-decrement" aria-label="Diminuir" tabIndex={-1} render={<InputAction className={stepperClass}/>}><Icon icon={Subtract}/></NumberFieldPrimitive.Decrement>
       </InputLeading>
       <span className="flex min-w-0 flex-1 items-center justify-center gap-1">
         <NumberFieldPrimitive.Input
@@ -74,7 +74,7 @@ function NumberInput({size = 'default', unit, leading, placeholder, className, d
         {unit && <span data-slot="number-input-unit" aria-hidden className={cn('shrink-0 text-text-3 group-data-disabled/input:text-text-disabled', textSize[size])}>{unit}</span>}
       </span>
       <InputTrailing>
-        <NumberFieldPrimitive.Increment data-slot="number-input-increment" aria-label="Increase" tabIndex={-1} render={<InputAction className={stepperClass}/>}><Icon icon={Add}/></NumberFieldPrimitive.Increment>
+        <NumberFieldPrimitive.Increment data-slot="number-input-increment" aria-label="Aumentar" tabIndex={-1} render={<InputAction className={stepperClass}/>}><Icon icon={Add}/></NumberFieldPrimitive.Increment>
       </InputTrailing>
     </NumberFieldPrimitive.Group>
   </NumberFieldPrimitive.Root>;

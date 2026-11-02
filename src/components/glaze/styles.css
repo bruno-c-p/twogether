@@ -38,7 +38,7 @@
 /* The folders to scan, but not the lint: it names every class Glaze has and many it bans, and none of it is markup. */
 @source "../../app";
 @source "../../pages";
-@source "../../src";
+@source "../..";
 @source "../../components";
 @source "../../lib/glaze";
 @source not "../../lib/glaze/lint";
