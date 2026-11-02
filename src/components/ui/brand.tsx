@@ -1,6 +1,6 @@
 import type { ComponentPropsWithoutRef, ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { cx } from "@/lib/cx";
+import { cn } from "@/lib/glaze/utils";
 
 export function Brand({
   className,
@@ -18,17 +18,17 @@ export function Brand({
   return (
     <Link
       to="/"
-      className={cx(
-        "flex items-center gap-2 font-heading text-2xl tracking-[-1.2px] font-800",
-        "max-bp1190:text-2xl",
+      className={cn(
+        "flex items-center gap-2 rounded-tag type-heading tracking-heading text-text-1",
         className,
       )}
       {...props}
     >
       {mark ? (
         <span
-          className={cx(
-            "w-[26px] h-[31px] relative inline-block -rotate-12 shrink-0",
+          aria-hidden="true"
+          className={cn(
+            "relative inline-block h-6 w-5 shrink-0 -rotate-12",
             markClassName,
           )}
         >
@@ -37,24 +37,22 @@ export function Brand({
         </span>
       ) : null}
       {children ?? (
-        <>
-          <span className={textClassName}>twogether</span>
-          <span className={cx("text-text-muted -ml-2", textClassName)}>.</span>
-        </>
+        <span className={textClassName}>
+          twogether<span className="text-text-2">.</span>
+        </span>
       )}
     </Link>
   );
 }
 
+// Two t's leaning on each other, drawn in ink.
 function MarkBar({ second }: { second?: boolean }) {
   return (
     <span
-      className={cx(
-        "absolute w-[8px] h-[24px] bg-brand",
-        second ? "left-[16px] top-[1px]" : "left-[3px] top-[7px]",
-        "rounded-t-sm rounded-b-sm",
-        "after:content-[''] after:absolute after:top-[6px] after:left-[-4px]",
-        "after:w-[16px] after:h-[6px] after:bg-brand",
+      className={cn(
+        "absolute h-5 w-1.5 bg-ink",
+        second ? "top-0 left-3" : "top-1.5 left-0.5",
+        "after:absolute after:top-1 after:-left-0.75 after:h-1 after:w-3 after:bg-ink after:content-['']",
       )}
     />
   );
