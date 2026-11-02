@@ -27,6 +27,16 @@ if (!window.matchMedia) {
   });
 }
 
+// jsdom has no layout; Glaze's dialog, segmented control and pagination
+// observe their size, which never changes here.
+if (!window.ResizeObserver) {
+  window.ResizeObserver = class ResizeObserver {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+  };
+}
+
 // jsdom has no scrolling; the test router's scroll restoration calls this.
 window.scrollTo = () => undefined;
 
