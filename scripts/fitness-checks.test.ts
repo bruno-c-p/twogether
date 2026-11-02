@@ -6,13 +6,13 @@ import {
   boundaryBaselineScope,
   domainBaselineGrowth,
   cacheControlSource,
-  componentModuleLayout,
   cssHouseStyle,
   headerCheckFailure,
   headerFailures,
   httpStatusBoundary,
   noApiRouteFiles,
   noComponentBarrels,
+  noCssModules,
   noCommandBusSource,
   noGithubMedia,
   sourceChecks,
@@ -23,12 +23,7 @@ import {
 } from "./fitness-checks";
 import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
 import { mutationRules } from "./fitness-mutations";
-import {
-  conflictingBoxUtilities,
-  mobileNavToken,
-  noNewArbitraryPx,
-  PX_BASELINE,
-} from "./fitness-styles";
+import { conflictingBoxUtilities, mobileNavToken } from "./fitness-styles";
 
 const healthyFiles = {
   "package.json": JSON.stringify({ dependencies: { tailwindcss: "4" } }),
@@ -37,13 +32,11 @@ const healthyFiles = {
   "src/components/glaze/styles.css":
     ".glass { background: linear-gradient(red, blue) }",
   "src/start.ts": "createCsrfMiddleware(); 'private, no-store'",
-  "src/ui/button/button.module.css": ".root {}",
-  "src/ui/button/button.tsx": "export {}",
   "src/features/budget/actions/save.ts": "export const save = 1;",
   "src/features/budget/components/workspace-navigation.tsx":
-    '<nav className="h-mobile-nav" />',
+    '<nav className="h-(--mobile-nav-height)" />',
   "src/features/budget/components/workspace-shell.tsx":
-    '<div className="max-bp1000:pb-mobile-nav" />',
+    '<div className="max-lg:pb-(--mobile-nav-height)" />',
   "src/components/ui/toaster.tsx":
     '<div className="[--c:var(--mobile-nav-height)]" />',
   [BOUNDARY_BASELINE]: JSON.stringify({
@@ -83,17 +76,16 @@ describe("fitness source checks", () => {
     ).toEqual(["image/video files under .github/:\n.github/shot.png"]);
   });
 
-  test("CSS modules must sit in a folder named after them with a component", () => {
+  test("CSS modules are retired", () => {
     expect(
-      componentModuleLayout(
+      noCssModules(
         repoWith({
-          "src/a/card.module.css": "",
-          "src/b/row/row.module.css": "",
+          "src/a/card/card.module.css": "",
+          "src/a/card/card.tsx": "",
         }),
       ),
     ).toEqual([
-      "src/a/card.module.css must live in a folder named card",
-      "src/b/row/row.module.css has no sibling row.tsx in row/",
+      "src/a/card/card.module.css is a CSS module; style it with Glaze components, recipes and token utilities",
     ]);
   });
 
@@ -421,54 +413,8 @@ describe("fitness header checks", () => {
 describe("fitness style checks", () => {
   const spacer = "src/features/budget/components/workspace-shell.tsx";
 
-  const generic =
-    "use a theme utility (spacing p-4 = 16px, text-sm, rounded-md, bp* breakpoints) or add a named token to uno.config.ts";
-
-  const grandfathered = `Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`;
-
   const conflict =
     "on one element; stylesheet order picks the winner, so keep only the sides you mean (e.g. mt-2 instead of m-0 mt-2)";
-
-  test("a new arbitrary px value fails and names the utility to use", () => {
-    expect(
-      noNewArbitraryPx(
-        repoWith({
-          [spacer]: 'const a = <div className="max-bp1000:pb-[77px]" />;',
-          "src/a.tsx": 'cx("w-[32px]", "text-[13px]", "[--size:40px]")',
-          "src/b.tsx": 'cx("w-32px p-13px !-mt-8px")',
-        }),
-      ),
-    ).toEqual([
-      `${spacer}:1 adds arbitrary px value max-bp1000:pb-[77px]; ${generic}. ${grandfathered}`,
-      `src/a.tsx:1 adds arbitrary px value w-[32px]; use w-8 (spacing is 4px per step). ${grandfathered}`,
-      `src/a.tsx:1 adds arbitrary px value text-[13px]; use text-sm. ${grandfathered}`,
-      `src/a.tsx:1 adds arbitrary px value [--size:40px]; ${generic}. ${grandfathered}`,
-      `src/b.tsx:1 adds arbitrary px value w-32px; use w-8 (spacing is 4px per step). ${grandfathered}`,
-      `src/b.tsx:1 adds arbitrary px value p-13px; ${generic}. ${grandfathered}`,
-      `src/b.tsx:1 adds arbitrary px value !-mt-8px; use -mt-2 (spacing is 4px per step). ${grandfathered}`,
-    ]);
-  });
-
-  test("prose that mentions px is not a class", () => {
-    expect(
-      noNewArbitraryPx(
-        repoWith({ "src/a.tsx": 'toast("Valor [10px] inválido, use 12px");' }),
-      ),
-    ).toEqual([]);
-  });
-
-  test("the baseline allows its recorded count and only shrinks", () => {
-    const repo = repoWith({
-      [PX_BASELINE]:
-        "src/a.tsx\th-[8px]\nsrc/a.tsx\th-[8px]\nsrc/gone.tsx\tw-[3px]\n",
-      "src/a.tsx": 'cx("h-[8px] w-[min(10em,100%)]");',
-    });
-
-    expect(noNewArbitraryPx(repo)).toEqual([
-      `${PX_BASELINE} lists src/a.tsx h-[8px] 1 more time(s) than the code uses it; delete those lines so the value cannot come back`,
-      `${PX_BASELINE} lists src/gone.tsx w-[3px] 1 more time(s) than the code uses it; delete those lines so the value cannot come back`,
-    ]);
-  });
 
   test("a shorthand and a side on one element conflict", () => {
     expect(
@@ -478,7 +424,7 @@ describe("fitness style checks", () => {
           '<p className="m-0 mt-2" />;',
           '<button className="py-2 p-0" />;',
           '<p className="pt-2 pt-3" />;',
-          '<p className="mt-2 mb-4 px-0 py-2 p-4 max-bp620:p-2" />;',
+          '<p className="mt-2 mb-4 px-0 py-2 p-4 max-sm:p-2" />;',
           'cx("p-4", "pt-2");',
           "<p className={`p-4 ${x} pt-2`} />;",
           '<p className="!p-4 pt-2" />;',
@@ -504,7 +450,7 @@ describe("fitness style checks", () => {
         "src/a.tsx",
         [
           '<p className="m-0" />; <p className="mt-2" />;',
-          'cx(cond ? "p-0" : "pt-2", "max-bp620:p-2");',
+          'cx(cond ? "p-0" : "pt-2", "max-sm:p-2");',
           'const shared = "m-0"; const other = "mt-2";',
         ].join("\n"),
       ),
@@ -512,13 +458,13 @@ describe("fitness style checks", () => {
   });
 
   test("the nav spacer must derive from the nav height token in a class", () => {
-    const missing = `${spacer} must use pb-mobile-nav in its className: the mobile nav height lives in --mobile-nav-height (src/styles.css) so the nav and what clears it cannot drift`;
+    const missing = `${spacer} must use pb-(--mobile-nav-height) in its className: the mobile nav height lives in --mobile-nav-height (src/styles.css) so the nav and what clears it cannot drift`;
 
     expect(
       mobileNavToken(
         repoWith({
           ...healthyFiles,
-          [spacer]: '<div className="max-bp1000:pb-16" />',
+          [spacer]: '<div className="max-lg:pb-16" />',
         }),
       ),
     ).toEqual([missing]);
@@ -527,7 +473,8 @@ describe("fitness style checks", () => {
       mobileNavToken(
         repoWith({
           ...healthyFiles,
-          [spacer]: '// pb-mobile-nav\n<div className="max-bp1000:pb-16" />',
+          [spacer]:
+            '// pb-(--mobile-nav-height)\n<div className="max-lg:pb-16" />',
         }),
       ),
     ).toEqual([missing]);

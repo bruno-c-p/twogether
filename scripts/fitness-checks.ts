@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { DOMAIN_BASELINE, domainModelRules } from "./fitness-domain";
 import { mutationRules } from "./fitness-mutations";
-import { styleChecks } from "./fitness-styles";
+import { GLAZE_VENDORED, styleChecks } from "./fitness-styles";
 
 export type Repo = {
   tracked: (patterns: string[]) => string[];
@@ -19,9 +19,6 @@ const RESURRECTED_CSS = [
 ];
 
 const BANNED_CSS_DEPS = ["unocss", "shadcn"];
-
-// Glaze's glass recipe is drawn with gradients; the vendored registry files own it.
-const GLAZE_VENDORED = ["src/components/glaze/", "src/lib/glaze/"];
 
 const CACHE_CONTROL_FILES = ["src/start.ts"];
 
@@ -74,25 +71,14 @@ export function noGithubMedia(repo: Repo) {
     : [];
 }
 
-function moduleLayoutFailure(repo: Repo, file: string) {
-  const parts = file.split("/");
-  const stem = (parts.at(-1) ?? "").replace(/\.module\.css$/, "");
-  const folder = parts.at(-2) ?? "";
-
-  if (folder !== stem) return `${file} must live in a folder named ${stem}`;
-
-  const sibling = [...parts.slice(0, -1), `${stem}.tsx`].join("/");
-
-  return repo.exists(sibling)
-    ? undefined
-    : `${file} has no sibling ${stem}.tsx in ${folder}/`;
-}
-
-export function componentModuleLayout(repo: Repo) {
+export function noCssModules(repo: Repo) {
   return repo
     .tracked(["src"])
     .filter((file) => file.endsWith(".module.css"))
-    .flatMap((file) => moduleLayoutFailure(repo, file) ?? []);
+    .map(
+      (file) =>
+        `${file} is a CSS module; style it with Glaze components, recipes and token utilities`,
+    );
 }
 
 export function noApiRouteFiles(files: string[]) {
@@ -443,7 +429,7 @@ export function sourceChecks(repo: Repo) {
     ...cacheControlSource(repo),
     ...cssHouseStyle(repo),
     ...glazeWiring(repo),
-    ...componentModuleLayout(repo),
+    ...noCssModules(repo),
     ...boundaryBaselineScope(repo),
     ...noComponentBarrels(repo),
     ...styleChecks(repo),

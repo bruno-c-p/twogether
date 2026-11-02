@@ -1,27 +1,9 @@
 import ts from "typescript";
 import type { Repo } from "./fitness-checks";
 
-export const PX_BASELINE = "scripts/fitness-px-baseline.tsv";
-
-const SPACING_PREFIX =
-  /^-?(p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml|gap|gap-x|gap-y|w|h|size|min-w|min-h|max-w|max-h|inset|inset-x|inset-y|top|right|bottom|left|translate-x|translate-y|scroll-mt)$/;
-
-const TEXT_SIZES = new Map([
-  ["12", "text-xs"],
-  ["13", "text-sm"],
-  ["14", "text-md"],
-  ["16", "text-lg"],
-  ["20", "text-xl"],
-  ["24", "text-2xl"],
-  ["32", "text-3xl"],
-  ["44", "text-4xl"],
-]);
-
-const RADII = new Map([
-  ["6", "rounded-sm"],
-  ["10", "rounded-md"],
-  ["14", "rounded-lg"],
-]);
+// Vendored from the Glaze registry: Glaze's own lint checks it, and its glass
+// recipe is drawn with gradients.
+export const GLAZE_VENDORED = ["src/components/glaze/", "src/lib/glaze/"];
 
 // A shorthand and any side of the same box property fight over one value;
 // the winner is the stylesheet order, not the class order.
@@ -36,20 +18,16 @@ const BOX_SIDES = new Map([
 
 const BOX_UTILITY = /^-?(p|px|py|pt|pr|pb|pl|m|mx|my|mt|mr|mb|ml)-./;
 
-const PX = String.raw`\d+(?:\.\d+)?px`;
-
-const BRACKET_PX = new RegExp(
-  String.raw`^(-?[a-z][a-z0-9-]*?)-\[([^\]]*${PX}[^\]]*)\]$`,
-);
-
-const PROPERTY_PX = new RegExp(String.raw`^\[[a-z-]+:([^\]]*${PX}[^\]]*)\]$`);
-
-const BARE_PX = new RegExp(`^(-?[a-z][a-z0-9-]*?)-(${PX})$`);
-
 const NAV_TOKEN_USES: [string, string][] = [
-  ["src/features/budget/components/workspace-navigation.tsx", "h-mobile-nav"],
-  ["src/features/budget/components/workspace-shell.tsx", "pb-mobile-nav"],
-  ["src/components/ui/toaster.tsx", "var(--mobile-nav-height)"],
+  [
+    "src/features/budget/components/workspace-navigation.tsx",
+    "h-(--mobile-nav-height)",
+  ],
+  [
+    "src/features/budget/components/workspace-shell.tsx",
+    "pb-(--mobile-nav-height)",
+  ],
+  ["src/components/ui/toaster.tsx", "--mobile-nav-height"],
 ];
 
 // One className attribute or cx() call is one element's class list. Every
@@ -66,7 +44,8 @@ type ClassToken = {
 function styledSources(repo: Repo) {
   return repo
     .tracked(["src"])
-    .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file));
+    .filter((file) => /\.tsx?$/.test(file) && !/\.test\.tsx?$/.test(file))
+    .filter((file) => !GLAZE_VENDORED.some((dir) => file.startsWith(dir)));
 }
 
 function isClassExpression(node: ts.Node) {
@@ -154,81 +133,6 @@ function splitVariant(token: string) {
   };
 }
 
-function arbitraryPx(token: string) {
-  const { utility } = splitVariant(token);
-
-  const match = BRACKET_PX.exec(utility) ?? BARE_PX.exec(utility);
-
-  if (match) return { prefix: match[1] ?? "", value: match[2] ?? "" };
-
-  const property = PROPERTY_PX.exec(utility);
-
-  return property ? { prefix: "", value: property[1] ?? "" } : undefined;
-}
-
-const GENERIC_SUGGESTION =
-  "use a theme utility (spacing p-4 = 16px, text-sm, rounded-md, bp* breakpoints) or add a named token to uno.config.ts";
-
-function namedUtility(prefix: string, px: string) {
-  if (SPACING_PREFIX.test(prefix) && Number(px) % 4 === 0)
-    return `${prefix}-${Number(px) / 4} (spacing is 4px per step)`;
-
-  if (prefix === "text") return TEXT_SIZES.get(px);
-
-  return prefix.startsWith("rounded") ? RADII.get(px) : undefined;
-}
-
-function pxSuggestion(prefix: string, value: string) {
-  const px = /^(\d+(?:\.\d+)?)px$/.exec(value)?.[1];
-  const named = px && namedUtility(prefix, px);
-
-  return named ? `use ${named}` : GENERIC_SUGGESTION;
-}
-
-function baselineCounts(repo: Repo) {
-  const counts = new Map<string, number>();
-
-  for (const line of repo.read(PX_BASELINE).split("\n").filter(Boolean))
-    counts.set(line, (counts.get(line) ?? 0) + 1);
-
-  return counts;
-}
-
-export function noNewArbitraryPx(repo: Repo) {
-  const allowed = baselineCounts(repo);
-
-  const added = styledSources(repo).flatMap((file) =>
-    classTokens(file, repo.read(file)).flatMap(({ token, line }) => {
-      const px = arbitraryPx(token);
-
-      if (!px) return [];
-
-      const key = `${file}\t${token}`;
-      const left = allowed.get(key) ?? 0;
-
-      if (left > 0) {
-        allowed.set(key, left - 1);
-
-        return [];
-      }
-
-      return [
-        `${file}:${line} adds arbitrary px value ${token}; ${pxSuggestion(px.prefix, px.value)}. Existing values are grandfathered in ${PX_BASELINE}; do not add to it.`,
-      ];
-    }),
-  );
-
-  const stale = [...allowed].flatMap(([key, left]) =>
-    left > 0
-      ? [
-          `${PX_BASELINE} lists ${key.replace("\t", " ")} ${left} more time(s) than the code uses it; delete those lines so the value cannot come back`,
-        ]
-      : [],
-  );
-
-  return [...added, ...stale];
-}
-
 function overlaps(a: string, b: string) {
   if (a === b) return true;
 
@@ -293,9 +197,5 @@ export function mobileNavToken(repo: Repo) {
 }
 
 export function styleChecks(repo: Repo) {
-  return [
-    ...noNewArbitraryPx(repo),
-    ...noConflictingBoxUtilities(repo),
-    ...mobileNavToken(repo),
-  ];
+  return [...noConflictingBoxUtilities(repo), ...mobileNavToken(repo)];
 }

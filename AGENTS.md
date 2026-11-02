@@ -12,58 +12,58 @@ without one is not checked.
 
 ### Setup, checks and pull requests
 
-| Rule                                                                                  | Enforcer                                                                      | Failure looks like                                                                      | Details                 |
-| ------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------- |
-| Run `bun run setup` in every worktree; never copy the main checkout's `.env.local`    | `bun run setup` (`scripts/setup-worktree.ts`)                                 | `setup: … holds live Clerk keys` / `sets … to something other than a local SQLite path` | Worktree setup          |
-| Validate every change in a real browser (320px to desktop, light and dark)            | **prose** (`verify-twogether` skill is the tool)                              | —                                                                                       | Validation              |
-| Run the full check list before finishing                                              | CI `Verify` job (`.github/workflows/ci-cd.yml`) runs each one                 | red `Verify`; merge-guard then refuses                                                  | Validation              |
-| Prettier formatting                                                                   | `bun run format:check`                                                        | `[warn] Code style issues found … Run Prettier with --write to fix.`                    | Validation              |
-| No whitespace errors in the diff                                                      | `git diff --check`                                                            | `<file>:<line>: trailing whitespace.`                                                   | Validation              |
-| Report what was tested, the check results, and blockers; never claim more             | **prose**                                                                     | —                                                                                       | Validation              |
-| Isolated test data; no publish or deploy without authorization                        | **prose**                                                                     | —                                                                                       | Validation              |
-| Fix lint findings; never disable a rule or add a cast to silence one                  | `bun run lint` (oxlint); not disabling is **prose**                           | `× <plugin>(<rule>): …`                                                                 | Lint, Doctor and Fallow |
-| A type assertion carries a `SAFETY:` comment stating the invariant                    | oxlint `anti-slop/require-safety-comment-for-type-assertion`                  | `anti-slop(require-safety-comment-for-type-assertion)`                                  | Lint, Doctor and Fallow |
-| Update the vendored anti-slop only through `install-anti-slop`; record `UPSTREAM.md`  | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
-| React Doctor has zero findings                                                        | `bun run doctor` (`--blocking warning`)                                       | non-zero exit listing the diagnostics                                                   | Lint, Doctor and Fallow |
-| Fallow has zero findings                                                              | `bun run fallow`                                                              | `Failed: dead-code (1 issues): …`                                                       | Lint, Doctor and Fallow |
-| Suppress a Doctor or Fallow finding only as a proven false positive, reason beside it | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
-| Run `fallow audit` before a commit or push                                            | Claude Code hook `.claude/hooks/fallow-gate.sh`; other agents **prose**       | commit or push blocked with verdict `fail`                                              | Fallow local gate       |
-| Merge only with `bun run merge-guard <pr>`, never `gh pr merge`                       | Claude Code hook `scripts/merge-guard-hook.ts`; other agents **prose**        | ``Raw `gh pr merge` is blocked: …``                                                     | Pull requests           |
-| Answer every bot review thread with a fix or a concrete reason before CODE-READY      | **prose**                                                                     | —                                                                                       | Pull requests           |
-| The rule table names real enforcers and lists every fitness check                     | fitness `agentsRuleTable`                                                     | ``AGENTS.md names fitness `…`, which no scripts/fitness*.ts defines``                   | Rule table              |
-| No screenshots or videos under `.github/`                                             | fitness `noGithubMedia`                                                       | `image/video files under .github/:`                                                     | Pull requests           |
-| E2E uses a free port in 3400-3499 and a throwaway SQLite file, never a running server | `e2e/playwright.config.ts` (`freePort`, `mkdtempSync`, `reuseExistingServer`) | `No free e2e port in 3400-3499`                                                         | E2E                     |
-| Seed `uniqueEmail` with stable values only                                            | **prose**                                                                     | — (each new email burns a Clerk user slot)                                              | E2E                     |
-| Locate with `getByRole`/`getByLabel`; no bare tag locators or picks after `getByText` | oxlint `e2e/no-ambiguous-locator`                                             | ``locator('span')` matches every copy a breakpoint renders…``                           | E2E                     |
-| A copy hidden for a breakpoint is `display: none`                                     | **prose**                                                                     | —                                                                                       | E2E                     |
+| Rule                                                                                               | Enforcer                                                                      | Failure looks like                                                                      | Details                 |
+| -------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- | ----------------------- |
+| Run `bun run setup` in every worktree; never copy the main checkout's `.env.local`                 | `bun run setup` (`scripts/setup-worktree.ts`)                                 | `setup: … holds live Clerk keys` / `sets … to something other than a local SQLite path` | Worktree setup          |
+| Validate every change in a real browser (320px to desktop, light and dark)                         | **prose** (`verify-twogether` skill is the tool)                              | —                                                                                       | Validation              |
+| Run the full check list before finishing                                                           | CI `Verify` job (`.github/workflows/ci-cd.yml`) runs each one                 | red `Verify`; merge-guard then refuses                                                  | Validation              |
+| Prettier formatting                                                                                | `bun run format:check`                                                        | `[warn] Code style issues found … Run Prettier with --write to fix.`                    | Validation              |
+| No whitespace errors in the diff                                                                   | `git diff --check`                                                            | `<file>:<line>: trailing whitespace.`                                                   | Validation              |
+| Report what was tested, the check results, and blockers; never claim more                          | **prose**                                                                     | —                                                                                       | Validation              |
+| Isolated test data; no publish or deploy without authorization                                     | **prose**                                                                     | —                                                                                       | Validation              |
+| Fix lint findings; never disable a rule or add a cast to silence one                               | `bun run lint` (oxlint); not disabling is **prose**                           | `× <plugin>(<rule>): …`                                                                 | Lint, Doctor and Fallow |
+| Glaze lint reports nothing on app code                                                             | `bun run lint:glaze` (Glaze's ESLint plugin, `glaze.eslint.config.mjs`)       | `glaze/<rule>  <what to use instead>`                                                   | Glaze                   |
+| Glaze registry files are vendored; update with `shadcn add --overwrite`, then reapply `PATCHES.md` | **prose**                                                                     | —                                                                                       | Glaze                   |
+| A type assertion carries a `SAFETY:` comment stating the invariant                                 | oxlint `anti-slop/require-safety-comment-for-type-assertion`                  | `anti-slop(require-safety-comment-for-type-assertion)`                                  | Lint, Doctor and Fallow |
+| Update the vendored anti-slop only through `install-anti-slop`; record `UPSTREAM.md`               | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
+| React Doctor has zero findings                                                                     | `bun run doctor` (`--blocking warning`)                                       | non-zero exit listing the diagnostics                                                   | Lint, Doctor and Fallow |
+| Fallow has zero findings                                                                           | `bun run fallow`                                                              | `Failed: dead-code (1 issues): …`                                                       | Lint, Doctor and Fallow |
+| Suppress a Doctor or Fallow finding only as a proven false positive, reason beside it              | **prose**                                                                     | —                                                                                       | Lint, Doctor and Fallow |
+| Run `fallow audit` before a commit or push                                                         | Claude Code hook `.claude/hooks/fallow-gate.sh`; other agents **prose**       | commit or push blocked with verdict `fail`                                              | Fallow local gate       |
+| Merge only with `bun run merge-guard <pr>`, never `gh pr merge`                                    | Claude Code hook `scripts/merge-guard-hook.ts`; other agents **prose**        | ``Raw `gh pr merge` is blocked: …``                                                     | Pull requests           |
+| Answer every bot review thread with a fix or a concrete reason before CODE-READY                   | **prose**                                                                     | —                                                                                       | Pull requests           |
+| The rule table names real enforcers and lists every fitness check                                  | fitness `agentsRuleTable`                                                     | ``AGENTS.md names fitness `…`, which no scripts/fitness*.ts defines``                   | Rule table              |
+| No screenshots or videos under `.github/`                                                          | fitness `noGithubMedia`                                                       | `image/video files under .github/:`                                                     | Pull requests           |
+| E2E uses a free port in 3400-3499 and a throwaway SQLite file, never a running server              | `e2e/playwright.config.ts` (`freePort`, `mkdtempSync`, `reuseExistingServer`) | `No free e2e port in 3400-3499`                                                         | E2E                     |
+| Seed `uniqueEmail` with stable values only                                                         | **prose**                                                                     | — (each new email burns a Clerk user slot)                                              | E2E                     |
+| Locate with `getByRole`/`getByLabel`; no bare tag locators or picks after `getByText`              | oxlint `e2e/no-ambiguous-locator`                                             | ``locator('span')` matches every copy a breakpoint renders…``                           | E2E                     |
+| A copy hidden for a breakpoint is `display: none`                                                  | **prose**                                                                     | —                                                                                       | E2E                     |
 
 ### React state and data
 
-| Rule                                                                              | Enforcer                                                                          | Failure looks like                                             | Details                |
-| --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------- |
-| No `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useInsertionEffect` | oxlint `no-restricted-imports`, oxlint `no-restricted-properties`                 | `Local component state is banned: …` / `Effects are banned: …` | State without useState |
-| Put state in React Query, React Hook Form, nuqs or Base UI as listed              | **prose**                                                                         | —                                                              | State without useState |
-| URL index parsers read out-of-range values as absent                              | `transaction-list.test.tsx` (`?page=0`) pins `pageParam`; new parsers **prose**   | test failure                                                   | State without useState |
-| Gate navigation on `queryClient.query()`, never `prefetchQuery`                   | `use-workspace-search.test.tsx` pins `setMonth`; new call sites **prose**         | `a month that fails to load keeps the current month` fails     | React Query            |
-| Wrap `mutation.reset()` so an in-flight run keeps pending and error               | `use-mutation.test.tsx` pins `useMutation`; new wrappers **prose**                | `reset during a run keeps it pending…` fails                   | React Query            |
-| An optimistic update paints what the server writes                                | `bun run test` (`optimistic.server.test.ts`); tsc `satisfies Scenarios` needs one | `optimistic updates agree with the server` fails / tsc error   | React Query            |
-| Workspace data lives under `workspaceQueryKey`, one entry per month               | **prose**                                                                         | —                                                              | React Query            |
+| Rule                                                                                          | Enforcer                                                                          | Failure looks like                                             | Details                |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------- | ---------------------- |
+| No `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, `useInsertionEffect` in app code | oxlint `no-restricted-imports`, oxlint `no-restricted-properties`                 | `Local component state is banned: …` / `Effects are banned: …` | State without useState |
+| Put state in React Query, React Hook Form, nuqs or Base UI as listed                          | **prose**                                                                         | —                                                              | State without useState |
+| URL index parsers read out-of-range values as absent                                          | `transaction-list.test.tsx` (`?page=0`) pins `pageParam`; new parsers **prose**   | test failure                                                   | State without useState |
+| Gate navigation on `queryClient.query()`, never `prefetchQuery`                               | `use-workspace-search.test.tsx` pins `setMonth`; new call sites **prose**         | `a month that fails to load keeps the current month` fails     | React Query            |
+| Wrap `mutation.reset()` so an in-flight run keeps pending and error                           | `use-mutation.test.tsx` pins `useMutation`; new wrappers **prose**                | `reset during a run keeps it pending…` fails                   | React Query            |
+| An optimistic update paints what the server writes                                            | `bun run test` (`optimistic.server.test.ts`); tsc `satisfies Scenarios` needs one | `optimistic updates agree with the server` fails / tsc error   | React Query            |
+| Workspace data lives under `workspaceQueryKey`, one entry per month                           | **prose**                                                                         | —                                                              | React Query            |
 
-### Styling
+### Styling (Glaze)
 
-| Rule                                                                                | Enforcer                            | Failure looks like                                                    | Details           |
-| ----------------------------------------------------------------------------------- | ----------------------------------- | --------------------------------------------------------------------- | ----------------- |
-| A component with a CSS module lives in `<component>/` next to it                    | fitness `componentModuleLayout`     | `… must live in a folder named …` / `… has no sibling ….tsx`          | Component folders |
-| New components use UnoCSS utilities and stay flat; a module only when needed        | **prose**                           | —                                                                     | Component folders |
-| Token utilities, project breakpoints, `cx(...)` groups, `shortcuts` for repeats     | **prose**                           | —                                                                     | Styling           |
-| No padding/margin shorthand next to one of its sides on one element                 | fitness `noConflictingBoxUtilities` | `… sets m-0 and mt-2 on one element; …`                               | Styling           |
-| No other conflicting utilities on one element (two `left-[...]`)                    | **prose**                           | —                                                                     | Styling           |
-| No new arbitrary px values in class strings                                         | fitness `noNewArbitraryPx`          | `… adds arbitrary px value w-[32px]; use w-8. …`                      | Styling           |
-| Never add lines to `scripts/fitness-px-baseline.tsv`                                | **prose** (no growth ratchet)       | —                                                                     | Styling           |
-| Clear the phone nav with `--mobile-nav-height`                                      | fitness `mobileNavToken`            | `… must use h-mobile-nav in its className: …`                         | Styling           |
-| Glaze is wired in the root (`styles.css`, `glaze` body, portal); no `uno.config.ts` | fitness `glazeWiring`               | `src/routes/__root.tsx must put className="glaze" on <body>`          | Styling           |
-| UnoCSS stays; no Tailwind, shadcn, `@radix-ui`, gradients or retired CSS files      | fitness `cssHouseStyle`             | `package.json must not depend on …` / `… still uses a CSS gradient …` | Styling           |
-| `src/styles.css` holds tokens, resets and global element rules only                 | **prose**                           | —                                                                     | Styling           |
+| Rule                                                                                            | Enforcer                                    | Failure looks like                                                         | Details |
+| ----------------------------------------------------------------------------------------------- | ------------------------------------------- | -------------------------------------------------------------------------- | ------- |
+| No CSS modules; style with Glaze components, recipes and token utilities                        | fitness `noCssModules`                      | `… is a CSS module; style it with Glaze components, …`                     | Glaze   |
+| Build UI from Glaze components first and follow its skill                                       | **prose** (`.claude/skills/glaze/SKILL.md`) | —                                                                          | Glaze   |
+| Glaze token roles only: no hex, raw px, `dark:` or inline style; one primary button per group   | `bun run lint:glaze`                        | `glaze/no-arbitrary-value` / `glaze/unknown-class` / `glaze/one-primary`   | Glaze   |
+| No padding/margin shorthand next to one of its sides on one element                             | fitness `noConflictingBoxUtilities`         | `… sets m-0 and mt-2 on one element; …`                                    | Glaze   |
+| No other conflicting utilities on one element (two `left-[...]`)                                | **prose**                                   | —                                                                          | Glaze   |
+| Clear the phone nav with `--mobile-nav-height`                                                  | fitness `mobileNavToken`                    | `… must use h-(--mobile-nav-height) in its className: …`                   | Glaze   |
+| Glaze is wired in the root (`styles.css`, `glaze` body, portal); no `uno.config.ts`             | fitness `glazeWiring`                       | `src/routes/__root.tsx must put className="glaze" on <body>`               | Glaze   |
+| Tailwind v4 through Glaze; no UnoCSS, `shadcn` package, `@radix-ui`, or gradients outside Glaze | fitness `cssHouseStyle`                     | `package.json must not depend on unocss` / `… still uses a CSS gradient …` | Glaze   |
+| `src/styles.css` holds app-wide custom properties and global rules outside Glaze's scope only   | **prose**                                   | —                                                                          | Glaze   |
 
 ### Code structure and domain
 
@@ -128,8 +128,8 @@ simple or low-impact.
   and value hiding.
 - Inspect console errors and failed requests. Fix problems the change
   introduced and repeat the validation of the fixed flow.
-- Run `bun run typecheck`, `bun run lint`, `bun run format:check`,
-  `bun run fitness`, `bun run doctor`, `bun run fallow`, `bun run test`,
+- Run `bun run typecheck`, `bun run lint`, `bun run lint:glaze`,
+  `bun run format:check`, `bun run fitness`, `bun run doctor`, `bun run fallow`, `bun run test`,
   `bun run build`, `bun run e2e`, and `git diff --check`.
 - Automated tests, code analysis, and build do not replace in-browser
   validation. Do not declare the task complete based only on those checks.
@@ -149,6 +149,10 @@ simple or low-impact.
   disabling rules or adding casts; a type assertion needs a `SAFETY:` comment
   that states the invariant. Update the vendored copy only through its
   `install-anti-slop` skill and record the commit in `UPSTREAM.md`.
+- `lint:glaze` runs Glaze's ESLint rules (`glaze.eslint.config.mjs`) on app
+  code. Fix every finding the way its message names; never add a disable
+  comment. oxlint, Prettier, Doctor and fallow skip the vendored Glaze files,
+  which Glaze's own rules check.
 - `doctor` (React Doctor, `doctor.config.json`) and `fallow`
   (`.fallowrc.json`) fail on any finding. Suppress one only when it is a
   proven false positive, with the reason written next to the suppression.
@@ -167,14 +171,16 @@ simple or low-impact.
   region or row. Breakpoints can render the same text twice and hide one
   copy with CSS, so `bun run lint` bans `locator("span"|"p"|"div")` and
   `.first()`/`.nth()`/`.last()` after `getByText`. A copy hidden for a
-  breakpoint must be `display: none` (`hidden`, `max-bpN:hidden`) so it
+  breakpoint must be `display: none` (`hidden`, `max-sm:hidden`) so it
   leaves the accessibility tree.
 
 ## State without useState or useEffect
 
 - `useState`, `useReducer`, `useEffect`, `useLayoutEffect`, and
   `useInsertionEffect` are banned by `bun run lint` (imports from `react`
-  and `React.*` access). Do not disable the rule.
+  and `React.*` access). Do not disable the rule. The vendored Glaze
+  components own their internal state; app code drives them through
+  `value`/`onValueChange` from the stores below or leaves them uncontrolled.
 - Server data and async results: React Query (`useQuery`, `useMutation`).
   Track pending, error, and success through the mutation instead of flags.
 - Form fields and local picker values: React Hook Form (`useForm`,
@@ -213,58 +219,42 @@ simple or low-impact.
   store writes. `optimistic.server.test.ts` runs each one against the server
   and fails on any difference; see One definition per mutation.
 
-## Component folders
+## Glaze
 
-- A component that owns a CSS module lives in its own folder:
-  `<component>/<component>.tsx` next to `<component>.module.css`, mirroring
-  `src/components/ui/button/`. `bun run fitness` fails when a
-  `*.module.css` is not inside a folder named after it or when the sibling
-  component file is missing.
-- Components without a CSS module stay flat, e.g. inside
-  `features/<name>/components/`.
-- New components default to UnoCSS utilities and stay flat. Keep a CSS module
-  only when utilities cannot express the rule (e.g. `::backdrop`,
-  `:focus-within` on a nested input, sibling selectors across component
-  boundaries); in that case move the component back into its own folder.
-
-## Styling
-
-- Style with utilities; tokens come from `uno.config.ts`, which maps
-  `src/styles.css` custom properties into `theme.colors`. Use token utilities
-  (`bg-surface`, `text-text-muted`, `border-border`) instead of raw colors.
-- Dark mode: tokens flip through `[data-theme="dark"]`, so most rules need no
-  `dark:` variant. The `dark:` variant is bound to that same attribute when a
-  non-token override is unavoidable.
-- Use the project breakpoints (`bp1450`, `bp1190`, `bp1000`, `bp800`,
-  `bp620`, `bp360`). They are min-width by default; prefix with `max-` for
-  max-width (`max-bp620:p-[13px]`, emitted as `max-width: 619.9px`).
+- The UI is built on the Glaze design system from design.how: Tailwind v4,
+  components in `src/components/glaze/ui`, icons in
+  `src/components/glaze/icon.tsx`, tokens and recipes in
+  `src/components/glaze/{tokens,base,styles}.css`, helpers in
+  `src/lib/glaze`. Follow `.claude/skills/glaze/SKILL.md` for every UI
+  change, and read a component's page
+  (`https://design.how/systems/glaze/components/<name>.md`) before using it.
+- Glaze is scoped to `.glaze`. `src/routes/__root.tsx` imports its
+  stylesheet, puts `glaze` on `<body>` and wraps the app in
+  `GlazePortalProvider`, so dialogs, menus and toasts keep the tokens.
+  `data-theme="dark"` on `<html>` flips them.
+- Colour means status only: ok, warn, fail. Categories, partners and
+  amounts are ink on paper; partners read through `PersonAvatar`.
+- Breakpoints are Glaze's `sm` 640, `md` 768, `lg` 1024 and `xl` 1280, with
+  `max-*` for max-width. Layouts must still fit a 320px screen.
+- No CSS modules and no per-component CSS. When a token or component is
+  missing, use the closest one and say so in the PR; never invent a token,
+  an arbitrary value or an inline style to dodge `bun run lint:glaze`.
 - Never emit conflicting utilities on one element (two `left-[...]`, two
   `text-[...]` without a variant). Cascade order decides the winner, not the
-  order in `className`. Pick one branch conditionally, as
-  `src/components/ui/brand.tsx` does for its mark bars. `bun run fitness`
+  order in `className`. Pick one branch conditionally. `bun run fitness`
   fails when a padding/margin shorthand and a side share one string
   (`m-0 mt-2`); keep only the sides you mean.
-- No new arbitrary px values in class strings: use a theme utility (spacing
-  is 4px per step, so `w-8`, not `w-[32px]`) or add a named token to
-  `uno.config.ts`. `bun run fitness` fails on any px value not grandfathered
-  in `scripts/fitness-px-baseline.tsv`; never add entries to that file.
-  Fractional steps are fine: `--spacing` is `4px`, so `gap-3.5` is 14px and
-  `w-4.5` is 18px, and the check only flags tokens that spell out `px`. Its
-  suggestion names a step only for multiples of 4px; a fractional step
-  works for the rest just as well.
-- The phone nav height lives once in `--mobile-nav-height` (`h-mobile-nav`,
-  `pb-mobile-nav`). Anything that clears the nav reads that token, not a
-  pixel guess.
-- Utilities live next to the markup, grouped in readable `cx(...)` lines or a
-  variant map like `src/components/ui/button.tsx`. Repeated cross-component
-  patterns belong in `shortcuts` in `uno.config.ts`.
-- Font families go under `theme.font` in `uno.config.ts` (`font-heading`,
-  `font-sans`); preset-wind4 ignores `theme.fontFamily`.
-- `src/routes/__root.tsx` imports `virtual:uno.css`; keep that import, and
-  keep `unocss` in devDependencies. Tailwind and shadcn stay banned by
-  `bun run fitness`.
-- `src/styles.css` keeps tokens, resets, and global element rules only. Do
-  not add per-component rules there.
+- The phone nav height lives once in `--mobile-nav-height`
+  (`src/styles.css`). The nav, the space under the workspace and the toast
+  offset read it (`h-(--mobile-nav-height)`, `pb-(--mobile-nav-height)`);
+  `bun run fitness` checks those three uses.
+- Vendored files: `src/components/glaze/**`, `src/lib/glaze/**` and
+  `glaze.eslint.config.mjs` come from the registry in `components.json`.
+  Add a component with
+  `npx shadcn@latest add https://design.how/r/glaze/<name>.json`. Do not
+  edit them except for the patches listed in
+  `src/components/glaze/PATCHES.md`; reapply those after any
+  `--overwrite`.
 
 ## Clock
 
