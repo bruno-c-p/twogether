@@ -102,7 +102,7 @@ function devEnv(): Record<string, string> {
 function sourceDigest() {
   const git = (...args: string[]) =>
     execFileSync("git", args, { cwd: ROOT, encoding: "utf8" });
-  const paths = ["src", "public", "vite.config.ts", "uno.config.ts"];
+  const paths = ["src", "public", "vite.config.ts", "postcss.config.mjs"];
 
   const hash = createHash("sha1")
     .update(git("rev-parse", "HEAD"))

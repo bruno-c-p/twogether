@@ -10,6 +10,27 @@ export default async function transactions(kit: Kit) {
   const row = (description: string) =>
     list.getByRole("button", { name: description, exact: true });
 
+  const dayName = new Intl.DateTimeFormat("pt-BR", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // The date is a button that opens a calendar on the month being viewed.
+  async function pickDay(scope: typeof page | ReturnType<typeof page.getByRole>, date: string) {
+    const [year, month, day] = date.split("-").map(Number);
+
+    await scope.getByRole("button", { name: /^Data / }).click();
+    await page
+      .getByRole("grid")
+      .getByRole("button", {
+        name: new RegExp(`^${dayName.format(new Date(year, month - 1, day))}(, hoje)?$`),
+      })
+      .click();
+    await expect(page.getByRole("grid")).toHaveCount(0);
+  }
+
   async function add(
     kind: "Receita" | "Despesa",
     amount: string,
@@ -19,10 +40,10 @@ export default async function transactions(kit: Kit) {
     await page.getByRole("button", { name: "Adicionar transação" }).first().click();
     const dialog = page.getByRole("dialog", { name: "Nova transação" });
 
-    await dialog.getByRole("button", { name: kind }).click();
+    await dialog.getByRole("radio", { name: kind }).click();
     await dialog.getByLabel("Valor").fill(amount);
     await dialog.getByLabel("Descrição").fill(description);
-    await dialog.getByLabel("Data").fill(date);
+    await pickDay(dialog, date);
 
     if (kind === "Despesa")
       await dialog.getByRole("button", { name: "Custo fixo", exact: true }).click();

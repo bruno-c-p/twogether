@@ -56,7 +56,7 @@ function daysBetween(a: Date, b: Date) {
   const ub = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
   return Math.abs(Math.round((ub - ua) / 86_400_000)) + 1;
 }
-const dayCount = (n: number) => `${n.toLocaleString('en-US')} ${n === 1 ? 'day' : 'days'}`;
+const dayCount = (n: number) => `${n.toLocaleString('pt-BR')} ${n === 1 ? 'dia' : 'dias'}`;
 
 function isDisabled(date: Date, matcher?: Matcher) {
   if (!matcher) return false;
@@ -277,7 +277,7 @@ function Calendar(props: CalendarProps) {
                       data-selected={end || undefined}
                       tabIndex={same(d, tabDate) ? 0 : -1}
                       disabled={off}
-                      aria-label={`${fmtFull.format(d)}${isToday ? ', today' : ''}`}
+                      aria-label={`${fmtFull.format(d)}${isToday ? ', hoje' : ''}`}
                       aria-current={isToday ? 'date' : undefined}
                       onClick={() => choose(d)}
                       onKeyDown={e => onKeyDown(e, d)}
@@ -662,7 +662,7 @@ function DateField(props: SingleProps | RangeProps | DateTimeProps) {
       data-size={size}
       disabled={disabled}
       // The name is the label and the value together: "Report period, Sep 12 – Sep 18, 7 days".
-      aria-label={props['aria-label'] ? `${props['aria-label']}, ${label ? `${label}${count ? `, ${dayCount(count)}` : ''}` : 'empty'}` : undefined}
+      aria-label={props['aria-label'] ? `${props['aria-label']}, ${label ? `${label}${count ? `, ${dayCount(count)}` : ''}` : 'vazio'}` : undefined}
       aria-labelledby={props['aria-label'] || !fieldIds.label ? undefined : `${fieldIds.label} ${triggerId}`}
       aria-describedby={props['aria-describedby'] ?? fieldIds.described}
       aria-invalid={invalid || undefined}
@@ -718,13 +718,13 @@ function DateField(props: SingleProps | RangeProps | DateTimeProps) {
               : <Calendar selected={draftSingle} onSelect={pickDay} disabled={disabledDays} weekStartsOn={weekStartsOn} locale={locale} today={props.today} defaultMonth={single ?? undefined}/>}
             {datetime && <div className="flex items-center justify-between gap-3 border-t border-line-faint px-1 pt-2">
               <span className="type-label text-text-2">Time</span>
-              <TimeField list={false} value={draftSingle ? isoTime(draftSingle) : null} onValueChange={pickTime} hourCycle={hourCycle} size="sm" aria-label="Time" className="w-24" onEnter={confirm}/>
+              <TimeField list={false} value={draftSingle ? isoTime(draftSingle) : null} onValueChange={pickTime} hourCycle={hourCycle} size="sm" aria-label="Horário" className="w-24" onEnter={confirm}/>
             </div>}
           </div>
           {footer && <div data-slot="date-picker-footer" className="shell-foot">
             <span role="status" className="me-auto data [unicode-bidi:plaintext]">{meta}</span>
-            {canClear && <Button variant="secondary" size="sm" data-slot="date-picker-clear" onClick={() => { set(range ? {} : null); close(); }}>Clear</Button>}
-            {datetime && <Button size="sm" data-slot="date-picker-confirm" disabled={!draftSingle} onClick={() => confirm()}>Set</Button>}
+            {canClear && <Button variant="secondary" size="sm" data-slot="date-picker-clear" onClick={() => { set(range ? {} : null); close(); }}>Limpar</Button>}
+            {datetime && <Button size="sm" data-slot="date-picker-confirm" disabled={!draftSingle} onClick={() => confirm()}>Definir</Button>}
           </div>}
         </PopoverPrimitive.Popup>
       </PopoverPrimitive.Positioner>

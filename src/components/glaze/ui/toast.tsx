@@ -146,7 +146,7 @@ function Toaster({inline, limit = 3, manager = toastManager, className}: Toaster
   const viewport = <ToastPrimitive.Viewport
     data-slot="toast-viewport"
     data-away={away || undefined}
-    {...(inline ? {role: 'group', 'aria-live': 'off' as const, 'aria-label': 'Example toasts'} : {})}
+    {...(inline ? {role: 'group', 'aria-live': 'off' as const, 'aria-label': 'Example toasts'} : {'aria-label': 'Notificações'})}
     className={cn(
       'group/toasts @container/toast flex w-full flex-col-reverse gap-2 outline-none',
       // On phones the stack spans the width 16px in and clears the home indicator; from sm it is 360px at the bottom end.
